@@ -6,7 +6,7 @@ addons:
   apt:
     packages:
       # rsmpi dependencies
-      - openmpi
+      - openmpi-bin
       - libclang-3.4-dev
       # travis-cargo dependencies
       - libcurl4-openssl-dev
