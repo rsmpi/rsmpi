@@ -1,0 +1,4 @@
+Cargo.lock
+target
+
+src/ffi/functions_and_types.rs
