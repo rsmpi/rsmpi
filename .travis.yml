@@ -20,7 +20,7 @@ rust:
 
 env:
   global:
-    - LIBCLANG_PATH=/usr/lib/x86_64-linux-gnu
+    - LIBCLANG_PATH=/usr/lib/llvm-3.4/lib
 
 before_script:
   - |
