@@ -1,6 +1,6 @@
 # Message Passing Interface bindings for Rust
 
-[![License: MIT][license-shield]][license]
+[![Travis build status][travis-shield]][travis] [![License: MIT][license-shield]][license]
 
 The [Message Passing Interface][MPI] (MPI) is a specification for a
 message-passing style concurrency library. Implementations of MPI are often used to structure
@@ -8,8 +8,10 @@ parallel computation on High Performance Computing systems. The MPI specificatio
 bindings for the C programming language (and through it C++) as well as for the Fortran
 programming language. This library tries to bridge the gap into a more rustic world.
 
-[license-shield]: https://img.shields.io/badge/license-MIT-magenta.svg?style=flat-square
+[license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
 [license]: https://github.com/bsteinb/rsmpi/LICENSE
+[travis-shield]: https://img.shields.io/travis/bsteinb/rsmpi.svg?style=flat-square
+[travis]: https://travis-ci.org/bsteinb/rsmpi
 [MPI]: http://www.mpi-forum.org
 
 ## Requirements
