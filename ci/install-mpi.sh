@@ -9,7 +9,7 @@ PACKAGE_NAME="${MPI_LIBRARY:?"MPI_LIBRARY not set!"}-${MPI_LIBRARY_VERSION:?"MPI
 INSTALL_PREFIX="${INSTALL_PREFIX}/${PACKAGE_NAME}"
 TARBALL_NAME="${PACKAGE_NAME}.tar.gz"
 
-if [[ -d "${INSTALL_PREFIX}" ]]
+if [ -d "${INSTALL_PREFIX}" ]
 then
   echo "MPI library already installed: ${PACKAGE_NAME}"
   exit 0
@@ -32,7 +32,9 @@ echo "Tarball name: ${TARBALL_NAME}"
 
 mkdir -p "${DOWNLOAD_DIR}"
 cd "${DOWNLOAD_DIR}"
+rm -rf "${TARBALL_NAME}"
 wget -O "${TARBALL_NAME}" "${SOURCE_URL}"
+rm -rf "${PACKAGE_NAME}"
 tar -xzf "${TARBALL_NAME}"
 
 cd "${PACKAGE_NAME}"
