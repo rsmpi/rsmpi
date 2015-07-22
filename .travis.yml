@@ -1,37 +1,43 @@
 language: rust
 
-#sudo: false
-#
-#addons:
-#  apt:
-#    packages:
-#      # rsmpi dependencies
-#      - mpich2
-#      - libclang-3.4-dev
-#      # travis-cargo dependencies
-#      - libcurl4-openssl-dev
-#      - libelf-dev
-#      - libdw-dev
+sudo: false
 
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y mpich2 libclang-3.4-dev libcurl4-openssl-dev libelf-dev libdw-dev
+addons:
+  apt:
+    packages:
+      # for building MPI libraries
+      - build-essential
+      # bindgen dependency
+      - libclang-3.4-dev
+      # travis-cargo dependencies
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
 
 rust:
-  - beta
   - stable
+  # - beta
 
 env:
+  - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4
+  # - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.0.4
+  # - MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.8.7
   global:
     - LIBCLANG_PATH=/usr/lib/llvm-3.4/lib
 
-before_script:
+install:
+  - sh ci/install-mpi.sh
+  - export PATH="${HOME}/opt/${MPI_LIBRARY}-${MPI_LIBRARY_VERSION}/bin:${PATH}"
   - |
       pip install 'travis-cargo<0.2' --user &&
-      export "PATH=$HOME/.local/bin:$PATH"
+      export PATH="${HOME}/.local/bin:${PATH}"
 
 script:
   - |
       travis-cargo build &&
       travis-cargo test &&
       travis-cargo --only stable doc
+
+cache:
+  directories:
+    - $HOME/opt
