@@ -32,21 +32,20 @@ env:
 
 install:
   - sh ci/install-mpi.sh
+  - pip install 'travis-cargo<0.2' --user
   - export MPI_PREFIX="${HOME}/opt/${MPI_LIBRARY}-${MPI_LIBRARY_VERSION}"
-  - export PATH="${MPI_PREFIX}/bin${PATH:+":${PATH}"}"
+  - export PATH="${HOME}/.local/bin:${MPI_PREFIX}/bin${PATH:+":${PATH}"}"
   - export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"
-  - |
-      pip install 'travis-cargo<0.2' --user &&
-      export PATH="${HOME}/.local/bin:${PATH}"
 
 script:
-  - |
-      travis-cargo build &&
-      travis-cargo test
-  - ([ "${MPI_LIBRARY}" != "${DOC_LIBRARY}" -o "${MPI_LIBRARY_VERSION}" != "${DOC_LIBRARY_VERSION}" ] && echo "Not building docs.") || travis-cargo --only stable doc
+  - travis-cargo build && travis-cargo test
 
-after_success:
-  - ([ "${MPI_LIBRARY}" != "${DOC_LIBRARY}" -o "${MPI_LIBRARY_VERSION}" != "${DOC_LIBRARY_VERSION}" ] && echo "Not deploying docs.") || travis-cargo --only stable doc-upload
+deploy:
+  provider: script
+  script: ci/deploy-docs.sh
+  on:
+    branch: master
+    condition: "${MPI_LIBRARY} == ${DOC_LIBRARY} -a ${MPI_LIBRARY_VERSION} == ${DOC_LIBRARY_VERSION} -a ${TRAVIS_RUST_VERSION} == stable"
 
 cache:
   directories:
