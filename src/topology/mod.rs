@@ -430,7 +430,7 @@ impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
 pub struct Group(MPI_Group);
 
 impl Group {
-    pub unsafe fn raw(&self) -> c_int {
+    pub unsafe fn raw(&self) -> MPI_Group {
         self.0
     }
 
