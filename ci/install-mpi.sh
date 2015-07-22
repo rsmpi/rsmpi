@@ -39,6 +39,6 @@ tar -xzf "${TARBALL_NAME}"
 
 cd "${PACKAGE_NAME}"
 mkdir -p "${INSTALL_PREFIX}"
-./configure --prefix="${INSTALL_PREFIX}"
+./configure --enable-shared --prefix="${INSTALL_PREFIX}"
 make -j 2
 make -j 2 install
