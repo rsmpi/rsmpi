@@ -25,7 +25,10 @@ env:
     - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.0.4
     - MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.8.7
   global:
+    - DOC_LIBRARY=mpich
+    - DOC_LIBRARY_VERSION=3.1.4
     - LIBCLANG_PATH=/usr/lib/llvm-3.4/lib
+    - secure: "hbB6EhELjgI79FKuov4M11ZWiIIZLyOikV+gcE9KpoedLgHbnhSgpbSBlMZ6QFbsXKNAFX7uHlnNkweqJB+pMHYCL8qL9Vxu4vFd1YRyexJSRo7Ly9T7U0aFYR7XCIboCwu26BKqWRPioWL/3W+e0dFctPDZ9Fp1dlFOGZKW1aAMC15r0ekFY0z7lvY4ph2eA45EygKyYnM3t1VAEzk+vq1cRqOL8zRpkB0ydeLkgW0JUWzM+tLdZCou7bsoqwPGEQgx+rUpBSpDEuB5FW0Bbbyhwhc5B1NKVLSTXpwKYY5sVG2YnC4B/hatagLUUpvXb0ncxzFah5rFL/qNZMiP2MB3G6Xn7SBZhapbnYClc7nsBsk8SQlSCKTnq6ypU1/0ZhR/UKhfZK4Yb5+k1TdQ4MeQUj+6elJOKmnIcrUQxGqVxFjuY5WarARjgyDoeG50iXqmVtC0jDdqpHEahIEzCHj79/KIiARsHss3Hm+eblRaWEQZzUzCSFQhoIUH1rzdSJ2twQyEpGpVVTttQjIGVRdhtute98NyvPz6Mk0hE9HO2m/RnYKieI3NG0TUzDkLANFYic/L8YxSek5uoJaZ3MNfEKELYxvZE7rtKm1TyDpwyJEDO7Sx2jSNX7ahqTX+e6a0so93vE+Wt5BlR9R6oVj7v9H9HfsGeTKpiis1Ol8="
 
 install:
   - sh ci/install-mpi.sh
@@ -42,6 +45,10 @@ script:
       travis-cargo test &&
       travis-cargo --only stable doc
 
+after_success:
+  - |
+      [ "${MPI_LIBRARY}" == "${DOC_LIBRARY}" && "${MPI_LIBRARY_VERSION}" == "${DOC_LIBRARY_VERSION}"] &&
+      travis-cargo --only stable doc-upload
 cache:
   directories:
     - $HOME/opt
