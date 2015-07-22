@@ -42,13 +42,12 @@ install:
 script:
   - |
       travis-cargo build &&
-      travis-cargo test &&
-      travis-cargo --only stable doc
+      travis-cargo test
+  - ([ "${MPI_LIBRARY}" != "${DOC_LIBRARY}" -o "${MPI_LIBRARY_VERSION}" != "${DOC_LIBRARY_VERSION}" ] && echo "Not building docs.") || travis-cargo --only stable doc
 
 after_success:
-  - |
-      [ "${MPI_LIBRARY}" == "${DOC_LIBRARY}" && "${MPI_LIBRARY_VERSION}" == "${DOC_LIBRARY_VERSION}"] &&
-      travis-cargo --only stable doc-upload
+  - ([ "${MPI_LIBRARY}" != "${DOC_LIBRARY}" -o "${MPI_LIBRARY_VERSION}" != "${DOC_LIBRARY_VERSION}" ] && echo "Not deploying docs.") || travis-cargo --only stable doc-upload
+
 cache:
   directories:
     - $HOME/opt
