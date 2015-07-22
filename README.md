@@ -1,6 +1,6 @@
-# Message Passing Interface bindings for Rust
+# MPI bindings for Rust
 
-[![Travis build status][travis-shield]][travis] [![License: MIT][license-shield]][license]
+[![Travis build status][travis-shield]][travis] [![Documentation: hosted][doc-shield]][doc] [![License: MIT][license-shield]][license]
 
 The [Message Passing Interface][MPI] (MPI) is a specification for a
 message-passing style concurrency library. Implementations of MPI are often used to structure
@@ -8,18 +8,20 @@ parallel computation on High Performance Computing systems. The MPI specificatio
 bindings for the C programming language (and through it C++) as well as for the Fortran
 programming language. This library tries to bridge the gap into a more rustic world.
 
-[license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
-[license]: https://github.com/bsteinb/rsmpi/LICENSE
 [travis-shield]: https://img.shields.io/travis/bsteinb/rsmpi.svg?style=flat-square
 [travis]: https://travis-ci.org/bsteinb/rsmpi
+[doc-shield]: https://img.shields.io/badge/documentation-hosted-blue.svg?style=flat-square
+[doc]: http://bsteinb.github.io/rsmpi/
+[license-shield]: https://img.shields.io/github/license/bsteinb/rsmpi.svg?style=flat-square
+[license]: https://github.com/bsteinb/rsmpi/blob/master/LICENSE
 [MPI]: http://www.mpi-forum.org
 
 ## Requirements
 
-An implementation of the C language interface of MPI. These bindings have been tested with:
+An implementation of the C language interface of MPI. These bindings are currently tested with:
 
-- [OpenMPI][OpenMPI] 1.8.6
-- [MPICH][MPICH] 3.1.4
+- [OpenMPI][OpenMPI] 1.8.7
+- [MPICH][MPICH] 3.1.4, 3.0.4
 
 [OpenMPI]: https://www.open-mpi.org
 [MPICH]: https://www.mpich.org
@@ -101,12 +103,14 @@ Not supported (yet):
 cargo doc
 ```
 
-Hosted documentation coming soon.
+Or see the [hosted documentation][doc].
 
 ## Examples
 
-See files in `examples/`.
+See files in [examples/][examples].
+
+[examples]: https://github.com/bsteinb/rsmpi/tree/master/examples
 
 ## License
 
-The MIT license, see the file `LICENSE`.
+The MIT license, see the file [LICENSE][license].
