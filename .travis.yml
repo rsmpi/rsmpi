@@ -45,7 +45,7 @@ deploy:
   script: ci/deploy-docs.sh
   on:
     branch: master
-    condition: "${MPI_LIBRARY} == ${DOC_LIBRARY} -a ${MPI_LIBRARY_VERSION} == ${DOC_LIBRARY_VERSION} -a ${TRAVIS_RUST_VERSION} == stable"
+    condition: "${MPI_LIBRARY} = ${DOC_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${DOC_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
 
 cache:
   directories:
