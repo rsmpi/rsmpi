@@ -17,13 +17,13 @@ addons:
 
 rust:
   - stable
-  # - beta
+  - beta
 
 env:
   matrix:
     - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4
-    # - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.0.4
-    # - MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.8.7
+    - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.0.4
+    - MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.8.7
   global:
     - LIBCLANG_PATH=/usr/lib/llvm-3.4/lib
 
