@@ -29,9 +29,7 @@
 use std::{mem, fmt};
 
 use ffi;
-use ffi::{MPI_Status};
-#[cfg(feature = "mpi30")]
-use ffi::{MPI_Message};
+use ffi::{MPI_Status, MPI_Message};
 use topology::{SystemCommunicator, UserCommunicator, Rank, Identifier};
 use topology::traits::*;
 use datatype::traits::*;
@@ -212,10 +210,8 @@ impl<Src: Source> Probe for Src {
 /// # Standard section(s)
 ///
 /// 3.8.2
-#[cfg(feature = "mpi30")]
 pub struct Message(MPI_Message);
 
-#[cfg(feature = "mpi30")]
 impl Message {
     unsafe fn raw(&self) -> MPI_Message {
         self.0
@@ -231,7 +227,6 @@ impl Message {
 /// # Standard section(s)
 ///
 /// 3.8.2
-#[cfg(feature = "mpi30")]
 pub trait MatchedProbe {
     /// Probe `Source` `&self` for incoming messages with a certain tag.
     fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status);
@@ -241,7 +236,6 @@ pub trait MatchedProbe {
     }
 }
 
-#[cfg(feature = "mpi30")]
 impl<Src: Source> MatchedProbe for Src {
     fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status) {
         let mut message: MPI_Message = unsafe { mem::uninitialized() };
@@ -259,13 +253,11 @@ impl<Src: Source> MatchedProbe for Src {
 /// # Standard section(s)
 ///
 /// 3.8.3
-#[cfg(feature = "mpi30")]
 pub trait MatchedReceive {
     /// Receives the message `&self` which contains a single instance of type `Msg`.
     fn matched_receive<Msg: EquivalentDatatype>(&mut self) -> (Msg, Status);
 }
 
-#[cfg(feature = "mpi30")]
 impl MatchedReceive for Message {
     fn matched_receive<Msg: EquivalentDatatype>(&mut self) -> (Msg, Status) {
         let mut res: Msg = unsafe { mem::uninitialized() };
@@ -279,13 +271,11 @@ impl MatchedReceive for Message {
 /// # Standard section(s)
 ///
 /// 3.8.3
-#[cfg(feature = "mpi30")]
 pub trait MatchedReceiveInto {
     /// Receive the message `&self` with contents matching `buf`.
     fn matched_receive_into<Buf: Buffer + ?Sized>(&mut self, buf: &mut Buf) -> Status;
 }
 
-#[cfg(feature = "mpi30")]
 impl MatchedReceiveInto for Message {
     fn matched_receive_into<Buf: Buffer + ?Sized>(&mut self, buf: &mut Buf) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
@@ -302,13 +292,11 @@ impl MatchedReceiveInto for Message {
 /// # Standard section(s)
 ///
 /// 3.8.3
-#[cfg(feature = "mpi30")]
 pub trait MatchedReceiveVec {
     /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`.
     fn matched_receive_vec<Msg: EquivalentDatatype>(&mut self) -> (Vec<Msg>, Status);
 }
 
-#[cfg(feature = "mpi30")]
 impl MatchedReceiveVec for (Message, Status) {
     fn matched_receive_vec<Msg: EquivalentDatatype>(&mut self) -> (Vec<Msg>, Status) {
         let count = self.1.count(Msg::equivalent_datatype()) as usize; // FIXME: this should be a checked cast.
@@ -383,7 +371,6 @@ impl<Src: Source> ReceiveInto for Src {
 /// # Standard section(s)
 ///
 /// 3.2.4
-#[cfg(feature = "mpi30")]
 pub trait ReceiveVec {
     /// Receive a message from `Source` `&self` tagged `tag` containing multiple instances of type
     /// `Msg` into a `Vec`.
@@ -398,7 +385,6 @@ pub trait ReceiveVec {
     }
 }
 
-#[cfg(feature = "mpi30")]
 impl<Src: Source> ReceiveVec for Src {
     fn receive_vec_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Vec<Msg>, Status) {
         self.matched_probe_with_tag(tag).matched_receive_vec()

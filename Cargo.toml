@@ -15,9 +15,6 @@ license = "MIT"
 
 build = "build.rs"
 
-[features]
-mpi30 = []
-
 [dependencies]
 libc = "0.1.8"
 
