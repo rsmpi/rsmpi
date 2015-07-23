@@ -33,6 +33,7 @@ env:
 install:
   - sh ci/install-mpi.sh
   - pip install 'travis-cargo<0.2' --user
+  - pip install 'ghp-import' --user
   - export MPI_PREFIX="${HOME}/opt/${MPI_LIBRARY}-${MPI_LIBRARY_VERSION}"
   - export PATH="${HOME}/.local/bin:${MPI_PREFIX}/bin${PATH:+":${PATH}"}"
   - export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"

@@ -3,4 +3,7 @@
 set -e
 
 travis-cargo doc
-travis-cargo doc-upload
+
+# Manual doc deployment
+echo "<meta http-equiv=refresh content=0;url=mpi/index.html>" >> target/doc/index.html
+ghp-import -n -p target/doc
