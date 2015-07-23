@@ -2,7 +2,7 @@
 
 set -e
 
-travis-cargo doc
+cargo -v doc
 
 # Manual doc deployment
 echo "<meta http-equiv=refresh content=0;url=mpi/index.html>" >> target/doc/index.html

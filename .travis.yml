@@ -10,10 +10,6 @@ addons:
       - gfortran
       # bindgen dependency
       - libclang-3.4-dev
-      # travis-cargo dependencies
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
 
 rust:
   - stable
@@ -32,14 +28,13 @@ env:
 
 install:
   - sh ci/install-mpi.sh
-  - pip install 'travis-cargo<0.2' --user
   - pip install 'ghp-import' --user
   - export MPI_PREFIX="${HOME}/opt/${MPI_LIBRARY}-${MPI_LIBRARY_VERSION}"
   - export PATH="${HOME}/.local/bin:${MPI_PREFIX}/bin${PATH:+":${PATH}"}"
   - export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"
 
 script:
-  - travis-cargo build && travis-cargo test
+  - cargo -v build && cargo -v test
 
 before_deploy:
   - touch ci/deploy_key && chmod 0600 ci/deploy_key
