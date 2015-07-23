@@ -3,17 +3,12 @@
 set -e
 
 TOKEN=${GH_TOKEN:?'GH_TOKEN not set!'}
+REPO=${TRAVIS_REPO_SLUG:?'TRAVIS_REPO_SLUG not set!'}
 
+echo "Writing OAuth token to .netrc."
 touch ${HOME}/.netrc
 chmod 0600 ${HOME}/.netrc
-echo "Writing OAuth token to .netrc."
 echo "machine github.com login $TOKEN password x-oauth-basic" >> ${HOME}/.netrc
 
-echo "HOME looks like:"
-ls -la ${HOME}
-
-echo ".netrc contains:"
-grep -o -E "^machine[[:space:]]+[^[:space:]]+[[:space:]]+login" ~/.netrc 
-
-echo "trying clone:"
-git clone --verbose https://github.com/davisp/ghp-import
+echo "Setting origin to use HTTPS for pushing"
+git remote set-url --push origin "https://github.com/${REPO}"
