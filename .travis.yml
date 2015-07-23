@@ -40,7 +40,7 @@ install:
 script:
   - travis-cargo build && travis-cargo test
 
-before-deploy:
+before_deploy:
   - sh ci/save-credentials.sh
 
 deploy:
