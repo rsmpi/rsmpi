@@ -46,6 +46,7 @@ before_deploy:
 deploy:
   provider: script
   script: ci/deploy-docs.sh
+  skip_cleanup: true
   on:
     branch: master
     condition: "${MPI_LIBRARY} = ${DOC_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${DOC_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
