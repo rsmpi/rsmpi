@@ -41,8 +41,8 @@ Uses `rust-bindgen` to generate FFI definitions, see the [bindgen project page][
 Add the `mpi` crate as a dependency in your `Cargo.toml`:
 
 ```
-[dependencies]
-mpi = "0.1.0"
+[dependencies.mpi]
+git = "https://github.com/bsteinb/rsmpi.git"
 ```
 
 Then use it in your program like this:
