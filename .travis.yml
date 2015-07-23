@@ -34,7 +34,7 @@ install:
   - export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"
 
 script:
-  - cargo -v build && cargo -v test
+  - cargo build -v && cargo test -v
 
 before_deploy:
   - touch ci/deploy_key && chmod 0600 ci/deploy_key
