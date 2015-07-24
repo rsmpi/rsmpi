@@ -50,6 +50,8 @@ before_deploy:
   - git remote set-url origin git@github.com:bsteinb/rsmpi.git
   # Login to cates.io
   - cargo login "${CRATES_IO_TOKEN}"
+  # Build crate
+  - cargo package -v
 
 deploy:
   # Build an upload documentation to GitHub pages
@@ -62,6 +64,15 @@ deploy:
   # Deploy the crate to crates.io
   - provider: script
     script: ci/deploy-crate.sh
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
+  # Deploy crate to GitHub releases
+  - provider: releases
+    api_key:
+      secure: Ke5lOvpyyl1DvwCYlmbw8MH+mjMH2pnLKm29gJV12UsnLM/b3g0IiffcdQV6nnDGofFq6dvnVurz1EFoWG0IzgRrAMLSyA+V30rXp0AYCYgz4jUIXkJGAQz6OS0nDlE9R4Fnpu6qqHhwJV64ooyAaisIJUTXV7CJMhK5YXQh+MchEKgvwqbCkHUqpW4A9vKrlcZbZjYHF3xUAIwoQr+KO6nf3DVyYZJ4+NjLjZA0d7QNxMgpIqjHR5kvNhaS6fuxrMxuoH3PbmGIkmJInxpA5P4oWGH8Qmh3fQTUO7702zWCdpDwnw9mOBr67QIBfPDOefVQTFfvNOafZsRRQKSmSAvqMPSsJ1nVJNAoccObHp5wswdvSn+iG0SfTuFzUA5egx/h9Xd3jJ6Nt95M1ohvy40nOHhil5SqG9qXEMJVKoaDSL1ocgW59Tu+ZKk/h/jxQp38KDSNXBN/rGLmMWwYmk2QvyCEvMwgK3nPNSKLJ/SoAEf3SpLIWdQWEDArHFW72HaoR33sT58/cE4xHHDA0nuxE5BudBKiaUKXDPWwsmcxvA4usmPC9F45F+//JGXmZAuGgWsGl2DD0mBgfRQ2BBGHE++21xCIn2Vkwt0W0vfAKTjQwqCn2dBewhtuMl67Fz+cZ4aF11RvFAcZIxDFBEMCnvtHRzcx7Kkud4VOYe4=
+    file: target/package/mpi-${TRAVIS_TAG}.crate
     skip_cleanup: true
     on:
       tags: true
