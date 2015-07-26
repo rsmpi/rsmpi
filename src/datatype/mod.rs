@@ -25,9 +25,7 @@
 //!
 //! # Unfinished features
 //!
-//! - **4.1.2**: Datatype constructors, `MPI_Type_create_hvector()`, `MPI_Type_indexed()`,
-//! `MPI_Type_create_hindexed()`, `MPI_Type_create_indexed_block()`,
-//! `MPI_Type_create_hindexed_block()`, `MPI_Type_create_struct()`
+//! - **4.1.2**: Datatype constructors, `MPI_Type_create_struct()`
 //! - **4.1.3**: Subarray datatype constructors, `MPI_Type_create_subarray()`,
 //! - **4.1.4**: Distributed array datatype constructors, `MPI_Type_create_darray()`
 //! - **4.1.5**: Address and size functions, `MPI_Get_address()`, `MPI_Aint_add()`,
@@ -47,7 +45,7 @@ use std::{mem};
 
 use libc::{c_void};
 
-use ::Count;
+use ::{Address, Count};
 use ffi;
 use ffi::MPI_Datatype;
 
@@ -149,6 +147,92 @@ impl UserDatatype {
         unsafe {
             ffi::MPI_Type_vector(count, blocklength, stride, oldtype.raw(),
                 &mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+        }
+        UserDatatype(newtype)
+    }
+
+    /// Like `vector()` but `stride` is given in bytes rather than elements of `oldtype`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 4.1.2
+    pub fn heterogeneous_vector<D: RawDatatype>(count: Count, blocklength: Count, stride: Address, oldtype: D) -> UserDatatype {
+        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Type_hvector(count, blocklength, stride, oldtype.raw(),
+                &mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+        }
+        UserDatatype(newtype)
+    }
+
+    /// Constructs a new type out of multiple blocks of individual length and displacement.
+    /// Block `i` will be `blocklengths[i]` items of datytpe `oldtype` long and displaced by
+    /// `dispplacements[i]` items of the `oldtype`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 4.1.2
+    pub fn indexed<D: RawDatatype>(blocklengths: &[Count], displacements: &[Count], oldtype: D) -> UserDatatype {
+        let count: Count = blocklengths.len() as Count; // FIXME: this should be a checked cast.
+        assert_eq!(count, displacements.len() as Count);
+        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Type_indexed(count, blocklengths.as_ptr(), displacements.as_ptr(), oldtype.raw(),
+                &mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+        }
+        UserDatatype(newtype)
+    }
+
+    /// Constructs a new type out of multiple blocks of individual length and displacement.
+    /// Block `i` will be `blocklengths[i]` items of datytpe `oldtype` long and displaced by
+    /// `dispplacements[i]` bytes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 4.1.2
+    pub fn heterogeneous_indexed<D: RawDatatype>(blocklengths: &[Count], displacements: &[Address], oldtype: D) -> UserDatatype {
+        let count: Count = blocklengths.len() as Count; // FIXME: this should be a checked cast.
+        assert_eq!(count, displacements.len() as Count);
+        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Type_create_hindexed(count, blocklengths.as_ptr(), displacements.as_ptr(),
+                oldtype.raw(), &mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+        }
+        UserDatatype(newtype)
+    }
+
+    /// Construct a new type out of blocks of the same length and individual displacements.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 4.1.2
+    pub fn indexed_block<D: RawDatatype>(blocklength: Count, displacements: &[Count], oldtype: D) -> UserDatatype {
+        let count: Count = displacements.len() as Count; // FIXME: this should be a checked cast.
+        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Type_create_indexed_block(count, blocklength, displacements.as_ptr(),
+                oldtype.raw(), &mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+        }
+        UserDatatype(newtype)
+    }
+
+    /// Construct a new type out of blocks of the same length and individual displacements.
+    /// Displacements are in bytes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 4.1.2
+    pub fn heterogeneous_indexed_block<D: RawDatatype>(blocklength: Count, displacements: &[Address], oldtype: D) -> UserDatatype {
+        let count: Count = displacements.len() as Count; // FIXME: this should be a checked cast.
+        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Type_create_hindexed_block(count, blocklength, displacements.as_ptr(),
+                oldtype.raw(), &mut newtype as *mut MPI_Datatype);
             ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
         }
         UserDatatype(newtype)

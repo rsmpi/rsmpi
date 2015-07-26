@@ -99,3 +99,5 @@ pub type Error = ::libc::c_int;
 pub type Count = ::libc::c_int;
 /// Can be used to tag messages on the sender side and match on the receiver side.
 pub type Tag = ::libc::c_int;
+/// An address in memory
+pub type Address = ::ffi::MPI_Aint;
