@@ -22,6 +22,7 @@ extern const MPI_Comm RSMPI_COMM_NULL;
 extern const MPI_Comm RSMPI_COMM_SELF;
 
 extern const MPI_Group RSMPI_GROUP_NULL;
+extern const int RSMPI_UNDEFINED;
 
 extern const int RSMPI_ANY_SOURCE;
 extern const int RSMPI_ANY_TAG;

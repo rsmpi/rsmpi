@@ -10,8 +10,6 @@
 //! # Unfinished features
 //!
 //! - **6.3**: Group management
-//!   - **6.3.1**: Accessors, `MPI_Group_size()`, `MPI_Group_rank()`,
-//!   `MPI_Group_translate_ranks()`
 //!   - **6.3.2**: Constructors, `MPI_Group_union()`, `MPI_Group_intersection()`,
 //!   `MPI_Group_difference()`, `MPI_Group_incl()`, `MPI_Group_excl()`, `MPI_Group_range_incl()`,
 //!   `MPI_Group_range_excl()`
@@ -427,11 +425,66 @@ impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
 /// # Standard section(s)
 ///
 /// 6.2.1
+#[derive(Clone)]
 pub struct Group(MPI_Group);
 
 impl Group {
     pub unsafe fn raw(&self) -> MPI_Group {
         self.0
+    }
+
+    /// Number of processes in the group.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.1
+    pub fn size(&self) -> Rank {
+        let mut res: Rank = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Group_size(self.raw(), &mut res as *mut Rank); }
+        res
+    }
+
+    /// Rank of this process within the group.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.1
+    pub fn rank(&self) -> Option<Rank> {
+        let mut res: Rank = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Group_rank(self.raw(), &mut res as *mut Rank); }
+        if res == ffi::RSMPI_UNDEFINED {
+            None
+        } else {
+            Some(res)
+        }
+    }
+
+    /// Find the rank in group `other' of the process that has rank `rank` in this group.
+    ///
+    /// If the process is not a member of the other group, returns `None`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.1
+    pub fn translate_rank(&self, rank: Rank, other: &Group) -> Option<Rank> {
+        let mut res: Rank = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Group_translate_ranks(self.raw(), 1, &rank as *const Rank, other.raw(), &mut res as *mut Rank); }
+        if res == ffi::RSMPI_UNDEFINED {
+            None
+        } else {
+            Some(res)
+        }
+    }
+
+    /// Find the ranks in group `other' of the processes that have ranks `ranks` in this group.
+    ///
+    /// If a process is not a member of the other group, returns `None`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.1
+    pub fn translate_ranks(&self, ranks: &[Rank], other: &Group) -> Vec<Option<Rank>> {
+        ranks.iter().map(|&r| self.translate_rank(r, other)).collect()
     }
 
     /// Compare two groups.
