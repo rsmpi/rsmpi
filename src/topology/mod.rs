@@ -10,8 +10,7 @@
 //! # Unfinished features
 //!
 //! - **6.3**: Group management
-//!   - **6.3.2**: Constructors, `MPI_Group_incl()`, `MPI_Group_excl()`, `MPI_Group_range_incl()`,
-//!   `MPI_Group_range_excl()`
+//!   - **6.3.2**: Constructors, `MPI_Group_range_incl()`, `MPI_Group_range_excl()`
 //! - **6.4**: Communicator management
 //!   - **6.4.2**: Constructors, `MPI_Comm_dup_with_info()`, `MPI_Comm_idup()`, `MPI_Comm_creat()`,
 //!   `MPI_Comm_create_group()`, `MPI_Comm_split_type()`
@@ -27,6 +26,7 @@ use std::marker::PhantomData;
 
 use libc::c_int;
 
+use ::Count;
 use ffi;
 use ffi::{MPI_Comm, MPI_Group};
 
@@ -467,6 +467,36 @@ impl Group {
     pub fn difference(&self, other: &Group) -> Group {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_difference(self.raw(), other.raw(), &mut newgroup as *mut MPI_Group); }
+        Group(newgroup)
+    }
+
+    /// Subgroup including specified ranks
+    ///
+    /// Constructs a new group where the process with rank `ranks[i]` in the old group has rank `i`
+    /// in the new group.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.2
+    pub fn include(&self, ranks: &[Rank]) -> Group {
+        let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
+        let count: Count = ranks.len() as Count; // FIXME: this should be a checked cast.
+        unsafe { ffi::MPI_Group_incl(self.raw(), count, ranks.as_ptr(), &mut newgroup as *mut MPI_Group); }
+        Group(newgroup)
+    }
+
+    /// Subgroup including specified ranks
+    ///
+    /// Constructs a new group containing those processes from the old group that are not mentioned
+    /// in `ranks`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.2
+    pub fn exclude(&self, ranks: &[Rank]) -> Group {
+        let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
+        let count: Count = ranks.len() as Count; // FIXME: this should be a checked cast.
+        unsafe { ffi::MPI_Group_excl(self.raw(), count, ranks.as_ptr(), &mut newgroup as *mut MPI_Group); }
         Group(newgroup)
     }
 
