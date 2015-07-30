@@ -10,8 +10,7 @@
 //! # Unfinished features
 //!
 //! - **6.3**: Group management
-//!   - **6.3.2**: Constructors, `MPI_Group_union()`, `MPI_Group_intersection()`,
-//!   `MPI_Group_difference()`, `MPI_Group_incl()`, `MPI_Group_excl()`, `MPI_Group_range_incl()`,
+//!   - **6.3.2**: Constructors, `MPI_Group_incl()`, `MPI_Group_excl()`, `MPI_Group_range_incl()`,
 //!   `MPI_Group_range_excl()`
 //! - **6.4**: Communicator management
 //!   - **6.4.2**: Constructors, `MPI_Comm_dup_with_info()`, `MPI_Comm_idup()`, `MPI_Comm_creat()`,
@@ -429,6 +428,48 @@ impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
 pub struct Group(MPI_Group);
 
 impl Group {
+    /// Group union
+    ///
+    /// Constructs a new group that contains all members of the first group followed by all members
+    /// of the second group that are not also members of the first group.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.2
+    pub fn union(&self, other: &Group) -> Group {
+        let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Group_union(self.raw(), other.raw(), &mut newgroup as *mut MPI_Group); }
+        Group(newgroup)
+    }
+
+    /// Group intersection
+    ///
+    /// Constructs a new group that contains all processes that are members of both the first and
+    /// second group in the order they have in the first group.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.2
+    pub fn intersection(&self, other: &Group) -> Group {
+        let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Group_intersection(self.raw(), other.raw(), &mut newgroup as *mut MPI_Group); }
+        Group(newgroup)
+    }
+
+    /// Group difference
+    ///
+    /// Constructs a new group that contains all members of the first group that are not also
+    /// members of the second group in the order they have in the first group.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.3.2
+    pub fn difference(&self, other: &Group) -> Group {
+        let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Group_difference(self.raw(), other.raw(), &mut newgroup as *mut MPI_Group); }
+        Group(newgroup)
+    }
+
     pub unsafe fn raw(&self) -> MPI_Group {
         self.0
     }
