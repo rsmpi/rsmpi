@@ -5,13 +5,11 @@ use mpi::traits::*;
 use mpi::datatype::{UserDatatype, View};
 use mpi::topology::Rank;
 
-trait Modulo<RHS = Self> {
-    type Output = Self;
-    fn modulo(self, rhs: RHS) -> Self::Output;
+trait Modulo {
+    fn modulo(self, rhs: Self) -> Self;
 }
 
 impl Modulo for Rank {
-    type Output = Rank;
     fn modulo(self, rhs: Rank) -> Rank {
         ((self % rhs) + rhs) % rhs
     }
