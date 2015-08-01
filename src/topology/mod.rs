@@ -119,10 +119,10 @@ impl Threading {
     fn raw(self) -> c_int {
         use self::Threading::*;
         match self {
-            Single => ffi::RSMPI_THREAD_SINGLE,
-            Funneled => ffi::RSMPI_THREAD_FUNNELED,
-            Serialized => ffi::RSMPI_THREAD_SERIALIZED,
-            Multiple => ffi::RSMPI_THREAD_MULTIPLE
+            Single => ffi::constants::MPI_THREAD_SINGLE,
+            Funneled => ffi::constants::MPI_THREAD_FUNNELED,
+            Serialized => ffi::constants::MPI_THREAD_SERIALIZED,
+            Multiple => ffi::constants::MPI_THREAD_MULTIPLE
         }
     }
 }
@@ -142,11 +142,13 @@ impl Ord for Threading {
 impl From<c_int> for Threading {
     fn from(i: c_int) -> Threading {
         use self::Threading::*;
-        if i == ffi::RSMPI_THREAD_SINGLE { return Single; }
-        else if i == ffi::RSMPI_THREAD_FUNNELED { return Funneled; }
-        else if i == ffi::RSMPI_THREAD_SERIALIZED { return Serialized; }
-        else if i == ffi::RSMPI_THREAD_MULTIPLE { return Multiple; }
-        panic!("Unknown threading level: {}", i)
+        match i {
+            ffi::constants::MPI_THREAD_SINGLE => Single,
+            ffi::constants::MPI_THREAD_FUNNELED => Funneled,
+            ffi::constants::MPI_THREAD_SERIALIZED => Serialized,
+            ffi::constants::MPI_THREAD_MULTIPLE => Multiple,
+            _ => panic!("Unknown threading level: {}", i)
+        }
     }
 }
 
@@ -389,12 +391,13 @@ pub enum CommunicatorRelation {
 impl From<c_int> for CommunicatorRelation {
     fn from(i: c_int) -> CommunicatorRelation {
         use self::CommunicatorRelation::*;
-        // FIXME: Yuck! These should be made const.
-        if i == ffi::RSMPI_IDENT { return Identical; }
-        else if i == ffi::RSMPI_CONGRUENT { return Congruent; }
-        else if i == ffi::RSMPI_SIMILAR { return Similar; }
-        else if i == ffi::RSMPI_UNEQUAL { return Unequal; }
-        panic!("Unknown communicator relation: {}", i)
+        match i {
+            ffi::constants::MPI_IDENT => Identical,
+            ffi::constants::MPI_CONGRUENT => Congruent,
+            ffi::constants::MPI_SIMILAR => Similar,
+            ffi::constants::MPI_UNEQUAL => Unequal,
+            _ => panic!("Unknown communicator relation: {}", i)
+        }
     }
 }
 
@@ -523,7 +526,7 @@ impl Group {
     pub fn rank(&self) -> Option<Rank> {
         let mut res: Rank = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_rank(self.raw(), &mut res as *mut Rank); }
-        if res == ffi::RSMPI_UNDEFINED {
+        if res == ffi::constants::MPI_UNDEFINED {
             None
         } else {
             Some(res)
@@ -540,7 +543,7 @@ impl Group {
     pub fn translate_rank(&self, rank: Rank, other: &Group) -> Option<Rank> {
         let mut res: Rank = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_translate_ranks(self.raw(), 1, &rank as *const Rank, other.raw(), &mut res as *mut Rank); }
-        if res == ffi::RSMPI_UNDEFINED {
+        if res == ffi::constants::MPI_UNDEFINED {
             None
         } else {
             Some(res)
@@ -595,10 +598,11 @@ pub enum GroupRelation {
 impl From<c_int> for GroupRelation {
     fn from(i: c_int) -> GroupRelation {
         use self::GroupRelation::*;
-        // FIXME: Yuck! These should be made const.
-        if i == ffi::RSMPI_IDENT { return Identical; }
-        else if i == ffi::RSMPI_SIMILAR { return Similar; }
-        else if i == ffi::RSMPI_UNEQUAL { return Unequal; }
-        panic!("Unknown group relation: {}", i)
+        match i {
+            ffi::constants::MPI_IDENT => Identical,
+            ffi::constants::MPI_SIMILAR => Similar,
+            ffi::constants::MPI_UNEQUAL => Unequal,
+            _ => panic!("Unknown group relation: {}", i)
+        }
     }
 }

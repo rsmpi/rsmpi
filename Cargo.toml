@@ -24,5 +24,8 @@ gcc = "0.3.8"
 [build-dependencies.bindgen]
 git = "https://github.com/crabtw/rust-bindgen.git"
 
+[build-dependencies.probe-c-api]
+git = "https://github.com/quantheory/probe-c-api.git"
+
 #[dependencies.c_import]
 #git = "https://github.com/vojtechkral/rust-c-import.git"

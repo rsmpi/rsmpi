@@ -59,19 +59,19 @@ pub trait Source: Communicator {
 // TODO: this does not work for now, needs specialization
 //impl<C: Communicator> Source for C {
 //    fn source_rank(&self) -> Rank {
-//        ffi::RSMPI_ANY_SOURCE
+//        ffi::constants::MPI_ANY_SOURCE
 //    }
 //}
 
 impl Source for SystemCommunicator {
     fn source_rank(&self) -> Rank {
-        ffi::RSMPI_ANY_SOURCE
+        ffi::constants::MPI_ANY_SOURCE
     }
 }
 
 impl<'a> Source for &'a UserCommunicator {
     fn source_rank(&self) -> Rank {
-        ffi::RSMPI_ANY_SOURCE
+        ffi::constants::MPI_ANY_SOURCE
     }
 }
 
@@ -190,7 +190,7 @@ pub trait Probe {
     fn probe_with_tag(&self, tag: Tag) -> Status;
     /// Probe `Source` `&self` for incoming messages with any tag.
     fn probe(&self) -> Status {
-        self.probe_with_tag(ffi::RSMPI_ANY_TAG)
+        self.probe_with_tag(ffi::constants::MPI_ANY_TAG)
     }
 }
 
@@ -232,7 +232,7 @@ pub trait MatchedProbe {
     fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status);
     /// Probe `Source` `&self` for incoming messages with any tag.
     fn matched_probe(&self) -> (Message, Status) {
-        self.matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
+        self.matched_probe_with_tag(ffi::constants::MPI_ANY_TAG)
     }
 }
 
@@ -329,7 +329,7 @@ pub trait Receive {
     fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Msg, Status);
     /// Receive a message from `Source` `&self` containing a single instance of type `Msg`.
     fn receive<Msg: EquivalentDatatype>(&self) -> (Msg, Status) {
-        self.receive_with_tag(ffi::RSMPI_ANY_TAG)
+        self.receive_with_tag(ffi::constants::MPI_ANY_TAG)
     }
 }
 
@@ -351,7 +351,7 @@ pub trait ReceiveInto {
     fn receive_into_with_tag<Buf: Buffer + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status;
     /// Receive a message from `Source` `&self` into `Buffer` `buf`.
     fn receive_into<Buf: Buffer + ?Sized>(&self, buf: &mut Buf) -> Status {
-        self.receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
+        self.receive_into_with_tag(buf, ffi::constants::MPI_ANY_TAG)
     }
 }
 
@@ -381,7 +381,7 @@ pub trait ReceiveVec {
     /// # Examples
     /// See `examples/send_receive.rs`
     fn receive_vec<Msg: EquivalentDatatype>(&self) -> (Vec<Msg>, Status) {
-        self.receive_vec_with_tag(ffi::RSMPI_ANY_TAG)
+        self.receive_vec_with_tag(ffi::constants::MPI_ANY_TAG)
     }
 }
 
@@ -425,7 +425,7 @@ pub trait SendReceive {
         where S: EquivalentDatatype,
               R: EquivalentDatatype
     {
-        self.send_receive_with_tags(msg, destination, Tag::default(), source, ffi::RSMPI_ANY_TAG)
+        self.send_receive_with_tags(msg, destination, Tag::default(), source, ffi::constants::MPI_ANY_TAG)
     }
 }
 
@@ -480,7 +480,7 @@ pub trait SendReceiveInto {
         where S: Buffer,
               R: Buffer
     {
-        self.send_receive_into_with_tags(sendbuf, destination, Tag::default(), receivebuf, source, ffi::RSMPI_ANY_TAG)
+        self.send_receive_into_with_tags(sendbuf, destination, Tag::default(), receivebuf, source, ffi::constants::MPI_ANY_TAG)
     }
 }
 
