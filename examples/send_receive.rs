@@ -7,27 +7,27 @@ fn main() {
     let world = universe.world();
     let size = world.size();
     let rank = world.rank();
-    println!("Hello parallel world from process {} of {}!", rank, size);
 
-    if size % 2 == 0 {
-        match rank % 2 {
-            0 => {
-                let (msg, status) = world.send_receive::<_, mpi::topology::Rank>(&rank, rank + 1, rank + 1);
-                println!("Process {} got message {}.\nStatus is: {:?}", rank, msg, status);
-                assert_eq!(msg, rank + 1);
-                let msg = vec![4.0f64, 8.0, 15.0];
-                world.process_at_rank(rank + 1).send(&msg[..]);
-            }
-            1 => {
-                let (msg, status) = world.send_receive::<_, mpi::topology::Rank>(&rank, rank - 1, rank - 1);
-                println!("Process {} got message {}.\nStatus is: {:?}", rank, msg, status);
-                assert_eq!(msg, rank - 1);
-                let (msg, status) = world.receive_vec::<f64>();
-                println!("Process {} got long message {:?}.\nStatus is: {:?}", rank, msg, status);
-            }
-            _ => unreachable!()
-        }
+    let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
+    let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
+
+    let (msg, status) = world.send_receive::<_, mpi::topology::Rank>(&rank, previous_rank, next_rank);
+    println!("Process {} got message {}.\nStatus is: {:?}", rank, msg, status);
+    world.barrier();
+    assert_eq!(msg, next_rank);
+
+    if rank > 0 {
+        let x = rank as f64;
+        let msg = vec![x, x + 1., x - 1.];
+        world.process_at_rank(0).send(&msg[..]);
     } else {
-        panic!("Size of MPI_COMM_WORLD must be a multiple of 2, but is {}!", size);
+        for _ in (1..size) {
+            let (msg, status) = world.receive_vec::<f64>();
+            println!("Process {} got long message {:?}.\nStatus is: {:?}", rank, msg, status);
+
+            let x = status.source_rank() as f64;
+            let v = vec![x, x + 1., x - 1.];
+            assert_eq!(v, msg);
+        }
     }
 }

@@ -1,19 +1,8 @@
 extern crate mpi;
 
 use mpi::traits::*;
-
 use mpi::datatype::{UserDatatype, View};
 use mpi::topology::Rank;
-
-trait Modulo {
-    fn modulo(self, rhs: Self) -> Self;
-}
-
-impl Modulo for Rank {
-    fn modulo(self, rhs: Rank) -> Rank {
-        ((self % rhs) + rhs) % rhs
-    }
-}
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -21,21 +10,25 @@ fn main() {
     let rank = world.rank();
     let size = world.size();
 
-    let fact = rank as f64;
-    let mut b1 = (1..).map(|x| fact * x as f64).take(3).collect::<Vec<_>>();
-    let mut b2 = std::iter::repeat(-1.0f64).take(3).collect::<Vec<_>>();
-    println!("Rank {} sending message: {:?}.", rank, b1);
+    let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
+    let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
 
-    let t = UserDatatype::contiguous(3, f64::equivalent_datatype());
+    let mut b1 = (1..).map(|x| rank * x).take(3).collect::<Vec<_>>();
+    let mut b2 = std::iter::repeat(-1).take(3).collect::<Vec<_>>();
+    println!("Rank {} sending message: {:?}.", rank, b1);
+    world.barrier();
+
+    let t = UserDatatype::contiguous(3, Rank::equivalent_datatype());
     let status;
     {
         let mut v1 = unsafe { View::with_count_and_datatype(&mut b1[..], 1, &t) };
         let mut v2 = unsafe { View::with_count_and_datatype(&mut b2[..], 1, &t) };
-        status = world.send_receive_into(&mut v1, (rank + 1).modulo(size),
-            &mut v2, (rank - 1).modulo(size));
+        status = world.send_receive_into(&mut v1, next_rank, &mut v2, previous_rank);
     }
 
+    println!("Rank {} received message: {:?}, status: {:?}.", rank, b2, status);
     world.barrier();
 
-    println!("Rank {} received message: {:?}, status: {:?}.", rank, b2, status);
+    let b3 = (1..).map(|x| previous_rank * x).take(3).collect::<Vec<_>>();
+    assert_eq!(b3, b2);
 }

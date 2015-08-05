@@ -1,6 +1,7 @@
 extern crate mpi;
 
 use mpi::traits::*;
+use mpi::topology::{CommunicatorRelation};
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -9,4 +10,6 @@ fn main() {
 
     world.barrier();
     moon.barrier();
+
+    assert_eq!(CommunicatorRelation::Congruent, world.compare(&moon));
 }
