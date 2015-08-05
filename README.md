@@ -18,9 +18,9 @@ programming language. This library tries to bridge the gap into a more rustic wo
 
 ## Requirements
 
-An implementation of the C language interface of MPI. These bindings are currently tested with:
+An implementation of the C language interface of MPI-3.0. These bindings are currently tested with:
 
-- [OpenMPI][OpenMPI] 1.8.7
+- [OpenMPI][OpenMPI] 1.8.8
 - [MPICH][MPICH] 3.1.4, 3.0.4
 
 [OpenMPI]: https://www.open-mpi.org
