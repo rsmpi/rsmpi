@@ -62,12 +62,12 @@ deploy:
       tags: true
       condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
   # Deploy the crate to crates.io
-  - provider: script
-    script: ci/deploy-crate.sh
-    skip_cleanup: true
-    on:
-      tags: true
-      condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
+  # - provider: script
+  #   script: ci/deploy-crate.sh
+  #   skip_cleanup: true
+  #   on:
+  #     tags: true
+  #     condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
   # Deploy crate to GitHub releases
   - provider: releases
     api_key:
