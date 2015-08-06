@@ -242,8 +242,27 @@ impl Drop for UserCommunicator {
     }
 }
 
-/// A color used in a communicator split.
-pub type Color = c_int;
+/// A color used in a communicator split
+pub struct Color(c_int);
+
+impl Color {
+    /// Special color of undefined value
+    pub fn undefined() -> Color {
+        Color(ffi::RSMPI_UNDEFINED)
+    }
+
+    /// A color of a certain value
+    ///
+    /// Valid values are non-negative.
+    pub fn with_value(value: c_int) -> Color {
+        if value < 0 { panic!("Value of color must be non-negative.") }
+        Color(value)
+    }
+
+    fn raw(&self) -> c_int {
+        self.0
+    }
+}
 
 /// A key used when determining the rank order of processes after a communicator split.
 pub type Key = c_int;
@@ -321,10 +340,11 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
         UserCommunicator(newcomm)
     }
 
-    /// Split a communicator.
+    /// Split a communicator by color.
     ///
     /// Creates as many new communicators as distinct values of `color` are given. All processes
-    /// with the same value of `color` join the same communicator.
+    /// with the same value of `color` join the same communicator. A process that passes the
+    /// special undefined color will not join a new communicator and `None` is returned.
     ///
     /// # Examples
     ///
@@ -333,11 +353,11 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split<C: Into<Color>>(&self, color: C) -> UserCommunicator {
-        self.split_with_key(color.into(), Key::default())
+    fn split_by_color(&self, color: Color) -> Option<UserCommunicator> {
+        self.split_by_color_with_key(color, Key::default())
     }
 
-    /// Split a communicator.
+    /// Split a communicator by color.
     ///
     /// Like `split()` but orders processes according to the value of `key` in the new
     /// communicators.
@@ -345,12 +365,14 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_with_key<C: Into<Color>, K: Into<Key>>(&self, color: C, key: K) -> UserCommunicator {
+    fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<UserCommunicator> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
-        unsafe { ffi::MPI_Comm_split(self.raw(), color.into(), key.into(),
-            &mut newcomm as *mut MPI_Comm);
+        unsafe { ffi::MPI_Comm_split(self.raw(), color.raw(), key, &mut newcomm as *mut MPI_Comm); }
+        if newcomm == ffi::RSMPI_COMM_NULL {
+            None
+        } else {
+            Some(UserCommunicator(newcomm))
         }
-        UserCommunicator(newcomm)
     }
 
     /// The group associated with this communicator
