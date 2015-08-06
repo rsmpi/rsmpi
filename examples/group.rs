@@ -1,7 +1,7 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::topology::{GroupRelation, Rank};
+use mpi::topology::{Group, GroupRelation, Rank};
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -24,7 +24,8 @@ fn main() {
     assert_eq!(GroupRelation::Identical, g.compare(&i));
 
     let empty = g.difference(&h);
-    // g difference h == g difference h = empty Group
+    // g difference h == g difference g = empty Group
+    assert_eq!(GroupRelation::Identical, Group::empty().compare(&empty));
     assert_eq!(0, empty.size());
 
     // g intersection empty == empty Group

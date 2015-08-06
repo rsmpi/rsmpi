@@ -21,6 +21,7 @@ extern const MPI_Comm RSMPI_COMM_WORLD;
 extern const MPI_Comm RSMPI_COMM_NULL;
 extern const MPI_Comm RSMPI_COMM_SELF;
 
+extern const MPI_Group RSMPI_GROUP_EMPTY;
 extern const MPI_Group RSMPI_GROUP_NULL;
 extern const int RSMPI_UNDEFINED;
 
@@ -36,5 +37,4 @@ extern const int RSMPI_THREAD_SINGLE;
 extern const int RSMPI_THREAD_FUNNELED;
 extern const int RSMPI_THREAD_SERIALIZED;
 extern const int RSMPI_THREAD_MULTIPLE;
-
 #endif

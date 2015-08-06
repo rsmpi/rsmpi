@@ -428,6 +428,10 @@ impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
 pub struct Group(MPI_Group);
 
 impl Group {
+    pub fn empty() -> Group {
+        Group(ffi::RSMPI_GROUP_EMPTY)
+    }
+
     /// Group union
     ///
     /// Constructs a new group that contains all members of the first group followed by all members
