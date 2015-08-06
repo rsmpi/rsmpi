@@ -1,11 +1,12 @@
 [package]
 name = "mpi"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Benedikt Steinbusch <benedikt.steinbusch@googlemail.com>"]
 description = "Message Passing Interface bindings for Rust"
 
 homepage = "https://github.com/bsteinb/rsmpi"
 repository = "https://github.com/bsteinb/rsmpi"
+documentation = "http://bsteinb.github.io/rsmpi/"
 
 readme = "README.md"
 
