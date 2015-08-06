@@ -2,7 +2,7 @@
 
 set -e
 
-cargo doc -v
+cargo doc -v --no-deps
 
 # Manual doc deployment
 echo "<meta http-equiv=refresh content=0;url=mpi/index.html>" >> target/doc/index.html
