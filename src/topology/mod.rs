@@ -12,8 +12,8 @@
 //! - **6.3**: Group management
 //!   - **6.3.2**: Constructors, `MPI_Group_range_incl()`, `MPI_Group_range_excl()`
 //! - **6.4**: Communicator management
-//!   - **6.4.2**: Constructors, `MPI_Comm_dup_with_info()`, `MPI_Comm_idup()`, `MPI_Comm_creat()`,
-//!   `MPI_Comm_create_group()`, `MPI_Comm_split_type()`
+//!   - **6.4.2**: Constructors, `MPI_Comm_dup_with_info()`, `MPI_Comm_idup()`,
+//!     `MPI_Comm_split_type()`
 //!   - **6.4.4**: Info, `MPI_Comm_set_info()`, `MPI_Comm_get_info()`
 //! - **6.6**: Inter-communication
 //! - **6.7**: Caching
@@ -26,7 +26,7 @@ use std::marker::PhantomData;
 
 use libc::c_int;
 
-use ::Count;
+use super::{Count, Tag};
 use ffi;
 use ffi::{MPI_Comm, MPI_Group};
 
@@ -368,6 +368,69 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<UserCommunicator> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_split(self.raw(), color.raw(), key, &mut newcomm as *mut MPI_Comm); }
+        if newcomm == ffi::RSMPI_COMM_NULL {
+            None
+        } else {
+            Some(UserCommunicator(newcomm))
+        }
+    }
+
+    /// Split a communicator collectively by subgroup.
+    ///
+    /// Proceses pass in a group that is a subgroup of the group associated with the old
+    /// communicator. Different processes may pass in different groups, but if two groups are
+    /// different, they have to be disjunct. One new communicator is created for each distinct
+    /// group. The new communicator is returned if a process is a member of the group he passed in,
+    /// otherwise `None`.
+    ///
+    /// This call is a collective operation on the old communicator so all processes have to
+    /// partake.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/split.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4.2
+    fn split_by_subgroup_collective(&self, group: &Group) -> Option<UserCommunicator> {
+        let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Comm_create(self.raw(), group.raw(), &mut newcomm as *mut MPI_Comm); }
+        if newcomm == ffi::RSMPI_COMM_NULL {
+            None
+        } else {
+            Some(UserCommunicator(newcomm))
+        }
+    }
+
+    /// Split a communicator by subgroup.
+    ///
+    /// Like `split_by_subgroup_collective()` but not a collective operation.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/split.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4.2
+    fn split_by_subgroup(&self, group: &Group) -> Option<UserCommunicator> {
+        self.split_by_subgroup_with_tag(group, Tag::default())
+    }
+
+    /// Split a communicator by subgroup
+    ///
+    /// Like `split_by_subgroup()` but can avoid collision of concurrent calls
+    /// (i.e. multithreaded) by passing in distinct tags.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4.2
+    fn split_by_subgroup_with_tag(&self, group: &Group, tag: Tag) -> Option<UserCommunicator> {
+        let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Comm_create_group(self.raw(), group.raw(), tag, &mut newcomm as *mut MPI_Comm);
+        }
         if newcomm == ffi::RSMPI_COMM_NULL {
             None
         } else {
