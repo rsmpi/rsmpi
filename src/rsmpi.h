@@ -25,8 +25,11 @@ extern const MPI_Group RSMPI_GROUP_EMPTY;
 extern const MPI_Group RSMPI_GROUP_NULL;
 extern const int RSMPI_UNDEFINED;
 
+extern const int RSMPI_PROC_NULL;
 extern const int RSMPI_ANY_SOURCE;
 extern const int RSMPI_ANY_TAG;
+
+extern const MPI_Message RSMPI_MESSAGE_NO_PROC;
 
 extern const int RSMPI_IDENT;
 extern const int RSMPI_CONGRUENT;

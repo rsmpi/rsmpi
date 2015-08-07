@@ -301,9 +301,24 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     ///
     /// # Examples
     /// See `examples/broadcast.rs` `examples/gather.rs` `examples/send_receive.rs`
-    // FIXME: handle out-of-range ranks
-    fn process_at_rank(&self, i: Rank) -> Identifier<Self> {
-        Identifier { comm: self, rank: i }
+    fn process_at_rank(&self, r: Rank) -> Identifier<Self> {
+        assert!(0 <= r && r < self.size());
+        Identifier { comm: self, rank: r }
+    }
+
+    /// The null process
+    ///
+    /// Point to point send/receive operations involving the null process as source/destination
+    /// have no effect.
+    ///
+    /// # Examples
+    /// See `examples/null_process.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.11
+    fn null_process(&self) -> Identifier<Self> {
+        Identifier { comm: self, rank: ffi::RSMPI_PROC_NULL }
     }
 
     /// An `Identifier` for the calling process

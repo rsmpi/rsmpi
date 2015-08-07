@@ -7,7 +7,7 @@
 //! # Unfinished features
 //!
 //! - **3.2.6**: `MPI_STATUS_IGNORE`
-//! - **3.4**: Any communicator mode except standard:
+//! - **3.4**: Any communication mode except standard:
 //!   - buffered mode, `MPI_Bsend()`
 //!   - synchronous mode, `MPI_Ssend()`
 //!   - ready mode, `MPI_Rsend()`
@@ -24,7 +24,6 @@
 //! - **3.9**: Persistent requests, `MPI_Send_init()`, `MPI_Bsend_init()`, `MPI_Ssend_init()`,
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 //! - **3.10**: In-place send-receive operations, `MPI_Sendrecv_replace()`
-//! - **3.11**: Null processes
 
 use std::{mem, fmt};
 
@@ -120,6 +119,7 @@ impl<'a, C: 'a + RawCommunicator> Destination for Identifier<'a, C> {
 pub trait Send {
     /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
     fn send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag);
+
     /// Send the contents of a `Buffer` to the `Destination` `&self`.
     ///
     /// # Examples
@@ -188,6 +188,7 @@ impl fmt::Debug for Status {
 pub trait Probe {
     /// Probe `Source` `&self` for incoming messages with a certain tag.
     fn probe_with_tag(&self, tag: Tag) -> Status;
+
     /// Probe `Source` `&self` for incoming messages with any tag.
     fn probe(&self) -> Status {
         self.probe_with_tag(ffi::RSMPI_ANY_TAG)
@@ -213,6 +214,11 @@ impl<Src: Source> Probe for Src {
 pub struct Message(MPI_Message);
 
 impl Message {
+    /// True if the `Source` for the probe was the null process.
+    pub fn is_no_proc(&self) -> bool {
+        unsafe { self.raw() == ffi::RSMPI_MESSAGE_NO_PROC }
+    }
+
     unsafe fn raw(&self) -> MPI_Message {
         self.0
     }
@@ -230,6 +236,7 @@ impl Message {
 pub trait MatchedProbe {
     /// Probe `Source` `&self` for incoming messages with a certain tag.
     fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status);
+
     /// Probe `Source` `&self` for incoming messages with any tag.
     fn matched_probe(&self) -> (Message, Status) {
         self.matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
@@ -254,15 +261,20 @@ impl<Src: Source> MatchedProbe for Src {
 ///
 /// 3.8.3
 pub trait MatchedReceive {
-    /// Receives the message `&self` which contains a single instance of type `Msg`.
-    fn matched_receive<Msg: EquivalentDatatype>(&mut self) -> (Msg, Status);
+    /// Receives the message `&self` which contains a single instance of type `Msg` or None if
+    /// receiving from the null process.
+    fn matched_receive<Msg: EquivalentDatatype>(&mut self) -> (Option<Msg>, Status);
 }
 
 impl MatchedReceive for Message {
-    fn matched_receive<Msg: EquivalentDatatype>(&mut self) -> (Msg, Status) {
+    fn matched_receive<Msg: EquivalentDatatype>(&mut self) -> (Option<Msg>, Status) {
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.matched_receive_into(&mut res);
-        (res, status)
+        if self.is_no_proc() {
+            (None, status)
+        } else {
+            (Some(res), status)
+        }
     }
 }
 
@@ -273,6 +285,8 @@ impl MatchedReceive for Message {
 /// 3.8.3
 pub trait MatchedReceiveInto {
     /// Receive the message `&self` with contents matching `buf`.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
     fn matched_receive_into<Buf: Buffer + ?Sized>(&mut self, buf: &mut Buf) -> Status;
 }
 
@@ -293,17 +307,22 @@ impl MatchedReceiveInto for Message {
 ///
 /// 3.8.3
 pub trait MatchedReceiveVec {
-    /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`.
-    fn matched_receive_vec<Msg: EquivalentDatatype>(&mut self) -> (Vec<Msg>, Status);
+    /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`
+    /// or `None` if receiving from the null process.
+    fn matched_receive_vec<Msg: EquivalentDatatype>(&mut self) -> (Option<Vec<Msg>>, Status);
 }
 
 impl MatchedReceiveVec for (Message, Status) {
-    fn matched_receive_vec<Msg: EquivalentDatatype>(&mut self) -> (Vec<Msg>, Status) {
+    fn matched_receive_vec<Msg: EquivalentDatatype>(&mut self) -> (Option<Vec<Msg>>, Status) {
         let count = self.1.count(Msg::equivalent_datatype()) as usize; // FIXME: this should be a checked cast.
         let mut res = Vec::with_capacity(count);
         unsafe { res.set_len(count); }
         let status = self.0.matched_receive_into(&mut res[..]);
-        (res, status)
+        if self.0.is_no_proc() {
+            (None, status)
+        } else {
+            (Some(res), status)
+        }
     }
 }
 
@@ -325,19 +344,25 @@ impl MatchedReceiveVec for (Message, Status) {
 /// 3.2.4
 pub trait Receive {
     /// Receive a message from `Source` `&self` tagged `tag` containing a single instance of type
-    /// `Msg`.
-    fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Msg, Status);
-    /// Receive a message from `Source` `&self` containing a single instance of type `Msg`.
-    fn receive<Msg: EquivalentDatatype>(&self) -> (Msg, Status) {
+    /// `Msg` or `None` if receiving from the null process.
+    fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Msg>, Status);
+
+    /// Receive a message from `Source` `&self` containing a single instance of type `Msg` or
+    /// `None` if receiving from the null process.
+    fn receive<Msg: EquivalentDatatype>(&self) -> (Option<Msg>, Status) {
         self.receive_with_tag(ffi::RSMPI_ANY_TAG)
     }
 }
 
-impl<Src: ReceiveInto> Receive for Src {
-    fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Msg, Status) {
+impl<Src: Source> Receive for Src {
+    fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Msg>, Status) {
         let mut res = unsafe { mem::uninitialized() };
         let status = self.receive_into_with_tag(&mut res, tag);
-        (res, status)
+        if self.source_rank() == ffi::RSMPI_PROC_NULL {
+            (None, status)
+        } else {
+            (Some(res), status)
+        }
     }
 }
 
@@ -348,8 +373,13 @@ impl<Src: ReceiveInto> Receive for Src {
 /// 3.2.4
 pub trait ReceiveInto {
     /// Receive a message from `Source` `&self` tagged `tag` into `Buffer` `buf`.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
     fn receive_into_with_tag<Buf: Buffer + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status;
+
     /// Receive a message from `Source` `&self` into `Buffer` `buf`.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
     fn receive_into<Buf: Buffer + ?Sized>(&self, buf: &mut Buf) -> Status {
         self.receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
     }
@@ -373,20 +403,21 @@ impl<Src: Source> ReceiveInto for Src {
 /// 3.2.4
 pub trait ReceiveVec {
     /// Receive a message from `Source` `&self` tagged `tag` containing multiple instances of type
-    /// `Msg` into a `Vec`.
-    fn receive_vec_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Vec<Msg>, Status);
+    /// `Msg` into a `Vec` or `None` if receiving from the null process.
+    fn receive_vec_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Vec<Msg>>, Status);
+
     /// Receive a message from `Source` `&self` containing multiple instances of type `Msg` into a
-    /// `Vec`.
+    /// `Vec` or `None` if receiving from the null process.
     ///
     /// # Examples
     /// See `examples/send_receive.rs`
-    fn receive_vec<Msg: EquivalentDatatype>(&self) -> (Vec<Msg>, Status) {
+    fn receive_vec<Msg: EquivalentDatatype>(&self) -> (Option<Vec<Msg>>, Status) {
         self.receive_vec_with_tag(ffi::RSMPI_ANY_TAG)
     }
 }
 
 impl<Src: Source> ReceiveVec for Src {
-    fn receive_vec_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Vec<Msg>, Status) {
+    fn receive_vec_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Vec<Msg>>, Status) {
         self.matched_probe_with_tag(tag).matched_receive_vec()
     }
 }
@@ -401,19 +432,20 @@ impl<Src: Source> ReceiveVec for Src {
 /// 3.10
 pub trait SendReceive {
     /// Sends `msg` to `Rank` `destination` tagging it `sendtag` and simultaneously receives an
-    /// instance of `R` tagged `receivetag` from `Rank` `source`.
+    /// instance of `R` tagged `receivetag` from `Rank` `source` or receives `None` if receiving
+    /// from the null process.
     fn send_receive_with_tags<S, R>(&self,
                                     msg: &S,
                                     destination: Rank,
                                     sendtag: Tag,
                                     source: Rank,
                                     receivetag: Tag)
-                                    -> (R, Status)
+                                    -> (Option<R>, Status)
         where S: EquivalentDatatype,
               R: EquivalentDatatype;
 
-    /// Sends `msg` to `Rank` `destination` and simultaneously receives an
-    /// instance of `R` from `Rank` `source`.
+    /// Sends `msg` to `Rank` `destination` and simultaneously receives an instance of `R` from
+    /// `Rank` `source` or receives `None` if receiving from the null process.
     ///
     /// # Examples
     /// See `examples/send_receive.rs`
@@ -421,7 +453,7 @@ pub trait SendReceive {
                           msg: &S,
                           destination: Rank,
                           source: Rank)
-                          -> (R, Status)
+                          -> (Option<R>, Status)
         where S: EquivalentDatatype,
               R: EquivalentDatatype
     {
@@ -436,7 +468,7 @@ impl<T: SendReceiveInto> SendReceive for T {
                                     sendtag: Tag,
                                     source: Rank,
                                     receivetag: Tag)
-                                    -> (R, Status)
+                                    -> (Option<R>, Status)
         where S: EquivalentDatatype,
               R: EquivalentDatatype
     {
@@ -444,7 +476,11 @@ impl<T: SendReceiveInto> SendReceive for T {
         let status = self.send_receive_into_with_tags(
             msg, destination, sendtag,
             &mut res, source, receivetag);
-        (res, status)
+        if source == ffi::RSMPI_PROC_NULL {
+            (None, status)
+        } else {
+            (Some(res), status)
+        }
     }
 }
 
@@ -457,6 +493,8 @@ pub trait SendReceiveInto {
     /// Sends the contents of `sendbuf` to `Rank` `destination` tagging it `sendtag` and
     /// simultaneously receives a message tagged `receivetag` from `Rank` `source` into
     /// `receivebuf`.
+    ///
+    /// Receiving from the null process leaves `receivebuf` untouched.
     fn send_receive_into_with_tags<S: ?Sized, R: ?Sized>(&self,
                                                          sendbuf: &S,
                                                          destination: Rank,
@@ -471,6 +509,8 @@ pub trait SendReceiveInto {
     /// Sends the contents of `sendbuf` to `Rank` `destination` and
     /// simultaneously receives a message from `Rank` `source` into
     /// `receivebuf`.
+    ///
+    /// Receiving from the null process leaves `receivebuf` untouched.
     fn send_receive_into<S: ?Sized, R: ?Sized>(&self,
                                                sendbuf: &S,
                                                destination: Rank,

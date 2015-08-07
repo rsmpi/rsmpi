@@ -2,6 +2,7 @@
 
 set -e
 
+EXAMPLES_DIR="examples"
 BINARIES_DIR="target/debug/examples"
 
 if [ ! -d "${BINARIES_DIR}" ]
@@ -10,7 +11,7 @@ then
   exit 1
 fi
 
-binaries=$(ls ${BINARIES_DIR})
+binaries=$(ls ${EXAMPLES_DIR} | sed "s/\\.rs\$//")
 num_binaries=$(printf "%d" "$(echo "${binaries}" | wc -w)")
 
 printf "running %d examples\n" ${num_binaries}
