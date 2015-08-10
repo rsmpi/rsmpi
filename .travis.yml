@@ -42,10 +42,10 @@ script:
 before_deploy:
   # Set up credentials for deploying
   # Decrypt GitHub deploy SSH key
-  - touch ci/deploy_key && chmod 0600 ci/deploy_key
-  - openssl aes-256-cbc -K $encrypted_bf29288dac26_key -iv $encrypted_bf29288dac26_iv -in ci/deploy_key.enc -out ci/deploy_key -d
+  - mkdir -p ${HOME}/.ssh && touch ${HOME}/.ssh/deploy_key && chmod 0600 ${HOME}/.ssh/deploy_key
+  - openssl aes-256-cbc -K $encrypted_180303504686_key -iv $encrypted_180303504686_iv -in ci/deploy_key.enc -out ${HOME}/.ssh/deploy_key -d
   # Make SSH aware of key
-  - echo -e "Host github.com\n  IdentityFile $(pwd)/ci/deploy_key" >> ${HOME}/.ssh/config
+  - echo -e "Host github.com\n  IdentityFile ${HOME}/.ssh/deploy_key" >> ${HOME}/.ssh/config
   # Make git push via SSH
   - git remote set-url origin git@github.com:bsteinb/rsmpi.git
   # Login to cates.io
