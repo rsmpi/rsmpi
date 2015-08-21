@@ -334,7 +334,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.1
-    fn compare<C: RawCommunicator>(&self, other: &C) -> CommunicatorRelation {
+    fn compare<C: ?Sized + RawCommunicator>(&self, other: &C) -> CommunicatorRelation {
         let mut res: c_int = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_compare(self.raw(), other.raw(), &mut res as *mut c_int); }
         res.into()
@@ -408,7 +408,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_subgroup_collective(&self, group: &Group) -> Option<UserCommunicator> {
+    fn split_by_subgroup_collective<G: ?Sized + RawGroup>(&self, group: &G) -> Option<UserCommunicator> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_create(self.raw(), group.raw(), &mut newcomm as *mut MPI_Comm); }
         if newcomm == ffi::RSMPI_COMM_NULL {
@@ -429,7 +429,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_subgroup(&self, group: &Group) -> Option<UserCommunicator> {
+    fn split_by_subgroup<G: ?Sized + RawGroup>(&self, group: &G) -> Option<UserCommunicator> {
         self.split_by_subgroup_with_tag(group, Tag::default())
     }
 
@@ -441,7 +441,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_subgroup_with_tag(&self, group: &Group, tag: Tag) -> Option<UserCommunicator> {
+    fn split_by_subgroup_with_tag<G: ?Sized + RawGroup>(&self, group: &G, tag: Tag) -> Option<UserCommunicator> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Comm_create_group(self.raw(), group.raw(), tag, &mut newcomm as *mut MPI_Comm);
@@ -458,10 +458,10 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    fn group(&self) -> Group {
+    fn group(&self) -> UserGroup {
         let mut group = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_group(self.raw(), &mut group as *mut MPI_Group); }
-        Group(group)
+        UserGroup(group)
     }
 }
 
@@ -519,18 +519,59 @@ impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
     }
 }
 
-/// A group of processes
+/// Something that can identify itself as a raw MPI group
+pub trait RawGroup {
+    unsafe fn raw(&self) -> MPI_Group;
+}
+
+impl<'a, G: 'a + RawGroup> RawGroup for &'a G {
+    unsafe fn raw(&self) -> MPI_Group {
+        (*self).raw()
+    }
+}
+
+/// A built-in group, e.g. `MPI_GROUP_EMPTY`
 ///
 /// # Standard section(s)
 ///
 /// 6.2.1
-pub struct Group(MPI_Group);
+#[derive(Copy, Clone)]
+pub struct SystemGroup(MPI_Group);
 
-impl Group {
-    pub fn empty() -> Group {
-        Group(ffi::RSMPI_GROUP_EMPTY)
+impl SystemGroup {
+    /// An empty group
+    pub fn empty() -> SystemGroup {
+        SystemGroup(ffi::RSMPI_GROUP_EMPTY)
     }
+}
 
+impl RawGroup for SystemGroup {
+    unsafe fn raw(&self) -> MPI_Group {
+        self.0
+    }
+}
+
+/// A user-defined group of processes
+///
+/// # Standard section(s)
+///
+/// 6.2.1
+pub struct UserGroup(MPI_Group);
+
+impl Drop for UserGroup {
+    fn drop(&mut self) {
+        unsafe { ffi::MPI_Group_free(&mut self.0 as *mut MPI_Group); }
+        assert_eq!(self.0, ffi::RSMPI_GROUP_NULL);
+    }
+}
+
+impl RawGroup for UserGroup {
+    unsafe fn raw(&self) -> MPI_Group {
+        self.0
+    }
+}
+
+pub trait GroupExt: RawGroup {
     /// Group union
     ///
     /// Constructs a new group that contains all members of the first group followed by all members
@@ -539,10 +580,10 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    pub fn union(&self, other: &Group) -> Group {
+    fn union<G: RawGroup>(&self, other: &G) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_union(self.raw(), other.raw(), &mut newgroup as *mut MPI_Group); }
-        Group(newgroup)
+        UserGroup(newgroup)
     }
 
     /// Group intersection
@@ -553,10 +594,10 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    pub fn intersection(&self, other: &Group) -> Group {
+    fn intersection<G: RawGroup>(&self, other: &G) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_intersection(self.raw(), other.raw(), &mut newgroup as *mut MPI_Group); }
-        Group(newgroup)
+        UserGroup(newgroup)
     }
 
     /// Group difference
@@ -567,10 +608,10 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    pub fn difference(&self, other: &Group) -> Group {
+    fn difference<G: RawGroup>(&self, other: &G) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_difference(self.raw(), other.raw(), &mut newgroup as *mut MPI_Group); }
-        Group(newgroup)
+        UserGroup(newgroup)
     }
 
     /// Subgroup including specified ranks
@@ -581,11 +622,11 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    pub fn include(&self, ranks: &[Rank]) -> Group {
+    fn include(&self, ranks: &[Rank]) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         let count: Count = ranks.len() as Count; // FIXME: this should be a checked cast.
         unsafe { ffi::MPI_Group_incl(self.raw(), count, ranks.as_ptr(), &mut newgroup as *mut MPI_Group); }
-        Group(newgroup)
+        UserGroup(newgroup)
     }
 
     /// Subgroup including specified ranks
@@ -596,15 +637,11 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    pub fn exclude(&self, ranks: &[Rank]) -> Group {
+    fn exclude(&self, ranks: &[Rank]) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         let count: Count = ranks.len() as Count; // FIXME: this should be a checked cast.
         unsafe { ffi::MPI_Group_excl(self.raw(), count, ranks.as_ptr(), &mut newgroup as *mut MPI_Group); }
-        Group(newgroup)
-    }
-
-    pub unsafe fn raw(&self) -> MPI_Group {
-        self.0
+        UserGroup(newgroup)
     }
 
     /// Number of processes in the group.
@@ -612,7 +649,7 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.1
-    pub fn size(&self) -> Rank {
+    fn size(&self) -> Rank {
         let mut res: Rank = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_size(self.raw(), &mut res as *mut Rank); }
         res
@@ -623,7 +660,7 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.1
-    pub fn rank(&self) -> Option<Rank> {
+    fn rank(&self) -> Option<Rank> {
         let mut res: Rank = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_rank(self.raw(), &mut res as *mut Rank); }
         if res == ffi::RSMPI_UNDEFINED {
@@ -640,7 +677,7 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.1
-    pub fn translate_rank(&self, rank: Rank, other: &Group) -> Option<Rank> {
+    fn translate_rank<G: RawGroup>(&self, rank: Rank, other: &G) -> Option<Rank> {
         let mut res: Rank = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_translate_ranks(self.raw(), 1, &rank as *const Rank, other.raw(), &mut res as *mut Rank); }
         if res == ffi::RSMPI_UNDEFINED {
@@ -657,7 +694,7 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.1
-    pub fn translate_ranks(&self, ranks: &[Rank], other: &Group) -> Vec<Option<Rank>> {
+    fn translate_ranks<G: RawGroup>(&self, ranks: &[Rank], other: &G) -> Vec<Option<Rank>> {
         ranks.iter().map(|&r| self.translate_rank(r, other)).collect()
     }
 
@@ -666,19 +703,16 @@ impl Group {
     /// # Standard section(s)
     ///
     /// 6.3.1
-    pub fn compare(&self, other: &Group) -> GroupRelation {
+    fn compare<G: RawGroup>(&self, other: &G) -> GroupRelation {
         let mut relation: c_int = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_compare(self.raw(), other.raw(), &mut relation as *mut c_int); }
         relation.into()
     }
 }
 
-impl Drop for Group {
-    fn drop(&mut self) {
-        unsafe { ffi::MPI_Group_free(&mut self.0 as *mut MPI_Group); }
-        assert_eq!(self.0, ffi::RSMPI_GROUP_NULL);
-    }
-}
+impl GroupExt for SystemGroup { }
+
+impl GroupExt for UserGroup { }
 
 /// The relation between two groups.
 ///

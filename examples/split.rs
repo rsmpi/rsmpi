@@ -1,7 +1,7 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::topology::{Color, Group, GroupRelation};
+use mpi::topology::{Color, SystemGroup, GroupRelation};
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -15,7 +15,7 @@ fn main() {
         (even_group.rank().is_none() && odd_group.rank().is_some())
     );
     let my_group = if odd_group.rank().is_some() { &odd_group } else { &even_group };
-    let empty_group = Group::empty();
+    let empty_group = SystemGroup::empty();
 
     let oddness_comm = world.split_by_subgroup_collective(my_group);
     assert!(oddness_comm.is_some());
@@ -23,7 +23,11 @@ fn main() {
     assert_eq!(GroupRelation::Identical, oddness_comm.group().compare(my_group));
 
     let odd_comm = world.split_by_subgroup_collective(
-        if odd_group.rank().is_some() { &odd_group } else { &empty_group });
+        if odd_group.rank().is_some() {
+            &odd_group as &RawGroup
+        } else {
+            &empty_group as &RawGroup
+        });
     if odd_group.rank().is_some() {
         assert!(odd_comm.is_some());
         let odd_comm = odd_comm.unwrap();
