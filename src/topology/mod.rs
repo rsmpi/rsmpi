@@ -524,7 +524,6 @@ impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
 /// # Standard section(s)
 ///
 /// 6.2.1
-#[derive(Clone)]
 pub struct Group(MPI_Group);
 
 impl Group {
