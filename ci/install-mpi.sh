@@ -17,7 +17,7 @@ fi
 
 case "$MPI_LIBRARY" in
   openmpi)
-    OPENMPI_SHORTVERSION=$(expr "${MPI_LIBRARY_VERSION}" ":" "\(.\..\)")
+    OPENMPI_SHORTVERSION=$(expr "${MPI_LIBRARY_VERSION}" ":" "\(.\{1,\}\..\{1,\}\)\..\{1,\}")
     SOURCE_URL="http://www.open-mpi.org/software/ompi/v${OPENMPI_SHORTVERSION}/downloads/${TARBALL_NAME}"
     ;;
   mpich)

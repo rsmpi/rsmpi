@@ -19,6 +19,7 @@ env:
   matrix:
     - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4
     - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.0.4
+    - MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.10.0
     - MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.8.8
   global:
     - RELEASE_LIBRARY=mpich
