@@ -1,7 +1,7 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::datatype::{UserDatatype, View};
+use mpi::datatype::{UserDatatype, View, MutView};
 use mpi::topology::Rank;
 
 fn main() {
@@ -13,7 +13,7 @@ fn main() {
     let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
     let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
 
-    let mut b1 = (1..).map(|x| rank * x).take(6).collect::<Vec<_>>();
+    let b1 = (1..).map(|x| rank * x).take(6).collect::<Vec<_>>();
     let mut b2 = std::iter::repeat(-1).take(6).collect::<Vec<_>>();
     println!("Rank {} sending message: {:?}.", rank, b1);
     world.barrier();
@@ -21,9 +21,9 @@ fn main() {
     let t = UserDatatype::vector(2, 2, 3, Rank::equivalent_datatype());
     let status;
     {
-        let mut v1 = unsafe { View::with_count_and_datatype(&mut b1[..], 1, &t) };
-        let mut v2 = unsafe { View::with_count_and_datatype(&mut b2[..], 1, &t) };
-        status = world.send_receive_into(&mut v1, next_rank, &mut v2, previous_rank);
+        let v1 = unsafe { View::with_count_and_datatype(&b1[..], 1, &t) };
+        let mut v2 = unsafe { MutView::with_count_and_datatype(&mut b2[..], 1, &t) };
+        status = world.send_receive_into(&v1, next_rank, &mut v2, previous_rank);
     }
 
     println!("Rank {} received message: {:?}, status: {:?}.", rank, b2, status);

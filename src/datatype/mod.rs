@@ -271,27 +271,61 @@ impl<T> Datatype for [T] where T: EquivalentDatatype {
     fn datatype(&self) -> Self::Out { <T as EquivalentDatatype>::equivalent_datatype() }
 }
 
-/// A buffer is a region in memory that starts at `send_address()` (or `receive_address()`) and
-/// contains `count()` copies of `datatype()`.
-pub trait Buffer: Datatype {
+/// A countable collection of things.
+pub trait Collection {
+    /// How many things are in this connection.
     fn count(&self) -> Count;
-    unsafe fn send_address(&self) -> *const c_void;
-    unsafe fn receive_address(&mut self) -> *mut c_void;
 }
 
-impl<T> Buffer for T where T: EquivalentDatatype {
+impl<T> Collection for T where T: EquivalentDatatype {
     fn count(&self) -> Count { 1 }
-    unsafe fn send_address(&self) -> *const c_void { mem::transmute(self as *const T) }
-    unsafe fn receive_address(&mut self) -> *mut c_void { mem::transmute(self as *mut T) }
 }
 
-impl<T> Buffer for [T] where T: EquivalentDatatype {
+impl<T> Collection for [T] where T: EquivalentDatatype {
     fn count(&self) -> Count {
         self.len() as Count // FIXME: this should be a checked cast.
     }
-    unsafe fn send_address(&self) -> *const c_void { mem::transmute(self.as_ptr()) }
-    unsafe fn receive_address(&mut self) -> *mut c_void { mem::transmute(self.as_mut_ptr()) }
 }
+
+/// Provides a pointer to the starting address in memory.
+pub trait Pointer {
+    /// A pointer to the starting address in memory
+    unsafe fn pointer(&self) -> *const c_void;
+}
+
+impl<T> Pointer for T where T: EquivalentDatatype {
+    unsafe fn pointer(&self) -> *const c_void { mem::transmute(self as *const T) }
+}
+
+impl<T> Pointer for [T] where T: EquivalentDatatype {
+    unsafe fn pointer(&self) -> *const c_void { mem::transmute(self.as_ptr()) }
+}
+
+/// Provides a mutable pointer to the starting address in memory.
+pub trait PointerMut {
+    /// A mutable pointer to the starting address in memory
+    unsafe fn pointer_mut(&mut self) -> *mut c_void;
+}
+
+impl<T> PointerMut for T where T: EquivalentDatatype {
+    unsafe fn pointer_mut(&mut self) -> *mut c_void { mem::transmute(self as *mut T) }
+}
+
+impl<T> PointerMut for [T] where T: EquivalentDatatype {
+    unsafe fn pointer_mut(&mut self) -> *mut c_void { mem::transmute(self.as_mut_ptr()) }
+}
+
+/// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
+/// `datatype()`.
+pub trait Buffer: Pointer + Collection + Datatype { }
+impl<T> Buffer for T where T: EquivalentDatatype { }
+impl<T> Buffer for [T] where T: EquivalentDatatype { }
+
+/// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
+/// copies of `datatype()`.
+pub trait BufferMut: PointerMut + Collection + Datatype { }
+impl<T> BufferMut for T where T: EquivalentDatatype { }
+impl<T> BufferMut for [T] where T: EquivalentDatatype { }
 
 /// A buffer with a user specified count and datatype
 ///
@@ -300,34 +334,83 @@ impl<T> Buffer for [T] where T: EquivalentDatatype {
 /// Views can be used to instruct the underlying MPI library to rummage around at arbitrary
 /// locations in memory. This might be controlled later on using datatype bounds an slice lengths
 /// but for now, all View constructors are marked `unsafe`.
-pub struct View<'a, 'b, T: 'a, D: 'b>
-where D: RawDatatype {
-    datatype: &'b D,
+pub struct View<'d, 'b, D: 'd, B: 'b + ?Sized>
+where D: RawDatatype, B: Pointer {
+    datatype: &'d D,
     count: Count,
-    buffer: &'a mut [T]
+    buffer: &'b B
 }
 
-impl<'a, 'b, T: 'a, D: 'b> View<'a, 'b, T, D>
-where D: RawDatatype {
-    /// Return a view of the slice `buffer` containing `count` instances of MPI datatype
-    /// `datatype`.
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> View<'d, 'b, D, B>
+where D: RawDatatype, B: Pointer {
+    /// Return a view of `buffer` containing `count` instances of MPI datatype `datatype`.
     ///
     /// # Examples
     /// See `examples/contiguous.rs`, `examples/vector.rs`
-    pub unsafe fn with_count_and_datatype(buffer: &'a mut [T], count: Count, datatype: &'b D) -> View<'a, 'b, T, D> {
+    pub unsafe fn with_count_and_datatype(buffer: &'b B, count: Count, datatype: &'d D) -> View<'d, 'b, D, B> {
         View { datatype: datatype, count: count, buffer: buffer }
     }
 }
 
-impl<'a, 'b, T: 'a, D: 'b> Datatype for View<'a, 'b, T, D>
-where D: RawDatatype {
-    type Out = &'b D;
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> Datatype for View<'d, 'b, D, B>
+where D: RawDatatype, B: Pointer {
+    type Out = &'d D;
     fn datatype(&self) -> Self::Out { self.datatype }
 }
 
-impl<'a, 'b, T: 'a, D: 'b> Buffer for View<'a, 'b, T, D>
-where D: RawDatatype {
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> Collection for View<'d, 'b, D, B>
+where D: RawDatatype, B: Pointer {
     fn count(&self) -> Count { self.count }
-    unsafe fn send_address(&self) -> *const c_void { mem::transmute(self.buffer.as_ptr()) }
-    unsafe fn receive_address(&mut self) -> *mut c_void { mem::transmute(self.buffer.as_mut_ptr()) }
 }
+
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> Pointer for View<'d, 'b, D, B>
+where D: RawDatatype, B: Pointer {
+    unsafe fn pointer(&self) -> *const c_void { self.buffer.pointer() }
+}
+
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> Buffer for View<'d, 'b, D, B>
+where D: RawDatatype, B: Pointer { }
+
+/// A buffer with a user specified count and datatype
+///
+/// # Safety
+///
+/// Views can be used to instruct the underlying MPI library to rummage around at arbitrary
+/// locations in memory. This might be controlled later on using datatype bounds an slice lengths
+/// but for now, all View constructors are marked `unsafe`.
+pub struct MutView<'d, 'b, D: 'd, B: 'b + ?Sized>
+where D: RawDatatype, B: PointerMut {
+    datatype: &'d D,
+    count: Count,
+    buffer: &'b mut B
+}
+
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> MutView<'d, 'b, D, B>
+where D: RawDatatype, B: PointerMut {
+    /// Return a view of `buffer` containing `count` instances of MPI datatype `datatype`.
+    ///
+    /// # Examples
+    /// See `examples/contiguous.rs`, `examples/vector.rs`
+    pub unsafe fn with_count_and_datatype(buffer: &'b mut B, count: Count, datatype: &'d D) -> MutView<'d, 'b, D, B> {
+        MutView { datatype: datatype, count: count, buffer: buffer }
+    }
+}
+
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> Datatype for MutView<'d, 'b, D, B>
+where D: RawDatatype, B: PointerMut {
+    type Out = &'d D;
+    fn datatype(&self) -> Self::Out { self.datatype }
+}
+
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> Collection for MutView<'d, 'b, D, B>
+where D: RawDatatype, B: PointerMut {
+    fn count(&self) -> Count { self.count }
+}
+
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> PointerMut for MutView<'d, 'b, D, B>
+where D: RawDatatype, B: PointerMut {
+    unsafe fn pointer_mut(&mut self) -> *mut c_void { self.buffer.pointer_mut() }
+}
+
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> BufferMut for MutView<'d, 'b, D, B>
+where D: RawDatatype, B: PointerMut { }

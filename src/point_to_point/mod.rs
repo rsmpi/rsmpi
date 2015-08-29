@@ -132,7 +132,7 @@ pub trait Send {
 impl<Dest: Destination> Send for Dest {
     fn send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
-            ffi::MPI_Send(buf.send_address(), buf.count(), buf.datatype().raw(),
+            ffi::MPI_Send(buf.pointer(), buf.count(), buf.datatype().raw(),
                 self.destination_rank(), tag, self.communicator().raw());
         }
     }
@@ -287,14 +287,14 @@ pub trait MatchedReceiveInto {
     /// Receive the message `&self` with contents matching `buf`.
     ///
     /// Receiving from the null process leaves `buf` untouched.
-    fn matched_receive_into<Buf: Buffer + ?Sized>(&mut self, buf: &mut Buf) -> Status;
+    fn matched_receive_into<Buf: BufferMut + ?Sized>(&mut self, buf: &mut Buf) -> Status;
 }
 
 impl MatchedReceiveInto for Message {
-    fn matched_receive_into<Buf: Buffer + ?Sized>(&mut self, buf: &mut Buf) -> Status {
+    fn matched_receive_into<Buf: BufferMut + ?Sized>(&mut self, buf: &mut Buf) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Mrecv(buf.receive_address(), buf.count(), buf.datatype().raw(),
+            ffi::MPI_Mrecv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
                 &mut self.raw() as *mut MPI_Message, &mut status as *mut MPI_Status);
         }
         Status(status)
@@ -375,21 +375,21 @@ pub trait ReceiveInto {
     /// Receive a message from `Source` `&self` tagged `tag` into `Buffer` `buf`.
     ///
     /// Receiving from the null process leaves `buf` untouched.
-    fn receive_into_with_tag<Buf: Buffer + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status;
+    fn receive_into_with_tag<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status;
 
     /// Receive a message from `Source` `&self` into `Buffer` `buf`.
     ///
     /// Receiving from the null process leaves `buf` untouched.
-    fn receive_into<Buf: Buffer + ?Sized>(&self, buf: &mut Buf) -> Status {
+    fn receive_into<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf) -> Status {
         self.receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
     }
 }
 
 impl<Src: Source> ReceiveInto for Src {
-    fn receive_into_with_tag<Buf: Buffer + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status {
+    fn receive_into_with_tag<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Recv(buf.receive_address(), buf.count(), buf.datatype().raw(),
+            ffi::MPI_Recv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
                 self.source_rank(), tag, self.communicator().raw(), &mut status as *mut MPI_Status);
         }
         Status(status)
@@ -504,7 +504,7 @@ pub trait SendReceiveInto {
                                                          receivetag: Tag)
                                                          -> Status
         where S: Buffer,
-              R: Buffer;
+              R: BufferMut;
 
     /// Sends the contents of `sendbuf` to `Rank` `destination` and
     /// simultaneously receives a message from `Rank` `source` into
@@ -518,7 +518,7 @@ pub trait SendReceiveInto {
                                                source: Rank)
                                                -> Status
         where S: Buffer,
-              R: Buffer
+              R: BufferMut
     {
         self.send_receive_into_with_tags(sendbuf, destination, Tag::default(), receivebuf, source, ffi::RSMPI_ANY_TAG)
     }
@@ -534,13 +534,13 @@ impl<C: RawCommunicator> SendReceiveInto for C {
                                                          receivetag: Tag)
                                                          -> Status
         where S: Buffer,
-              R: Buffer
+              R: BufferMut
     {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Sendrecv(
-                sendbuf.send_address(), sendbuf.count(), sendbuf.datatype().raw(), destination, sendtag,
-                receivebuf.receive_address(), receivebuf.count(), receivebuf.datatype().raw(), source, receivetag,
+                sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(), destination, sendtag,
+                receivebuf.pointer_mut(), receivebuf.count(), receivebuf.datatype().raw(), source, receivetag,
                 self.raw(), &mut status as *mut MPI_Status);
         }
         Status(status)

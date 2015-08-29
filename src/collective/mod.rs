@@ -78,13 +78,13 @@ pub trait BroadcastInto {
     ///
     /// # Examples
     /// See `examples/broadcast.rs`
-    fn broadcast_into<Buf: Buffer + ?Sized>(&self, buffer: &mut Buf);
+    fn broadcast_into<Buf: BufferMut + ?Sized>(&self, buffer: &mut Buf);
 }
 
 impl<T: Root> BroadcastInto for T {
-    fn broadcast_into<Buf: Buffer + ?Sized>(&self, buffer: &mut Buf) {
+    fn broadcast_into<Buf: BufferMut + ?Sized>(&self, buffer: &mut Buf) {
         unsafe {
-            ffi::MPI_Bcast(buffer.receive_address(), buffer.count(), buffer.datatype().raw(),
+            ffi::MPI_Bcast(buffer.pointer_mut(), buffer.count(), buffer.datatype().raw(),
                 self.root_rank(), self.communicator().raw());
         }
     }
@@ -104,14 +104,14 @@ pub trait GatherInto {
     ///
     /// # Examples
     /// See `examples/gather.rs`
-    fn gather_into<S: Buffer + ?Sized, R: Buffer + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>);
+    fn gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>);
 }
 
 impl<T: Root> GatherInto for T {
-    fn gather_into<S: Buffer + ?Sized, R: Buffer + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>) {
+    fn gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>) {
         unsafe {
-            ffi::MPI_Gather(sendbuf.send_address(), sendbuf.count(), sendbuf.datatype().raw(),
-                recvbuf.map_or(ptr::null_mut(), |x| x.receive_address()), sendbuf.count(), sendbuf.datatype().raw(),
+            ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(),
+                recvbuf.map_or(ptr::null_mut(), |x| x.pointer_mut()), sendbuf.count(), sendbuf.datatype().raw(),
                 self.root_rank(), self.communicator().raw());
         }
     }
