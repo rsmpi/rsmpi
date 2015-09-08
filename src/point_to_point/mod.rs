@@ -26,9 +26,10 @@
 //! - **3.10**: In-place send-receive operations, `MPI_Sendrecv_replace()`
 
 use std::{mem, fmt};
+use std::marker::PhantomData;
 
 use ffi;
-use ffi::{MPI_Status, MPI_Message};
+use ffi::{MPI_Status, MPI_Message, MPI_Request};
 use topology::{SystemCommunicator, UserCommunicator, Rank, Identifier};
 use topology::traits::*;
 use datatype::traits::*;
@@ -544,5 +545,147 @@ impl<C: RawCommunicator> SendReceiveInto for C {
                 self.raw(), &mut status as *mut MPI_Status);
         }
         Status(status)
+    }
+}
+
+/// A request object for an immediate (non-blocking) send operation
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.1
+pub struct SendRequest<'b, Buf: 'b + Buffer + ?Sized>(MPI_Request, PhantomData<&'b Buf>);
+
+impl<'b, Buf: 'b + Buffer + ?Sized> SendRequest<'b, Buf> {
+    pub unsafe fn raw(&self) -> *const MPI_Request { & (self.0) }
+
+    pub unsafe fn raw_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
+
+    /// Wait for the operation to finish.
+    ///
+    /// Will block execution of the calling thread until the data has been sent.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.3
+    pub fn wait(mut self) -> Status {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Wait(self.raw_mut(), &mut status as *mut MPI_Status);
+            assert_eq!(*self.raw(), ffi::RSMPI_REQUEST_NULL);
+        }
+        mem::forget(self);
+        Status(status)
+    }
+}
+
+impl<'b, Buf: 'b + Buffer + ?Sized> Drop for SendRequest<'b, Buf> {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::MPI_Request_free(self.raw_mut());
+            assert_eq!(*self.raw(), ffi::RSMPI_REQUEST_NULL);
+        }
+    }
+}
+
+/// Initiate an immediate (non-blocking) send operation.
+///
+/// # Examples
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.2
+pub trait ImmediateSend {
+    fn immediate_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
+
+    fn immediate_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
+        self.immediate_send_with_tag(buf, Tag::default())
+    }
+}
+
+impl<Dest: Destination> ImmediateSend for Dest {
+    fn immediate_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Isend(buf.pointer(), buf.count(), buf.datatype().raw(),
+                self.destination_rank(), tag, self.communicator().raw(),
+                &mut request as *mut MPI_Request);
+        }
+        SendRequest(request, PhantomData)
+    }
+}
+
+/// A request object for an immediate (non-blocking) receive operation
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.1
+pub struct ReceiveRequest<'b, Buf: 'b + BufferMut + ?Sized>(MPI_Request, PhantomData<&'b mut Buf>);
+
+impl<'b, Buf: 'b + BufferMut + ?Sized> ReceiveRequest<'b, Buf> {
+    pub unsafe fn raw(&self) -> *const MPI_Request { & (self.0) }
+
+    pub unsafe fn raw_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
+
+    /// Wait for the operation to finish.
+    ///
+    /// Will block execution of the calling thread until the data has been received.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.3
+    pub fn wait(mut self) -> Status {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Wait(self.raw_mut(), &mut status as *mut MPI_Status);
+            assert_eq!(*self.raw(), ffi::RSMPI_REQUEST_NULL);
+        }
+        mem::forget(self);
+        Status(status)
+    }
+}
+
+impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for ReceiveRequest<'b, Buf> {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::MPI_Request_free(self.raw_mut());
+            assert_eq!(*self.raw(), ffi::RSMPI_REQUEST_NULL);
+        }
+    }
+}
+
+/// Initiate an immediate (non-blocking) receive operation.
+///
+/// # Examples
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.2
+pub trait ImmediateReceiveInto {
+    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf>;
+
+    fn immediate_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf> {
+        self.immediate_receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
+    }
+}
+
+impl<Src:Source> ImmediateReceiveInto for Src {
+    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Irecv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
+                self.source_rank(), tag, self.communicator().raw(),
+                &mut request as *mut MPI_Request);
+        }
+        ReceiveRequest(request, PhantomData)
     }
 }
