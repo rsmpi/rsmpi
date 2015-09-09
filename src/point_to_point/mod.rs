@@ -13,11 +13,9 @@
 //!   - ready mode, `MPI_Rsend()`
 //! - **3.6**: Buffer usage, `MPI_Buffer_attach()`, `MPI_Buffer_detach()`
 //! - **3.7**: Nonblocking mode:
-//!   - Sending, `MPI_Isend()`, `MPI_Ibsend()`, `MPI_Issend()`, `MPI_Irsend()`
-//!   - Receiving, `MPI_Irecv()`
-//!   - Completion, `MPI_Wait()`, `MPI_Test()`, `MPI_Request_free()`, `MPI_Waitany()`,
-//!   `MPI_Waitall()`, `MPI_Waitsome()`, `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`,
-//!   `MPI_Request_get_status()`
+//!   - Sending, `MPI_Ibsend()`, `MPI_Issend()`, `MPI_Irsend()`
+//!   - Completion, `MPI_Test()`, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
+//!   `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`, `MPI_Request_get_status()`
 //! - **3.8**:
 //!   - Nonblocking probe operations, `MPI_Iprobe()`, `MPI_Improbe()`, `MPI_Imrecv()`
 //!   - Cancellation, `MPI_Cancel()`, `MPI_Test_cancelled()`
