@@ -1,6 +1,6 @@
 [package]
 name = "mpi"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Benedikt Steinbusch <benedikt.steinbusch@googlemail.com>"]
 description = "Message Passing Interface bindings for Rust"
 
@@ -10,7 +10,7 @@ documentation = "http://bsteinb.github.io/rsmpi/"
 
 readme = "README.md"
 
-keywords = [ "message-passing", "distributed memory", "parallel" ]
+keywords = [ "message-passing", "parallel" ]
 
 license = "MIT"
 
