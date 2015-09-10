@@ -1,6 +1,6 @@
 # MPI bindings for Rust
 
-[![Travis build status][travis-shield]][travis] [![Documentation: hosted][doc-shield]][doc] [![License: MIT][license-shield]][license]
+[![Travis build status][travis-shield]][travis] [![Documentation: hosted][doc-shield]][doc] [![License: MIT][license-shield]][license] [![crate on crates.io][crate-shield]][crate]
 
 The [Message Passing Interface][MPI] (MPI) is a specification for a
 message-passing style concurrency library. Implementations of MPI are often used to structure
@@ -14,6 +14,8 @@ programming language. This library tries to bridge the gap into a more rustic wo
 [doc]: http://bsteinb.github.io/rsmpi/
 [license-shield]: https://img.shields.io/github/license/bsteinb/rsmpi.svg?style=flat-square
 [license]: https://github.com/bsteinb/rsmpi/blob/master/LICENSE
+[crate-shield]: https://img.shields.io/crates/v/mpi.svg?style=flat-square
+[crate]: https://crates.io/crates/mpi
 [MPI]: http://www.mpi-forum.org
 
 ## Requirements
