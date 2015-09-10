@@ -59,8 +59,7 @@
 //!
 //! - **Groups, Contexts, Communicators**: Only basic features are supported so far.
 //! - **Point to point communication**: Most of the blocking, standard mode functions are supported.
-//! Blocking communication in buffered, synchronous and ready mode are not yet supported. Neither
-//! are the non-blocking functions.
+//! Blocking communication in buffered, synchronous and ready mode are not yet supported.
 //! - **Collective communication**: Blocking barrier, broadcast and gather operations.
 //! - **Datatypes**: Bridging between Rust types and MPI basic types as well as custom MPI datatypes
 //! which can act as views into buffers.
