@@ -16,8 +16,8 @@
 //! Add the `mpi` crate as a dependency in your `Cargo.toml`:
 //!
 //! ```toml
-//! [dependencies.mpi]
-//! git = "https://github.com/bsteinb/rsmpi.git"
+//! [dependencies]
+//! mpi = "0.1.7"
 //! ```
 //!
 //! Then use it in your program like this:
