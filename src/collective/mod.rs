@@ -119,3 +119,30 @@ impl<T: Root> GatherInto for T {
         }
     }
 }
+
+/// Gather contents of buffers on all participating processes.
+///
+/// After the call completes, the contents of the send `Buffer`s on all processes will be
+/// concatenated into the receive `Buffer`s on all ranks.
+///
+/// # Standard section(s)
+///
+/// 5.7
+pub trait AllGatherInto {
+    /// Gather the contents of all `sendbuf`s into all `rcevbuf`s on all processes in the
+    /// communicator.
+    ///
+    /// # Examples
+    /// See `examples/all_gather.rs`
+    fn all_gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
+}
+
+impl<C: Communicator> AllGatherInto for C {
+    fn all_gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
+        unsafe {
+            ffi::MPI_Allgather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / self.communicator().size(),
+                recvbuf.datatype().raw(), self.communicator().raw());
+        }
+    }
+}
