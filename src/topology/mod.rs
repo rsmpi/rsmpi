@@ -465,9 +465,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     }
 }
 
-impl CommunicatorExt for SystemCommunicator { }
-
-impl CommunicatorExt for UserCommunicator { }
+impl<T: Sized + RawCommunicator> CommunicatorExt for T { }
 
 /// The relation between two communicators.
 ///
