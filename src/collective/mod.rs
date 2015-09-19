@@ -94,7 +94,6 @@ impl<T: Root> BroadcastInto for T {
 ///
 /// After the call completes, the contents of the `Buffer`s on all ranks will be
 /// concatenated into the `Buffer` on `Root`.
-// TODO: handle typeof(sendbuf) != typeof(recvbuf[.])
 ///
 /// # Standard section(s)
 ///
@@ -110,9 +109,13 @@ pub trait GatherInto {
 impl<T: Root> GatherInto for T {
     fn gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>) {
         unsafe {
+            let (recvptr, recvcount, recvtype) = recvbuf.map_or(
+                (ptr::null_mut(), 0, u8::equivalent_datatype().raw()),
+                |x| (x.pointer_mut(), x.count() / self.communicator().size(), x.datatype().raw())
+            );
+
             ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(),
-                recvbuf.map_or(ptr::null_mut(), |x| x.pointer_mut()), sendbuf.count(), sendbuf.datatype().raw(),
-                self.root_rank(), self.communicator().raw());
+                recvptr, recvcount, recvtype, self.root_rank(), self.communicator().raw());
         }
     }
 }
