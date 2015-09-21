@@ -90,6 +90,8 @@ impl<T: Root> BroadcastInto for T {
     }
 }
 
+// TODO: Introduce "partitioned buffer" for varying count gather/scatter/alltoall?
+
 /// Gather contents of buffers on `Root`.
 ///
 /// After the call completes, the contents of the `Buffer`s on all ranks will be
@@ -111,8 +113,7 @@ impl<T: Root> GatherInto for T {
         unsafe {
             let (recvptr, recvcount, recvtype) = recvbuf.map_or(
                 (ptr::null_mut(), 0, u8::equivalent_datatype().raw()),
-                |x| (x.pointer_mut(), x.count() / self.communicator().size(), x.datatype().raw())
-            );
+                |x| (x.pointer_mut(), x.count() / self.communicator().size(), x.datatype().raw()));
 
             ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(),
                 recvptr, recvcount, recvtype, self.root_rank(), self.communicator().raw());
@@ -143,6 +144,36 @@ impl<C: Communicator> AllGatherInto for C {
             ffi::MPI_Allgather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(),
                 recvbuf.pointer_mut(), recvbuf.count() / self.communicator().size(),
                 recvbuf.datatype().raw(), self.communicator().raw());
+        }
+    }
+}
+
+/// Scatter contents of a buffer on the root process to all processes.
+///
+/// After the call completes each participating process will have received a part of the send
+/// `Buffer` on the root process.
+///
+/// # Standard section(s)
+///
+/// 5.6
+pub trait ScatterInto {
+    /// Scatter the contents of `sendbuf` to the participating processes.
+    ///
+    /// # Examples
+    /// See `examples/scatter.rs`
+    fn scatter_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: Option<&S>, recvbuf: &mut R);
+}
+
+impl<T: Root> ScatterInto for T {
+    fn scatter_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: Option<&S>, recvbuf: &mut R) {
+        unsafe {
+            let (sendptr, sendcount, sendtype) = sendbuf.map_or(
+                (ptr::null(), 0, u8::equivalent_datatype().raw()),
+                |x| (x.pointer(), x.count() / self.communicator().size(), x.datatype().raw()));
+
+            ffi::MPI_Scatter(sendptr, sendcount, sendtype,
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().raw(),
+                self.root_rank(), self.communicator().raw());
         }
     }
 }
