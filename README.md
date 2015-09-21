@@ -25,18 +25,17 @@ An implementation of the C language interface of MPI-3.0. These bindings are cur
 - [OpenMPI][OpenMPI] 1.8.8, 1.10.0
 - [MPICH][MPICH] 3.1.4, 3.0.4
 
+To generate FFI definitions `rsmpi` uses `rust-bindgen` which needs `libclang`. See the [bindgen project page][bindgen] for troubleshooting.
+
 [OpenMPI]: https://www.open-mpi.org
 [MPICH]: https://www.mpich.org
+[bindgen]: https://github.com/crabtw/rust-bindgen
 
 ## Building
 
 ```
 cargo build
 ```
-
-Uses `rust-bindgen` to generate FFI definitions, see the [bindgen project page][bindgen] for troubleshooting.
-
-[bindgen]: https://github.com/crabtw/rust-bindgen
 
 ## Usage
 
