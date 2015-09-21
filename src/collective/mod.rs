@@ -177,3 +177,27 @@ impl<T: Root> ScatterInto for T {
         }
     }
 }
+
+/// Distribute the send `Buffer`s from all processes to the receive `Buffer`s on all processes.
+///
+/// # Standard section(s)
+///
+/// 5.8
+pub trait AllToAllInto {
+    fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
+}
+
+impl<C: Communicator> AllToAllInto for C {
+    /// Distribute the `sendbuf` from all ranks to the `recvbuf` on all ranks.
+    ///
+    /// # Examples
+    /// See `examples/all_to_all.rs`
+    fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
+        let c_size = self.communicator().size();
+        unsafe {
+            ffi::MPI_Alltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.datatype().raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().raw(),
+                self.communicator().raw());
+        }
+    }
+}
