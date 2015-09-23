@@ -5,9 +5,9 @@
 //! # Unfinished features
 //!
 //! - **5.5**: Varying counts gather operation, `MPI_Gatherv()`
-//! - **5.6**: Scatter, `MPI_Scatter()`, `MPI_Scatterv()`
+//! - **5.6**: Scatter, `MPI_Scatterv()`
 //! - **5.7**: Gather-to-all, `MPI_Allgatherv()`
-//! - **5.8**: All-to-all, `MPI_Alltoall()`, `MPI_Alltoallv()`, `MPI_Alltoallw()`
+//! - **5.8**: All-to-all, `MPI_Alltoallv()`, `MPI_Alltoallw()`
 //! - **5.9**: Global reduction operations, `MPI_Reduce()`, `MPI_Op_create()`, `MPI_Op_free()`,
 //! `MPI_Allreduce()`, `MPI_Reduce_local()`, `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
