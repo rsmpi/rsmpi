@@ -14,7 +14,7 @@
 //! - **3.6**: Buffer usage, `MPI_Buffer_attach()`, `MPI_Buffer_detach()`
 //! - **3.7**: Nonblocking mode:
 //!   - Sending, `MPI_Ibsend()`, `MPI_Issend()`, `MPI_Irsend()`
-//!   - Completion, `MPI_Test()`, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
+//!   - Completion, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
 //!   `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`, `MPI_Request_get_status()`
 //! - **3.8**:
 //!   - Nonblocking probe operations, `MPI_Iprobe()`, `MPI_Improbe()`, `MPI_Imrecv()`
@@ -25,6 +25,8 @@
 
 use std::{mem, fmt};
 use std::marker::PhantomData;
+
+use libc::c_int;
 
 use ffi;
 use ffi::{MPI_Status, MPI_Message, MPI_Request};
@@ -546,6 +548,68 @@ impl<C: RawCommunicator> SendReceiveInto for C {
     }
 }
 
+/// Something that can identify as a raw `MPI_Request`
+pub trait RawRequest {
+    /// The raw `MPI_Request` value
+    unsafe fn raw(&self) -> MPI_Request;
+    /// A mutable pointer to the raw `MPI_Request` value
+    unsafe fn ptr_mut(&mut self) -> *mut MPI_Request;
+}
+
+/// Wait for an operation to finish.
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.3
+pub trait Wait: RawRequest + Sized {
+    /// Will block execution of the calling thread until the associated operation has finished.
+    fn wait(mut self) -> Status {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Wait(self.ptr_mut(), &mut status as *mut MPI_Status);
+            assert_eq!(self.raw(), ffi::RSMPI_REQUEST_NULL);
+        }
+        mem::forget(self);
+        Status(status)
+    }
+}
+
+impl<R: RawRequest + Sized> Wait for R { }
+
+/// Test whether an operation has finished.
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.3
+pub trait Test: RawRequest + Sized {
+    /// If the operation has finished returns the `Status` otherwise returns the unfinished
+    /// `Request`.
+    fn test(mut self) -> Result<Status, Self> {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        let mut flag: c_int = 0;
+        unsafe {
+            ffi::MPI_Test(self.ptr_mut(), &mut flag as *mut c_int, &mut status as *mut MPI_Status);
+        }
+        if flag != 0 {
+            unsafe { assert_eq!(self.raw(), ffi::RSMPI_REQUEST_NULL); }
+            mem::forget(self);
+            Result::Ok(Status(status))
+        } else {
+            Result::Err(self)
+        }
+    }
+}
+
+impl<R: RawRequest + Sized> Test for R { }
+
 /// A request object for an immediate (non-blocking) send operation
 ///
 /// # Examples
@@ -557,34 +621,16 @@ impl<C: RawCommunicator> SendReceiveInto for C {
 /// 3.7.1
 pub struct SendRequest<'b, Buf: 'b + Buffer + ?Sized>(MPI_Request, PhantomData<&'b Buf>);
 
-impl<'b, Buf: 'b + Buffer + ?Sized> SendRequest<'b, Buf> {
-    pub unsafe fn raw(&self) -> *const MPI_Request { & (self.0) }
-
-    pub unsafe fn raw_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
-
-    /// Wait for the operation to finish.
-    ///
-    /// Will block execution of the calling thread until the data has been sent.
-    ///
-    /// # Standard section(s)
-    ///
-    /// 3.7.3
-    pub fn wait(mut self) -> Status {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Wait(self.raw_mut(), &mut status as *mut MPI_Status);
-            assert_eq!(*self.raw(), ffi::RSMPI_REQUEST_NULL);
-        }
-        mem::forget(self);
-        Status(status)
-    }
+impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for SendRequest<'b, Buf> {
+    unsafe fn raw(&self) -> MPI_Request { self.0 }
+    unsafe fn ptr_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
 }
 
 impl<'b, Buf: 'b + Buffer + ?Sized> Drop for SendRequest<'b, Buf> {
     fn drop(&mut self) {
         unsafe {
-            ffi::MPI_Request_free(self.raw_mut());
-            assert_eq!(*self.raw(), ffi::RSMPI_REQUEST_NULL);
+            ffi::MPI_Request_free(self.ptr_mut());
+            assert_eq!(self.raw(), ffi::RSMPI_REQUEST_NULL);
         }
     }
 }
@@ -628,34 +674,16 @@ impl<Dest: Destination> ImmediateSend for Dest {
 /// 3.7.1
 pub struct ReceiveRequest<'b, Buf: 'b + BufferMut + ?Sized>(MPI_Request, PhantomData<&'b mut Buf>);
 
-impl<'b, Buf: 'b + BufferMut + ?Sized> ReceiveRequest<'b, Buf> {
-    pub unsafe fn raw(&self) -> *const MPI_Request { & (self.0) }
-
-    pub unsafe fn raw_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
-
-    /// Wait for the operation to finish.
-    ///
-    /// Will block execution of the calling thread until the data has been received.
-    ///
-    /// # Standard section(s)
-    ///
-    /// 3.7.3
-    pub fn wait(mut self) -> Status {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Wait(self.raw_mut(), &mut status as *mut MPI_Status);
-            assert_eq!(*self.raw(), ffi::RSMPI_REQUEST_NULL);
-        }
-        mem::forget(self);
-        Status(status)
-    }
+impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for ReceiveRequest<'b, Buf> {
+    unsafe fn raw(&self) -> MPI_Request { self.0 }
+    unsafe fn ptr_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
 }
 
 impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for ReceiveRequest<'b, Buf> {
     fn drop(&mut self) {
         unsafe {
-            ffi::MPI_Request_free(self.raw_mut());
-            assert_eq!(*self.raw(), ffi::RSMPI_REQUEST_NULL);
+            ffi::MPI_Request_free(self.ptr_mut());
+            assert_eq!(self.raw(), ffi::RSMPI_REQUEST_NULL);
         }
     }
 }

@@ -4,4 +4,5 @@ pub use super::{Source, Destination, Send, Probe,
                 MatchedReceiveVec, MatchedProbe,
                 Receive, ReceiveInto, ReceiveVec,
                 SendReceive, SendReceiveInto,
+                RawRequest, Wait, Test,
                 ImmediateSend, ImmediateReceiveInto};
