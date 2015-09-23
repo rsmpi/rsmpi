@@ -10,10 +10,15 @@ fn main() {
     let mut y: f32 = 0.0;
 
     {
-        let sreq = world.this_process().immediate_send(&x);
+        let mut sreq = world.this_process().immediate_send(&x);
         let rreq = world.immediate_receive_into(&mut y);
         rreq.wait();
-        sreq.wait();
+        loop {
+            match sreq.test() {
+                Ok(_) => { break; }
+                Err(req) => { sreq = req; }
+            }
+        }
     }
 
     assert_eq!(x, y);
