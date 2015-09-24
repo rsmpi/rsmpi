@@ -571,9 +571,7 @@ pub trait Wait: RawRequest + Sized {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Wait(self.ptr_mut(), &mut status as *mut MPI_Status);
-            assert_eq!(self.raw(), ffi::RSMPI_REQUEST_NULL);
         }
-        mem::forget(self);
         Status(status)
     }
 }
@@ -599,8 +597,6 @@ pub trait Test: RawRequest + Sized {
             ffi::MPI_Test(self.ptr_mut(), &mut flag as *mut c_int, &mut status as *mut MPI_Status);
         }
         if flag != 0 {
-            unsafe { assert_eq!(self.raw(), ffi::RSMPI_REQUEST_NULL); }
-            mem::forget(self);
             Result::Ok(Status(status))
         } else {
             Result::Err(self)
@@ -619,6 +615,7 @@ impl<R: RawRequest + Sized> Test for R { }
 /// # Standard section(s)
 ///
 /// 3.7.1
+#[must_use]
 pub struct SendRequest<'b, Buf: 'b + Buffer + ?Sized>(MPI_Request, PhantomData<&'b Buf>);
 
 impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for SendRequest<'b, Buf> {
@@ -629,8 +626,8 @@ impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for SendRequest<'b, Buf> {
 impl<'b, Buf: 'b + Buffer + ?Sized> Drop for SendRequest<'b, Buf> {
     fn drop(&mut self) {
         unsafe {
-            ffi::MPI_Request_free(self.ptr_mut());
-            assert_eq!(self.raw(), ffi::RSMPI_REQUEST_NULL);
+            assert!(self.raw() == ffi::RSMPI_REQUEST_NULL,
+                "asynchronous send request dropped without ascertaining completion.");
         }
     }
 }
@@ -672,6 +669,7 @@ impl<Dest: Destination> ImmediateSend for Dest {
 /// # Standard section(s)
 ///
 /// 3.7.1
+#[must_use]
 pub struct ReceiveRequest<'b, Buf: 'b + BufferMut + ?Sized>(MPI_Request, PhantomData<&'b mut Buf>);
 
 impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for ReceiveRequest<'b, Buf> {
@@ -682,8 +680,8 @@ impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for ReceiveRequest<'b, Buf> {
 impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for ReceiveRequest<'b, Buf> {
     fn drop(&mut self) {
         unsafe {
-            ffi::MPI_Request_free(self.ptr_mut());
-            assert_eq!(self.raw(), ffi::RSMPI_REQUEST_NULL);
+            assert!(self.raw() == ffi::RSMPI_REQUEST_NULL,
+                "asynchronous receive request dropped without ascertaining completion.");
         }
     }
 }
