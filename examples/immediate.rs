@@ -20,6 +20,14 @@ fn main() {
             }
         }
     }
+    assert_eq!(x, y);
 
+    y = 0.0;
+    {
+        let rreq = world.immediate_receive_into(&mut y);
+        let sreq = world.this_process().immediate_ready_send(&x);
+        rreq.wait();
+        sreq.wait();
+    }
     assert_eq!(x, y);
 }

@@ -7,13 +7,8 @@
 //! # Unfinished features
 //!
 //! - **3.2.6**: `MPI_STATUS_IGNORE`
-//! - **3.4**: Any communication mode except standard:
-//!   - buffered mode, `MPI_Bsend()`
-//!   - synchronous mode, `MPI_Ssend()`
-//!   - ready mode, `MPI_Rsend()`
 //! - **3.6**: Buffer usage, `MPI_Buffer_attach()`, `MPI_Buffer_detach()`
 //! - **3.7**: Nonblocking mode:
-//!   - Sending, `MPI_Ibsend()`, `MPI_Issend()`, `MPI_Irsend()`
 //!   - Completion, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
 //!   `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`, `MPI_Request_get_status()`
 //! - **3.8**:
@@ -134,6 +129,86 @@ impl<Dest: Destination> Send for Dest {
     fn send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
             ffi::MPI_Send(buf.pointer(), buf.count(), buf.datatype().raw(),
+                self.destination_rank(), tag, self.communicator().raw());
+        }
+    }
+}
+
+/// Blocking buffered mode send operation
+///
+/// # Standard section(s)
+///
+/// 3.4
+pub trait BufferedSend {
+    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    fn buffered_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag);
+
+    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    fn buffered_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
+        self.buffered_send_with_tag(buf, Tag::default())
+    }
+}
+
+impl<Dest: Destination> BufferedSend for Dest {
+    fn buffered_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
+        unsafe {
+            ffi::MPI_Bsend(buf.pointer(), buf.count(), buf.datatype().raw(),
+                self.destination_rank(), tag, self.communicator().raw());
+        }
+    }
+}
+
+/// Blocking synchronous mode send operation
+///
+/// # Standard section(s)
+///
+/// 3.4
+pub trait SynchronousSend {
+    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    ///
+    /// Completes only once the matching receive operation has started.
+    fn synchronous_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag);
+
+    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    ///
+    /// Completes only once the matching receive operation has started.
+    fn synchronous_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
+        self.synchronous_send_with_tag(buf, Tag::default())
+    }
+}
+
+impl<Dest: Destination> SynchronousSend for Dest {
+    fn synchronous_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
+        unsafe {
+            ffi::MPI_Ssend(buf.pointer(), buf.count(), buf.datatype().raw(),
+                self.destination_rank(), tag, self.communicator().raw());
+        }
+    }
+}
+
+/// Blocking ready mode send operation
+///
+/// # Standard section(s)
+///
+/// 3.4
+pub trait ReadySend {
+    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    ///
+    /// Fails if the matching receive operation has not been posted.
+    fn ready_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag);
+
+    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    ///
+    /// Fails if the matching receive operation has not been posted.
+    fn ready_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
+        self.ready_send_with_tag(buf, Tag::default())
+    }
+}
+
+impl<Dest: Destination> ReadySend for Dest {
+    fn ready_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
+        unsafe {
+            ffi::MPI_Rsend(buf.pointer(), buf.count(), buf.datatype().raw(),
                 self.destination_rank(), tag, self.communicator().raw());
         }
     }
@@ -632,7 +707,7 @@ impl<'b, Buf: 'b + Buffer + ?Sized> Drop for SendRequest<'b, Buf> {
     }
 }
 
-/// Initiate an immediate (non-blocking) send operation.
+/// Initiate an immediate (non-blocking) standard mode send operation.
 ///
 /// # Examples
 /// See `examples/immediate.rs`
@@ -653,6 +728,85 @@ impl<Dest: Destination> ImmediateSend for Dest {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Isend(buf.pointer(), buf.count(), buf.datatype().raw(),
+                self.destination_rank(), tag, self.communicator().raw(),
+                &mut request as *mut MPI_Request);
+        }
+        SendRequest(request, PhantomData)
+    }
+}
+
+/// Initiate an immediate (non-blocking) buffered mode send operation.
+///
+/// # Standard section(s)
+///
+/// 3.7.2
+pub trait ImmediateBufferedSend {
+    fn immediate_buffered_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
+
+    fn immediate_buffered_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
+        self.immediate_buffered_send_with_tag(buf, Tag::default())
+    }
+}
+
+impl<Dest: Destination> ImmediateBufferedSend for Dest {
+    fn immediate_buffered_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Ibsend(buf.pointer(), buf.count(), buf.datatype().raw(),
+                self.destination_rank(), tag, self.communicator().raw(),
+                &mut request as *mut MPI_Request);
+        }
+        SendRequest(request, PhantomData)
+    }
+}
+
+/// Initiate an immediate (non-blocking) synchronous mode send operation.
+///
+/// # Standard section(s)
+///
+/// 3.7.2
+pub trait ImmediateSynchronousSend {
+    fn immediate_synchronous_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
+
+    fn immediate_synchronous_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
+        self.immediate_synchronous_send_with_tag(buf, Tag::default())
+    }
+}
+
+impl<Dest: Destination> ImmediateSynchronousSend for Dest {
+    fn immediate_synchronous_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Issend(buf.pointer(), buf.count(), buf.datatype().raw(),
+                self.destination_rank(), tag, self.communicator().raw(),
+                &mut request as *mut MPI_Request);
+        }
+        SendRequest(request, PhantomData)
+    }
+}
+
+/// Initiate an immediate (non-blocking) ready mode send operation.
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.2
+pub trait ImmediateReadySend {
+    fn immediate_ready_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
+
+    fn immediate_ready_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
+        self.immediate_ready_send_with_tag(buf, Tag::default())
+    }
+}
+
+impl<Dest: Destination> ImmediateReadySend for Dest {
+    fn immediate_ready_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Irsend(buf.pointer(), buf.count(), buf.datatype().raw(),
                 self.destination_rank(), tag, self.communicator().raw(),
                 &mut request as *mut MPI_Request);
         }
