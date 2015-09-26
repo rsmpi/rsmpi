@@ -18,12 +18,14 @@
 //! `MPI_Ireduce()`, `MPI_Iallreduce()`, `MPI_Ireduce_scatter_block()`, `MPI_Ireduce_scatter()`,
 //! `MPI_Iscan()`, `MPI_Iexscan()`
 
-use std::{ptr};
+use std::{mem, ptr};
 
 use ffi;
+use ffi::{MPI_Request};
 use topology::{Rank, Identifier};
 use topology::traits::*;
 use datatype::traits::*;
+use point_to_point::{RawRequest};
 
 pub mod traits;
 
@@ -39,13 +41,14 @@ pub trait Barrier {
     /// Partake in a barrier synchronization across all processes in the `Communicator` `&self`.
     ///
     /// # Examples
+    ///
     /// See `examples/barrier.rs`
     fn barrier(&self);
 }
 
-impl<C: RawCommunicator> Barrier for C {
+impl<C: Communicator> Barrier for C {
     fn barrier(&self) {
-        unsafe { ffi::MPI_Barrier(self.raw()); }
+        unsafe { ffi::MPI_Barrier(self.communicator().raw()); }
     }
 }
 
@@ -77,6 +80,7 @@ pub trait BroadcastInto {
     /// Broadcast the contents of `buffer` from the `Root` to the `buffer`s on all other processes.
     ///
     /// # Examples
+    ///
     /// See `examples/broadcast.rs`
     fn broadcast_into<Buf: BufferMut + ?Sized>(&self, buffer: &mut Buf);
 }
@@ -104,6 +108,7 @@ pub trait GatherInto {
     /// Gather the contents of all `sendbuf`s into `recvbuf` on `Root` `&self`.
     ///
     /// # Examples
+    ///
     /// See `examples/gather.rs`
     fn gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>);
 }
@@ -134,6 +139,7 @@ pub trait AllGatherInto {
     /// communicator.
     ///
     /// # Examples
+    ///
     /// See `examples/all_gather.rs`
     fn all_gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
 }
@@ -160,6 +166,7 @@ pub trait ScatterInto {
     /// Scatter the contents of `sendbuf` to the participating processes.
     ///
     /// # Examples
+    ///
     /// See `examples/scatter.rs`
     fn scatter_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: Option<&S>, recvbuf: &mut R);
 }
@@ -191,6 +198,7 @@ impl<C: Communicator> AllToAllInto for C {
     /// Distribute the `sendbuf` from all ranks to the `recvbuf` on all ranks.
     ///
     /// # Examples
+    ///
     /// See `examples/all_to_all.rs`
     fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
         let c_size = self.communicator().size();
@@ -199,5 +207,47 @@ impl<C: Communicator> AllToAllInto for C {
                 recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().raw(),
                 self.communicator().raw());
         }
+    }
+}
+
+/// A request object for an immediate (non-blocking) barrier operation
+///
+/// # Examples
+///
+/// See `examples/immediate_barrier.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.1
+#[must_use]
+pub struct BarrierRequest(MPI_Request);
+
+impl RawRequest for BarrierRequest {
+    unsafe fn raw(&self) -> MPI_Request { self.0 }
+    unsafe fn ptr_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
+}
+
+/// Non-blocking barrier synchronization among all processes in a `Communicator`
+///
+/// Calling processes (or threads within the calling processes) enter the barrier. Completion
+/// methods on the associated request object will block until all processes have entered.
+///
+/// # Standard section(s)
+///
+/// 5.12.1
+pub trait ImmediateBarrier {
+    /// Partake in a barrier synchronization across all processes in the `Communicator` `&self`.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_barrier.rs`
+    fn immediate_barrier(&self) -> BarrierRequest;
+}
+
+impl<C: Communicator> ImmediateBarrier for C {
+    fn immediate_barrier(&self) -> BarrierRequest {
+        let mut request = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Ibarrier(self.communicator().raw(), &mut request as *mut MPI_Request); }
+        BarrierRequest(request)
     }
 }
