@@ -46,12 +46,12 @@ impl<'a, C: 'a + RawCommunicator> RawCommunicator for &'a C {
 /// Something that has a communicator associated with it
 pub trait Communicator {
     type Out: RawCommunicator;
-    fn communicator(&self) -> Self::Out;
+    fn communicator(&self) -> &Self::Out;
 }
 
 impl<'a, C: 'a + RawCommunicator> Communicator for &'a C {
-    type Out = &'a C;
-    fn communicator(&self) -> Self::Out {
+    type Out = C;
+    fn communicator(&self) -> &Self::Out {
         self
     }
 }
@@ -217,8 +217,8 @@ impl RawCommunicator for SystemCommunicator {
 
 impl Communicator for SystemCommunicator {
     type Out = SystemCommunicator;
-    fn communicator(&self) -> Self::Out {
-        *self
+    fn communicator(&self) -> &Self::Out {
+        self
     }
 }
 
@@ -228,6 +228,13 @@ impl Communicator for SystemCommunicator {
 ///
 /// 6.4
 pub struct UserCommunicator(MPI_Comm);
+
+impl Communicator for UserCommunicator {
+    type Out = UserCommunicator;
+    fn communicator(&self) -> &Self::Out {
+        self
+    }
+}
 
 impl RawCommunicator for UserCommunicator {
     unsafe fn raw(&self) -> MPI_Comm {
@@ -511,8 +518,8 @@ impl<'a, C: 'a + RawCommunicator> Identifier<'a, C> {
 }
 
 impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
-    type Out = &'a C;
-    fn communicator(&self) -> Self::Out {
+    type Out = C;
+    fn communicator(&self) -> &Self::Out {
         self.comm
     }
 }
