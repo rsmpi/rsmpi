@@ -83,12 +83,25 @@ The bindings follow the MPI 3.1 specification.
 
 Currently supported:
 
-- **Groups, Contexts, Communicators**: Only rudimentary features are supported so far.
-- **Point to point communication**: Most of the blocking, standard mode functions are supported.
-Blocking communication in buffered, synchronous and ready mode are not yet supported.
-- **Collective communication**: Blocking barrier, broadcast and gather operations.
-- **Datatypes**: Bridging between Rust types and MPI basic types as well as custom MPI datatypes
-which can act as views into buffers.
+- **Groups, Contexts, Communicators**:
+  - Group and (Intra-)Communicator management from section 6 is mostly complete.
+  - no Inter-Communicators
+  - noprocess topologies
+- **Point to point communication**:
+  - standard, buffered, synchronous and ready mode send in blocking and non-blocking variants
+  - receive in blocking and non-blocking variants
+  - send-receive
+  - probe
+  - matched probe/receive
+- **Collective communication**:
+  - barrier in blocking and non-blocking variants
+  - broadcast
+  - (all) gather
+  - scatter
+  - all to all
+  - no varying counts operations
+  - no reductions/scans
+- **Datatypes**: Bridging between Rust types and MPI basic types as well as custom MPI datatypes which can act as views into buffers.
 
 Not supported (yet):
 

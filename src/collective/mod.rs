@@ -12,7 +12,7 @@
 //! `MPI_Allreduce()`, `MPI_Reduce_local()`, `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
 //! - **5.11**: Scan, `MPI_Scan()`, `MPI_Exscan()`
-//! - **5.12**: Nonblocking collective operations, `MPI_Ibarrier()`, `MPI_Ibcast()`,
+//! - **5.12**: Nonblocking collective operations, `MPI_Ibcast()`,
 //! `MPI_Igather()`, `MPI_Igatherv()`, `MPI_Iscatter()`, `MPI_Iscatterv()`, `MPI_Iallgather()`,
 //! `MPI_Iallgatherv()`, `MPI_Ialltoall()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`,
 //! `MPI_Ireduce()`, `MPI_Iallreduce()`, `MPI_Ireduce_scatter_block()`, `MPI_Ireduce_scatter()`,
