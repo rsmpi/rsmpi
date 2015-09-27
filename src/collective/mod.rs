@@ -222,6 +222,15 @@ impl<C: Communicator> AllToAllInto for C {
 #[must_use]
 pub struct BarrierRequest(MPI_Request);
 
+impl Drop for BarrierRequest {
+    fn drop(&mut self) {
+        unsafe {
+            assert!(self.raw() == ffi::RSMPI_REQUEST_NULL,
+                "asynchronous barrier request dropped without ascertaining completion.");
+        }
+    }
+}
+
 impl RawRequest for BarrierRequest {
     unsafe fn raw(&self) -> MPI_Request { self.0 }
     unsafe fn ptr_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
