@@ -1,6 +1,6 @@
 [package]
 name = "mpi"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Benedikt Steinbusch <benedikt.steinbusch@googlemail.com>"]
 description = "Message Passing Interface bindings for Rust"
 

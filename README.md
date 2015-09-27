@@ -43,7 +43,7 @@ Add the `mpi` crate as a dependency in your `Cargo.toml`:
 
 ```
 [dependencies]
-mpi = "0.1.8"
+mpi = "0.1.9"
 ```
 
 Then use it in your program like this:
