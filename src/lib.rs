@@ -104,6 +104,7 @@ pub mod point_to_point;
 pub mod topology;
 pub mod traits;
 
+#[doc(inline)]
 pub use topology::{initialize, initialize_with_threading, Threading};
 
 /// Encodes error values returned by MPI functions.
