@@ -23,8 +23,9 @@
 use std::{mem, ptr};
 use std::cmp::Ordering;
 use std::marker::PhantomData;
+use std::string::{FromUtf8Error};
 
-use libc::c_int;
+use libc::{c_char, c_int};
 
 use super::{Count, Tag};
 use ffi;
@@ -83,6 +84,18 @@ impl Universe {
         let mut res: c_int = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Query_thread(&mut res as *mut c_int); }
         res.into()
+    }
+
+    /// Names the processor that the calling process is running on.
+    ///
+    /// Can return an `Err` if the processor name is not a UTF-8 string.
+    pub fn get_processor_name(&self) -> Result<String, FromUtf8Error> {
+        let mut buf = vec![0u8; ffi::RSMPI_MAX_PROCESSOR_NAME as usize];
+        let mut len: c_int = 0;
+
+        unsafe { ffi::MPI_Get_processor_name(buf.as_mut_ptr() as *mut c_char, &mut len as *mut c_int); }
+        buf.truncate(len as usize);
+        String::from_utf8(buf)
     }
 }
 

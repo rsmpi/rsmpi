@@ -42,4 +42,7 @@ extern const int RSMPI_THREAD_SINGLE;
 extern const int RSMPI_THREAD_FUNNELED;
 extern const int RSMPI_THREAD_SERIALIZED;
 extern const int RSMPI_THREAD_MULTIPLE;
+
+extern const int RSMPI_MAX_LIBRARY_VERSION_STRING;
+extern const int RSMPI_MAX_PROCESSOR_NAME;
 #endif

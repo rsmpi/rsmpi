@@ -88,7 +88,12 @@
 //! The sub-modules contain a more detailed description of which features are and are not
 //! supported.
 
+use std::mem;
+use std::string::{FromUtf8Error};
+
 extern crate libc;
+
+use libc::{c_char, c_int};
 
 /// The raw C language MPI API
 ///
@@ -107,11 +112,39 @@ pub mod traits;
 #[doc(inline)]
 pub use topology::{initialize, initialize_with_threading, Threading};
 
+use ffi::MPI_Aint;
+
 /// Encodes error values returned by MPI functions.
-pub type Error = ::libc::c_int;
+pub type Error = c_int;
 /// Encodes number of values in multi-value messages.
-pub type Count = ::libc::c_int;
+pub type Count = c_int;
 /// Can be used to tag messages on the sender side and match on the receiver side.
-pub type Tag = ::libc::c_int;
+pub type Tag = c_int;
 /// An address in memory
-pub type Address = ::ffi::MPI_Aint;
+pub type Address = MPI_Aint;
+
+/// Identifies the version of the MPI standard implemented by the library.
+///
+/// Returns a tuple of `(version, subversion)`, e.g. `(3, 0)`.
+///
+/// Can be called without initializing MPI.
+pub fn get_version() -> (c_int, c_int) {
+    let mut version: c_int = unsafe { mem::uninitialized() };
+    let mut subversion: c_int = unsafe { mem::uninitialized() };
+    unsafe { ffi::MPI_Get_version(&mut version as *mut c_int, &mut subversion as *mut c_int); }
+    (version, subversion)
+}
+
+/// Describes the version of the MPI library itself.
+///
+/// Can return an `Err` if the description of the MPI library is not a UTF-8 string.
+///
+/// Can be called without initializing MPI.
+pub fn get_library_version() -> Result<String, FromUtf8Error> {
+    let mut buf = vec![0u8; ffi::RSMPI_MAX_LIBRARY_VERSION_STRING as usize];
+    let mut len: c_int = 0;
+
+    unsafe { ffi::MPI_Get_library_version(buf.as_mut_ptr() as *mut c_char, &mut len as *mut c_int); }
+    buf.truncate(len as usize);
+    String::from_utf8(buf)
+}
