@@ -34,4 +34,8 @@ fn main() {
             assert_eq!(v, msg);
         }
     }
+
+    let mut x = rank;
+    world.send_receive_replace_into(&mut x, next_rank, previous_rank);
+    assert_eq!(x, previous_rank);
 }

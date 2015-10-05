@@ -15,7 +15,6 @@
 //!   - Cancellation, `MPI_Cancel()`, `MPI_Test_cancelled()`
 //! - **3.9**: Persistent requests, `MPI_Send_init()`, `MPI_Bsend_init()`, `MPI_Ssend_init()`,
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
-//! - **3.10**: In-place send-receive operations, `MPI_Sendrecv_replace()`
 
 use std::{mem, fmt};
 use std::marker::PhantomData;
@@ -634,6 +633,62 @@ impl<C: RawCommunicator> SendReceiveInto for C {
                 sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(), destination, sendtag,
                 receivebuf.pointer_mut(), receivebuf.count(), receivebuf.datatype().raw(), source, receivetag,
                 self.raw(), &mut status as *mut MPI_Status);
+        }
+        Status(status)
+    }
+}
+
+/// Simultaneously send and receive the contents of the same buffer.
+///
+/// # Standard section(s)
+///
+/// 3.10
+pub trait SendReceiveReplaceInto {
+    /// Sends the contents of `buf` to `Rank` `destination` tagging it `sendtag` and
+    /// simultaneously receives a message tagged `receivetag` from `Rank` `source` and replaces the
+    /// contents of `buf` with it.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
+    fn send_receive_replace_into_with_tags<B: ?Sized>(&self,
+                                                      buf: &mut B,
+                                                      destination: Rank,
+                                                      sendtag: Tag,
+                                                      source: Rank,
+                                                      receivetag: Tag)
+                                                      -> Status
+        where B: BufferMut;
+
+    /// Sends the contents of `buf` to `Rank` `destination` and
+    /// simultaneously receives a message from `Rank` `source` into and replaces the contents of
+    /// `buf` with it.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
+    fn send_receive_replace_into<B: ?Sized>(&self,
+                                            buf: &mut B,
+                                            destination: Rank,
+                                            source: Rank)
+                                            -> Status
+        where B: BufferMut
+    {
+        self.send_receive_replace_into_with_tags(buf, destination, Tag::default(), source, Tag::default())
+    }
+}
+
+impl<C: RawCommunicator> SendReceiveReplaceInto for C {
+    fn send_receive_replace_into_with_tags<B: ?Sized>(&self,
+                                                      buf: &mut B,
+                                                      destination: Rank,
+                                                      sendtag: Tag,
+                                                      source: Rank,
+                                                      receivetag: Tag)
+                                                      -> Status
+        where B: BufferMut
+    {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Sendrecv_replace(
+                buf.pointer_mut(), buf.count(), buf.datatype().raw(), destination, sendtag,
+                source, receivetag, self.raw(), &mut status as *mut MPI_Status);
         }
         Status(status)
     }
