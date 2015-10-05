@@ -287,6 +287,7 @@ impl<Src: Source> Probe for Src {
 /// # Standard section(s)
 ///
 /// 3.8.2
+#[must_use]
 pub struct Message(MPI_Message);
 
 impl Message {
@@ -297,6 +298,19 @@ impl Message {
 
     unsafe fn raw(&self) -> MPI_Message {
         self.0
+    }
+
+    unsafe fn ptr_mut(&mut self) -> *mut MPI_Message {
+        &mut self.0 as *mut MPI_Message
+    }
+}
+
+impl Drop for Message {
+    fn drop(&mut self) {
+        unsafe {
+            assert!(self.raw() == ffi::RSMPI_MESSAGE_NULL,
+                "matched messag dropped without receiving.");
+        }
     }
 }
 
@@ -339,14 +353,15 @@ impl<Src: Source> MatchedProbe for Src {
 pub trait MatchedReceive {
     /// Receives the message `&self` which contains a single instance of type `Msg` or None if
     /// receiving from the null process.
-    fn matched_receive<Msg: EquivalentDatatype>(&mut self) -> (Option<Msg>, Status);
+    fn matched_receive<Msg: EquivalentDatatype>(self) -> (Option<Msg>, Status);
 }
 
 impl MatchedReceive for Message {
-    fn matched_receive<Msg: EquivalentDatatype>(&mut self) -> (Option<Msg>, Status) {
+    fn matched_receive<Msg: EquivalentDatatype>(self) -> (Option<Msg>, Status) {
+        let is_no_proc = self.is_no_proc();
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.matched_receive_into(&mut res);
-        if self.is_no_proc() {
+        if is_no_proc {
             (None, status)
         } else {
             (Some(res), status)
@@ -363,15 +378,16 @@ pub trait MatchedReceiveInto {
     /// Receive the message `&self` with contents matching `buf`.
     ///
     /// Receiving from the null process leaves `buf` untouched.
-    fn matched_receive_into<Buf: BufferMut + ?Sized>(&mut self, buf: &mut Buf) -> Status;
+    fn matched_receive_into<Buf: BufferMut + ?Sized>(self, buf: &mut Buf) -> Status;
 }
 
 impl MatchedReceiveInto for Message {
-    fn matched_receive_into<Buf: BufferMut + ?Sized>(&mut self, buf: &mut Buf) -> Status {
+    fn matched_receive_into<Buf: BufferMut + ?Sized>(mut self, buf: &mut Buf) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Mrecv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
-                &mut self.raw() as *mut MPI_Message, &mut status as *mut MPI_Status);
+                self.ptr_mut(), &mut status as *mut MPI_Status);
+            assert_eq!(self.raw(), ffi::RSMPI_MESSAGE_NULL);
         }
         Status(status)
     }
@@ -385,16 +401,17 @@ impl MatchedReceiveInto for Message {
 pub trait MatchedReceiveVec {
     /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`
     /// or `None` if receiving from the null process.
-    fn matched_receive_vec<Msg: EquivalentDatatype>(&mut self) -> (Option<Vec<Msg>>, Status);
+    fn matched_receive_vec<Msg: EquivalentDatatype>(self) -> (Option<Vec<Msg>>, Status);
 }
 
 impl MatchedReceiveVec for (Message, Status) {
-    fn matched_receive_vec<Msg: EquivalentDatatype>(&mut self) -> (Option<Vec<Msg>>, Status) {
+    fn matched_receive_vec<Msg: EquivalentDatatype>(self) -> (Option<Vec<Msg>>, Status) {
+        let is_no_proc = self.0.is_no_proc();
         let count = self.1.count(Msg::equivalent_datatype()) as usize; // FIXME: this should be a checked cast.
         let mut res = Vec::with_capacity(count);
         unsafe { res.set_len(count); }
         let status = self.0.matched_receive_into(&mut res[..]);
-        if self.0.is_no_proc() {
+        if is_no_proc {
             (None, status)
         } else {
             (Some(res), status)

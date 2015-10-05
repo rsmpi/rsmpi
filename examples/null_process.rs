@@ -13,7 +13,7 @@ fn main() {
     let x = 1u64;
     world.null_process().send(&x);
 
-    let (mut msg, status) = world.null_process().matched_probe();
+    let (msg, status) = world.null_process().matched_probe();
     assert!(msg.is_no_proc());
     assert_eq!(mpi::ffi::RSMPI_PROC_NULL, status.source_rank());
 
