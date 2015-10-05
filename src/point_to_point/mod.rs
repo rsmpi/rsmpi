@@ -12,7 +12,6 @@
 //!   - Completion, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
 //!   `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`, `MPI_Request_get_status()`
 //! - **3.8**:
-//!   - Nonblocking probe operations, `MPI_Iprobe()`, `MPI_Improbe()`, `MPI_Imrecv()`
 //!   - Cancellation, `MPI_Cancel()`, `MPI_Test_cancelled()`
 //! - **3.9**: Persistent requests, `MPI_Send_init()`, `MPI_Bsend_init()`, `MPI_Ssend_init()`,
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
@@ -880,6 +879,99 @@ impl<Src:Source> ImmediateReceiveInto for Src {
             ffi::MPI_Irecv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
                 self.source_rank(), tag, self.communicator().raw(),
                 &mut request as *mut MPI_Request);
+        }
+        ReceiveRequest(request, PhantomData)
+    }
+}
+
+/// Asynchronously probe a source for incoming messages.
+///
+/// Like `Probe` but returns a `None` immediately if there is no incoming message to be probed.
+///
+/// # Standard section(s)
+///
+/// 3.8.1
+pub trait ImmediateProbe {
+    /// Asynchronously probe `Source` `&self` for incoming messages with a certain tag.
+    fn immediate_probe_with_tag(&self, tag: Tag) -> Option<Status>;
+
+    /// Asynchronously probe `Source` `&self` for incoming messages with any tag.
+    fn immediate_probe(&self) -> Option<Status> {
+        self.immediate_probe_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+}
+
+impl<Src: Source> ImmediateProbe for Src {
+    fn immediate_probe_with_tag(&self, tag: Tag) -> Option<Status> {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        let mut flag: c_int = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iprobe(self.source_rank(), tag, self.communicator().raw(),
+                &mut flag as *mut c_int, &mut status as *mut MPI_Status);
+        };
+        if flag != 0 {
+            Some(Status(status))
+        } else {
+            None
+        }
+    }
+}
+
+/// Asynchronously probe a source for incoming messages with guaranteed reception.
+///
+/// Like `MatchedProbe` but returns a `None` immediately if there is no incoming message to be
+/// probed.
+///
+/// # Standard section(s)
+///
+/// 3.8.2
+pub trait ImmediateMatchedProbe {
+    /// Asynchronously probe `Source` `&self` for incoming messages with a certain tag.
+    fn immediate_matched_probe_with_tag(&self, tag: Tag) -> Option<(Message, Status)>;
+
+    /// Asynchronously probe `Source` `&self` for incoming messages with any tag.
+    fn immediate_matched_probe(&self) -> Option<(Message, Status)> {
+        self.immediate_matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+}
+
+impl<Src: Source> ImmediateMatchedProbe for Src {
+    fn immediate_matched_probe_with_tag(&self, tag: Tag) -> Option<(Message, Status)> {
+        let mut message: MPI_Message = unsafe { mem::uninitialized() };
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        let mut flag: c_int = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Improbe(self.source_rank(), tag, self.communicator().raw(),
+                &mut flag as *mut c_int, &mut message as *mut MPI_Message,
+                &mut status as *mut MPI_Status);
+        }
+        if flag != 0 {
+            Some((Message(message), Status(status)))
+        } else {
+            None
+        }
+    }
+}
+
+/// Asynchronously receive a previously probed message into a `Buffer`.
+///
+/// # Standard section(s)
+///
+/// 3.8.3
+pub trait ImmediateMatchedReceiveInto {
+    /// Asynchronously receive the message `&self` with contents matching `buf`.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
+    fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(self, buf: &mut Buf) -> ReceiveRequest<'b, Buf>;
+}
+
+impl ImmediateMatchedReceiveInto for Message {
+    fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(mut self, buf: &mut Buf) -> ReceiveRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Imrecv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
+                self.ptr_mut(), &mut request as *mut MPI_Request);
+            assert_eq!(self.raw(), ffi::RSMPI_MESSAGE_NULL);
         }
         ReceiveRequest(request, PhantomData)
     }
