@@ -1,3 +1,3 @@
 //! Collective communication traits
 pub use super::{Barrier, Root, BroadcastInto, GatherInto, AllGatherInto, ScatterInto,
-                AllToAllInto, ImmediateBarrier};
+                AllToAllInto, ReduceInto, AllReduceInto, ImmediateBarrier};

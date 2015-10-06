@@ -8,8 +8,8 @@
 //! - **5.6**: Scatter, `MPI_Scatterv()`
 //! - **5.7**: Gather-to-all, `MPI_Allgatherv()`
 //! - **5.8**: All-to-all, `MPI_Alltoallv()`, `MPI_Alltoallw()`
-//! - **5.9**: Global reduction operations, `MPI_Reduce()`, `MPI_Op_create()`, `MPI_Op_free()`,
-//! `MPI_Allreduce()`, `MPI_Reduce_local()`, `MPI_Op_commutative()`
+//! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
+//! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
 //! - **5.11**: Scan, `MPI_Scan()`, `MPI_Exscan()`
 //! - **5.12**: Nonblocking collective operations, `MPI_Ibcast()`,
@@ -21,7 +21,7 @@
 use std::{mem, ptr};
 
 use ffi;
-use ffi::{MPI_Request};
+use ffi::{MPI_Request, MPI_Op};
 use topology::{Rank, Identifier};
 use topology::traits::*;
 use datatype::traits::*;
@@ -207,6 +207,138 @@ impl<C: Communicator> AllToAllInto for C {
                 recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().raw(),
                 self.communicator().raw());
         }
+    }
+}
+
+/// Something that can identify as a raw `MPI_Op`
+pub trait RawOperation {
+    /// The raw `MPI_Op` value
+    unsafe fn raw(&self) -> MPI_Op;
+}
+
+/// A built-in operation like `MPI_SUM`
+///
+/// # Standard section(s)
+///
+/// 5.9.2
+#[derive(Copy, Clone)]
+pub struct SystemOperation(MPI_Op);
+
+macro_rules! system_operation_constructors {
+    ($($ctor:ident => $val:path),*) => (
+        $(pub fn $ctor() -> SystemOperation {
+            //! The built-in `$ctor` operation
+            SystemOperation($val)
+        })*
+    )
+}
+
+impl SystemOperation {
+    system_operation_constructors! {
+        max => ffi::RSMPI_MAX,
+        min => ffi::RSMPI_MIN,
+        sum => ffi::RSMPI_SUM,
+        product => ffi::RSMPI_PROD,
+        logical_and => ffi::RSMPI_LAND,
+        bitwise_and => ffi::RSMPI_BAND,
+        logical_or => ffi::RSMPI_LOR,
+        bitwise_or => ffi::RSMPI_BOR,
+        logical_xor => ffi::RSMPI_LXOR,
+        bitwise_xor => ffi::RSMPI_BXOR
+    }
+}
+
+impl RawOperation for SystemOperation {
+    unsafe fn raw(&self) -> MPI_Op {
+        self.0
+    }
+}
+
+macro_rules! reduce_into_specializations {
+    ($($name:ident => $operation:expr),*) => (
+        $(fn $name<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>) {
+            self.reduce_into(sendbuf, recvbuf, $operation)
+        })*
+    )
+}
+
+/// Perform a global reduction, storing the result on the `Root` process.
+///
+/// # Standard section(s)
+///
+/// 5.9.1
+pub trait ReduceInto {
+    /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
+    /// stores the result in `recvbuf` on the `Root` process.
+    ///
+    /// `recvbuf` is ignored and can be `None` on all processes but the `Root` process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/reduce.rs`
+    fn reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: Option<&mut R>, op: O);
+
+//    reduce_into_specializations! {
+//        max_into => SystemOperation::max(),
+//        min_into => SystemOperation::min(),
+//        sum_into => SystemOperation::sum(),
+//        product_into => SystemOperation::product(),
+//        logical_and_into => SystemOperation::logical_and(),
+//        bitwise_and_into => SystemOperation::bitwise_and(),
+//        logical_or_into => SystemOperation::logical_or(),
+//        bitwise_or_into => SystemOperation::bitwise_or(),
+//        logical_xor_into => SystemOperation::logical_xor(),
+//        bitwise_xor_into => SystemOperation::bitwise_xor()
+//    }
+}
+
+impl<T: Root> ReduceInto for T {
+    fn reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: Option<&mut R>, op: O) {
+        unsafe {
+            let recvptr = recvbuf.map_or(ptr::null_mut(), |x| { x.pointer_mut() });
+            ffi::MPI_Reduce(sendbuf.pointer(), recvptr, sendbuf.count(), sendbuf.datatype().raw(),
+                op.raw(), self.root_rank(), self.communicator().raw());
+        }
+    }
+}
+
+/// Perform a global reduction, storing the result on all processes.
+///
+/// # Standard section(s)
+///
+/// 5.9.6
+pub trait AllReduceInto {
+    /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
+    /// stores the result in `recvbuf` on all processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/reduce.rs`
+    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
+}
+
+impl<C: Communicator> AllReduceInto for C {
+    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        unsafe {
+            ffi::MPI_Allreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.datatype().raw(), op.raw(), self.communicator().raw());
+        }
+    }
+}
+
+/// Perform a local reduction.
+///
+/// # Standard section(s)
+///
+/// 5.9.7
+///
+/// # Examples
+///
+/// See `examples/redure.rs`
+pub fn reduce_local_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(inbuf: &S, inoutbuf: &mut R, op: O) {
+    unsafe {
+        ffi::MPI_Reduce_local(inbuf.pointer(), inoutbuf.pointer_mut(), inbuf.count(),
+          inbuf.datatype().raw(), op.raw());
     }
 }
 

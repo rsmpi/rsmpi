@@ -46,4 +46,15 @@ extern const int RSMPI_THREAD_MULTIPLE;
 
 extern const int RSMPI_MAX_LIBRARY_VERSION_STRING;
 extern const int RSMPI_MAX_PROCESSOR_NAME;
+
+extern const MPI_Op RSMPI_MAX;
+extern const MPI_Op RSMPI_MIN;
+extern const MPI_Op RSMPI_SUM;
+extern const MPI_Op RSMPI_PROD;
+extern const MPI_Op RSMPI_LAND;
+extern const MPI_Op RSMPI_BAND;
+extern const MPI_Op RSMPI_LOR;
+extern const MPI_Op RSMPI_BOR;
+extern const MPI_Op RSMPI_LXOR;
+extern const MPI_Op RSMPI_BXOR;
 #endif
