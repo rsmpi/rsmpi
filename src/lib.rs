@@ -1,5 +1,6 @@
 // #![feature(plugin, custom_attribute)]
 // #![plugin(c_import)]
+#![deny(missing_docs)]
 
 //! Message Passing Interface bindings for Rust
 //!
@@ -100,7 +101,7 @@ use libc::{c_char, c_int};
 /// Documented in the [Message Passing Interface specification][spec]
 ///
 /// [spec]: http://www.mpi-forum.org/docs/docs.html
-#[allow(dead_code, non_snake_case, non_camel_case_types)]
+#[allow(missing_docs, dead_code, non_snake_case, non_camel_case_types)]
 pub mod ffi;
 
 pub mod collective;
