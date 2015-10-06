@@ -787,8 +787,10 @@ impl<'b, Buf: 'b + Buffer + ?Sized> Drop for SendRequest<'b, Buf> {
 ///
 /// 3.7.2
 pub trait ImmediateSend {
+    /// Initiate sending the data in `buf` in standard mode and tag it.
     fn immediate_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
 
+    /// Initiate sending the data in `buf` in standard mode.
     fn immediate_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
         self.immediate_send_with_tag(buf, Tag::default())
     }
@@ -812,8 +814,10 @@ impl<Dest: Destination> ImmediateSend for Dest {
 ///
 /// 3.7.2
 pub trait ImmediateBufferedSend {
+    /// Initiate sending the data in `buf` in buffered mode and tag it.
     fn immediate_buffered_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
 
+    /// Initiate sending the data in `buf` in buffered mode.
     fn immediate_buffered_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
         self.immediate_buffered_send_with_tag(buf, Tag::default())
     }
@@ -837,8 +841,10 @@ impl<Dest: Destination> ImmediateBufferedSend for Dest {
 ///
 /// 3.7.2
 pub trait ImmediateSynchronousSend {
+    /// Initiate sending the data in `buf` in synchronous mode and tag it.
     fn immediate_synchronous_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
 
+    /// Initiate sending the data in `buf` in synchronous mode.
     fn immediate_synchronous_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
         self.immediate_synchronous_send_with_tag(buf, Tag::default())
     }
@@ -866,8 +872,10 @@ impl<Dest: Destination> ImmediateSynchronousSend for Dest {
 ///
 /// 3.7.2
 pub trait ImmediateReadySend {
+    /// Initiate sending the data in `buf` in ready mode and tag it.
     fn immediate_ready_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
 
+    /// Initiate sending the data in `buf` in ready mode.
     fn immediate_ready_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
         self.immediate_ready_send_with_tag(buf, Tag::default())
     }
@@ -920,8 +928,10 @@ impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for ReceiveRequest<'b, Buf> {
 ///
 /// 3.7.2
 pub trait ImmediateReceiveInto {
+    /// Initiate receiving a message matching `tag` into `buf`.
     fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf>;
 
+    /// Initiate receiving a message into `buf`.
     fn immediate_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf> {
         self.immediate_receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
     }

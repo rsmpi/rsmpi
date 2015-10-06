@@ -53,6 +53,7 @@ pub mod traits;
 
 /// Can identify as an `MPI_Datatype`
 pub trait RawDatatype {
+    /// The raw `MPI_Datatype` value
     unsafe fn raw(&self) -> MPI_Datatype;
 }
 
@@ -82,7 +83,9 @@ impl RawDatatype for SystemDatatype {
 ///
 /// 3.2.2
 pub trait EquivalentDatatype {
+    /// The type of the equivalent MPI datatype (e.g. `SystemDatatype` or `UserDatatype`)
     type Out: RawDatatype;
+    /// The MPI datatype that is equivalent to this Rust type
     fn equivalent_datatype() -> Self::Out;
 }
 
@@ -257,7 +260,9 @@ impl Drop for UserDatatype {
 /// Something that has an associated datatype
 // TODO: merge this into Buffer, maybe?
 pub trait Datatype {
+    /// The type of the associated MPI datatype (e.g. `SystemDatatype` or `UserDatatype`)
     type Out: RawDatatype;
+    /// The associated MPI datatype
     fn datatype(&self) -> Self::Out;
 }
 

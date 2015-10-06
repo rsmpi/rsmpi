@@ -35,6 +35,7 @@ pub mod traits;
 
 /// Something that can identify itself as a raw MPI communicator
 pub trait RawCommunicator {
+    /// The raw `MPI_Comm` value
     unsafe fn raw(&self) -> MPI_Comm;
 }
 
@@ -46,7 +47,9 @@ impl<'a, C: 'a + RawCommunicator> RawCommunicator for &'a C {
 
 /// Something that has a communicator associated with it
 pub trait Communicator {
+    /// The type of the associated communicator
     type Out: RawCommunicator;
+    /// Returns the associated communicator.
     fn communicator(&self) -> &Self::Out;
 }
 
@@ -129,6 +132,7 @@ pub enum Threading {
 }
 
 impl Threading {
+    /// The raw value understood by the MPI C API
     fn raw(self) -> c_int {
         use self::Threading::*;
         match self {
@@ -163,6 +167,7 @@ impl From<c_int> for Threading {
     }
 }
 
+/// Whether the MPI library has been initialized
 fn is_initialized() -> bool {
     let mut res: c_int = unsafe { mem::uninitialized() };
     unsafe { ffi::MPI_Initialized(&mut res as *mut c_int); }
@@ -279,6 +284,7 @@ impl Color {
         Color(value)
     }
 
+    /// The raw value understood by the MPI C API
     fn raw(&self) -> c_int {
         self.0
     }
@@ -539,6 +545,7 @@ impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
 
 /// Something that can identify itself as a raw MPI group
 pub trait RawGroup {
+    /// The raw `MPI_Group` value
     unsafe fn raw(&self) -> MPI_Group;
 }
 
@@ -589,6 +596,7 @@ impl RawGroup for UserGroup {
     }
 }
 
+/// Extension methods implemented on Groups
 pub trait GroupExt: RawGroup {
     /// Group union
     ///

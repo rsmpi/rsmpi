@@ -191,15 +191,15 @@ impl<T: Root> ScatterInto for T {
 ///
 /// 5.8
 pub trait AllToAllInto {
-    fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
-}
-
-impl<C: Communicator> AllToAllInto for C {
     /// Distribute the `sendbuf` from all ranks to the `recvbuf` on all ranks.
     ///
     /// # Examples
     ///
     /// See `examples/all_to_all.rs`
+    fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
+}
+
+impl<C: Communicator> AllToAllInto for C {
     fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
         let c_size = self.communicator().size();
         unsafe {
