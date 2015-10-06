@@ -41,14 +41,14 @@ cargo build
 
 Add the `mpi` crate as a dependency in your `Cargo.toml`:
 
-```
+```toml
 [dependencies]
 mpi = "0.1.9"
 ```
 
 Then use it in your program like this:
 
-```
+```rust
 extern crate mpi;
 
 use mpi::traits::*;
