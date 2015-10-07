@@ -11,7 +11,6 @@
 //! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
 //! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
-//! - **5.11**: Scan, `MPI_Scan()`, `MPI_Exscan()`
 //! - **5.12**: Nonblocking collective operations, `MPI_Ibcast()`,
 //! `MPI_Igather()`, `MPI_Igatherv()`, `MPI_Iscatter()`, `MPI_Iscatterv()`, `MPI_Iallgather()`,
 //! `MPI_Iallgatherv()`, `MPI_Ialltoall()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`,
@@ -339,6 +338,54 @@ pub fn reduce_local_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperat
     unsafe {
         ffi::MPI_Reduce_local(inbuf.pointer(), inoutbuf.pointer_mut(), inbuf.count(),
           inbuf.datatype().raw(), op.raw());
+    }
+}
+
+/// Perform a global inclusive prefix reduction.
+///
+/// # Standard section(s)
+///
+/// 5.11.1
+pub trait ScanInto {
+    /// Performs a global inclusive prefix reduction of the data in `sendbuf` into `recvbuf` under
+    /// operation `op`.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scan.rs`
+    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
+}
+
+impl<C: Communicator> ScanInto for C {
+    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        unsafe {
+            ffi::MPI_Scan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.datatype().raw(), op.raw(), self.communicator().raw());
+        }
+    }
+}
+
+/// Perform a global exclusive prefix reduction.
+///
+/// # Standard section(s)
+///
+/// 5.11.2
+pub trait ExclusiveScanInto {
+    /// Performs a global exclusive prefix reduction of the data in `sendbuf` into `recvbuf` under
+    /// operation `op`.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scan.rs`
+    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
+}
+
+impl<C: Communicator> ExclusiveScanInto for C {
+    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        unsafe {
+            ffi::MPI_Exscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.datatype().raw(), op.raw(), self.communicator().raw());
+        }
     }
 }
 
