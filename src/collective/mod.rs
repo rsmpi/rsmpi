@@ -227,7 +227,7 @@ pub struct SystemOperation(MPI_Op);
 macro_rules! system_operation_constructors {
     ($($ctor:ident => $val:path),*) => (
         $(pub fn $ctor() -> SystemOperation {
-            //! The built-in `$ctor` operation
+            //! A built-in operation
             SystemOperation($val)
         })*
     )
