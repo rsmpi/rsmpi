@@ -21,6 +21,8 @@ use std::marker::PhantomData;
 
 use libc::c_int;
 
+use conv::ConvUtil;
+
 use ffi;
 use ffi::{MPI_Status, MPI_Message, MPI_Request};
 use topology::{SystemCommunicator, UserCommunicator, Rank, Identifier};
@@ -405,7 +407,7 @@ pub trait MatchedReceiveVec {
 impl MatchedReceiveVec for (Message, Status) {
     fn matched_receive_vec<Msg: EquivalentDatatype>(self) -> (Option<Vec<Msg>>, Status) {
         let is_no_proc = self.0.is_no_proc();
-        let count = self.1.count(Msg::equivalent_datatype()) as usize; // FIXME: this should be a checked cast.
+        let count = self.1.count(Msg::equivalent_datatype()).value_as().unwrap();
         let mut res = Vec::with_capacity(count);
         unsafe { res.set_len(count); }
         let status = self.0.matched_receive_into(&mut res[..]);

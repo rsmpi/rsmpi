@@ -27,6 +27,8 @@ use std::string::{FromUtf8Error};
 
 use libc::{c_char, c_int};
 
+use conv::ConvUtil;
+
 use super::{Count, Tag};
 use ffi;
 use ffi::{MPI_Comm, MPI_Group};
@@ -650,7 +652,7 @@ pub trait GroupExt: RawGroup {
     /// 6.3.2
     fn include(&self, ranks: &[Rank]) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
-        let count: Count = ranks.len() as Count; // FIXME: this should be a checked cast.
+        let count: Count = ranks.len().value_as().unwrap();
         unsafe { ffi::MPI_Group_incl(self.raw(), count, ranks.as_ptr(), &mut newgroup as *mut MPI_Group); }
         UserGroup(newgroup)
     }
@@ -665,7 +667,7 @@ pub trait GroupExt: RawGroup {
     /// 6.3.2
     fn exclude(&self, ranks: &[Rank]) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
-        let count: Count = ranks.len() as Count; // FIXME: this should be a checked cast.
+        let count: Count = ranks.len().value_as().unwrap();
         unsafe { ffi::MPI_Group_excl(self.raw(), count, ranks.as_ptr(), &mut newgroup as *mut MPI_Group); }
         UserGroup(newgroup)
     }

@@ -96,6 +96,8 @@ extern crate libc;
 
 use libc::{c_char, c_int};
 
+extern crate conv;
+
 /// The raw C language MPI API
 ///
 /// Documented in the [Message Passing Interface specification][spec]

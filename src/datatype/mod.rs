@@ -45,6 +45,8 @@ use std::{mem};
 
 use libc::{c_void};
 
+use conv::ConvUtil;
+
 use ::{Address, Count};
 use ffi;
 use ffi::MPI_Datatype;
@@ -178,8 +180,8 @@ impl UserDatatype {
     ///
     /// 4.1.2
     pub fn indexed<D: RawDatatype>(blocklengths: &[Count], displacements: &[Count], oldtype: D) -> UserDatatype {
-        let count: Count = blocklengths.len() as Count; // FIXME: this should be a checked cast.
-        assert_eq!(count, displacements.len() as Count);
+        assert_eq!(blocklengths.len(), displacements.len());
+        let count: Count = blocklengths.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_indexed(count, blocklengths.as_ptr(), displacements.as_ptr(), oldtype.raw(),
@@ -197,8 +199,8 @@ impl UserDatatype {
     ///
     /// 4.1.2
     pub fn heterogeneous_indexed<D: RawDatatype>(blocklengths: &[Count], displacements: &[Address], oldtype: D) -> UserDatatype {
-        let count: Count = blocklengths.len() as Count; // FIXME: this should be a checked cast.
-        assert_eq!(count, displacements.len() as Count);
+        assert_eq!(blocklengths.len(), displacements.len());
+        let count: Count = blocklengths.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_hindexed(count, blocklengths.as_ptr(), displacements.as_ptr(),
@@ -214,7 +216,7 @@ impl UserDatatype {
     ///
     /// 4.1.2
     pub fn indexed_block<D: RawDatatype>(blocklength: Count, displacements: &[Count], oldtype: D) -> UserDatatype {
-        let count: Count = displacements.len() as Count; // FIXME: this should be a checked cast.
+        let count: Count = displacements.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_indexed_block(count, blocklength, displacements.as_ptr(),
@@ -231,7 +233,7 @@ impl UserDatatype {
     ///
     /// 4.1.2
     pub fn heterogeneous_indexed_block<D: RawDatatype>(blocklength: Count, displacements: &[Address], oldtype: D) -> UserDatatype {
-        let count: Count = displacements.len() as Count; // FIXME: this should be a checked cast.
+        let count: Count = displacements.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_hindexed_block(count, blocklength, displacements.as_ptr(),
@@ -288,7 +290,7 @@ impl<T> Collection for T where T: EquivalentDatatype {
 
 impl<T> Collection for [T] where T: EquivalentDatatype {
     fn count(&self) -> Count {
-        self.len() as Count // FIXME: this should be a checked cast.
+        self.len().value_as().unwrap()
     }
 }
 
