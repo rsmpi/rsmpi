@@ -23,12 +23,15 @@ use libc::c_int;
 
 use conv::ConvUtil;
 
+use super::{Error, Count, Tag};
+
 use ffi;
 use ffi::{MPI_Status, MPI_Message, MPI_Request};
+
+use datatype::traits::*;
+use raw::traits::*;
 use topology::{SystemCommunicator, UserCommunicator, Rank, Identifier};
 use topology::traits::*;
-use datatype::traits::*;
-use super::{Error, Count, Tag};
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
 
@@ -128,8 +131,8 @@ pub trait Send {
 impl<Dest: Destination> Send for Dest {
     fn send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
-            ffi::MPI_Send(buf.pointer(), buf.count(), buf.datatype().raw(),
-                self.destination_rank(), tag, self.communicator().raw());
+            ffi::MPI_Send(buf.pointer(), buf.count(), buf.datatype().as_raw(),
+                self.destination_rank(), tag, self.communicator().as_raw());
         }
     }
 }
@@ -152,8 +155,8 @@ pub trait BufferedSend {
 impl<Dest: Destination> BufferedSend for Dest {
     fn buffered_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
-            ffi::MPI_Bsend(buf.pointer(), buf.count(), buf.datatype().raw(),
-                self.destination_rank(), tag, self.communicator().raw());
+            ffi::MPI_Bsend(buf.pointer(), buf.count(), buf.datatype().as_raw(),
+                self.destination_rank(), tag, self.communicator().as_raw());
         }
     }
 }
@@ -180,8 +183,8 @@ pub trait SynchronousSend {
 impl<Dest: Destination> SynchronousSend for Dest {
     fn synchronous_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
-            ffi::MPI_Ssend(buf.pointer(), buf.count(), buf.datatype().raw(),
-                self.destination_rank(), tag, self.communicator().raw());
+            ffi::MPI_Ssend(buf.pointer(), buf.count(), buf.datatype().as_raw(),
+                self.destination_rank(), tag, self.communicator().as_raw());
         }
     }
 }
@@ -208,8 +211,8 @@ pub trait ReadySend {
 impl<Dest: Destination> ReadySend for Dest {
     fn ready_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
-            ffi::MPI_Rsend(buf.pointer(), buf.count(), buf.datatype().raw(),
-                self.destination_rank(), tag, self.communicator().raw());
+            ffi::MPI_Rsend(buf.pointer(), buf.count(), buf.datatype().as_raw(),
+                self.destination_rank(), tag, self.communicator().as_raw());
         }
     }
 }
@@ -240,7 +243,7 @@ impl Status {
     /// Number of instances of the type contained in the message
     pub fn count<D: RawDatatype>(&self, d: D) -> Count {
         let mut count: Count = unsafe { mem::uninitialized() };
-        unsafe { ffi::MPI_Get_count(&self.0, d.raw(), &mut count as *mut Count) };
+        unsafe { ffi::MPI_Get_count(&self.0, d.as_raw(), &mut count) };
         count
     }
 }
@@ -275,14 +278,14 @@ impl<Src: Source> Probe for Src {
     fn probe_with_tag(&self, tag: Tag) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Probe(self.source_rank(), tag, self.communicator().raw(),
-                &mut status as *mut MPI_Status);
+            ffi::MPI_Probe(self.source_rank(), tag, self.communicator().as_raw(),
+                &mut status);
         };
         Status(status)
     }
 }
 
-/// Describes an pending incoming message, probed by a `matched_probe()`.
+/// Describes a pending incoming message, probed by a `matched_probe()`.
 ///
 /// # Standard section(s)
 ///
@@ -293,23 +296,24 @@ pub struct Message(MPI_Message);
 impl Message {
     /// True if the `Source` for the probe was the null process.
     pub fn is_no_proc(&self) -> bool {
-        unsafe { self.raw() == ffi::RSMPI_MESSAGE_NO_PROC }
+        unsafe { self.as_raw() == ffi::RSMPI_MESSAGE_NO_PROC }
     }
+}
 
-    unsafe fn raw(&self) -> MPI_Message {
-        self.0
-    }
+impl AsRaw for Message {
+    type Raw = MPI_Message;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
+}
 
-    unsafe fn ptr_mut(&mut self) -> *mut MPI_Message {
-        &mut self.0 as *mut MPI_Message
-    }
+impl AsRawMut for Message {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut self.0 }
 }
 
 impl Drop for Message {
     fn drop(&mut self) {
         unsafe {
-            assert!(self.raw() == ffi::RSMPI_MESSAGE_NULL,
-                "matched messag dropped without receiving.");
+            assert!(self.as_raw() == ffi::RSMPI_MESSAGE_NULL,
+                "matched message dropped without receiving.");
         }
     }
 }
@@ -338,8 +342,8 @@ impl<Src: Source> MatchedProbe for Src {
         let mut message: MPI_Message = unsafe { mem::uninitialized() };
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Mprobe(self.source_rank(), tag, self.communicator().raw(),
-                &mut message as *mut MPI_Message, &mut status as *mut MPI_Status);
+            ffi::MPI_Mprobe(self.source_rank(), tag, self.communicator().as_raw(),
+                &mut message, &mut status);
         }
         (Message(message), Status(status))
     }
@@ -385,9 +389,9 @@ impl MatchedReceiveInto for Message {
     fn matched_receive_into<Buf: BufferMut + ?Sized>(mut self, buf: &mut Buf) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Mrecv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
-                self.ptr_mut(), &mut status as *mut MPI_Status);
-            assert_eq!(self.raw(), ffi::RSMPI_MESSAGE_NULL);
+            ffi::MPI_Mrecv(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
+                self.as_raw_mut(), &mut status);
+            assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
         }
         Status(status)
     }
@@ -406,11 +410,12 @@ pub trait MatchedReceiveVec {
 
 impl MatchedReceiveVec for (Message, Status) {
     fn matched_receive_vec<Msg: EquivalentDatatype>(self) -> (Option<Vec<Msg>>, Status) {
-        let is_no_proc = self.0.is_no_proc();
-        let count = self.1.count(Msg::equivalent_datatype()).value_as().unwrap();
+        let (message, status) = self;
+        let is_no_proc = message.is_no_proc();
+        let count = status.count(Msg::equivalent_datatype()).value_as().unwrap();
         let mut res = Vec::with_capacity(count);
         unsafe { res.set_len(count); }
-        let status = self.0.matched_receive_into(&mut res[..]);
+        let status = message.matched_receive_into(&mut res[..]);
         if is_no_proc {
             (None, status)
         } else {
@@ -449,7 +454,7 @@ pub trait Receive {
 
 impl<Src: Source> Receive for Src {
     fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Msg>, Status) {
-        let mut res = unsafe { mem::uninitialized() };
+        let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.receive_into_with_tag(&mut res, tag);
         if self.source_rank() == ffi::RSMPI_PROC_NULL {
             (None, status)
@@ -482,8 +487,8 @@ impl<Src: Source> ReceiveInto for Src {
     fn receive_into_with_tag<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Recv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
-                self.source_rank(), tag, self.communicator().raw(), &mut status as *mut MPI_Status);
+            ffi::MPI_Recv(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
+                self.source_rank(), tag, self.communicator().as_raw(), &mut status);
         }
         Status(status)
     }
@@ -565,7 +570,7 @@ impl<T: SendReceiveInto> SendReceive for T {
         where S: EquivalentDatatype,
               R: EquivalentDatatype
     {
-        let mut res = unsafe { mem::uninitialized() };
+        let mut res: R = unsafe { mem::uninitialized() };
         let status = self.send_receive_into_with_tags(
             msg, destination, sendtag,
             &mut res, source, receivetag);
@@ -632,9 +637,9 @@ impl<C: RawCommunicator> SendReceiveInto for C {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Sendrecv(
-                sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(), destination, sendtag,
-                receivebuf.pointer_mut(), receivebuf.count(), receivebuf.datatype().raw(), source, receivetag,
-                self.raw(), &mut status as *mut MPI_Status);
+                sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(), destination, sendtag,
+                receivebuf.pointer_mut(), receivebuf.count(), receivebuf.datatype().as_raw(), source, receivetag,
+                self.as_raw(), &mut status);
         }
         Status(status)
     }
@@ -689,19 +694,11 @@ impl<C: RawCommunicator> SendReceiveReplaceInto for C {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Sendrecv_replace(
-                buf.pointer_mut(), buf.count(), buf.datatype().raw(), destination, sendtag,
-                source, receivetag, self.raw(), &mut status as *mut MPI_Status);
+                buf.pointer_mut(), buf.count(), buf.datatype().as_raw(), destination, sendtag,
+                source, receivetag, self.as_raw(), &mut status);
         }
         Status(status)
     }
-}
-
-/// Something that can identify as a raw `MPI_Request`
-pub trait RawRequest {
-    /// The raw `MPI_Request` value
-    unsafe fn raw(&self) -> MPI_Request;
-    /// A mutable pointer to the raw `MPI_Request` value
-    unsafe fn ptr_mut(&mut self) -> *mut MPI_Request;
 }
 
 /// Wait for an operation to finish.
@@ -718,7 +715,7 @@ pub trait Wait: RawRequest + Sized {
     fn wait(mut self) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Wait(self.ptr_mut(), &mut status as *mut MPI_Status);
+            ffi::MPI_Wait(self.as_raw_mut(), &mut status);
         }
         Status(status)
     }
@@ -742,7 +739,7 @@ pub trait Test: RawRequest + Sized {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         let mut flag: c_int = 0;
         unsafe {
-            ffi::MPI_Test(self.ptr_mut(), &mut flag as *mut c_int, &mut status as *mut MPI_Status);
+            ffi::MPI_Test(self.as_raw_mut(), &mut flag, &mut status);
         }
         if flag != 0 {
             Result::Ok(Status(status))
@@ -766,15 +763,21 @@ impl<R: RawRequest + Sized> Test for R { }
 #[must_use]
 pub struct SendRequest<'b, Buf: 'b + Buffer + ?Sized>(MPI_Request, PhantomData<&'b Buf>);
 
-impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for SendRequest<'b, Buf> {
-    unsafe fn raw(&self) -> MPI_Request { self.0 }
-    unsafe fn ptr_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
+impl<'b, Buf: 'b + Buffer + ?Sized> AsRaw for SendRequest<'b, Buf> {
+    type Raw = MPI_Request;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
+
+impl<'b, Buf: 'b + Buffer + ?Sized> AsRawMut for SendRequest<'b, Buf> {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
+}
+
+impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for SendRequest<'b, Buf> { }
 
 impl<'b, Buf: 'b + Buffer + ?Sized> Drop for SendRequest<'b, Buf> {
     fn drop(&mut self) {
         unsafe {
-            assert!(self.raw() == ffi::RSMPI_REQUEST_NULL,
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
                 "asynchronous send request dropped without ascertaining completion.");
         }
     }
@@ -802,9 +805,9 @@ impl<Dest: Destination> ImmediateSend for Dest {
     fn immediate_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Isend(buf.pointer(), buf.count(), buf.datatype().raw(),
-                self.destination_rank(), tag, self.communicator().raw(),
-                &mut request as *mut MPI_Request);
+            ffi::MPI_Isend(buf.pointer(), buf.count(), buf.datatype().as_raw(),
+                self.destination_rank(), tag, self.communicator().as_raw(),
+                &mut request);
         }
         SendRequest(request, PhantomData)
     }
@@ -829,9 +832,9 @@ impl<Dest: Destination> ImmediateBufferedSend for Dest {
     fn immediate_buffered_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ibsend(buf.pointer(), buf.count(), buf.datatype().raw(),
-                self.destination_rank(), tag, self.communicator().raw(),
-                &mut request as *mut MPI_Request);
+            ffi::MPI_Ibsend(buf.pointer(), buf.count(), buf.datatype().as_raw(),
+                self.destination_rank(), tag, self.communicator().as_raw(),
+                &mut request);
         }
         SendRequest(request, PhantomData)
     }
@@ -856,9 +859,9 @@ impl<Dest: Destination> ImmediateSynchronousSend for Dest {
     fn immediate_synchronous_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Issend(buf.pointer(), buf.count(), buf.datatype().raw(),
-                self.destination_rank(), tag, self.communicator().raw(),
-                &mut request as *mut MPI_Request);
+            ffi::MPI_Issend(buf.pointer(), buf.count(), buf.datatype().as_raw(),
+                self.destination_rank(), tag, self.communicator().as_raw(),
+                &mut request);
         }
         SendRequest(request, PhantomData)
     }
@@ -887,9 +890,9 @@ impl<Dest: Destination> ImmediateReadySend for Dest {
     fn immediate_ready_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Irsend(buf.pointer(), buf.count(), buf.datatype().raw(),
-                self.destination_rank(), tag, self.communicator().raw(),
-                &mut request as *mut MPI_Request);
+            ffi::MPI_Irsend(buf.pointer(), buf.count(), buf.datatype().as_raw(),
+                self.destination_rank(), tag, self.communicator().as_raw(),
+                &mut request);
         }
         SendRequest(request, PhantomData)
     }
@@ -907,15 +910,21 @@ impl<Dest: Destination> ImmediateReadySend for Dest {
 #[must_use]
 pub struct ReceiveRequest<'b, Buf: 'b + BufferMut + ?Sized>(MPI_Request, PhantomData<&'b mut Buf>);
 
-impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for ReceiveRequest<'b, Buf> {
-    unsafe fn raw(&self) -> MPI_Request { self.0 }
-    unsafe fn ptr_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
+impl<'b, Buf: 'b + BufferMut + ?Sized> AsRaw for ReceiveRequest<'b, Buf> {
+    type Raw = MPI_Request;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
+
+impl<'b, Buf: 'b + BufferMut + ?Sized> AsRawMut for ReceiveRequest<'b, Buf> {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
+}
+
+impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for ReceiveRequest<'b, Buf> { }
 
 impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for ReceiveRequest<'b, Buf> {
     fn drop(&mut self) {
         unsafe {
-            assert!(self.raw() == ffi::RSMPI_REQUEST_NULL,
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
                 "asynchronous receive request dropped without ascertaining completion.");
         }
     }
@@ -943,9 +952,9 @@ impl<Src:Source> ImmediateReceiveInto for Src {
     fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Irecv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
-                self.source_rank(), tag, self.communicator().raw(),
-                &mut request as *mut MPI_Request);
+            ffi::MPI_Irecv(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
+                self.source_rank(), tag, self.communicator().as_raw(),
+                &mut request);
         }
         ReceiveRequest(request, PhantomData)
     }
@@ -973,8 +982,8 @@ impl<Src: Source> ImmediateProbe for Src {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         let mut flag: c_int = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iprobe(self.source_rank(), tag, self.communicator().raw(),
-                &mut flag as *mut c_int, &mut status as *mut MPI_Status);
+            ffi::MPI_Iprobe(self.source_rank(), tag, self.communicator().as_raw(),
+                &mut flag, &mut status);
         };
         if flag != 0 {
             Some(Status(status))
@@ -1008,9 +1017,8 @@ impl<Src: Source> ImmediateMatchedProbe for Src {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         let mut flag: c_int = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Improbe(self.source_rank(), tag, self.communicator().raw(),
-                &mut flag as *mut c_int, &mut message as *mut MPI_Message,
-                &mut status as *mut MPI_Status);
+            ffi::MPI_Improbe(self.source_rank(), tag, self.communicator().as_raw(),
+                &mut flag, &mut message, &mut status);
         }
         if flag != 0 {
             Some((Message(message), Status(status)))
@@ -1036,9 +1044,9 @@ impl ImmediateMatchedReceiveInto for Message {
     fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(mut self, buf: &mut Buf) -> ReceiveRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Imrecv(buf.pointer_mut(), buf.count(), buf.datatype().raw(),
-                self.ptr_mut(), &mut request as *mut MPI_Request);
-            assert_eq!(self.raw(), ffi::RSMPI_MESSAGE_NULL);
+            ffi::MPI_Imrecv(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
+                self.as_raw_mut(), &mut request);
+            assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
         }
         ReceiveRequest(request, PhantomData)
     }

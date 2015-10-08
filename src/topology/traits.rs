@@ -1,2 +1,2 @@
 //! Topology traits
-pub use super::{RawCommunicator, CommunicatorExt, Communicator, RawGroup, GroupExt};
+pub use super::{CommunicatorExt, Communicator, GroupExt};

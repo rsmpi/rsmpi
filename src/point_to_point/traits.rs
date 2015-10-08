@@ -3,7 +3,7 @@ pub use super::{Source, Destination, Send, BufferedSend, SynchronousSend, ReadyS
                 MatchedReceive, MatchedReceiveInto, MatchedReceiveVec, MatchedProbe,
                 Receive, ReceiveInto, ReceiveVec,
                 SendReceive, SendReceiveInto, SendReceiveReplaceInto,
-                RawRequest, Wait, Test,
+                Wait, Test,
                 ImmediateSend, ImmediateBufferedSend, ImmediateSynchronousSend, ImmediateReadySend,
                 ImmediateReceiveInto, ImmediateProbe, ImmediateMatchedProbe,
                 ImmediateMatchedReceiveInto};

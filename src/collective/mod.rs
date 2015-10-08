@@ -21,10 +21,11 @@ use std::{mem, ptr};
 
 use ffi;
 use ffi::{MPI_Request, MPI_Op};
-use topology::{Rank, Identifier};
-use topology::traits::*;
+
 use datatype::traits::*;
-use point_to_point::{RawRequest};
+use raw::traits::*;
+use topology::traits::*;
+use topology::{Rank, Identifier};
 
 pub mod traits;
 
@@ -47,7 +48,7 @@ pub trait Barrier {
 
 impl<C: Communicator> Barrier for C {
     fn barrier(&self) {
-        unsafe { ffi::MPI_Barrier(self.communicator().raw()); }
+        unsafe { ffi::MPI_Barrier(self.communicator().as_raw()); }
     }
 }
 
@@ -87,8 +88,8 @@ pub trait BroadcastInto {
 impl<T: Root> BroadcastInto for T {
     fn broadcast_into<Buf: BufferMut + ?Sized>(&self, buffer: &mut Buf) {
         unsafe {
-            ffi::MPI_Bcast(buffer.pointer_mut(), buffer.count(), buffer.datatype().raw(),
-                self.root_rank(), self.communicator().raw());
+            ffi::MPI_Bcast(buffer.pointer_mut(), buffer.count(), buffer.datatype().as_raw(),
+                self.root_rank(), self.communicator().as_raw());
         }
     }
 }
@@ -116,11 +117,11 @@ impl<T: Root> GatherInto for T {
     fn gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>) {
         unsafe {
             let (recvptr, recvcount, recvtype) = recvbuf.map_or(
-                (ptr::null_mut(), 0, u8::equivalent_datatype().raw()),
-                |x| (x.pointer_mut(), x.count() / self.communicator().size(), x.datatype().raw()));
+                (ptr::null_mut(), 0, u8::equivalent_datatype().as_raw()),
+                |x| (x.pointer_mut(), x.count() / self.communicator().size(), x.datatype().as_raw()));
 
-            ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(),
-                recvptr, recvcount, recvtype, self.root_rank(), self.communicator().raw());
+            ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(),
+                recvptr, recvcount, recvtype, self.root_rank(), self.communicator().as_raw());
         }
     }
 }
@@ -146,9 +147,9 @@ pub trait AllGatherInto {
 impl<C: Communicator> AllGatherInto for C {
     fn all_gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
         unsafe {
-            ffi::MPI_Allgather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().raw(),
+            ffi::MPI_Allgather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(),
                 recvbuf.pointer_mut(), recvbuf.count() / self.communicator().size(),
-                recvbuf.datatype().raw(), self.communicator().raw());
+                recvbuf.datatype().as_raw(), self.communicator().as_raw());
         }
     }
 }
@@ -174,12 +175,12 @@ impl<T: Root> ScatterInto for T {
     fn scatter_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: Option<&S>, recvbuf: &mut R) {
         unsafe {
             let (sendptr, sendcount, sendtype) = sendbuf.map_or(
-                (ptr::null(), 0, u8::equivalent_datatype().raw()),
-                |x| (x.pointer(), x.count() / self.communicator().size(), x.datatype().raw()));
+                (ptr::null(), 0, u8::equivalent_datatype().as_raw()),
+                |x| (x.pointer(), x.count() / self.communicator().size(), x.datatype().as_raw()));
 
             ffi::MPI_Scatter(sendptr, sendcount, sendtype,
-                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().raw(),
-                self.root_rank(), self.communicator().raw());
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
+                self.root_rank(), self.communicator().as_raw());
         }
     }
 }
@@ -202,17 +203,11 @@ impl<C: Communicator> AllToAllInto for C {
     fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
         let c_size = self.communicator().size();
         unsafe {
-            ffi::MPI_Alltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.datatype().raw(),
-                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().raw(),
-                self.communicator().raw());
+            ffi::MPI_Alltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().as_raw(),
+                self.communicator().as_raw());
         }
     }
-}
-
-/// Something that can identify as a raw `MPI_Op`
-pub trait RawOperation {
-    /// The raw `MPI_Op` value
-    unsafe fn raw(&self) -> MPI_Op;
 }
 
 /// A built-in operation like `MPI_SUM`
@@ -247,11 +242,12 @@ impl SystemOperation {
     }
 }
 
-impl RawOperation for SystemOperation {
-    unsafe fn raw(&self) -> MPI_Op {
-        self.0
-    }
+impl AsRaw for SystemOperation {
+    type Raw = MPI_Op;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
+
+impl RawOperation for SystemOperation { }
 
 macro_rules! reduce_into_specializations {
     ($($name:ident => $operation:expr),*) => (
@@ -295,8 +291,8 @@ impl<T: Root> ReduceInto for T {
     fn reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: Option<&mut R>, op: O) {
         unsafe {
             let recvptr = recvbuf.map_or(ptr::null_mut(), |x| { x.pointer_mut() });
-            ffi::MPI_Reduce(sendbuf.pointer(), recvptr, sendbuf.count(), sendbuf.datatype().raw(),
-                op.raw(), self.root_rank(), self.communicator().raw());
+            ffi::MPI_Reduce(sendbuf.pointer(), recvptr, sendbuf.count(), sendbuf.datatype().as_raw(),
+                op.as_raw(), self.root_rank(), self.communicator().as_raw());
         }
     }
 }
@@ -320,7 +316,7 @@ impl<C: Communicator> AllReduceInto for C {
     fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
         unsafe {
             ffi::MPI_Allreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.datatype().raw(), op.raw(), self.communicator().raw());
+                sendbuf.datatype().as_raw(), op.as_raw(), self.communicator().as_raw());
         }
     }
 }
@@ -337,7 +333,7 @@ impl<C: Communicator> AllReduceInto for C {
 pub fn reduce_local_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(inbuf: &S, inoutbuf: &mut R, op: O) {
     unsafe {
         ffi::MPI_Reduce_local(inbuf.pointer(), inoutbuf.pointer_mut(), inbuf.count(),
-          inbuf.datatype().raw(), op.raw());
+          inbuf.datatype().as_raw(), op.as_raw());
     }
 }
 
@@ -360,7 +356,7 @@ impl<C: Communicator> ScanInto for C {
     fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
         unsafe {
             ffi::MPI_Scan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.datatype().raw(), op.raw(), self.communicator().raw());
+                sendbuf.datatype().as_raw(), op.as_raw(), self.communicator().as_raw());
         }
     }
 }
@@ -384,7 +380,7 @@ impl<C: Communicator> ExclusiveScanInto for C {
     fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
         unsafe {
             ffi::MPI_Exscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.datatype().raw(), op.raw(), self.communicator().raw());
+                sendbuf.datatype().as_raw(), op.as_raw(), self.communicator().as_raw());
         }
     }
 }
@@ -404,16 +400,22 @@ pub struct BarrierRequest(MPI_Request);
 impl Drop for BarrierRequest {
     fn drop(&mut self) {
         unsafe {
-            assert!(self.raw() == ffi::RSMPI_REQUEST_NULL,
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
                 "asynchronous barrier request dropped without ascertaining completion.");
         }
     }
 }
 
-impl RawRequest for BarrierRequest {
-    unsafe fn raw(&self) -> MPI_Request { self.0 }
-    unsafe fn ptr_mut(&mut self) -> *mut MPI_Request { &mut (self.0) }
+impl AsRaw for BarrierRequest {
+    type Raw = MPI_Request;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
+
+impl AsRawMut for BarrierRequest {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
+}
+
+impl RawRequest for BarrierRequest { }
 
 /// Non-blocking barrier synchronization among all processes in a `Communicator`
 ///
@@ -434,8 +436,8 @@ pub trait ImmediateBarrier {
 
 impl<C: Communicator> ImmediateBarrier for C {
     fn immediate_barrier(&self) -> BarrierRequest {
-        let mut request = unsafe { mem::uninitialized() };
-        unsafe { ffi::MPI_Ibarrier(self.communicator().raw(), &mut request as *mut MPI_Request); }
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Ibarrier(self.communicator().as_raw(), &mut request); }
         BarrierRequest(request)
     }
 }

@@ -98,6 +98,8 @@ use libc::{c_char, c_int};
 
 extern crate conv;
 
+use conv::ConvUtil;
+
 /// The raw C language MPI API
 ///
 /// Documented in the [Message Passing Interface specification][spec]
@@ -109,6 +111,7 @@ pub mod ffi;
 pub mod collective;
 pub mod datatype;
 pub mod point_to_point;
+pub mod raw;
 pub mod topology;
 pub mod traits;
 
@@ -134,7 +137,7 @@ pub type Address = MPI_Aint;
 pub fn get_version() -> (c_int, c_int) {
     let mut version: c_int = unsafe { mem::uninitialized() };
     let mut subversion: c_int = unsafe { mem::uninitialized() };
-    unsafe { ffi::MPI_Get_version(&mut version as *mut c_int, &mut subversion as *mut c_int); }
+    unsafe { ffi::MPI_Get_version(&mut version, &mut subversion); }
     (version, subversion)
 }
 
@@ -144,10 +147,10 @@ pub fn get_version() -> (c_int, c_int) {
 ///
 /// Can be called without initializing MPI.
 pub fn get_library_version() -> Result<String, FromUtf8Error> {
-    let mut buf = vec![0u8; ffi::RSMPI_MAX_LIBRARY_VERSION_STRING as usize];
+    let mut buf = vec![0u8; ffi::RSMPI_MAX_LIBRARY_VERSION_STRING.value_as().unwrap()];
     let mut len: c_int = 0;
 
-    unsafe { ffi::MPI_Get_library_version(buf.as_mut_ptr() as *mut c_char, &mut len as *mut c_int); }
-    buf.truncate(len as usize);
+    unsafe { ffi::MPI_Get_library_version(buf.as_mut_ptr() as *mut c_char, &mut len); }
+    buf.truncate(len.value_as().unwrap());
     String::from_utf8(buf)
 }

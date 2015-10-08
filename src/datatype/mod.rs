@@ -47,23 +47,14 @@ use libc::{c_void};
 
 use conv::ConvUtil;
 
-use ::{Address, Count};
+use super::{Address, Count};
+
 use ffi;
 use ffi::MPI_Datatype;
 
+use raw::traits::*;
+
 pub mod traits;
-
-/// Can identify as an `MPI_Datatype`
-pub trait RawDatatype {
-    /// The raw `MPI_Datatype` value
-    unsafe fn raw(&self) -> MPI_Datatype;
-}
-
-impl<'a, D: RawDatatype> RawDatatype for &'a D {
-    unsafe fn raw(&self) -> MPI_Datatype {
-        (*self).raw()
-    }
-}
 
 /// A system datatype, e.g. `MPI_FLOAT`
 ///
@@ -73,11 +64,12 @@ impl<'a, D: RawDatatype> RawDatatype for &'a D {
 #[derive(Copy, Clone)]
 pub struct SystemDatatype(MPI_Datatype);
 
-impl RawDatatype for SystemDatatype {
-    unsafe fn raw(&self) -> MPI_Datatype {
-        self.0
-    }
+impl AsRaw for SystemDatatype {
+    type Raw = MPI_Datatype;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
+
+impl RawDatatype for SystemDatatype { }
 
 /// A direct equivalence exists between the implementing type and an MPI datatype
 ///
@@ -132,8 +124,8 @@ impl UserDatatype {
     pub fn contiguous<D: RawDatatype>(count: Count, oldtype: D) -> UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_contiguous(count, oldtype.raw(), &mut newtype as *mut MPI_Datatype);
-            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_contiguous(count, oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
     }
@@ -150,9 +142,8 @@ impl UserDatatype {
     pub fn vector<D: RawDatatype>(count: Count, blocklength: Count, stride: Count, oldtype: D) -> UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_vector(count, blocklength, stride, oldtype.raw(),
-                &mut newtype as *mut MPI_Datatype);
-            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_vector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
     }
@@ -165,9 +156,8 @@ impl UserDatatype {
     pub fn heterogeneous_vector<D: RawDatatype>(count: Count, blocklength: Count, stride: Address, oldtype: D) -> UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_hvector(count, blocklength, stride, oldtype.raw(),
-                &mut newtype as *mut MPI_Datatype);
-            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_hvector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
     }
@@ -184,9 +174,9 @@ impl UserDatatype {
         let count: Count = blocklengths.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_indexed(count, blocklengths.as_ptr(), displacements.as_ptr(), oldtype.raw(),
-                &mut newtype as *mut MPI_Datatype);
-            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+            ffi::MPI_Type_indexed(count, blocklengths.as_ptr(), displacements.as_ptr(),
+                oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
     }
@@ -204,8 +194,8 @@ impl UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_hindexed(count, blocklengths.as_ptr(), displacements.as_ptr(),
-                oldtype.raw(), &mut newtype as *mut MPI_Datatype);
-            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+                oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
     }
@@ -220,8 +210,8 @@ impl UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_indexed_block(count, blocklength, displacements.as_ptr(),
-                oldtype.raw(), &mut newtype as *mut MPI_Datatype);
-            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+                oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
     }
@@ -237,27 +227,28 @@ impl UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_hindexed_block(count, blocklength, displacements.as_ptr(),
-                oldtype.raw(), &mut newtype as *mut MPI_Datatype);
-            ffi::MPI_Type_commit(&mut newtype as *mut MPI_Datatype);
+                oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
-    }
-}
-
-impl RawDatatype for UserDatatype {
-    unsafe fn raw(&self) -> MPI_Datatype {
-        self.0
     }
 }
 
 impl Drop for UserDatatype {
     fn drop(&mut self) {
         unsafe {
-            ffi::MPI_Type_free(&mut self.0 as *mut MPI_Datatype);
+            ffi::MPI_Type_free(&mut self.0);
         }
         assert_eq!(self.0, ffi::RSMPI_DATATYPE_NULL);
     }
 }
+
+impl AsRaw for UserDatatype {
+    type Raw = MPI_Datatype;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
+}
+
+impl RawDatatype for UserDatatype { }
 
 /// Something that has an associated datatype
 // TODO: merge this into Buffer, maybe?
@@ -301,7 +292,7 @@ pub trait Pointer {
 }
 
 impl<T> Pointer for T where T: EquivalentDatatype {
-    unsafe fn pointer(&self) -> *const c_void { mem::transmute(self as *const T) }
+    unsafe fn pointer(&self) -> *const c_void { mem::transmute(self) }
 }
 
 impl<T> Pointer for [T] where T: EquivalentDatatype {
@@ -315,7 +306,7 @@ pub trait PointerMut {
 }
 
 impl<T> PointerMut for T where T: EquivalentDatatype {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void { mem::transmute(self as *mut T) }
+    unsafe fn pointer_mut(&mut self) -> *mut c_void { mem::transmute(self) }
 }
 
 impl<T> PointerMut for [T] where T: EquivalentDatatype {
