@@ -55,3 +55,11 @@ const MPI_Op RSMPI_LOR = MPI_LOR;
 const MPI_Op RSMPI_BOR = MPI_BOR;
 const MPI_Op RSMPI_LXOR = MPI_LXOR;
 const MPI_Op RSMPI_BXOR = MPI_BXOR;
+
+double RSMPI_Wtime() {
+  return MPI_Wtime();
+}
+
+double RSMPI_Wtick() {
+  return MPI_Wtick();
+}

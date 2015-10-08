@@ -57,4 +57,7 @@ extern const MPI_Op RSMPI_LOR;
 extern const MPI_Op RSMPI_BOR;
 extern const MPI_Op RSMPI_LXOR;
 extern const MPI_Op RSMPI_BXOR;
+
+double RSMPI_Wtime();
+double RSMPI_Wtick();
 #endif

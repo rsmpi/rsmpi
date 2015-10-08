@@ -25,7 +25,7 @@ use std::cmp::Ordering;
 use std::marker::PhantomData;
 use std::string::{FromUtf8Error};
 
-use libc::{c_char, c_int};
+use libc::{c_char, c_int, c_double};
 
 use conv::ConvUtil;
 
@@ -101,6 +101,18 @@ impl Universe {
         unsafe { ffi::MPI_Get_processor_name(buf.as_mut_ptr() as *mut c_char, &mut len as *mut c_int); }
         buf.truncate(len as usize);
         String::from_utf8(buf)
+    }
+
+    /// Time in seconds since an arbitrary time in the past.
+    ///
+    /// The cheapest high-resolution timer available will be used.
+    pub fn get_time(&self) -> c_double {
+      unsafe { ffi::RSMPI_Wtime() }
+    }
+
+    /// Resolution of timer used in MPI_Wtime in seconds
+    pub fn get_time_res(&self) -> c_double {
+      unsafe { ffi::RSMPI_Wtick() }
     }
 }
 
