@@ -960,6 +960,97 @@ impl<Src:Source> ImmediateReceiveInto for Src {
     }
 }
 
+/// A plain request without associated data
+struct PlainRequest(MPI_Request);
+
+impl AsRaw for PlainRequest {
+    type Raw = MPI_Request;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
+}
+
+impl AsRawMut for PlainRequest {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut self.0 }
+}
+
+impl RawRequest for PlainRequest { }
+
+/// Will contain a value of type `T` received via a non-blocking receive operation.
+#[must_use]
+pub struct ReceiveFuture<T> {
+    val: Box<T>,
+    req: PlainRequest
+}
+
+impl<T> ReceiveFuture<T> {
+    /// Wait for the receive operation to finish and return the received data.
+    pub fn get(self) -> (Option<T>, Status) {
+        let status = self.req.wait();
+        if status.source_rank() == ffi::RSMPI_PROC_NULL {
+            (None, status)
+        } else {
+            (Some(*self.val), status)
+        }
+    }
+
+    /// Check whether the receive operation has finished.
+    ///
+    /// If the operation has finished, the data received is returned. Otherwise the future itself
+    /// is returned.
+    pub fn try(mut self) -> Result<(Option<T>, Status), Self> {
+        match self.req.test() {
+            Ok(status) => {
+                Ok((
+                    if status.source_rank() == ffi::RSMPI_PROC_NULL {
+                        None
+                    } else {
+                        Some(*self.val)
+                    },
+                    status
+                ))
+            }
+            Err(request) => {
+                self.req = request;
+                Err(self)
+            }
+        }
+    }
+}
+
+/// Initiate a non-blocking receive operation.
+///
+/// # Examples
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.2
+pub trait ImmediateReceive {
+    /// Initiate a non-blocking receive operation for messages matching tag `tag`.
+    fn immediate_receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> ReceiveFuture<Msg>;
+
+    /// Initiate a non-blocking receive operation.
+    fn immediate_receive<Msg: EquivalentDatatype>(&self) -> ReceiveFuture<Msg> {
+        self.immediate_receive_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+}
+
+impl<Src: Source> ImmediateReceive for Src {
+    fn immediate_receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> ReceiveFuture<Msg> {
+        let mut res: ReceiveFuture<Msg> = ReceiveFuture {
+            val: Box::new( unsafe { mem::uninitialized() }),
+            req: PlainRequest(unsafe { mem::uninitialized() })
+        };
+
+        unsafe {
+            ffi::MPI_Irecv((&mut *(res.val)).pointer_mut(), res.val.count(),
+                Msg::equivalent_datatype().as_raw(), self.source_rank(), tag,
+                self.communicator().as_raw(), res.req.as_raw_mut());
+        }
+
+        res
+    }
+}
+
 /// Asynchronously probe a source for incoming messages.
 ///
 /// Like `Probe` but returns a `None` immediately if there is no incoming message to be probed.

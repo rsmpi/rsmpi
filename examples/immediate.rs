@@ -45,4 +45,26 @@ fn main() {
         sreq.wait();
     }
     assert_eq!(x, y);
+
+    let future = world.immediate_receive();
+    world.this_process().send(&x);
+    let (msg, _) = future.get();
+    assert!(msg.is_some());
+    assert_eq!(x, msg.unwrap());
+
+    let future = world.immediate_receive();
+    let res = future.try();
+    assert!(res.is_err());
+    let mut future = res.err().unwrap();
+    world.this_process().send(&x);
+    loop {
+        match future.try() {
+            Ok((msg, _)) => {
+                assert!(msg.is_some());
+                assert_eq!(x, msg.unwrap());
+                break;
+            }
+            Err(f) => { future = f; }
+        }
+    }
 }

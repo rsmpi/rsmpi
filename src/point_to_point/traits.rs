@@ -5,5 +5,5 @@ pub use super::{Source, Destination, Send, BufferedSend, SynchronousSend, ReadyS
                 SendReceive, SendReceiveInto, SendReceiveReplaceInto,
                 Wait, Test,
                 ImmediateSend, ImmediateBufferedSend, ImmediateSynchronousSend, ImmediateReadySend,
-                ImmediateReceiveInto, ImmediateProbe, ImmediateMatchedProbe,
+                ImmediateReceive, ImmediateReceiveInto, ImmediateProbe, ImmediateMatchedProbe,
                 ImmediateMatchedReceiveInto};
