@@ -412,7 +412,8 @@ impl MatchedReceiveVec for (Message, Status) {
     fn matched_receive_vec<Msg: EquivalentDatatype>(self) -> (Option<Vec<Msg>>, Status) {
         let (message, status) = self;
         let is_no_proc = message.is_no_proc();
-        let count = status.count(Msg::equivalent_datatype()).value_as().unwrap();
+        let count = status.count(Msg::equivalent_datatype()).value_as().expect(
+            "Message element count cannot be expressed as a usize.");
         let mut res = Vec::with_capacity(count);
         unsafe { res.set_len(count); }
         let status = message.matched_receive_into(&mut res[..]);

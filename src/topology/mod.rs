@@ -87,11 +87,16 @@ impl Universe {
     ///
     /// Can return an `Err` if the processor name is not a UTF-8 string.
     pub fn get_processor_name(&self) -> Result<String, FromUtf8Error> {
-        let mut buf = vec![0u8; ffi::RSMPI_MAX_PROCESSOR_NAME.value_as().unwrap()];
+        let bufsize = ffi::RSMPI_MAX_PROCESSOR_NAME.value_as().expect(
+            &format!("MPI_MAX_LIBRARY_SIZE ({}) cannot be expressed as a usize.",
+                ffi::RSMPI_MAX_PROCESSOR_NAME)
+            );
+        let mut buf = vec![0u8; bufsize];
         let mut len: c_int = 0;
 
         unsafe { ffi::MPI_Get_processor_name(buf.as_mut_ptr() as *mut c_char, &mut len); }
-        buf.truncate(len.value_as().unwrap());
+        buf.truncate(len.value_as().expect(
+            &format!("Length of processor name string ({}) cannot be expressed as a usize.", len)));
         String::from_utf8(buf)
     }
 

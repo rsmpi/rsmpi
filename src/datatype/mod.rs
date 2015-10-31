@@ -277,7 +277,7 @@ impl<T> Collection for T where T: EquivalentDatatype {
 
 impl<T> Collection for [T] where T: EquivalentDatatype {
     fn count(&self) -> Count {
-        self.len().value_as().unwrap()
+        self.len().value_as().expect("Length of slice cannot be expressed as an MPI Count.")
     }
 }
 

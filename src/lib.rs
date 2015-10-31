@@ -147,10 +147,15 @@ pub fn get_version() -> (c_int, c_int) {
 ///
 /// Can be called without initializing MPI.
 pub fn get_library_version() -> Result<String, FromUtf8Error> {
-    let mut buf = vec![0u8; ffi::RSMPI_MAX_LIBRARY_VERSION_STRING.value_as().unwrap()];
+    let bufsize = ffi::RSMPI_MAX_LIBRARY_VERSION_STRING.value_as().expect(
+        &format!("MPI_MAX_LIBRARY_SIZE ({}) cannot be expressed as a usize.",
+            ffi::RSMPI_MAX_LIBRARY_VERSION_STRING)
+        );
+    let mut buf = vec![0u8; bufsize];
     let mut len: c_int = 0;
 
     unsafe { ffi::MPI_Get_library_version(buf.as_mut_ptr() as *mut c_char, &mut len); }
-    buf.truncate(len.value_as().unwrap());
+    buf.truncate(len.value_as().expect(
+        &format!("Length of library version string ({}) cannot be expressed as a usize.", len)));
     String::from_utf8(buf)
 }
