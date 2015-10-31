@@ -171,11 +171,10 @@ impl UserDatatype {
     /// 4.1.2
     pub fn indexed<D: RawDatatype>(blocklengths: &[Count], displacements: &[Count], oldtype: D) -> UserDatatype {
         assert_eq!(blocklengths.len(), displacements.len());
-        let count: Count = blocklengths.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_indexed(count, blocklengths.as_ptr(), displacements.as_ptr(),
-                oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_indexed(blocklengths.count(), blocklengths.as_ptr(),
+                displacements.as_ptr(), oldtype.as_raw(), &mut newtype);
             ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
@@ -190,11 +189,10 @@ impl UserDatatype {
     /// 4.1.2
     pub fn heterogeneous_indexed<D: RawDatatype>(blocklengths: &[Count], displacements: &[Address], oldtype: D) -> UserDatatype {
         assert_eq!(blocklengths.len(), displacements.len());
-        let count: Count = blocklengths.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_hindexed(count, blocklengths.as_ptr(), displacements.as_ptr(),
-                oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_create_hindexed(blocklengths.count(), blocklengths.as_ptr(),
+                displacements.as_ptr(), oldtype.as_raw(), &mut newtype);
             ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
@@ -206,11 +204,10 @@ impl UserDatatype {
     ///
     /// 4.1.2
     pub fn indexed_block<D: RawDatatype>(blocklength: Count, displacements: &[Count], oldtype: D) -> UserDatatype {
-        let count: Count = displacements.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_indexed_block(count, blocklength, displacements.as_ptr(),
-                oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_create_indexed_block(displacements.count(), blocklength,
+                displacements.as_ptr(), oldtype.as_raw(), &mut newtype);
             ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)
@@ -223,11 +220,10 @@ impl UserDatatype {
     ///
     /// 4.1.2
     pub fn heterogeneous_indexed_block<D: RawDatatype>(blocklength: Count, displacements: &[Address], oldtype: D) -> UserDatatype {
-        let count: Count = displacements.len().value_as().unwrap();
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_hindexed_block(count, blocklength, displacements.as_ptr(),
-                oldtype.as_raw(), &mut newtype);
+            ffi::MPI_Type_create_hindexed_block(displacements.count(), blocklength,
+                displacements.as_ptr(), oldtype.as_raw(), &mut newtype);
             ffi::MPI_Type_commit(&mut newtype);
         }
         UserDatatype(newtype)

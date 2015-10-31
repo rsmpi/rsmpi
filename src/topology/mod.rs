@@ -29,11 +29,13 @@ use libc::{c_char, c_int, c_double};
 
 use conv::ConvUtil;
 
-use super::{Count, Tag};
+use super::Tag;
 use ffi;
 use ffi::{MPI_Comm, MPI_Group};
 
 use raw::traits::*;
+
+use datatype::traits::*;
 
 pub mod traits;
 
@@ -646,8 +648,7 @@ pub trait GroupExt: RawGroup {
     /// 6.3.2
     fn include(&self, ranks: &[Rank]) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
-        let count: Count = ranks.len().value_as().unwrap();
-        unsafe { ffi::MPI_Group_incl(self.as_raw(), count, ranks.as_ptr(), &mut newgroup); }
+        unsafe { ffi::MPI_Group_incl(self.as_raw(), ranks.count(), ranks.as_ptr(), &mut newgroup); }
         UserGroup(newgroup)
     }
 
@@ -661,8 +662,7 @@ pub trait GroupExt: RawGroup {
     /// 6.3.2
     fn exclude(&self, ranks: &[Rank]) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
-        let count: Count = ranks.len().value_as().unwrap();
-        unsafe { ffi::MPI_Group_excl(self.as_raw(), count, ranks.as_ptr(), &mut newgroup); }
+        unsafe { ffi::MPI_Group_excl(self.as_raw(), ranks.count(), ranks.as_ptr(), &mut newgroup); }
         UserGroup(newgroup)
     }
 
