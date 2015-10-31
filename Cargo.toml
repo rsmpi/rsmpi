@@ -17,7 +17,7 @@ license = "MIT"
 build = "build.rs"
 
 [dependencies]
-libc = "0.1.10"
+libc = "0.2.0"
 conv = "0.3.0"
 
 [build-dependencies]
