@@ -11,13 +11,14 @@
 //! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
 //! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
-//! - **5.12**: Nonblocking collective operations, `MPI_Ibcast()`,
+//! - **5.12**: Nonblocking collective operations,
 //! `MPI_Igather()`, `MPI_Igatherv()`, `MPI_Iscatter()`, `MPI_Iscatterv()`, `MPI_Iallgather()`,
 //! `MPI_Iallgatherv()`, `MPI_Ialltoall()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`,
 //! `MPI_Ireduce()`, `MPI_Iallreduce()`, `MPI_Ireduce_scatter_block()`, `MPI_Ireduce_scatter()`,
 //! `MPI_Iscan()`, `MPI_Iexscan()`
 
 use std::{mem, ptr};
+use std::marker::PhantomData;
 
 use ffi;
 use ffi::{MPI_Request, MPI_Op};
@@ -494,5 +495,61 @@ impl<C: Communicator> ImmediateBarrier for C {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Ibarrier(self.communicator().as_raw(), &mut request); }
         BarrierRequest(request)
+    }
+}
+
+/// A request object for an immediate (non-blocking) broadcast operation
+///
+/// # Examples
+///
+/// See `examples/immediate_broadcast.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.1
+pub struct BroadcastRequest<'b, Buf: 'b + BufferMut + ?Sized>(MPI_Request, PhantomData<&'b mut Buf>);
+
+impl <'b, Buf: 'b + BufferMut + ?Sized> AsRaw for BroadcastRequest<'b, Buf> {
+    type Raw = MPI_Request;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
+}
+
+impl <'b, Buf: 'b + BufferMut + ?Sized> AsRawMut for BroadcastRequest<'b, Buf> {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
+}
+
+impl <'b, Buf: 'b + BufferMut + ?Sized> RawRequest for BroadcastRequest<'b, Buf> { }
+
+impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for BroadcastRequest<'b, Buf> {
+    fn drop(&mut self) {
+        unsafe {
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
+                "asynchronous broadcast request dropped without ascertaining completion.");
+        }
+    }
+}
+
+/// Non-blocking broadcast of a value from a `Root` process to all other processes.
+///
+/// # Standard section(s)
+///
+/// 5.12.2
+pub trait ImmediateBroadcastInto {
+    /// Initiate broadcast of a value from the `Root` process to all other processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_broadcast.rs`
+    fn immediate_broadcast_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> BroadcastRequest<'b, Buf>;
+}
+
+impl<R: Root> ImmediateBroadcastInto for R {
+    fn immediate_broadcast_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> BroadcastRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Ibcast(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
+                self.root_rank(), self.communicator().as_raw(), &mut request);
+        }
+        BroadcastRequest(request, PhantomData)
     }
 }
