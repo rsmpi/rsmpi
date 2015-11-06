@@ -11,12 +11,12 @@ fn main() {
     let size = world.size();
     let root_rank = 0;
 
-    let mut sum: Rank = 0;
-
-    world.process_at_rank(root_rank).reduce_into(&rank, Some(&mut sum), SystemOperation::sum());
-
     if rank == root_rank {
+        let mut sum: Rank = 0;
+        world.process_at_rank(root_rank).reduce_into_root(&rank, &mut sum, SystemOperation::sum());
         assert_eq!(sum, size * (size - 1) / 2);
+    } else {
+        world.process_at_rank(root_rank).reduce_into(&rank, SystemOperation::sum());
     }
 
     let mut max: Rank = -1;

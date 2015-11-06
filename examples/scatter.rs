@@ -11,10 +11,12 @@ fn main() {
     let root_rank = 0;
     let root_process = world.process_at_rank(root_rank);
 
-    let v = if rank == root_rank { Some((0..size).collect::<Vec<_>>()) } else { None };
     let mut x = 0 as Rank;
-
-    root_process.scatter_into(v.as_ref().map(|x| &x[..]), &mut x);
-
+    if rank == root_rank { 
+        let v = (0..size).collect::<Vec<_>>();
+        root_process.scatter_into_root(&v[..], &mut x);
+    } else {
+        root_process.scatter_into(&mut x);
+    }
     assert_eq!(x, rank);
 }
