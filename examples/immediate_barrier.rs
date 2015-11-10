@@ -5,34 +5,37 @@ use mpi::traits::*;
 fn main() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
-    let rank = world.rank();
     let size = world.size();
+    let receiver_rank = 0;
 
-    if rank > 0 {
-        let msg = 1u64;
-        world.process_at_rank(0).send(&msg);
-        let breq = world.immediate_barrier();
-        let msg = 2u64;
-        world.process_at_rank(0).send(&msg);
-        breq.wait();
-        let msg = 3u64;
-        world.process_at_rank(0).send(&msg);
-    } else {
+    if world.rank() == receiver_rank { // receiver process
         let n = (size - 1) as usize;
         let mut buf = vec![0u64; 3 * n];
-        for x in buf[0..n].iter_mut() {
-            world.receive_into(x);
-        }
+        // receive first 2 * n messages
+        for x in buf[0..2 * n].iter_mut() { world.receive_into(x); }
+        // signal the waiting senders that 2 * n messages have been received
         let breq = world.immediate_barrier();
-        for x in buf[n..2 * n].iter_mut() {
-            world.receive_into(x);
-        }
-        breq.wait();
-        for x in buf[2 * n..3 * n].iter_mut() {
-            world.receive_into(x);
-        }
+        // receive remaining n messages
+        for x in buf[2 * n..3 * n].iter_mut() { world.receive_into(x); }
         println!("{:?}", buf);
-        assert!(buf[0..2 * n].iter().all(|&x| { x == 1 || x == 2 }));
+        // messages "1" and "2" may be interleaved, but all have to be contained within the first
+        // 2 * n slots of the buffer
+        assert!(buf[0..2 * n].iter().filter(|&&x| x == 1).count() == n);
+        assert!(buf[0..2 * n].iter().filter(|&&x| x == 2).count() == n);
+        // the last n slots in the buffer may only contain message "3"
         assert!(buf[2 * n..3 * n].iter().all(|&x| { x == 3 }));
+        // clean up the barrier request
+        breq.wait();
+    } else { // sender processes
+        // send message "1"
+        world.process_at_rank(0).send(&1u64);
+        // join barrier, but do not block
+        let breq = world.immediate_barrier();
+        // send message "2"
+        world.process_at_rank(0).send(&2u64);
+        // wait for receiver process to receive the first 2 * n messages
+        breq.wait();
+        // send message "3"
+        world.process_at_rank(0).send(&3u64);
     }
 }
