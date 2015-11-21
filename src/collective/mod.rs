@@ -11,8 +11,7 @@
 //! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
 //! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
-//! - **5.12**: Nonblocking collective operations,
-//! `MPI_Igatherv()`, `MPI_Iscatter()`, `MPI_Iscatterv()`,
+//! - **5.12**: Nonblocking collective operations, `MPI_Igatherv()`, `MPI_Iscatterv()`,
 //! `MPI_Iallgatherv()`, `MPI_Ialltoall()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`,
 //! `MPI_Ireduce()`, `MPI_Iallreduce()`, `MPI_Ireduce_scatter_block()`, `MPI_Ireduce_scatter()`,
 //! `MPI_Iscan()`, `MPI_Iexscan()`
@@ -726,5 +725,119 @@ impl<C: Communicator> ImmediateAllGatherInto for C {
                 self.communicator().as_raw(), &mut request);
         }
         AllGatherRequest(request, PhantomData, PhantomData)
+    }
+}
+
+/// A request object for an immediate (non-blocking) scatter operation
+///
+/// # Examples
+///
+/// See `examples/immediate_scatter.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.1
+#[must_use]
+pub struct ScatterRequest<'r, R: 'r + BufferMut + ?Sized>(MPI_Request, PhantomData<&'r mut R>);
+
+impl<'r, R: 'r + BufferMut + ?Sized> AsRaw for ScatterRequest<'r, R> {
+    type Raw = MPI_Request;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
+}
+
+impl<'r, R: 'r + BufferMut + ?Sized> AsRawMut for ScatterRequest<'r, R> {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
+}
+
+impl<'r, R: 'r + BufferMut + ?Sized> RawRequest for ScatterRequest<'r, R> { }
+
+impl<'r, R: 'r + BufferMut + ?Sized> Drop for ScatterRequest<'r, R> {
+    fn drop(&mut self) {
+        unsafe {
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
+                "asynchronous scatter request dropped without ascertaining completion.");
+        }
+    }
+}
+
+/// A request object for an immediate (non-blocking) scatter operation on the root process
+///
+/// # Examples
+///
+/// See `examples/immediate_scatter.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.1
+#[must_use]
+pub struct ScatterRootRequest<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(MPI_Request, PhantomData<&'s S>, PhantomData<&'r mut R>);
+
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRaw for ScatterRootRequest<'s, 'r, S, R> {
+    type Raw = MPI_Request;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
+}
+
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for ScatterRootRequest<'s, 'r, S, R> {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
+}
+
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for ScatterRootRequest<'s, 'r, S, R> { }
+
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for ScatterRootRequest<'s, 'r, S, R> {
+    fn drop(&mut self) {
+        unsafe {
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
+                "asynchronous scatter request dropped without ascertaining completion.");
+        }
+    }
+}
+
+/// Non-blocking scatter of values from the `Root` process
+///
+/// # Standard section(s)
+///
+/// 5.12.4
+pub trait ImmediateScatterInto {
+    /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
+    ///
+    /// This function must be called on all non-root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_scatter.rs`
+    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &mut R) -> ScatterRequest<'r, R>;
+
+    /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
+    ///
+    /// This function must be called on the root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_scatter.rs`
+    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> ScatterRootRequest<'s, 'r, S, R>;
+}
+
+impl<T: Root> ImmediateScatterInto for T {
+    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &mut R) -> ScatterRequest<'r, R> {
+        assert!(self.communicator().rank() != self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iscatter(ptr::null(), 0, u8::equivalent_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
+                self.root_rank(), self.communicator().as_raw(), &mut request);
+        }
+        ScatterRequest(request, PhantomData)
+    }
+
+    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> ScatterRootRequest<'s, 'r, S, R> {
+        assert!(self.communicator().rank() == self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            let sendcount = sendbuf.count() / self.communicator().size();
+            ffi::MPI_Iscatter(sendbuf.pointer(), sendcount, sendbuf.datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
+                self.root_rank(), self.communicator().as_raw(), &mut request);
+        }
+        ScatterRootRequest(request, PhantomData, PhantomData)
     }
 }
