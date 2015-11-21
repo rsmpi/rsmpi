@@ -243,6 +243,8 @@ impl AsRaw for SystemCommunicator {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
+impl RawCommunicator for SystemCommunicator { }
+
 impl Communicator for SystemCommunicator {
     type Out = SystemCommunicator;
     fn communicator(&self) -> &Self::Out {
@@ -268,6 +270,8 @@ impl AsRaw for UserCommunicator {
     type Raw = MPI_Comm;
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
+
+impl RawCommunicator for UserCommunicator { }
 
 impl Drop for UserCommunicator {
     fn drop(&mut self) {
@@ -572,6 +576,8 @@ impl AsRaw for SystemGroup {
     unsafe fn as_raw(&self) -> Self::Raw { self. 0 }
 }
 
+impl RawGroup for SystemGroup { }
+
 /// A user-defined group of processes
 ///
 /// # Standard section(s)
@@ -590,6 +596,8 @@ impl AsRaw for UserGroup {
     type Raw = MPI_Group;
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
+
+impl RawGroup for UserGroup { }
 
 /// Extension methods implemented on Groups
 pub trait GroupExt: RawGroup {

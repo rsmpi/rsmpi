@@ -29,20 +29,19 @@ pub trait AsRawMut: AsRaw {
 
 /// A type that can identify as an `MPI_Comm`
 pub trait RawCommunicator: AsRaw<Raw = MPI_Comm> { }
-impl<T> RawCommunicator for T where T: AsRaw<Raw = MPI_Comm> { }
+impl<'a, T: 'a + RawCommunicator> RawCommunicator for &'a T { }
 
 /// A type that can identify as an `MPI_Group`
 pub trait RawGroup: AsRaw<Raw = MPI_Group> { }
-impl<T> RawGroup for T where T: AsRaw<Raw = MPI_Group> { }
+impl<'a, T: 'a + RawGroup> RawGroup for &'a T { }
 
 /// A type that can identify as an `MPI_Datatype`
 pub trait RawDatatype: AsRaw<Raw = MPI_Datatype> { }
-impl<T> RawDatatype for T where T: AsRaw<Raw = MPI_Datatype> { }
+impl<'a, T: 'a + RawDatatype> RawDatatype for &'a T { }
 
 /// A type that can identify as an `MPI_Request`
 pub trait RawRequest: AsRaw<Raw = MPI_Request> + AsRawMut { }
-impl<T> RawRequest for T where T: AsRaw<Raw = MPI_Request> + AsRawMut { }
 
 /// A type that can identify as an `MPI_Op`
 pub trait RawOperation: AsRaw<Raw = MPI_Op> { }
-impl<T> RawOperation for T where T: AsRaw<Raw = MPI_Op> { }
+impl<'a, T: 'a + RawOperation> RawOperation for &'a T { }
