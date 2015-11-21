@@ -12,7 +12,7 @@
 //! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
 //! - **5.12**: Nonblocking collective operations, `MPI_Igatherv()`, `MPI_Iscatterv()`,
-//! `MPI_Iallgatherv()`, `MPI_Ialltoall()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`,
+//! `MPI_Iallgatherv()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`,
 //! `MPI_Ireduce()`, `MPI_Iallreduce()`, `MPI_Ireduce_scatter_block()`, `MPI_Ireduce_scatter()`,
 //! `MPI_Iscan()`, `MPI_Iexscan()`
 
@@ -839,5 +839,63 @@ impl<T: Root> ImmediateScatterInto for T {
                 self.root_rank(), self.communicator().as_raw(), &mut request);
         }
         ScatterRootRequest(request, PhantomData, PhantomData)
+    }
+}
+
+/// A request object for an immediate (non-blocking) all-to-all operation
+///
+/// # Examples
+///
+/// See `examples/immediate_all_to_all.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.1
+#[must_use]
+pub struct AllToAllRequest<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(MPI_Request, PhantomData<&'s S>, PhantomData<&'r mut R>);
+
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRaw for AllToAllRequest<'s, 'r, S, R> {
+    type Raw = MPI_Request;
+    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
+}
+
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for AllToAllRequest<'s, 'r, S, R> {
+    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
+}
+
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for AllToAllRequest<'s, 'r, S, R> { }
+
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for AllToAllRequest<'s, 'r, S, R> {
+    fn drop(&mut self) {
+        unsafe {
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
+                "asynchronous all-to-all request dropped without ascertaining completion.");
+        }
+    }
+}
+/// Non-blocking all-to-all communication.
+///
+/// # Standard section(s)
+///
+/// 5.12.6
+pub trait ImmediateAllToAllInto {
+    /// Initiate non-blocking all-to-all communication.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_all_to_all.rs`
+    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> AllToAllRequest<'s, 'r, S, R>;
+}
+
+impl<C: Communicator> ImmediateAllToAllInto for C {
+    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> AllToAllRequest<'s, 'r, S, R> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        let c_size = self.communicator().size();
+        unsafe {
+            ffi::MPI_Ialltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().as_raw(),
+                self.communicator().as_raw(), &mut request);
+        }
+        AllToAllRequest(request, PhantomData, PhantomData)
     }
 }
