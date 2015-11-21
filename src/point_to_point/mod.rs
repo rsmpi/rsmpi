@@ -773,8 +773,6 @@ impl<'b, Buf: 'b + Buffer + ?Sized> AsRawMut for SendRequest<'b, Buf> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for SendRequest<'b, Buf> { }
-
 impl<'b, Buf: 'b + Buffer + ?Sized> Drop for SendRequest<'b, Buf> {
     fn drop(&mut self) {
         unsafe {
@@ -920,8 +918,6 @@ impl<'b, Buf: 'b + BufferMut + ?Sized> AsRawMut for ReceiveRequest<'b, Buf> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for ReceiveRequest<'b, Buf> { }
-
 impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for ReceiveRequest<'b, Buf> {
     fn drop(&mut self) {
         unsafe {
@@ -972,8 +968,6 @@ impl AsRaw for PlainRequest {
 impl AsRawMut for PlainRequest {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut self.0 }
 }
-
-impl RawRequest for PlainRequest { }
 
 /// Will contain a value of type `T` received via a non-blocking receive operation.
 #[must_use]

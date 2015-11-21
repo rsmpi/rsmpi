@@ -284,8 +284,6 @@ impl AsRaw for SystemOperation {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl RawOperation for SystemOperation { }
-
 macro_rules! reduce_into_specializations {
     ($($name:ident => $operation:expr),*) => (
         $(fn $name<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>) {
@@ -470,8 +468,6 @@ impl AsRawMut for BarrierRequest {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl RawRequest for BarrierRequest { }
-
 /// Non-blocking barrier synchronization among all processes in a `Communicator`
 ///
 /// Calling processes (or threads within the calling processes) enter the barrier. Completion
@@ -517,8 +513,6 @@ impl<'b, Buf: 'b + BufferMut + ?Sized> AsRaw for BroadcastRequest<'b, Buf> {
 impl<'b, Buf: 'b + BufferMut + ?Sized> AsRawMut for BroadcastRequest<'b, Buf> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for BroadcastRequest<'b, Buf> { }
 
 impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for BroadcastRequest<'b, Buf> {
     fn drop(&mut self) {
@@ -575,8 +569,6 @@ impl<'s, S: 's + Buffer + ?Sized> AsRawMut for GatherRequest<'s, S> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'s, S: 's + Buffer + ?Sized> RawRequest for GatherRequest<'s, S> { }
-
 impl<'s, S: 's + Buffer + ?Sized> Drop for GatherRequest<'s, S> {
     fn drop(&mut self) {
         unsafe {
@@ -606,8 +598,6 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRaw for Gath
 impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for GatherRootRequest<'s, 'r, S, R> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for GatherRootRequest<'s, 'r, S, R> { }
 
 impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for GatherRootRequest<'s, 'r, S, R> {
     fn drop(&mut self) {
@@ -689,8 +679,6 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for A
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for AllGatherRequest<'s, 'r, S, R> { }
-
 impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for AllGatherRequest<'s, 'r, S, R> {
     fn drop(&mut self) {
         unsafe {
@@ -749,8 +737,6 @@ impl<'r, R: 'r + BufferMut + ?Sized> AsRawMut for ScatterRequest<'r, R> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'r, R: 'r + BufferMut + ?Sized> RawRequest for ScatterRequest<'r, R> { }
-
 impl<'r, R: 'r + BufferMut + ?Sized> Drop for ScatterRequest<'r, R> {
     fn drop(&mut self) {
         unsafe {
@@ -780,8 +766,6 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRaw for Scat
 impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for ScatterRootRequest<'s, 'r, S, R> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for ScatterRootRequest<'s, 'r, S, R> { }
 
 impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for ScatterRootRequest<'s, 'r, S, R> {
     fn drop(&mut self) {
@@ -863,8 +847,6 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for A
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for AllToAllRequest<'s, 'r, S, R> { }
-
 impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for AllToAllRequest<'s, 'r, S, R> {
     fn drop(&mut self) {
         unsafe {
@@ -873,6 +855,7 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for AllTo
         }
     }
 }
+
 /// Non-blocking all-to-all communication.
 ///
 /// # Standard section(s)

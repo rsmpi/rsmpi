@@ -69,8 +69,6 @@ impl AsRaw for SystemDatatype {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl RawDatatype for SystemDatatype { }
-
 /// A direct equivalence exists between the implementing type and an MPI datatype
 ///
 /// # Standard section(s)
@@ -243,8 +241,6 @@ impl AsRaw for UserDatatype {
     type Raw = MPI_Datatype;
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
-
-impl RawDatatype for UserDatatype { }
 
 /// Something that has an associated datatype
 // TODO: merge this into Buffer, maybe?
