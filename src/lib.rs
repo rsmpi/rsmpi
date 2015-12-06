@@ -112,6 +112,7 @@ pub mod collective;
 pub mod datatype;
 pub mod point_to_point;
 pub mod raw;
+pub mod request;
 pub mod topology;
 pub mod traits;
 

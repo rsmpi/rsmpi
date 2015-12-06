@@ -17,13 +17,13 @@
 //! `MPI_Iscan()`, `MPI_Iexscan()`
 
 use std::{mem, ptr};
-use std::marker::PhantomData;
 
 use ffi;
 use ffi::{MPI_Request, MPI_Op};
 
 use datatype::traits::*;
 use raw::traits::*;
+use request::{Request, ReadRequest, WriteRequest, ReadWriteRequest};
 use topology::traits::*;
 use topology::{Rank, Identifier};
 
@@ -441,36 +441,7 @@ impl<C: Communicator> ExclusiveScanInto for C {
 }
 
 /// A request object for an immediate (non-blocking) barrier operation
-///
-/// # Examples
-///
-/// See `examples/immediate_barrier.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct BarrierRequest(MPI_Request);
-
-impl Drop for BarrierRequest {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous barrier request dropped without ascertaining completion.");
-        }
-    }
-}
-
-impl AsRaw for BarrierRequest {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl AsRawMut for BarrierRequest {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl RawRequest for BarrierRequest { }
+pub type BarrierRequest = Request;
 
 /// Non-blocking barrier synchronization among all processes in a `Communicator`
 ///
@@ -493,41 +464,12 @@ impl<C: Communicator> ImmediateBarrier for C {
     fn immediate_barrier(&self) -> BarrierRequest {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Ibarrier(self.communicator().as_raw(), &mut request); }
-        BarrierRequest(request)
+        BarrierRequest::from_raw(request)
     }
 }
 
 /// A request object for an immediate (non-blocking) broadcast operation
-///
-/// # Examples
-///
-/// See `examples/immediate_broadcast.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct BroadcastRequest<'b, Buf: 'b + BufferMut + ?Sized>(MPI_Request, PhantomData<&'b mut Buf>);
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> AsRaw for BroadcastRequest<'b, Buf> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> AsRawMut for BroadcastRequest<'b, Buf> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for BroadcastRequest<'b, Buf> { }
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for BroadcastRequest<'b, Buf> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous broadcast request dropped without ascertaining completion.");
-        }
-    }
-}
+pub type BroadcastRequest<'b, Buf> = WriteRequest<'b, Buf>;
 
 /// Non-blocking broadcast of a value from a `Root` process to all other processes.
 ///
@@ -550,73 +492,15 @@ impl<R: Root> ImmediateBroadcastInto for R {
             ffi::MPI_Ibcast(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
                 self.root_rank(), self.communicator().as_raw(), &mut request);
         }
-        BroadcastRequest(request, PhantomData)
+        BroadcastRequest::from_raw(request, buf)
     }
 }
 
 /// A request object for an immediate (non-blocking) gather operation
-///
-/// # Examples
-///
-/// See `examples/immediate_gather.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct GatherRequest<'s, S: 's + Buffer + ?Sized>(MPI_Request, PhantomData<&'s S>);
-
-impl<'s, S: 's + Buffer + ?Sized> AsRaw for GatherRequest<'s, S> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'s, S: 's + Buffer + ?Sized> AsRawMut for GatherRequest<'s, S> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'s, S: 's + Buffer + ?Sized> RawRequest for GatherRequest<'s, S> { }
-
-impl<'s, S: 's + Buffer + ?Sized> Drop for GatherRequest<'s, S> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous gather request dropped without ascertaining completion.");
-        }
-    }
-}
+pub type GatherRequest<'s, S> = ReadRequest<'s, S>;
 
 /// A request object for an immediate (non-blocking) gather operation on the root process
-///
-/// # Examples
-///
-/// See `examples/immediate_gather.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct GatherRootRequest<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(MPI_Request, PhantomData<&'s S>, PhantomData<&'r mut R>);
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRaw for GatherRootRequest<'s, 'r, S, R> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for GatherRootRequest<'s, 'r, S, R> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for GatherRootRequest<'s, 'r, S, R> { }
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for GatherRootRequest<'s, 'r, S, R> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous gather request dropped without ascertaining completion.");
-        }
-    }
-}
+pub type GatherRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
 
 /// Non-blocking gather of values at the `Root` process
 ///
@@ -652,7 +536,7 @@ impl<T: Root> ImmediateGatherInto for T {
                 ptr::null_mut(), 0, u8::equivalent_datatype().as_raw(),
                 self.root_rank(), self.communicator().as_raw(), &mut request);
         }
-        GatherRequest(request, PhantomData)
+        GatherRequest::from_raw(request, sendbuf)
     }
 
     fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> GatherRootRequest<'s, 'r, S, R> {
@@ -664,41 +548,12 @@ impl<T: Root> ImmediateGatherInto for T {
                 recvbuf.pointer_mut(), recvcount, recvbuf.datatype().as_raw(),
                 self.root_rank(), self.communicator().as_raw(), &mut request);
         }
-        GatherRootRequest(request, PhantomData, PhantomData)
+        GatherRootRequest::from_raw(request, sendbuf, recvbuf)
     }
 }
 
 /// A request object for an immediate (non-blocking) all-gather operation
-///
-/// # Examples
-///
-/// See `examples/immediate_all_gather.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct AllGatherRequest<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(MPI_Request, PhantomData<&'s S>, PhantomData<&'r mut R>);
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRaw for AllGatherRequest<'s, 'r, S, R> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for AllGatherRequest<'s, 'r, S, R> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for AllGatherRequest<'s, 'r, S, R> { }
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for AllGatherRequest<'s, 'r, S, R> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous all-gather request dropped without ascertaining completion.");
-        }
-    }
-}
+pub type AllGatherRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
 
 /// Non-blocking gather of contents of buffers on all participating processes.
 ///
@@ -724,73 +579,15 @@ impl<C: Communicator> ImmediateAllGatherInto for C {
                 recvbuf.pointer_mut(), recvcount, recvbuf.datatype().as_raw(),
                 self.communicator().as_raw(), &mut request);
         }
-        AllGatherRequest(request, PhantomData, PhantomData)
+        AllGatherRequest::from_raw(request, sendbuf, recvbuf)
     }
 }
 
 /// A request object for an immediate (non-blocking) scatter operation
-///
-/// # Examples
-///
-/// See `examples/immediate_scatter.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct ScatterRequest<'r, R: 'r + BufferMut + ?Sized>(MPI_Request, PhantomData<&'r mut R>);
-
-impl<'r, R: 'r + BufferMut + ?Sized> AsRaw for ScatterRequest<'r, R> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'r, R: 'r + BufferMut + ?Sized> AsRawMut for ScatterRequest<'r, R> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'r, R: 'r + BufferMut + ?Sized> RawRequest for ScatterRequest<'r, R> { }
-
-impl<'r, R: 'r + BufferMut + ?Sized> Drop for ScatterRequest<'r, R> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous scatter request dropped without ascertaining completion.");
-        }
-    }
-}
+pub type ScatterRequest<'r, R> = WriteRequest<'r, R>;
 
 /// A request object for an immediate (non-blocking) scatter operation on the root process
-///
-/// # Examples
-///
-/// See `examples/immediate_scatter.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct ScatterRootRequest<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(MPI_Request, PhantomData<&'s S>, PhantomData<&'r mut R>);
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRaw for ScatterRootRequest<'s, 'r, S, R> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for ScatterRootRequest<'s, 'r, S, R> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for ScatterRootRequest<'s, 'r, S, R> { }
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for ScatterRootRequest<'s, 'r, S, R> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous scatter request dropped without ascertaining completion.");
-        }
-    }
-}
+pub type ScatterRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
 
 /// Non-blocking scatter of values from the `Root` process
 ///
@@ -826,7 +623,7 @@ impl<T: Root> ImmediateScatterInto for T {
                 recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
                 self.root_rank(), self.communicator().as_raw(), &mut request);
         }
-        ScatterRequest(request, PhantomData)
+        ScatterRequest::from_raw(request, recvbuf)
     }
 
     fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> ScatterRootRequest<'s, 'r, S, R> {
@@ -838,41 +635,13 @@ impl<T: Root> ImmediateScatterInto for T {
                 recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
                 self.root_rank(), self.communicator().as_raw(), &mut request);
         }
-        ScatterRootRequest(request, PhantomData, PhantomData)
+        ScatterRootRequest::from_raw(request, sendbuf, recvbuf)
     }
 }
 
 /// A request object for an immediate (non-blocking) all-to-all operation
-///
-/// # Examples
-///
-/// See `examples/immediate_all_to_all.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct AllToAllRequest<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(MPI_Request, PhantomData<&'s S>, PhantomData<&'r mut R>);
+pub type AllToAllRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
 
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRaw for AllToAllRequest<'s, 'r, S, R> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for AllToAllRequest<'s, 'r, S, R> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for AllToAllRequest<'s, 'r, S, R> { }
-
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for AllToAllRequest<'s, 'r, S, R> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous all-to-all request dropped without ascertaining completion.");
-        }
-    }
-}
 /// Non-blocking all-to-all communication.
 ///
 /// # Standard section(s)
@@ -896,6 +665,6 @@ impl<C: Communicator> ImmediateAllToAllInto for C {
                 recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().as_raw(),
                 self.communicator().as_raw(), &mut request);
         }
-        AllToAllRequest(request, PhantomData, PhantomData)
+        AllToAllRequest::from_raw(request, sendbuf, recvbuf)
     }
 }

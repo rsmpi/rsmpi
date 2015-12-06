@@ -8,16 +8,10 @@
 //!
 //! - **3.2.6**: `MPI_STATUS_IGNORE`
 //! - **3.6**: Buffer usage, `MPI_Buffer_attach()`, `MPI_Buffer_detach()`
-//! - **3.7**: Nonblocking mode:
-//!   - Completion, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
-//!   `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`, `MPI_Request_get_status()`
-//! - **3.8**:
-//!   - Cancellation, `MPI_Cancel()`, `MPI_Test_cancelled()`
 //! - **3.9**: Persistent requests, `MPI_Send_init()`, `MPI_Bsend_init()`, `MPI_Ssend_init()`,
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 
 use std::{mem, fmt};
-use std::marker::PhantomData;
 
 use libc::c_int;
 
@@ -30,6 +24,8 @@ use ffi::{MPI_Status, MPI_Message, MPI_Request};
 
 use datatype::traits::*;
 use raw::traits::*;
+use request::{ReadRequest, WriteRequest};
+use request::traits::*;
 use topology::{SystemCommunicator, UserCommunicator, Rank, Identifier};
 use topology::traits::*;
 
@@ -225,6 +221,11 @@ impl<Dest: Destination> ReadySend for Dest {
 pub struct Status(MPI_Status);
 
 impl Status {
+    /// Construct a `Status` value from the raw MPI type
+    pub fn from_raw(status: MPI_Status) -> Status {
+        Status(status)
+    }
+
     /// The rank of the message source
     pub fn source_rank(&self) -> Rank {
         self.0.MPI_SOURCE
@@ -702,87 +703,8 @@ impl<C: RawCommunicator> SendReceiveReplaceInto for C {
     }
 }
 
-/// Wait for an operation to finish.
-///
-/// # Examples
-///
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.3
-pub trait Wait: RawRequest + Sized {
-    /// Will block execution of the calling thread until the associated operation has finished.
-    fn wait(mut self) -> Status {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Wait(self.as_raw_mut(), &mut status);
-        }
-        Status(status)
-    }
-}
-
-impl<R: RawRequest + Sized> Wait for R { }
-
-/// Test whether an operation has finished.
-///
-/// # Examples
-///
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.3
-pub trait Test: RawRequest + Sized {
-    /// If the operation has finished returns the `Status` otherwise returns the unfinished
-    /// `Request`.
-    fn test(mut self) -> Result<Status, Self> {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        let mut flag: c_int = 0;
-        unsafe {
-            ffi::MPI_Test(self.as_raw_mut(), &mut flag, &mut status);
-        }
-        if flag != 0 {
-            Result::Ok(Status(status))
-        } else {
-            Result::Err(self)
-        }
-    }
-}
-
-impl<R: RawRequest + Sized> Test for R { }
-
-/// A request object for an immediate (non-blocking) send operation
-///
-/// # Examples
-///
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct SendRequest<'b, Buf: 'b + Buffer + ?Sized>(MPI_Request, PhantomData<&'b Buf>);
-
-impl<'b, Buf: 'b + Buffer + ?Sized> AsRaw for SendRequest<'b, Buf> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'b, Buf: 'b + Buffer + ?Sized> AsRawMut for SendRequest<'b, Buf> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for SendRequest<'b, Buf> { }
-
-impl<'b, Buf: 'b + Buffer + ?Sized> Drop for SendRequest<'b, Buf> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous send request dropped without ascertaining completion.");
-        }
-    }
-}
+/// A request object associated with a send operation
+pub type SendRequest<'b, Buf> = ReadRequest<'b, Buf>;
 
 /// Initiate an immediate (non-blocking) standard mode send operation.
 ///
@@ -810,7 +732,7 @@ impl<Dest: Destination> ImmediateSend for Dest {
                 self.destination_rank(), tag, self.communicator().as_raw(),
                 &mut request);
         }
-        SendRequest(request, PhantomData)
+        SendRequest::from_raw(request, buf)
     }
 }
 
@@ -837,7 +759,7 @@ impl<Dest: Destination> ImmediateBufferedSend for Dest {
                 self.destination_rank(), tag, self.communicator().as_raw(),
                 &mut request);
         }
-        SendRequest(request, PhantomData)
+        SendRequest::from_raw(request, buf)
     }
 }
 
@@ -864,7 +786,7 @@ impl<Dest: Destination> ImmediateSynchronousSend for Dest {
                 self.destination_rank(), tag, self.communicator().as_raw(),
                 &mut request);
         }
-        SendRequest(request, PhantomData)
+        SendRequest::from_raw(request, buf)
     }
 }
 
@@ -895,41 +817,12 @@ impl<Dest: Destination> ImmediateReadySend for Dest {
                 self.destination_rank(), tag, self.communicator().as_raw(),
                 &mut request);
         }
-        SendRequest(request, PhantomData)
+        SendRequest::from_raw(request, buf)
     }
 }
 
-/// A request object for an immediate (non-blocking) receive operation
-///
-/// # Examples
-///
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.1
-#[must_use]
-pub struct ReceiveRequest<'b, Buf: 'b + BufferMut + ?Sized>(MPI_Request, PhantomData<&'b mut Buf>);
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> AsRaw for ReceiveRequest<'b, Buf> {
-    type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw { self.0 }
-}
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> AsRawMut for ReceiveRequest<'b, Buf> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
-}
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for ReceiveRequest<'b, Buf> { }
-
-impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for ReceiveRequest<'b, Buf> {
-    fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "asynchronous receive request dropped without ascertaining completion.");
-        }
-    }
-}
+/// A request object associated with a receive operation
+pub type ReceiveRequest<'b, Buf> = WriteRequest<'b, Buf>;
 
 /// Initiate an immediate (non-blocking) receive operation.
 ///
@@ -941,7 +834,7 @@ impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for ReceiveRequest<'b, Buf> {
 /// 3.7.2
 pub trait ImmediateReceiveInto {
     /// Initiate receiving a message matching `tag` into `buf`.
-    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf>;
+    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf>;
 
     /// Initiate receiving a message into `buf`.
     fn immediate_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf> {
@@ -950,14 +843,14 @@ pub trait ImmediateReceiveInto {
 }
 
 impl<Src:Source> ImmediateReceiveInto for Src {
-    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf> {
+    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Irecv(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
                 self.source_rank(), tag, self.communicator().as_raw(),
                 &mut request);
         }
-        ReceiveRequest(request, PhantomData)
+        ReceiveRequest::from_raw(request, buf)
     }
 }
 
@@ -1129,17 +1022,17 @@ pub trait ImmediateMatchedReceiveInto {
     /// Asynchronously receive the message `&self` with contents matching `buf`.
     ///
     /// Receiving from the null process leaves `buf` untouched.
-    fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(self, buf: &mut Buf) -> ReceiveRequest<'b, Buf>;
+    fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf>;
 }
 
 impl ImmediateMatchedReceiveInto for Message {
-    fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(mut self, buf: &mut Buf) -> ReceiveRequest<'b, Buf> {
+    fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(mut self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Imrecv(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
                 self.as_raw_mut(), &mut request);
             assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
         }
-        ReceiveRequest(request, PhantomData)
+        ReceiveRequest::from_raw(request, buf)
     }
 }
