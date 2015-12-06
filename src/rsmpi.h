@@ -34,6 +34,8 @@ extern const MPI_Message RSMPI_MESSAGE_NO_PROC;
 
 extern const MPI_Request RSMPI_REQUEST_NULL;
 
+extern MPI_Status* const RSMPI_STATUS_IGNORE;
+
 extern const int RSMPI_IDENT;
 extern const int RSMPI_CONGRUENT;
 extern const int RSMPI_SIMILAR;

@@ -35,7 +35,9 @@ pub trait Wait: RawRequest + Sized {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Wait(self.as_raw_mut(), &mut status);
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL);
         }
+        mem::forget(self);
         Status::from_raw(status)
     }
 }
@@ -59,8 +61,10 @@ pub trait Test: RawRequest + Sized {
         let mut flag: c_int = 0;
         unsafe {
             ffi::MPI_Test(self.as_raw_mut(), &mut flag, &mut status);
+            assert!(flag == 0 || self.as_raw() == ffi::RSMPI_REQUEST_NULL);
         }
         if flag != 0 {
+            mem::forget(self);
             Result::Ok(Status::from_raw(status))
         } else {
             Result::Err(self)
@@ -69,6 +73,29 @@ pub trait Test: RawRequest + Sized {
 }
 
 impl<R: RawRequest + Sized> Test for R { }
+
+/// Cancel an operation.
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.8.4
+pub trait Cancel: RawRequest + Sized {
+    /// Cancel an operation.
+    fn cancel(mut self) {
+        unsafe {
+            ffi::MPI_Cancel(self.as_raw_mut());
+            ffi::MPI_Request_free(self.as_raw_mut());
+            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL);
+        }
+        mem::forget(self);
+    }
+}
+
+impl<R: RawRequest + Sized> Cancel for R { }
 
 /// A request object for an non-blocking operation that holds no references
 ///
@@ -224,5 +251,54 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for ReadW
             assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
                 "read-write request dropped without ascertaining completion.");
         }
+    }
+}
+
+/// Guard object that waits for the completion of an operation when it is dropped
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+pub struct WaitGuard<Req: RawRequest>(Option<Req>);
+
+impl<Req: RawRequest> Drop for WaitGuard<Req> {
+    fn drop(&mut self) {
+        let mut req = self.0.take().unwrap();
+        unsafe {
+            ffi::MPI_Wait(req.as_raw_mut(), ffi::RSMPI_STATUS_IGNORE);
+            assert!(req.as_raw() == ffi::RSMPI_REQUEST_NULL);
+        }
+        mem::forget(req);
+    }
+}
+
+impl<Req: RawRequest> From<Req> for WaitGuard<Req> {
+    fn from(req: Req) -> WaitGuard<Req> {
+        WaitGuard(Some(req))
+    }
+}
+
+/// Guard object that cancels an operation when it is dropped
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+pub struct CancelGuard<Req: RawRequest>(Option<Req>);
+
+impl<Req: RawRequest> Drop for CancelGuard<Req> {
+    fn drop(&mut self) {
+        let mut req = self.0.take().unwrap();
+        unsafe {
+            ffi::MPI_Cancel(req.as_raw_mut());
+            ffi::MPI_Request_free(req.as_raw_mut());
+            assert!(req.as_raw() == ffi::RSMPI_REQUEST_NULL);
+        }
+        mem::forget(req);
+    }
+}
+
+impl<Req: RawRequest> From<Req> for CancelGuard<Req> {
+    fn from(req: Req) -> CancelGuard<Req> {
+        CancelGuard(Some(req))
     }
 }

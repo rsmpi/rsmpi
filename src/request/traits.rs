@@ -1,2 +1,2 @@
 //! Request object traits
-pub use super::{Wait, Test};
+pub use super::{Wait, Test, Cancel};
