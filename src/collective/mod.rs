@@ -631,7 +631,7 @@ pub trait ImmediateGatherInto {
     /// # Examples
     ///
     /// See `examples/immediate_gather.rs`
-    fn immediate_gather_into<'s, S: 's + Buffer + ?Sized>(&self, sendbuf: &S) -> GatherRequest<'s, S>;
+    fn immediate_gather_into<'s, S: 's + Buffer + ?Sized>(&self, sendbuf: &'s S) -> GatherRequest<'s, S>;
 
     /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
     ///
@@ -640,11 +640,11 @@ pub trait ImmediateGatherInto {
     /// # Examples
     ///
     /// See `examples/immediate_gather.rs`
-    fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> GatherRootRequest<'s, 'r, S, R>;
+    fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> GatherRootRequest<'s, 'r, S, R>;
 }
 
 impl<T: Root> ImmediateGatherInto for T {
-    fn immediate_gather_into<'s, S: 's + Buffer + ?Sized>(&self, sendbuf: &S) -> GatherRequest<'s, S> {
+    fn immediate_gather_into<'s, S: 's + Buffer + ?Sized>(&self, sendbuf: &'s S) -> GatherRequest<'s, S> {
         assert!(self.communicator().rank() != self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
@@ -655,7 +655,7 @@ impl<T: Root> ImmediateGatherInto for T {
         GatherRequest(request, PhantomData)
     }
 
-    fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> GatherRootRequest<'s, 'r, S, R> {
+    fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> GatherRootRequest<'s, 'r, S, R> {
         assert!(self.communicator().rank() == self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
@@ -712,11 +712,11 @@ pub trait ImmediateAllGatherInto {
     /// # Examples
     ///
     /// See `examples/immediate_all_gather.rs`
-    fn immediate_all_gather_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> AllGatherRequest<'s, 'r, S, R>;
+    fn immediate_all_gather_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllGatherRequest<'s, 'r, S, R>;
 }
 
 impl<C: Communicator> ImmediateAllGatherInto for C {
-    fn immediate_all_gather_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> AllGatherRequest<'s, 'r, S, R> {
+    fn immediate_all_gather_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllGatherRequest<'s, 'r, S, R> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             let recvcount = recvbuf.count() / self.communicator().size();
@@ -805,7 +805,7 @@ pub trait ImmediateScatterInto {
     /// # Examples
     ///
     /// See `examples/immediate_scatter.rs`
-    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &mut R) -> ScatterRequest<'r, R>;
+    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &'r mut R) -> ScatterRequest<'r, R>;
 
     /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
     ///
@@ -814,11 +814,11 @@ pub trait ImmediateScatterInto {
     /// # Examples
     ///
     /// See `examples/immediate_scatter.rs`
-    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> ScatterRootRequest<'s, 'r, S, R>;
+    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> ScatterRootRequest<'s, 'r, S, R>;
 }
 
 impl<T: Root> ImmediateScatterInto for T {
-    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &mut R) -> ScatterRequest<'r, R> {
+    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &'r mut R) -> ScatterRequest<'r, R> {
         assert!(self.communicator().rank() != self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
@@ -829,7 +829,7 @@ impl<T: Root> ImmediateScatterInto for T {
         ScatterRequest(request, PhantomData)
     }
 
-    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> ScatterRootRequest<'s, 'r, S, R> {
+    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> ScatterRootRequest<'s, 'r, S, R> {
         assert!(self.communicator().rank() == self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
@@ -884,11 +884,11 @@ pub trait ImmediateAllToAllInto {
     /// # Examples
     ///
     /// See `examples/immediate_all_to_all.rs`
-    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> AllToAllRequest<'s, 'r, S, R>;
+    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllToAllRequest<'s, 'r, S, R>;
 }
 
 impl<C: Communicator> ImmediateAllToAllInto for C {
-    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) -> AllToAllRequest<'s, 'r, S, R> {
+    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllToAllRequest<'s, 'r, S, R> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         let c_size = self.communicator().size();
         unsafe {
