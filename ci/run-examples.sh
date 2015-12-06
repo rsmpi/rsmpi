@@ -25,7 +25,7 @@ do
   num_proc=$((($(printf "%d" 0x$(openssl rand -hex 1)) % 7) + 2))
   printf "example ${binary} on ${num_proc} processes ... "
   output_file=${binary}_output
-  if (mpiexec -np ${num_proc} "${BINARIES_DIR}/${binary}" > "${output_file}")
+  if (mpiexec -n ${num_proc} "${BINARIES_DIR}/${binary}" > "${output_file}")
   then
     printf "ok\n"
     num_ok=$((${num_ok} + 1))
