@@ -23,7 +23,7 @@ fn main() {
         let msg = vec![rank, rank + 1, rank - 1];
         world.process_at_rank(0).send(&msg[..]);
     } else {
-        for _ in (1..size) {
+        for _ in 1..size {
             let (msg, status) = world.receive_vec::<Rank>();
             assert!(msg.is_some());
             let msg = msg.unwrap();
