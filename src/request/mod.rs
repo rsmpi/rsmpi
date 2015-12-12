@@ -35,8 +35,8 @@ pub trait Wait: RawRequest + Sized {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Wait(self.as_raw_mut(), &mut status);
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL);
         }
+        assert!(self.is_null());
         mem::forget(self);
         Status::from_raw(status)
     }
@@ -61,8 +61,8 @@ pub trait Test: RawRequest + Sized {
         let mut flag: c_int = 0;
         unsafe {
             ffi::MPI_Test(self.as_raw_mut(), &mut flag, &mut status);
-            assert!(flag == 0 || self.as_raw() == ffi::RSMPI_REQUEST_NULL);
         }
+        assert!(flag == 0 || self.is_null());
         if flag != 0 {
             mem::forget(self);
             Result::Ok(Status::from_raw(status))
@@ -89,8 +89,8 @@ pub trait Cancel: RawRequest + Sized {
         unsafe {
             ffi::MPI_Cancel(self.as_raw_mut());
             ffi::MPI_Request_free(self.as_raw_mut());
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL);
         }
+        assert!(self.is_null());
         mem::forget(self);
     }
 }
@@ -129,10 +129,7 @@ impl RawRequest for Request { }
 
 impl Drop for Request {
     fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "request dropped without ascertaining completion.");
-        }
+        assert!(self.is_null(), "request dropped without ascertaining completion.");
     }
 }
 
@@ -168,10 +165,7 @@ impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for ReadRequest<'b, Buf> { }
 
 impl<'b, Buf: 'b + Buffer + ?Sized> Drop for ReadRequest<'b, Buf> {
     fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "read request dropped without ascertaining completion.");
-        }
+        assert!(self.is_null(), "read request dropped without ascertaining completion.");
     }
 }
 
@@ -207,10 +201,7 @@ impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for WriteRequest<'b, Buf> { }
 
 impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for WriteRequest<'b, Buf> {
     fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "write request dropped without ascertaining completion.");
-        }
+        assert!(self.is_null(), "write request dropped without ascertaining completion.");
     }
 }
 
@@ -247,10 +238,7 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for
 
 impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for ReadWriteRequest<'s, 'r, S, R> {
     fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_REQUEST_NULL,
-                "read-write request dropped without ascertaining completion.");
-        }
+        assert!(self.is_null(), "read-write request dropped without ascertaining completion.");
     }
 }
 

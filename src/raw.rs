@@ -1,5 +1,6 @@
 //! Bridge between rust types and raw values
 
+use ffi;
 use ffi::{MPI_Comm, MPI_Group, MPI_Datatype, MPI_Request, MPI_Op};
 
 /// Rust C bridge traits
@@ -40,7 +41,14 @@ pub trait RawDatatype: AsRaw<Raw = MPI_Datatype> { }
 impl<'a, T: 'a + RawDatatype> RawDatatype for &'a T { }
 
 /// A type that can identify as an `MPI_Request`
-pub trait RawRequest: AsRaw<Raw = MPI_Request> + AsRawMut { }
+pub trait RawRequest: AsRaw<Raw = MPI_Request> + AsRawMut {
+    /// Returns true for a null request handle.
+    fn is_null(&self) -> bool {
+        unsafe {
+            self.as_raw() == ffi::RSMPI_REQUEST_NULL
+        }
+    }
+}
 
 /// A type that can identify as an `MPI_Op`
 pub trait RawOperation: AsRaw<Raw = MPI_Op> { }
