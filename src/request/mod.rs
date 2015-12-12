@@ -251,12 +251,13 @@ pub struct WaitGuard<Req: RawRequest>(Option<Req>);
 
 impl<Req: RawRequest> Drop for WaitGuard<Req> {
     fn drop(&mut self) {
-        let mut req = self.0.take().unwrap();
-        unsafe {
-            ffi::MPI_Wait(req.as_raw_mut(), ffi::RSMPI_STATUS_IGNORE);
-            assert!(req.as_raw() == ffi::RSMPI_REQUEST_NULL);
-        }
-        mem::forget(req);
+        self.0.take().map(|mut req| {
+            unsafe {
+                ffi::MPI_Wait(req.as_raw_mut(), ffi::RSMPI_STATUS_IGNORE);
+            }
+            assert!(req.is_null());
+            mem::forget(req);
+        });
     }
 }
 
@@ -275,13 +276,14 @@ pub struct CancelGuard<Req: RawRequest>(Option<Req>);
 
 impl<Req: RawRequest> Drop for CancelGuard<Req> {
     fn drop(&mut self) {
-        let mut req = self.0.take().unwrap();
-        unsafe {
-            ffi::MPI_Cancel(req.as_raw_mut());
-            ffi::MPI_Request_free(req.as_raw_mut());
-            assert!(req.as_raw() == ffi::RSMPI_REQUEST_NULL);
-        }
-        mem::forget(req);
+        self.0.take().map(|mut req| {
+            unsafe {
+                ffi::MPI_Cancel(req.as_raw_mut());
+                ffi::MPI_Request_free(req.as_raw_mut());
+            }
+            assert!(req.is_null());
+            mem::forget(req);
+        });
     }
 }
 
