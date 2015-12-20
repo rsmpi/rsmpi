@@ -20,7 +20,7 @@ programming language. This library tries to bridge the gap into a more rustic wo
 
 ## Requirements
 
-An implementation of the C language interface of MPI-3.0. These bindings are currently tested with:
+An implementation of the C language interface of MPI-3.1. These bindings are currently tested with:
 
 - [OpenMPI][OpenMPI] 1.8.8, 1.10.0
 - [MPICH][MPICH] 3.2, 3.1.4
@@ -99,7 +99,7 @@ Currently supported:
 - **Groups, Contexts, Communicators**:
   - Group and (Intra-)Communicator management from section 6 is mostly complete.
   - no Inter-Communicators
-  - noprocess topologies
+  - no process topologies
 - **Point to point communication**:
   - standard, buffered, synchronous and ready mode send in blocking and non-blocking variants
   - receive in blocking and non-blocking variants
@@ -107,13 +107,14 @@ Currently supported:
   - probe
   - matched probe/receive
 - **Collective communication**:
-  - barrier in blocking and non-blocking variants
+  - barrier
   - broadcast
   - (all) gather
   - scatter
   - all to all
+  - reductions/scans
   - no varying counts operations
-  - no reductions/scans
+  - no user-defined operators for reductions/scans
 - **Datatypes**: Bridging between Rust types and MPI basic types as well as custom MPI datatypes which can act as views into buffers.
 
 Not supported (yet):
