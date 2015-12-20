@@ -23,7 +23,7 @@ programming language. This library tries to bridge the gap into a more rustic wo
 An implementation of the C language interface of MPI-3.0. These bindings are currently tested with:
 
 - [OpenMPI][OpenMPI] 1.8.8, 1.10.0
-- [MPICH][MPICH] 3.1.4, 3.0.4
+- [MPICH][MPICH] 3.2, 3.1.4
 
 To generate FFI definitions `rsmpi` uses `rust-bindgen` which needs `libclang`. See the [bindgen project page][bindgen] for troubleshooting.
 
