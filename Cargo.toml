@@ -12,7 +12,7 @@ readme = "README.md"
 
 keywords = [ "message-passing", "parallel" ]
 
-license = "MIT"
+license = "MIT OR Apache-2.0"
 
 build = "build.rs"
 
