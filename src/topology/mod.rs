@@ -146,11 +146,11 @@ impl Threading {
     /// The raw value understood by the MPI C API
     fn as_raw(&self) -> c_int {
         use self::Threading::*;
-        match self {
-            &Single => ffi::RSMPI_THREAD_SINGLE,
-            &Funneled => ffi::RSMPI_THREAD_FUNNELED,
-            &Serialized => ffi::RSMPI_THREAD_SERIALIZED,
-            &Multiple => ffi::RSMPI_THREAD_MULTIPLE
+        match *self {
+            Single => ffi::RSMPI_THREAD_SINGLE,
+            Funneled => ffi::RSMPI_THREAD_FUNNELED,
+            Serialized => ffi::RSMPI_THREAD_SERIALIZED,
+            Multiple => ffi::RSMPI_THREAD_MULTIPLE
         }
     }
 }

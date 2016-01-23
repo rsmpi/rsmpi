@@ -1009,11 +1009,11 @@ pub trait ImmediateMatchedReceiveInto {
     /// Asynchronously receive the message `&self` with contents matching `buf`.
     ///
     /// Receiving from the null process leaves `buf` untouched.
-    fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf>;
+    fn immediate_matched_receive_into<Buf: BufferMut + ?Sized>(self, buf: &mut Buf) -> ReceiveRequest<Buf>;
 }
 
 impl ImmediateMatchedReceiveInto for Message {
-    fn immediate_matched_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(mut self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf> {
+    fn immediate_matched_receive_into<Buf: BufferMut + ?Sized>(mut self, buf: &mut Buf) -> ReceiveRequest<Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Imrecv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
