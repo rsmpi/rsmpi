@@ -20,22 +20,29 @@ programming language. This library tries to bridge the gap into a more rustic wo
 
 ## Requirements
 
-An implementation of the C language interface of MPI-3.1. These bindings are currently tested with:
+An implementation of the C language interface that conforms to MPI-3.1. `rsmpi` is currently tested with these implementations:
 
 - [OpenMPI][OpenMPI] 1.8.8, 1.10.0
 - [MPICH][MPICH] 3.2, 3.1.4
 
-To generate FFI definitions `rsmpi` uses `rust-bindgen` which needs `libclang`. See the [bindgen project page][bindgen] for troubleshooting.
+For a reasonable chance of success with `rsmpi` any MPI implementation that you want to use with it should satisfy the following assumptions that `rsmpi` currently makes:
+
+- The implementation should provide a C compiler wrapper `mpicc`.
+- `mpicc -show` should print the full command line that is used to invoke the wrapped C compiler.
+- The result of `mpicc -show` contains the libraries, library search paths, and header search paths in a format understood by GCC (e.g. `-lmpi`, `-I/usr/local/include`, ...).
+
+Since the MPI standard leaves some details of the C API unspecified (e.g. whether to implement certain constants and even functions using preprocessor macros or native C constructs, the details of most types, ...) `rsmpi` takes a two step approach to generating functional low-level bindings.
+
+First, it uses a thin static library written in C (see [rsmpi.h][rsmpih] and [rsmpi.c][rsmpic]) that tries to capture the underspecified identifiers and re-exports them with a fixed C API. This library is built from [build.rs][buildrs] using the `gcc` crate.
+
+Second, to generate FFI definitions tailored to each MPI implementation, `rsmpi` uses `rust-bindgen` which needs `libclang`. See the [bindgen project page][bindgen] for more information.
 
 [OpenMPI]: https://www.open-mpi.org
 [MPICH]: https://www.mpich.org
+[rsmpih]: https://github.com/bsteinb/rsmpi/blob/master/src/rsmpi.h
+[rsmpic]: https://github.com/bsteinb/rsmpi/blob/master/src/rsmpi.c
+[buildrs]: https://github.com/bsteinb/rsmpi/blob/master/build.rs
 [bindgen]: https://github.com/crabtw/rust-bindgen
-
-## Building
-
-```
-cargo build
-```
 
 ## Usage
 
@@ -126,15 +133,17 @@ Not supported (yet):
 
 ## Documentation
 
+Every public item of `rsmpi` should at least have a short piece of documentation associated with it. Documentation can be generated via:
+
 ```
 cargo doc
 ```
 
-Or see the [hosted documentation][doc].
+Documentation for the latest version of the crate released to crates.io is [hosted on Github pages][doc].
 
 ## Examples
 
-See files in [examples/][examples].
+See files in [examples/][examples]. These examples also act as [integration tests][travis].
 
 [examples]: https://github.com/bsteinb/rsmpi/tree/master/examples
 
