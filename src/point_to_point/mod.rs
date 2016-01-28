@@ -353,11 +353,10 @@ impl MatchedReceive for Message {
         let is_no_proc = self.is_no_proc();
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.matched_receive_into(&mut res);
-        if is_no_proc {
-            (None, status)
-        } else {
-            (Some(res), status)
-        }
+        (
+            if is_no_proc { None } else { Some(res) },
+            status
+        )
     }
 }
 
@@ -405,11 +404,10 @@ impl MatchedReceiveVec for (Message, Status) {
         let mut res = Vec::with_capacity(count);
         unsafe { res.set_len(count); }
         let status = message.matched_receive_into(&mut res[..]);
-        if is_no_proc {
-            (None, status)
-        } else {
-            (Some(res), status)
-        }
+        (
+            if is_no_proc { None } else { Some(res) },
+            status
+        )
     }
 }
 
@@ -445,11 +443,10 @@ impl<Src: Source> Receive for Src {
     fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Msg>, Status) {
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.receive_into_with_tag(&mut res, tag);
-        if self.source_rank() == ffi::RSMPI_PROC_NULL {
-            (None, status)
-        } else {
-            (Some(res), status)
-        }
+        (
+            if self.source_rank() == ffi::RSMPI_PROC_NULL { None } else { Some(res) },
+            status
+        )
     }
 }
 
@@ -563,11 +560,10 @@ impl<T: SendReceiveInto> SendReceive for T {
         let status = self.send_receive_into_with_tags(
             msg, destination, sendtag,
             &mut res, source, receivetag);
-        if source == ffi::RSMPI_PROC_NULL {
-            (None, status)
-        } else {
-            (Some(res), status)
-        }
+        (
+            if source == ffi::RSMPI_PROC_NULL { None } else { Some(res) },
+            status
+        )
     }
 }
 
@@ -852,11 +848,10 @@ impl<T> ReceiveFuture<T> {
     /// Wait for the receive operation to finish and return the received data.
     pub fn get(self) -> (Option<T>, Status) {
         let status = self.req.wait();
-        if status.source_rank() == ffi::RSMPI_PROC_NULL {
-            (None, status)
-        } else {
-            (Some(*self.val), status)
-        }
+        (
+            if status.source_rank() == ffi::RSMPI_PROC_NULL { None } else { Some(*self.val) },
+            status
+        )
     }
 
     /// Check whether the receive operation has finished.
