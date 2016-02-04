@@ -42,8 +42,7 @@
 //! `MPI_Pack_external_size()`
 
 use std::{mem};
-
-use libc::{c_void};
+use std::os::raw::{c_void};
 
 use conv::ConvUtil;
 
