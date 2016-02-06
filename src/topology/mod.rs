@@ -61,7 +61,7 @@ impl Universe {
     /// # Examples
     /// See `examples/simple.rs`
     pub fn world(&self) -> SystemCommunicator {
-        SystemCommunicator(ffi::RSMPI_COMM_WORLD)
+        SystemCommunicator::from_raw_unchecked(ffi::RSMPI_COMM_WORLD)
     }
 
     /// Level of multithreading supported by this MPI universe
@@ -231,6 +231,24 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
 #[derive(Copy, Clone)]
 pub struct SystemCommunicator(MPI_Comm);
 
+impl SystemCommunicator {
+    /// If the raw value is the null handle returns `None`
+    #[allow(dead_code)]
+    fn from_raw(raw: MPI_Comm) -> Option<SystemCommunicator> {
+        if raw == ffi::RSMPI_COMM_NULL {
+            None
+        } else {
+            Some(SystemCommunicator(raw))
+        }
+    }
+
+    /// Wraps the raw value without checking for null handle
+    fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicator {
+        debug_assert!(raw != ffi::RSMPI_COMM_NULL);
+        SystemCommunicator(raw)
+    }
+}
+
 impl AsRaw for SystemCommunicator {
     type Raw = MPI_Comm;
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
@@ -251,6 +269,23 @@ impl AsCommunicator for SystemCommunicator {
 ///
 /// 6.4
 pub struct UserCommunicator(MPI_Comm);
+
+impl UserCommunicator {
+    /// If the raw value is the null handle returns `None`
+    fn from_raw(raw: MPI_Comm) -> Option<UserCommunicator> {
+        if raw == ffi::RSMPI_COMM_NULL {
+            None
+        } else {
+            Some(UserCommunicator(raw))
+        }
+    }
+
+    /// Wraps the raw value without checking for null handle
+    fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
+        debug_assert!(raw != ffi::RSMPI_COMM_NULL);
+        UserCommunicator(raw)
+    }
+}
 
 impl AsCommunicator for UserCommunicator {
     type Out = UserCommunicator;
@@ -390,7 +425,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn duplicate(&self) -> UserCommunicator {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_dup(self.as_raw(), &mut newcomm); }
-        UserCommunicator(newcomm)
+        UserCommunicator::from_raw_unchecked(newcomm)
     }
 
     /// Split a communicator by color.
@@ -421,11 +456,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<UserCommunicator> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_split(self.as_raw(), color.as_raw(), key, &mut newcomm); }
-        if newcomm == ffi::RSMPI_COMM_NULL {
-            None
-        } else {
-            Some(UserCommunicator(newcomm))
-        }
+        UserCommunicator::from_raw(newcomm)
     }
 
     /// Split a communicator collectively by subgroup.
@@ -449,11 +480,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn split_by_subgroup_collective<G: ?Sized + Group>(&self, group: &G) -> Option<UserCommunicator> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_create(self.as_raw(), group.as_raw(), &mut newcomm); }
-        if newcomm == ffi::RSMPI_COMM_NULL {
-            None
-        } else {
-            Some(UserCommunicator(newcomm))
-        }
+        UserCommunicator::from_raw(newcomm)
     }
 
     /// Split a communicator by subgroup.
@@ -484,11 +511,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         unsafe {
             ffi::MPI_Comm_create_group(self.as_raw(), group.as_raw(), tag, &mut newcomm);
         }
-        if newcomm == ffi::RSMPI_COMM_NULL {
-            None
-        } else {
-            Some(UserCommunicator(newcomm))
-        }
+        UserCommunicator::from_raw(newcomm)
     }
 
     /// The group associated with this communicator
