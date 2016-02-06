@@ -1,3 +1,15 @@
+//! Request objects for non-blocking operations
+//!
+//! Non-blocking operations such as `immediate_send()` return request objects that borrow any
+//! buffers involved in the operation so as to ensure proper access restrictions. In order to
+//! release the borrowed buffers from the request objects, a completion operation such as `wait()`
+//! or `test()` must be used on the request object. To enforce this rule, the request objects
+//! implement a `Drop` bomb which will `panic!()` when a request object is dropped.
+//!
+//! To handle request completion in a RAII style, requests can be wrapped in either `WaitGuard` or
+//! `CancelGuard` which will follow the respective policy for completing the operation upon being
+//! dropped instead of `panic!()`ing.
+//!
 //! # Unfinished features
 //!
 //! - **3.7**: Nonblocking mode:
