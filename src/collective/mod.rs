@@ -25,7 +25,7 @@ use datatype::traits::*;
 use raw::traits::*;
 use request::{PlainRequest, ReadRequest, WriteRequest, ReadWriteRequest};
 use topology::traits::*;
-use topology::{Rank, Identifier};
+use topology::{Rank, ProcessIdentifier};
 
 pub mod traits;
 
@@ -63,7 +63,7 @@ pub trait Root: AsCommunicator
     fn root_rank(&self) -> Rank;
 }
 
-impl<'a, C: 'a + Communicator> Root for Identifier<'a, C> {
+impl<'a, C: 'a + Communicator> Root for ProcessIdentifier<'a, C> {
     fn root_rank(&self) -> Rank {
         self.rank()
     }

@@ -5,7 +5,7 @@
 //! the computation are organized in a context called the 'world communicator' which is available
 //! as a property of the `Universe`. From the world communicator, other communicators can be
 //! created. Processes can be addressed via their `Rank` within a specific communicator. This
-//! information is encapsulated in an `Identifier`.
+//! information is encapsulated in a `ProcessIdentifier`.
 //!
 //! # Unfinished features
 //!
@@ -336,13 +336,13 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         res
     }
 
-    /// Bundles a reference to this communicator with a specific `Rank` into an `Identifier`.
+    /// Bundles a reference to this communicator with a specific `Rank` into a `ProcessIdentifier`.
     ///
     /// # Examples
     /// See `examples/broadcast.rs` `examples/gather.rs` `examples/send_receive.rs`
-    fn process_at_rank(&self, r: Rank) -> Identifier<Self> where Self: Sized {
+    fn process_at_rank(&self, r: Rank) -> ProcessIdentifier<Self> where Self: Sized {
         assert!(0 <= r && r < self.size());
-        Identifier { comm: self, rank: r }
+        ProcessIdentifier { comm: self, rank: r }
     }
 
     /// The null process
@@ -356,14 +356,14 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 3.11
-    fn null_process(&self) -> Identifier<Self> where Self: Sized {
-        Identifier { comm: self, rank: ffi::RSMPI_PROC_NULL }
+    fn null_process(&self) -> ProcessIdentifier<Self> where Self: Sized {
+        ProcessIdentifier { comm: self, rank: ffi::RSMPI_PROC_NULL }
     }
 
-    /// An `Identifier` for the calling process
-    fn this_process(&self) -> Identifier<Self> where Self: Sized {
+    /// A `ProcessIdentifier` for the calling process
+    fn this_process(&self) -> ProcessIdentifier<Self> where Self: Sized{
         let rank = self.rank();
-        Identifier { comm: self, rank: rank }
+        ProcessIdentifier { comm: self, rank: rank }
     }
 
     /// Compare two communicators.
@@ -535,19 +535,19 @@ impl From<c_int> for CommunicatorRelation {
 
 /// Identifies a process by its `Rank` within a certain communicator.
 #[derive(Copy, Clone)]
-pub struct Identifier<'a, C: 'a + Communicator> {
+pub struct ProcessIdentifier<'a, C: 'a + Communicator> {
     comm: &'a C,
     rank: Rank,
 }
 
-impl<'a, C: 'a + Communicator> Identifier<'a, C> {
+impl<'a, C: 'a + Communicator> ProcessIdentifier<'a, C> {
     /// The process rank
     pub fn rank(&self) -> Rank {
         self.rank
     }
 }
 
-impl<'a, C: 'a + Communicator> AsCommunicator for Identifier<'a, C> {
+impl<'a, C: 'a + Communicator> AsCommunicator for ProcessIdentifier<'a, C> {
     type Out = C;
     fn as_communicator(&self) -> &Self::Out {
         self.comm
