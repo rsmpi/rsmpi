@@ -345,6 +345,12 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         ProcessIdentifier { comm: self, rank: r }
     }
 
+    /// Returns an `AnyProcess` identifier that can be used, e.g. as a `Source` in point to point
+    /// communication.
+    fn any_process(&self) -> AnyProcess<Self> where Self: Sized {
+        AnyProcess(self)
+    }
+
     /// The null process
     ///
     /// Point to point send/receive operations involving the null process as source/destination
@@ -551,6 +557,17 @@ impl<'a, C: 'a + Communicator> AsCommunicator for ProcessIdentifier<'a, C> {
     type Out = C;
     fn as_communicator(&self) -> &Self::Out {
         self.comm
+    }
+}
+
+/// Identifies an arbitrary process that is a member of a certain communicator, e.g. for use as a
+/// `Source` in point to point communication.
+pub struct AnyProcess<'a, C: 'a + Communicator>(&'a C);
+
+impl<'a, C: 'a + Communicator> AsCommunicator for AnyProcess<'a, C> {
+    type Out = C;
+    fn as_communicator(&self) -> &Self::Out {
+        self.0
     }
 }
 

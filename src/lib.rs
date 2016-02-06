@@ -61,7 +61,7 @@
 //!             world.process_at_rank(rank + 1).send(&msg[..]);
 //!         }
 //!         1 => {
-//!             let (msg, status) = world.receive_vec::<f64>();
+//!             let (msg, status) = world.any_process().receive_vec::<f64>();
 //!             println!("Process {} got message {:?}.\nStatus is: {:?}", rank, msg, status);
 //!         }
 //!         _ => unreachable!()

@@ -73,7 +73,7 @@ fn main() {
     let msg = vec![rank , 2 * rank, 4 * rank];
     let _sreq = WaitGuard::from(world.process_at_rank(next_rank).immediate_send(&msg[..]));
 
-    let (msg, status) = world.receive_vec();
+    let (msg, status) = world.any_process().receive_vec();
     let msg = msg.unwrap();
 
     println!("Process {} got message {:?}.\nStatus is: {:?}", rank, msg, status);

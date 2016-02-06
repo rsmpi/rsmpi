@@ -12,7 +12,7 @@ fn main() {
 
     {
         let mut sreq = world.this_process().immediate_send(&x);
-        let rreq = world.immediate_receive_into(&mut y);
+        let rreq = world.any_process().immediate_receive_into(&mut y);
         rreq.wait();
         loop {
             match sreq.test() {
@@ -25,31 +25,31 @@ fn main() {
 
     y = 0.0;
     {
-        let _rreq = WaitGuard::from(world.immediate_receive_into(&mut y));
+        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(&mut y));
         let _sreq = WaitGuard::from(world.this_process().immediate_ready_send(&x));
     }
     assert_eq!(x, y);
 
-    assert!(world.immediate_probe().is_none());
-    assert!(world.immediate_matched_probe().is_none());
+    assert!(world.any_process().immediate_probe().is_none());
+    assert!(world.any_process().immediate_matched_probe().is_none());
 
     y = 0.0;
     {
         let _sreq: WaitGuard<_> = world.this_process().immediate_synchronous_send(&x).into();
-        let preq = world.immediate_matched_probe();
+        let preq = world.any_process().immediate_matched_probe();
         assert!(preq.is_some());
         let (msg, _) = preq.unwrap();
         let _rreq: WaitGuard<_> = msg.immediate_matched_receive_into(&mut y).into();
     }
     assert_eq!(x, y);
 
-    let future = world.immediate_receive();
+    let future = world.any_process().immediate_receive();
     world.this_process().send(&x);
     let (msg, _) = future.get();
     assert!(msg.is_some());
     assert_eq!(x, msg.unwrap());
 
-    let future = world.immediate_receive();
+    let future = world.any_process().immediate_receive();
     let res = future.try();
     assert!(res.is_err());
     let mut future = res.err().unwrap();

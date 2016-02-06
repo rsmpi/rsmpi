@@ -12,11 +12,11 @@ fn main() {
         let n = (size - 1) as usize;
         let mut buf = vec![0u64; 3 * n];
         // receive first 2 * n messages
-        for x in buf[0..2 * n].iter_mut() { world.receive_into(x); }
+        for x in buf[0..2 * n].iter_mut() { world.any_process().receive_into(x); }
         // signal the waiting senders that 2 * n messages have been received
         let breq = world.immediate_barrier();
         // receive remaining n messages
-        for x in buf[2 * n..3 * n].iter_mut() { world.receive_into(x); }
+        for x in buf[2 * n..3 * n].iter_mut() { world.any_process().receive_into(x); }
         println!("{:?}", buf);
         // messages "1" and "2" may be interleaved, but all have to be contained within the first
         // 2 * n slots of the buffer

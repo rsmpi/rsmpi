@@ -26,7 +26,7 @@ use datatype::traits::*;
 use raw::traits::*;
 use request::{PlainRequest, ReadRequest, WriteRequest};
 use request::traits::*;
-use topology::{SystemCommunicator, UserCommunicator, Rank, ProcessIdentifier};
+use topology::{Rank, ProcessIdentifier, AnyProcess};
 use topology::traits::*;
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
@@ -50,20 +50,7 @@ pub trait Source: AsCommunicator {
     fn source_rank(&self) -> Rank;
 }
 
-// TODO: this does not work for now, needs specialization
-//impl<C: AsCommunicator> Source for C {
-//    fn source_rank(&self) -> Rank {
-//        ffi::RSMPI_ANY_SOURCE
-//    }
-//}
-
-impl Source for SystemCommunicator {
-    fn source_rank(&self) -> Rank {
-        ffi::RSMPI_ANY_SOURCE
-    }
-}
-
-impl<'a> Source for &'a UserCommunicator {
+impl<'a, C: 'a + Communicator> Source for AnyProcess<'a, C> {
     fn source_rank(&self) -> Rank {
         ffi::RSMPI_ANY_SOURCE
     }
@@ -436,7 +423,7 @@ impl MatchedReceiveVec for (Message, Status) {
 /// let universe = mpi::initialize().unwrap();
 /// let world = universe.world();
 ///
-/// let x = world.receive::<f64>();
+/// let x = world.any_process().receive::<f64>();
 /// ```
 ///
 /// # Standard section(s)
