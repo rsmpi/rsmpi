@@ -47,13 +47,6 @@ pub trait AsCommunicator {
     fn as_communicator(&self) -> &Self::Out;
 }
 
-impl<'a, C: 'a + Communicator> AsCommunicator for &'a C {
-    type Out = C;
-    fn as_communicator(&self) -> &Self::Out {
-        self
-    }
-}
-
 /// Identifies a certain process within a communicator.
 pub type Rank = c_int;
 
