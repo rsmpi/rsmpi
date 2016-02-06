@@ -41,9 +41,10 @@
 //! - **4.3**: Canonical pack and unpack, `MPI_Pack_external()`, `MPI_Unpack_external()`,
 //! `MPI_Pack_external_size()`
 
-use std::{mem};
+use std::mem;
+use std::borrow::Borrow;
 
-use libc::{c_void};
+use libc::c_void;
 
 use conv::ConvUtil;
 
@@ -411,3 +412,117 @@ where D: Datatype, B: PointerMut {
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> BufferMut for MutView<'d, 'b, D, B>
 where D: Datatype, B: PointerMut { }
+
+/// Describes how a `Buffer` is partitioned by specifying the count of elements and displacement
+/// from the start of the buffer for each partition.
+pub trait Partitioned {
+    /// The count of elements in each partition.
+    fn counts(&self) -> &[Count];
+    /// The displacement from the start of the buffer for each partition.
+    fn displs(&self) -> &[Count];
+
+    /// A pointer to `counts()`
+    unsafe fn counts_ptr(&self) -> *const Count { self.counts().as_ptr() }
+    /// A pointer to `displs()`
+    unsafe fn displs_ptr(&self) -> *const Count { self.displs().as_ptr() }
+}
+
+/// A buffer that is `Partitioned`
+pub trait PartitionedBuffer: Partitioned + Pointer + AsDatatype { }
+
+/// A mutable buffer that is `Partitioned`
+pub trait PartitionedBufferMut: Partitioned + PointerMut + AsDatatype { }
+
+/// Adds a partitioning to an existing `Buffer` so that it becomes `Partitioned`
+pub struct Partition<'b, B: 'b + ?Sized, C, D> {
+    buf: &'b B,
+    counts: C,
+    displs: D
+}
+
+impl<
+    'b,
+    B: 'b + Buffer + ?Sized,
+    C: Borrow<[Count]>,
+    D: Borrow<[Count]>
+> Partition<'b, B, C, D> {
+    /// Partition `buf` using `counts` and `displs`
+    pub fn new(buf: &B, counts: C, displs: D) -> Partition<B, C, D> {
+        let n = buf.count();
+        assert!(counts.borrow().iter().zip(displs.borrow().iter()).all(|(&c, &d)| { c + d <= n }));
+
+        Partition {
+            buf: buf,
+            counts: counts,
+            displs: displs
+        }
+    }
+}
+
+impl<'b, B: 'b + AsDatatype + ?Sized, C, D> AsDatatype for Partition<'b, B, C, D> {
+    type Out = <B as AsDatatype>::Out;
+    fn as_datatype(&self) -> Self::Out { self.buf.as_datatype() }
+}
+
+impl<'b, B: 'b + Pointer + ?Sized, C, D> Pointer for Partition<'b, B, C, D> {
+    unsafe fn pointer(&self) -> *const c_void { self.buf.pointer() }
+}
+
+impl<'b, B: 'b + ?Sized, C: Borrow<[Count]>, D: Borrow<[Count]>> Partitioned for Partition<'b, B, C, D> {
+    fn counts(&self) -> &[Count] { self.counts.borrow() }
+    fn displs(&self) -> &[Count] { self.displs.borrow() }
+}
+
+impl<
+    'b,
+    B: 'b + Pointer + AsDatatype + ?Sized,
+    C: Borrow<[Count]>,
+    D: Borrow<[Count]>
+> PartitionedBuffer for Partition<'b, B, C, D> { }
+
+/// Adds a partitioning to an existing `BufferMut` so that it becomes `Partitioned`
+pub struct PartitionMut<'b, B: 'b + ?Sized, C, D> {
+    buf: &'b mut B,
+    counts: C,
+    displs: D
+}
+
+impl<
+    'b,
+    B: 'b + BufferMut + ?Sized,
+    C: Borrow<[Count]>,
+    D: Borrow<[Count]>
+> PartitionMut<'b, B, C, D> {
+    /// Partition `buf` using `counts` and `displs`
+    pub fn new(buf: &mut B, counts: C, displs: D) -> PartitionMut<B, C, D> {
+        let n = buf.count();
+        assert!(counts.borrow().iter().zip(displs.borrow().iter()).all(|(&c, &d)| { c + d <= n }));
+
+        PartitionMut {
+            buf: buf,
+            counts: counts,
+            displs: displs
+        }
+    }
+}
+
+impl<'b, B: 'b + AsDatatype + ?Sized, C, D> AsDatatype for PartitionMut<'b, B, C, D> {
+    type Out = <B as AsDatatype>::Out;
+    fn as_datatype(&self) -> Self::Out { self.buf.as_datatype() }
+}
+
+impl<'b, B: 'b + PointerMut + ?Sized, C, D> PointerMut for PartitionMut<'b, B, C, D> {
+    unsafe fn pointer_mut(&mut self) -> *mut c_void { self.buf.pointer_mut() }
+}
+
+impl<'b, B: 'b + ?Sized, C: Borrow<[Count]>, D: Borrow<[Count]>> Partitioned for PartitionMut<'b, B, C, D> {
+    fn counts(&self) -> &[Count] { self.counts.borrow() }
+    fn displs(&self) -> &[Count] { self.displs.borrow() }
+}
+
+impl<
+    'b,
+    B: 'b + PointerMut + AsDatatype + ?Sized,
+    C: Borrow<[Count]>,
+    D: Borrow<[Count]>
+> PartitionedBufferMut for PartitionMut<'b, B, C, D> { }

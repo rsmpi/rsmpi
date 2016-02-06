@@ -4,10 +4,7 @@
 //!
 //! # Unfinished features
 //!
-//! - **5.5**: Varying counts gather operation, `MPI_Gatherv()`
-//! - **5.6**: Scatter, `MPI_Scatterv()`
-//! - **5.7**: Gather-to-all, `MPI_Allgatherv()`
-//! - **5.8**: All-to-all, `MPI_Alltoallv()`, `MPI_Alltoallw()`
+//! - **5.8**: All-to-all, `MPI_Alltoallw()`
 //! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
 //! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
@@ -95,12 +92,12 @@ impl<T: Root> BroadcastInto for T {
     }
 }
 
-// TODO: Introduce "partitioned buffer" for varying count gather/scatter/alltoall?
-
 /// Gather contents of buffers on `Root`.
 ///
 /// After the call completes, the contents of the `Buffer`s on all ranks will be
 /// concatenated into the `Buffer` on `Root`.
+///
+/// All send `Buffer`s must have the same count of elements.
 ///
 /// # Standard section(s)
 ///
@@ -146,10 +143,79 @@ impl<T: Root> GatherInto for T {
     }
 }
 
+/// Gather contents of buffers on `Root`.
+///
+/// After the call completes, the contents of the `Buffer`s on all ranks will be
+/// concatenated into the `Buffer` on `Root`.
+///
+/// The send `Buffer`s may contain different counts of elements on different processes. The
+/// distribution of elements in the receive `Buffer` is specified via `Partitioned`.
+///
+/// # Standard section(s)
+///
+/// 5.5
+pub trait GatherVarcountInto {
+    /// Gather the contents of all `sendbuf`s on `Root` `&self`.
+    ///
+    /// This function must be called on all non-root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/gather_varcount.rs`
+    fn gather_varcount_into<S: Buffer + ?Sized>(&self, sendbuf: &S);
+
+    /// Gather the contents of all `sendbuf`s into `recvbuf` on `Root` `&self`.
+    ///
+    /// This function must be called on the root process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/gather_varcount.rs`
+    fn gather_varcount_into_root<
+        S: Buffer + ?Sized,
+        R: PartitionedBufferMut + ?Sized,
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    );
+}
+
+impl<T: Root> GatherVarcountInto for T {
+    fn gather_varcount_into<S: Buffer + ?Sized>(&self, sendbuf: &S) {
+        assert!(self.as_communicator().rank() != self.root_rank());
+        unsafe {
+            ffi::MPI_Gatherv(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                ptr::null_mut(), ptr::null(), ptr::null(), u8::equivalent_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw());
+        }
+    }
+
+    fn gather_varcount_into_root<
+        S: Buffer + ?Sized,
+        R: PartitionedBufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    ) {
+        assert!(self.as_communicator().rank() == self.root_rank());
+        unsafe {
+            ffi::MPI_Gatherv(
+                sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.counts_ptr(),
+                recvbuf.displs_ptr(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw());
+        }
+    }
+}
+
 /// Gather contents of buffers on all participating processes.
 ///
 /// After the call completes, the contents of the send `Buffer`s on all processes will be
 /// concatenated into the receive `Buffer`s on all ranks.
+///
+/// All send `Buffer`s must contain the same count of elements.
 ///
 /// # Standard section(s)
 ///
@@ -174,10 +240,58 @@ impl<C: Communicator> AllGatherInto for C {
     }
 }
 
+/// Gather contents of buffers on all participating processes.
+///
+/// After the call completes, the contents of the send `Buffer`s on all processes will be
+/// concatenated into the receive `Buffer`s on all ranks.
+///
+/// The send `Buffer`s may contain different counts of elements on different processes. The
+/// distribution of elements in the receive `Buffer`s is specified via `Partitioned`.
+///
+/// # Standard section(s)
+///
+/// 5.7
+pub trait AllGatherVarcountInto {
+    /// Gather the contents of all `sendbuf`s into all `rcevbuf`s on all processes in the
+    /// communicator.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/all_gather_varcount.rs`
+    fn all_gather_varcount_into<
+        S: Buffer + ?Sized,
+        R: PartitionedBufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    );
+}
+
+impl<T: Communicator> AllGatherVarcountInto for T {
+    fn all_gather_varcount_into<
+        S: Buffer + ?Sized,
+        R: PartitionedBufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    ) {
+        unsafe {
+            ffi::MPI_Allgatherv(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.counts_ptr(),
+                recvbuf.displs_ptr(), recvbuf.as_datatype().as_raw(),
+                self.as_raw());
+        }
+    }
+}
+
 /// Scatter contents of a buffer on the root process to all processes.
 ///
 /// After the call completes each participating process will have received a part of the send
 /// `Buffer` on the root process.
+///
+/// All send `Buffer`s must have the same count of elements.
 ///
 /// # Standard section(s)
 ///
@@ -223,7 +337,75 @@ impl<T: Root> ScatterInto for T {
     }
 }
 
+/// Scatter contents of a buffer on the root process to all processes.
+///
+/// After the call completes each participating process will have received a part of the send
+/// `Buffer` on the root process.
+///
+/// The send `Buffer` may contain different counts of elements for different processes. The
+/// distribution of elements in the send `Buffer` is specified via `Partitioned`.
+///
+/// # Standard section(s)
+///
+/// 5.6
+pub trait ScatterVarcountInto {
+    /// Scatter data from the root process to all participating processes.
+    ///
+    /// This function must be called on all non-root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scatter_varcount.rs`
+    fn scatter_varcount_into<R: BufferMut + ?Sized>(&self, recvbuf: &mut R);
+
+    /// Scatter the contents of `sendbuf` to all participating processes.
+    ///
+    /// This function must be called on the root process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scatter_varcount.rs`
+    fn scatter_varcount_into_root<
+        S: PartitionedBuffer + ?Sized,
+        R: BufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    );
+}
+
+impl<T: Root> ScatterVarcountInto for T {
+    fn scatter_varcount_into<R: BufferMut + ?Sized>(&self, recvbuf: &mut R) {
+        assert!(self.as_communicator().rank() != self.root_rank());
+        unsafe {
+            ffi::MPI_Scatterv(ptr::null(), ptr::null(), ptr::null(), u8::equivalent_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw());
+        }
+    }
+
+    fn scatter_varcount_into_root<
+        S: PartitionedBuffer + ?Sized,
+        R: BufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    ) {
+        assert!(self.as_communicator().rank() == self.root_rank());
+        unsafe {
+            ffi::MPI_Scatterv(sendbuf.pointer(), sendbuf.counts_ptr(),
+                sendbuf.displs_ptr(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw());
+        }
+    }
+}
+
 /// Distribute the send `Buffer`s from all processes to the receive `Buffer`s on all processes.
+///
+/// Each process sends and receives the same count of elements to and from each process.
 ///
 /// # Standard section(s)
 ///
@@ -243,6 +425,44 @@ impl<C: Communicator> AllToAllInto for C {
         unsafe {
             ffi::MPI_Alltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.as_datatype().as_raw(),
                 recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.as_datatype().as_raw(),
+                self.as_raw());
+        }
+    }
+}
+
+/// Distribute the send `Buffer`s from all processes to the receive `Buffer`s on all processes.
+///
+/// The count of elements to send and receive to and from each process can vary and is specified
+/// using `Partitioned`.
+///
+/// # Standard section(s)
+///
+/// 5.8
+pub trait AllToAllVarcountInto {
+    /// Distribute the `sendbuf` from all ranks to the `recvbuf` on all ranks.
+    fn all_to_all_varcount_into<
+        S: PartitionedBuffer + ?Sized,
+        R: PartitionedBufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    );
+}
+
+impl<T: Communicator> AllToAllVarcountInto for T {
+    fn all_to_all_varcount_into<
+        S: PartitionedBuffer + ?Sized,
+        R: PartitionedBufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    ) {
+        unsafe {
+            ffi::MPI_Alltoallv(
+                sendbuf.pointer(), sendbuf.counts_ptr(), sendbuf.displs_ptr(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.counts_ptr(), recvbuf.displs_ptr(), recvbuf.as_datatype().as_raw(),
                 self.as_raw());
         }
     }

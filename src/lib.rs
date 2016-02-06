@@ -78,7 +78,7 @@
 //! - **Groups, Contexts, Communicators**:
 //!   - Group and (Intra-)Communicator management from section 6 is mostly complete.
 //!   - no Inter-Communicators
-//!   - noprocess topologies
+//!   - no process topologies
 //! - **Point to point communication**:
 //!   - standard, buffered, synchronous and ready mode send in blocking and non-blocking variants
 //!   - receive in blocking and non-blocking variants
@@ -86,13 +86,14 @@
 //!   - probe
 //!   - matched probe/receive
 //! - **Collective communication**:
-//!   - barrier in blocking and non-blocking variants
+//!   - barrier
 //!   - broadcast
 //!   - (all) gather
 //!   - scatter
 //!   - all to all
-//!   - no varying counts operations
-//!   - no reductions/scans
+//!   - varying counts operations
+//!   - reductions/scans
+//!   - blocking and non-blocking variants
 //! - **Datatypes**: Bridging between Rust types and MPI basic types as well as custom MPI datatypes
 //! which can act as views into buffers.
 //!
@@ -105,6 +106,14 @@
 //!
 //! The sub-modules contain a more detailed description of which features are and are not
 //! supported.
+//!
+//! # Further Reading
+//!
+//! While every publicly defined item in this crate should have some documentation attached to it,
+//! most of the descriptions are quite terse for now and to the uninitiated will only make sense in
+//! combination with the [MPI specification][MPIspec].
+//!
+//! [MPIspec]: http://www.mpi-forum.org/docs/docs.html
 
 use std::mem;
 use std::string::{FromUtf8Error};

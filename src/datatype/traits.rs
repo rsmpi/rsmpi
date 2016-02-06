@@ -1,3 +1,3 @@
 //! Datatype traits
 pub use super::{EquivalentDatatype, Datatype, AsDatatype, Collection, Pointer, PointerMut,
-    Buffer, BufferMut};
+    Buffer, BufferMut, Partitioned, PartitionedBuffer, PartitionedBufferMut};
