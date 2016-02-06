@@ -40,16 +40,16 @@ use datatype::traits::*;
 pub mod traits;
 
 /// Something that has a communicator associated with it
-pub trait Communicator {
+pub trait AsCommunicator {
     /// The type of the associated communicator
-    type Out: RawCommunicator;
+    type Out: Communicator;
     /// Returns the associated communicator.
-    fn communicator(&self) -> &Self::Out;
+    fn as_communicator(&self) -> &Self::Out;
 }
 
-impl<'a, C: 'a + RawCommunicator> Communicator for &'a C {
+impl<'a, C: 'a + Communicator> AsCommunicator for &'a C {
     type Out = C;
-    fn communicator(&self) -> &Self::Out {
+    fn as_communicator(&self) -> &Self::Out {
         self
     }
 }
@@ -243,11 +243,11 @@ impl AsRaw for SystemCommunicator {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl RawCommunicator for SystemCommunicator { }
+impl Communicator for SystemCommunicator { }
 
-impl Communicator for SystemCommunicator {
+impl AsCommunicator for SystemCommunicator {
     type Out = SystemCommunicator;
-    fn communicator(&self) -> &Self::Out {
+    fn as_communicator(&self) -> &Self::Out {
         self
     }
 }
@@ -259,9 +259,9 @@ impl Communicator for SystemCommunicator {
 /// 6.4
 pub struct UserCommunicator(MPI_Comm);
 
-impl Communicator for UserCommunicator {
+impl AsCommunicator for UserCommunicator {
     type Out = UserCommunicator;
-    fn communicator(&self) -> &Self::Out {
+    fn as_communicator(&self) -> &Self::Out {
         self
     }
 }
@@ -271,7 +271,7 @@ impl AsRaw for UserCommunicator {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl RawCommunicator for UserCommunicator { }
+impl Communicator for UserCommunicator { }
 
 impl Drop for UserCommunicator {
     fn drop(&mut self) {
@@ -306,8 +306,8 @@ impl Color {
 /// A key used when determining the rank order of processes after a communicator split.
 pub type Key = c_int;
 
-/// Standard operations on communicators
-pub trait CommunicatorExt: Sized + RawCommunicator {
+/// Communicators are contexts for communication
+pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// Number of processes in this communicator
     ///
     /// # Examples
@@ -340,7 +340,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     ///
     /// # Examples
     /// See `examples/broadcast.rs` `examples/gather.rs` `examples/send_receive.rs`
-    fn process_at_rank(&self, r: Rank) -> Identifier<Self> {
+    fn process_at_rank(&self, r: Rank) -> Identifier<Self> where Self: Sized {
         assert!(0 <= r && r < self.size());
         Identifier { comm: self, rank: r }
     }
@@ -356,12 +356,12 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 3.11
-    fn null_process(&self) -> Identifier<Self> {
+    fn null_process(&self) -> Identifier<Self> where Self: Sized {
         Identifier { comm: self, rank: ffi::RSMPI_PROC_NULL }
     }
 
     /// An `Identifier` for the calling process
-    fn this_process(&self) -> Identifier<Self> {
+    fn this_process(&self) -> Identifier<Self> where Self: Sized {
         let rank = self.rank();
         Identifier { comm: self, rank: rank }
     }
@@ -373,7 +373,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.1
-    fn compare<C: ?Sized + RawCommunicator>(&self, other: &C) -> CommunicatorRelation {
+    fn compare<C: ?Sized + Communicator>(&self, other: &C) -> CommunicatorRelation {
         let mut res: c_int = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_compare(self.as_raw(), other.as_raw(), &mut res); }
         res.into()
@@ -447,7 +447,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_subgroup_collective<G: ?Sized + RawGroup>(&self, group: &G) -> Option<UserCommunicator> {
+    fn split_by_subgroup_collective<G: ?Sized + Group>(&self, group: &G) -> Option<UserCommunicator> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Comm_create(self.as_raw(), group.as_raw(), &mut newcomm); }
         if newcomm == ffi::RSMPI_COMM_NULL {
@@ -468,7 +468,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_subgroup<G: ?Sized + RawGroup>(&self, group: &G) -> Option<UserCommunicator> {
+    fn split_by_subgroup<G: ?Sized + Group>(&self, group: &G) -> Option<UserCommunicator> {
         self.split_by_subgroup_with_tag(group, Tag::default())
     }
 
@@ -480,7 +480,7 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_subgroup_with_tag<G: ?Sized + RawGroup>(&self, group: &G, tag: Tag) -> Option<UserCommunicator> {
+    fn split_by_subgroup_with_tag<G: ?Sized + Group>(&self, group: &G, tag: Tag) -> Option<UserCommunicator> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Comm_create_group(self.as_raw(), group.as_raw(), tag, &mut newcomm);
@@ -503,8 +503,6 @@ pub trait CommunicatorExt: Sized + RawCommunicator {
         UserGroup(group)
     }
 }
-
-impl<T: Sized + RawCommunicator> CommunicatorExt for T { }
 
 /// The relation between two communicators.
 ///
@@ -537,21 +535,21 @@ impl From<c_int> for CommunicatorRelation {
 
 /// Identifies a process by its `Rank` within a certain communicator.
 #[derive(Copy, Clone)]
-pub struct Identifier<'a, C: 'a + RawCommunicator> {
+pub struct Identifier<'a, C: 'a + Communicator> {
     comm: &'a C,
     rank: Rank,
 }
 
-impl<'a, C: 'a + RawCommunicator> Identifier<'a, C> {
+impl<'a, C: 'a + Communicator> Identifier<'a, C> {
     /// The process rank
     pub fn rank(&self) -> Rank {
         self.rank
     }
 }
 
-impl<'a, C: 'a + RawCommunicator> Communicator for Identifier<'a, C> {
+impl<'a, C: 'a + Communicator> AsCommunicator for Identifier<'a, C> {
     type Out = C;
-    fn communicator(&self) -> &Self::Out {
+    fn as_communicator(&self) -> &Self::Out {
         self.comm
     }
 }
@@ -576,7 +574,7 @@ impl AsRaw for SystemGroup {
     unsafe fn as_raw(&self) -> Self::Raw { self. 0 }
 }
 
-impl RawGroup for SystemGroup { }
+impl Group for SystemGroup { }
 
 /// A user-defined group of processes
 ///
@@ -597,10 +595,10 @@ impl AsRaw for UserGroup {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl RawGroup for UserGroup { }
+impl Group for UserGroup { }
 
-/// Extension methods implemented on Groups
-pub trait GroupExt: RawGroup {
+/// Groups are collections of parallel processes
+pub trait Group: AsRaw<Raw = MPI_Group> {
     /// Group union
     ///
     /// Constructs a new group that contains all members of the first group followed by all members
@@ -609,7 +607,7 @@ pub trait GroupExt: RawGroup {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    fn union<G: RawGroup>(&self, other: &G) -> UserGroup {
+    fn union<G: Group>(&self, other: &G) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_union(self.as_raw(), other.as_raw(), &mut newgroup); }
         UserGroup(newgroup)
@@ -623,7 +621,7 @@ pub trait GroupExt: RawGroup {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    fn intersection<G: RawGroup>(&self, other: &G) -> UserGroup {
+    fn intersection<G: Group>(&self, other: &G) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_intersection(self.as_raw(), other.as_raw(), &mut newgroup); }
         UserGroup(newgroup)
@@ -637,7 +635,7 @@ pub trait GroupExt: RawGroup {
     /// # Standard section(s)
     ///
     /// 6.3.2
-    fn difference<G: RawGroup>(&self, other: &G) -> UserGroup {
+    fn difference<G: Group>(&self, other: &G) -> UserGroup {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_difference(self.as_raw(), other.as_raw(), &mut newgroup); }
         UserGroup(newgroup)
@@ -704,7 +702,7 @@ pub trait GroupExt: RawGroup {
     /// # Standard section(s)
     ///
     /// 6.3.1
-    fn translate_rank<G: RawGroup>(&self, rank: Rank, other: &G) -> Option<Rank> {
+    fn translate_rank<G: Group>(&self, rank: Rank, other: &G) -> Option<Rank> {
         let mut res: Rank = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_translate_ranks(self.as_raw(), 1, &rank, other.as_raw(), &mut res); }
         if res == ffi::RSMPI_UNDEFINED {
@@ -721,7 +719,7 @@ pub trait GroupExt: RawGroup {
     /// # Standard section(s)
     ///
     /// 6.3.1
-    fn translate_ranks<G: RawGroup>(&self, ranks: &[Rank], other: &G) -> Vec<Option<Rank>> {
+    fn translate_ranks<G: Group>(&self, ranks: &[Rank], other: &G) -> Vec<Option<Rank>> {
         ranks.iter().map(|&r| self.translate_rank(r, other)).collect()
     }
 
@@ -730,14 +728,12 @@ pub trait GroupExt: RawGroup {
     /// # Standard section(s)
     ///
     /// 6.3.1
-    fn compare<G: RawGroup>(&self, other: &G) -> GroupRelation {
+    fn compare<G: Group>(&self, other: &G) -> GroupRelation {
         let mut relation: c_int = unsafe { mem::uninitialized() };
         unsafe { ffi::MPI_Group_compare(self.as_raw(), other.as_raw(), &mut relation); }
         relation.into()
     }
 }
-
-impl<T: RawGroup> GroupExt for T { }
 
 /// The relation between two groups.
 ///

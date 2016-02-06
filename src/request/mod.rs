@@ -20,18 +20,27 @@ use raw::traits::*;
 
 pub mod traits;
 
-/// Wait for an operation to finish.
-///
-/// # Examples
-///
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.3
-pub trait Wait: RawRequest + Sized {
+/// A request for a non-blocking operation
+pub trait Request: AsRaw<Raw = MPI_Request> + AsRawMut {
+    /// Returns true for a null request handle.
+    fn is_null(&self) -> bool {
+        unsafe {
+            self.as_raw() == ffi::RSMPI_REQUEST_NULL
+        }
+    }
+
+    /// Wait for an operation to finish.
+    ///
     /// Will block execution of the calling thread until the associated operation has finished.
-    fn wait(mut self) -> Status {
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.3
+    fn wait(mut self) -> Status where Self: Sized {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Wait(self.as_raw_mut(), &mut status);
@@ -40,23 +49,19 @@ pub trait Wait: RawRequest + Sized {
         mem::forget(self);
         Status::from_raw(status)
     }
-}
 
-impl<R: RawRequest + Sized> Wait for R { }
-
-/// Test whether an operation has finished.
-///
-/// # Examples
-///
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.3
-pub trait Test: RawRequest + Sized {
+    /// Test whether an operation has finished.
+    ///
     /// If the operation has finished returns the `Status` otherwise returns the unfinished
     /// `Request`.
-    fn test(mut self) -> Result<Status, Self> {
+    /// # Examples
+    ///
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.3
+    fn test(mut self) -> Result<Status, Self> where Self: Sized {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         let mut flag: c_int = 0;
         unsafe {
@@ -70,22 +75,17 @@ pub trait Test: RawRequest + Sized {
             Result::Err(self)
         }
     }
-}
 
-impl<R: RawRequest + Sized> Test for R { }
-
-/// Cancel an operation.
-///
-/// # Examples
-///
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.8.4
-pub trait Cancel: RawRequest + Sized {
     /// Cancel an operation.
-    fn cancel(mut self) {
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.4
+    fn cancel(mut self) where Self: Sized {
         unsafe {
             ffi::MPI_Cancel(self.as_raw_mut());
             ffi::MPI_Request_free(self.as_raw_mut());
@@ -94,8 +94,6 @@ pub trait Cancel: RawRequest + Sized {
         mem::forget(self);
     }
 }
-
-impl<R: RawRequest + Sized> Cancel for R { }
 
 /// A request object for an non-blocking operation that holds no references
 ///
@@ -107,27 +105,27 @@ impl<R: RawRequest + Sized> Cancel for R { }
 ///
 /// 3.7.1
 #[must_use]
-pub struct Request(MPI_Request);
+pub struct PlainRequest(MPI_Request);
 
-impl Request {
+impl PlainRequest {
     /// Construct a request object from the raw MPI type
-    pub fn from_raw(request: MPI_Request) -> Request {
-        Request(request)
+    pub fn from_raw(request: MPI_Request) -> PlainRequest {
+        PlainRequest(request)
     }
 }
 
-impl AsRaw for Request {
+impl AsRaw for PlainRequest {
     type Raw = MPI_Request;
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl AsRawMut for Request {
+impl AsRawMut for PlainRequest {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl RawRequest for Request { }
+impl Request for PlainRequest { }
 
-impl Drop for Request {
+impl Drop for PlainRequest {
     fn drop(&mut self) {
         assert!(self.is_null(), "request dropped without ascertaining completion.");
     }
@@ -161,7 +159,7 @@ impl<'b, Buf: 'b + Buffer + ?Sized> AsRawMut for ReadRequest<'b, Buf> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'b, Buf: 'b + Buffer + ?Sized> RawRequest for ReadRequest<'b, Buf> { }
+impl<'b, Buf: 'b + Buffer + ?Sized> Request for ReadRequest<'b, Buf> { }
 
 impl<'b, Buf: 'b + Buffer + ?Sized> Drop for ReadRequest<'b, Buf> {
     fn drop(&mut self) {
@@ -197,7 +195,7 @@ impl<'b, Buf: 'b + BufferMut + ?Sized> AsRawMut for WriteRequest<'b, Buf> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'b, Buf: 'b + BufferMut + ?Sized> RawRequest for WriteRequest<'b, Buf> { }
+impl<'b, Buf: 'b + BufferMut + ?Sized> Request for WriteRequest<'b, Buf> { }
 
 impl<'b, Buf: 'b + BufferMut + ?Sized> Drop for WriteRequest<'b, Buf> {
     fn drop(&mut self) {
@@ -234,7 +232,7 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> AsRawMut for R
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw { &mut (self.0) }
 }
 
-impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> RawRequest for ReadWriteRequest<'s, 'r, S, R> { }
+impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Request for ReadWriteRequest<'s, 'r, S, R> { }
 
 impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for ReadWriteRequest<'s, 'r, S, R> {
     fn drop(&mut self) {
@@ -247,9 +245,9 @@ impl<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized> Drop for ReadW
 /// # Examples
 ///
 /// See `examples/immediate.rs`
-pub struct WaitGuard<Req: RawRequest>(Option<Req>);
+pub struct WaitGuard<Req: Request>(Option<Req>);
 
-impl<Req: RawRequest> Drop for WaitGuard<Req> {
+impl<Req: Request> Drop for WaitGuard<Req> {
     fn drop(&mut self) {
         self.0.take().map(|mut req| {
             unsafe {
@@ -261,7 +259,7 @@ impl<Req: RawRequest> Drop for WaitGuard<Req> {
     }
 }
 
-impl<Req: RawRequest> From<Req> for WaitGuard<Req> {
+impl<Req: Request> From<Req> for WaitGuard<Req> {
     fn from(req: Req) -> WaitGuard<Req> {
         WaitGuard(Some(req))
     }
@@ -272,9 +270,9 @@ impl<Req: RawRequest> From<Req> for WaitGuard<Req> {
 /// # Examples
 ///
 /// See `examples/immediate.rs`
-pub struct CancelGuard<Req: RawRequest>(Option<Req>);
+pub struct CancelGuard<Req: Request>(Option<Req>);
 
-impl<Req: RawRequest> Drop for CancelGuard<Req> {
+impl<Req: Request> Drop for CancelGuard<Req> {
     fn drop(&mut self) {
         self.0.take().map(|mut req| {
             unsafe {
@@ -287,7 +285,7 @@ impl<Req: RawRequest> Drop for CancelGuard<Req> {
     }
 }
 
-impl<Req: RawRequest> From<Req> for CancelGuard<Req> {
+impl<Req: Request> From<Req> for CancelGuard<Req> {
     fn from(req: Req) -> CancelGuard<Req> {
         CancelGuard(Some(req))
     }

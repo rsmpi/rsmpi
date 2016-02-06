@@ -69,7 +69,7 @@ impl AsRaw for SystemDatatype {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl RawDatatype for SystemDatatype { }
+impl Datatype for SystemDatatype { }
 
 /// A direct equivalence exists between the implementing type and an MPI datatype
 ///
@@ -78,7 +78,7 @@ impl RawDatatype for SystemDatatype { }
 /// 3.2.2
 pub trait EquivalentDatatype {
     /// The type of the equivalent MPI datatype (e.g. `SystemDatatype` or `UserDatatype`)
-    type Out: RawDatatype;
+    type Out: Datatype;
     /// The MPI datatype that is equivalent to this Rust type
     fn equivalent_datatype() -> Self::Out;
 }
@@ -121,7 +121,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn contiguous<D: RawDatatype>(count: Count, oldtype: D) -> UserDatatype {
+    pub fn contiguous<D: Datatype>(count: Count, oldtype: D) -> UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_contiguous(count, oldtype.as_raw(), &mut newtype);
@@ -139,7 +139,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn vector<D: RawDatatype>(count: Count, blocklength: Count, stride: Count, oldtype: D) -> UserDatatype {
+    pub fn vector<D: Datatype>(count: Count, blocklength: Count, stride: Count, oldtype: D) -> UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_vector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
@@ -153,7 +153,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn heterogeneous_vector<D: RawDatatype>(count: Count, blocklength: Count, stride: Address, oldtype: D) -> UserDatatype {
+    pub fn heterogeneous_vector<D: Datatype>(count: Count, blocklength: Count, stride: Address, oldtype: D) -> UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_hvector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
@@ -169,7 +169,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn indexed<D: RawDatatype>(blocklengths: &[Count], displacements: &[Count], oldtype: D) -> UserDatatype {
+    pub fn indexed<D: Datatype>(blocklengths: &[Count], displacements: &[Count], oldtype: D) -> UserDatatype {
         assert_eq!(blocklengths.len(), displacements.len());
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
@@ -187,7 +187,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn heterogeneous_indexed<D: RawDatatype>(blocklengths: &[Count], displacements: &[Address], oldtype: D) -> UserDatatype {
+    pub fn heterogeneous_indexed<D: Datatype>(blocklengths: &[Count], displacements: &[Address], oldtype: D) -> UserDatatype {
         assert_eq!(blocklengths.len(), displacements.len());
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
@@ -203,7 +203,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn indexed_block<D: RawDatatype>(blocklength: Count, displacements: &[Count], oldtype: D) -> UserDatatype {
+    pub fn indexed_block<D: Datatype>(blocklength: Count, displacements: &[Count], oldtype: D) -> UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_indexed_block(displacements.count(), blocklength,
@@ -219,7 +219,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn heterogeneous_indexed_block<D: RawDatatype>(blocklength: Count, displacements: &[Address], oldtype: D) -> UserDatatype {
+    pub fn heterogeneous_indexed_block<D: Datatype>(blocklength: Count, displacements: &[Address], oldtype: D) -> UserDatatype {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_hindexed_block(displacements.count(), blocklength,
@@ -244,30 +244,33 @@ impl AsRaw for UserDatatype {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl RawDatatype for UserDatatype { }
+impl Datatype for UserDatatype { }
+
+/// A Datatype describes the layout of messages in memory.
+pub trait Datatype: AsRaw<Raw = MPI_Datatype> { }
+impl<'a, D: 'a + Datatype> Datatype for &'a D { }
 
 /// Something that has an associated datatype
-// TODO: merge this into Buffer, maybe?
-pub trait Datatype {
+pub trait AsDatatype {
     /// The type of the associated MPI datatype (e.g. `SystemDatatype` or `UserDatatype`)
-    type Out: RawDatatype;
+    type Out: Datatype;
     /// The associated MPI datatype
-    fn datatype(&self) -> Self::Out;
+    fn as_datatype(&self) -> Self::Out;
 }
 
-impl<T> Datatype for T where T: EquivalentDatatype {
+impl<T> AsDatatype for T where T: EquivalentDatatype {
     type Out = <T as EquivalentDatatype>::Out;
-    fn datatype(&self) -> Self::Out { <T as EquivalentDatatype>::equivalent_datatype() }
+    fn as_datatype(&self) -> Self::Out { <T as EquivalentDatatype>::equivalent_datatype() }
 }
 
-impl<T> Datatype for [T] where T: EquivalentDatatype {
+impl<T> AsDatatype for [T] where T: EquivalentDatatype {
     type Out = <T as EquivalentDatatype>::Out;
-    fn datatype(&self) -> Self::Out { <T as EquivalentDatatype>::equivalent_datatype() }
+    fn as_datatype(&self) -> Self::Out { <T as EquivalentDatatype>::equivalent_datatype() }
 }
 
 /// A countable collection of things.
 pub trait Collection {
-    /// How many things are in this connection.
+    /// How many things are in this collection.
     fn count(&self) -> Count;
 }
 
@@ -310,14 +313,14 @@ impl<T> PointerMut for [T] where T: EquivalentDatatype {
 }
 
 /// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
-/// `datatype()`.
-pub trait Buffer: Pointer + Collection + Datatype { }
+/// `as_datatype()`.
+pub trait Buffer: Pointer + Collection + AsDatatype { }
 impl<T> Buffer for T where T: EquivalentDatatype { }
 impl<T> Buffer for [T] where T: EquivalentDatatype { }
 
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
-/// copies of `datatype()`.
-pub trait BufferMut: PointerMut + Collection + Datatype { }
+/// copies of `as_datatype()`.
+pub trait BufferMut: PointerMut + Collection + AsDatatype { }
 impl<T> BufferMut for T where T: EquivalentDatatype { }
 impl<T> BufferMut for [T] where T: EquivalentDatatype { }
 
@@ -329,14 +332,14 @@ impl<T> BufferMut for [T] where T: EquivalentDatatype { }
 /// locations in memory. This might be controlled later on using datatype bounds an slice lengths
 /// but for now, all View constructors are marked `unsafe`.
 pub struct View<'d, 'b, D: 'd, B: 'b + ?Sized>
-where D: RawDatatype, B: Pointer {
+where D: Datatype, B: Pointer {
     datatype: &'d D,
     count: Count,
     buffer: &'b B
 }
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> View<'d, 'b, D, B>
-where D: RawDatatype, B: Pointer {
+where D: Datatype, B: Pointer {
     /// Return a view of `buffer` containing `count` instances of MPI datatype `datatype`.
     ///
     /// # Examples
@@ -346,24 +349,24 @@ where D: RawDatatype, B: Pointer {
     }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> Datatype for View<'d, 'b, D, B>
-where D: RawDatatype, B: Pointer {
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> AsDatatype for View<'d, 'b, D, B>
+where D: Datatype, B: Pointer {
     type Out = &'d D;
-    fn datatype(&self) -> Self::Out { self.datatype }
+    fn as_datatype(&self) -> Self::Out { self.datatype }
 }
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> Collection for View<'d, 'b, D, B>
-where D: RawDatatype, B: Pointer {
+where D: Datatype, B: Pointer {
     fn count(&self) -> Count { self.count }
 }
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> Pointer for View<'d, 'b, D, B>
-where D: RawDatatype, B: Pointer {
+where D: Datatype, B: Pointer {
     unsafe fn pointer(&self) -> *const c_void { self.buffer.pointer() }
 }
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> Buffer for View<'d, 'b, D, B>
-where D: RawDatatype, B: Pointer { }
+where D: Datatype, B: Pointer { }
 
 /// A buffer with a user specified count and datatype
 ///
@@ -373,14 +376,14 @@ where D: RawDatatype, B: Pointer { }
 /// locations in memory. This might be controlled later on using datatype bounds an slice lengths
 /// but for now, all View constructors are marked `unsafe`.
 pub struct MutView<'d, 'b, D: 'd, B: 'b + ?Sized>
-where D: RawDatatype, B: PointerMut {
+where D: Datatype, B: PointerMut {
     datatype: &'d D,
     count: Count,
     buffer: &'b mut B
 }
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> MutView<'d, 'b, D, B>
-where D: RawDatatype, B: PointerMut {
+where D: Datatype, B: PointerMut {
     /// Return a view of `buffer` containing `count` instances of MPI datatype `datatype`.
     ///
     /// # Examples
@@ -390,21 +393,21 @@ where D: RawDatatype, B: PointerMut {
     }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> Datatype for MutView<'d, 'b, D, B>
-where D: RawDatatype, B: PointerMut {
+impl<'d, 'b, D: 'd, B: 'b + ?Sized> AsDatatype for MutView<'d, 'b, D, B>
+where D: Datatype, B: PointerMut {
     type Out = &'d D;
-    fn datatype(&self) -> Self::Out { self.datatype }
+    fn as_datatype(&self) -> Self::Out { self.datatype }
 }
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> Collection for MutView<'d, 'b, D, B>
-where D: RawDatatype, B: PointerMut {
+where D: Datatype, B: PointerMut {
     fn count(&self) -> Count { self.count }
 }
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> PointerMut for MutView<'d, 'b, D, B>
-where D: RawDatatype, B: PointerMut {
+where D: Datatype, B: PointerMut {
     unsafe fn pointer_mut(&mut self) -> *mut c_void { self.buffer.pointer_mut() }
 }
 
 impl<'d, 'b, D: 'd, B: 'b + ?Sized> BufferMut for MutView<'d, 'b, D, B>
-where D: RawDatatype, B: PointerMut { }
+where D: Datatype, B: PointerMut { }

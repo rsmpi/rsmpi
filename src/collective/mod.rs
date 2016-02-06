@@ -23,7 +23,7 @@ use ffi::{MPI_Request, MPI_Op};
 
 use datatype::traits::*;
 use raw::traits::*;
-use request::{Request, ReadRequest, WriteRequest, ReadWriteRequest};
+use request::{PlainRequest, ReadRequest, WriteRequest, ReadWriteRequest};
 use topology::traits::*;
 use topology::{Rank, Identifier};
 
@@ -48,7 +48,7 @@ pub trait Barrier {
 
 impl<C: Communicator> Barrier for C {
     fn barrier(&self) {
-        unsafe { ffi::MPI_Barrier(self.communicator().as_raw()); }
+        unsafe { ffi::MPI_Barrier(self.as_raw()); }
     }
 }
 
@@ -57,12 +57,13 @@ impl<C: Communicator> Barrier for C {
 /// Many collective operations define a 'root' process that takes a special role in the
 /// communication. These collective operations are implemented as traits that have blanket
 /// implementations for every type that implements the `Root` trait.
-pub trait Root: Communicator {
+pub trait Root: AsCommunicator
+{
     /// Rank of the root process
     fn root_rank(&self) -> Rank;
 }
 
-impl<'a, C: 'a + RawCommunicator> Root for Identifier<'a, C> {
+impl<'a, C: 'a + Communicator> Root for Identifier<'a, C> {
     fn root_rank(&self) -> Rank {
         self.rank()
     }
@@ -88,8 +89,8 @@ pub trait BroadcastInto {
 impl<T: Root> BroadcastInto for T {
     fn broadcast_into<Buf: BufferMut + ?Sized>(&self, buffer: &mut Buf) {
         unsafe {
-            ffi::MPI_Bcast(buffer.pointer_mut(), buffer.count(), buffer.datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw());
+            ffi::MPI_Bcast(buffer.pointer_mut(), buffer.count(), buffer.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw());
         }
     }
 }
@@ -126,21 +127,21 @@ pub trait GatherInto {
 
 impl<T: Root> GatherInto for T {
     fn gather_into<S: Buffer + ?Sized>(&self, sendbuf: &S) {
-        assert!(self.communicator().rank() != self.root_rank());
+        assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
-            ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(),
+            ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
                 ptr::null_mut(), 0, u8::equivalent_datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw());
+                self.root_rank(), self.as_communicator().as_raw());
         }
     }
 
     fn gather_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
-        assert!(self.communicator().rank() == self.root_rank());
+        assert!(self.as_communicator().rank() == self.root_rank());
         unsafe {
-            let recvcount = recvbuf.count() / self.communicator().size();
-            ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(),
-                recvbuf.pointer_mut(), recvcount, recvbuf.datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw());
+            let recvcount = recvbuf.count() / self.as_communicator().size();
+            ffi::MPI_Gather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvcount, recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw());
         }
     }
 }
@@ -166,9 +167,9 @@ pub trait AllGatherInto {
 impl<C: Communicator> AllGatherInto for C {
     fn all_gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
         unsafe {
-            ffi::MPI_Allgather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count() / self.communicator().size(),
-                recvbuf.datatype().as_raw(), self.communicator().as_raw());
+            ffi::MPI_Allgather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / self.size(),
+                recvbuf.as_datatype().as_raw(), self.as_raw());
         }
     }
 }
@@ -203,21 +204,21 @@ pub trait ScatterInto {
 
 impl<T: Root> ScatterInto for T {
     fn scatter_into<R: BufferMut + ?Sized>(&self, recvbuf: &mut R) {
-        assert!(self.communicator().rank() != self.root_rank());
+        assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
             ffi::MPI_Scatter(ptr::null(), 0, u8::equivalent_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw());
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw());
         }
     }
 
     fn scatter_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
-        assert!(self.communicator().rank() == self.root_rank());
-        let sendcount = sendbuf.count() / self.communicator().size();
+        assert!(self.as_communicator().rank() == self.root_rank());
+        let sendcount = sendbuf.count() / self.as_communicator().size();
         unsafe {
-            ffi::MPI_Scatter(sendbuf.pointer(), sendcount, sendbuf.datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw());
+            ffi::MPI_Scatter(sendbuf.pointer(), sendcount, sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw());
         }
     }
 }
@@ -238,14 +239,18 @@ pub trait AllToAllInto {
 
 impl<C: Communicator> AllToAllInto for C {
     fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
-        let c_size = self.communicator().size();
+        let c_size = self.size();
         unsafe {
-            ffi::MPI_Alltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().as_raw(),
-                self.communicator().as_raw());
+            ffi::MPI_Alltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.as_datatype().as_raw(),
+                self.as_raw());
         }
     }
 }
+
+/// An operation to be used in a reduction or scan type operation, e.g. `MPI_SUM`
+pub trait Operation: AsRaw<Raw = MPI_Op> { }
+impl<'a, T: 'a + Operation> Operation for &'a T { }
 
 /// A built-in operation like `MPI_SUM`
 ///
@@ -284,7 +289,7 @@ impl AsRaw for SystemOperation {
     unsafe fn as_raw(&self) -> Self::Raw { self.0 }
 }
 
-impl RawOperation for SystemOperation { }
+impl Operation for SystemOperation { }
 
 macro_rules! reduce_into_specializations {
     ($($name:ident => $operation:expr),*) => (
@@ -308,7 +313,7 @@ pub trait ReduceInto {
     /// # Examples
     ///
     /// See `examples/reduce.rs`
-    fn reduce_into<S: Buffer + ?Sized, O: RawOperation>(&self, sendbuf: &S, op: O);
+    fn reduce_into<S: Buffer + ?Sized, O: Operation>(&self, sendbuf: &S, op: O);
 
     /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
     /// stores the result in `recvbuf` on the `Root` process.
@@ -318,7 +323,7 @@ pub trait ReduceInto {
     /// # Examples
     ///
     /// See `examples/reduce.rs`
-    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
+    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
 
 //    reduce_into_specializations! {
 //        max_into => SystemOperation::max(),
@@ -335,19 +340,19 @@ pub trait ReduceInto {
 }
 
 impl<T: Root> ReduceInto for T {
-    fn reduce_into<S: Buffer + ?Sized, O: RawOperation>(&self, sendbuf: &S, op: O) {
-        assert!(self.communicator().rank() != self.root_rank());
+    fn reduce_into<S: Buffer + ?Sized, O: Operation>(&self, sendbuf: &S, op: O) {
+        assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
-            ffi::MPI_Reduce(sendbuf.pointer(), ptr::null_mut(), sendbuf.count(), sendbuf.datatype().as_raw(),
-                op.as_raw(), self.root_rank(), self.communicator().as_raw());
+            ffi::MPI_Reduce(sendbuf.pointer(), ptr::null_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                op.as_raw(), self.root_rank(), self.as_communicator().as_raw());
         }
     }
 
-    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
-        assert!(self.communicator().rank() == self.root_rank());
+    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        assert!(self.as_communicator().rank() == self.root_rank());
         unsafe {
-            ffi::MPI_Reduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(), sendbuf.datatype().as_raw(),
-                op.as_raw(), self.root_rank(), self.communicator().as_raw());
+            ffi::MPI_Reduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                op.as_raw(), self.root_rank(), self.as_communicator().as_raw());
         }
     }
 }
@@ -364,14 +369,14 @@ pub trait AllReduceInto {
     /// # Examples
     ///
     /// See `examples/reduce.rs`
-    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
+    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
 }
 
 impl<C: Communicator> AllReduceInto for C {
-    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
         unsafe {
             ffi::MPI_Allreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.datatype().as_raw(), op.as_raw(), self.communicator().as_raw());
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
         }
     }
 }
@@ -385,10 +390,10 @@ impl<C: Communicator> AllReduceInto for C {
 /// # Examples
 ///
 /// See `examples/redure.rs`
-pub fn reduce_local_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(inbuf: &S, inoutbuf: &mut R, op: O) {
+pub fn reduce_local_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(inbuf: &S, inoutbuf: &mut R, op: O) {
     unsafe {
         ffi::MPI_Reduce_local(inbuf.pointer(), inoutbuf.pointer_mut(), inbuf.count(),
-          inbuf.datatype().as_raw(), op.as_raw());
+          inbuf.as_datatype().as_raw(), op.as_raw());
     }
 }
 
@@ -404,14 +409,14 @@ pub trait ScanInto {
     /// # Examples
     ///
     /// See `examples/scan.rs`
-    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
+    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
 }
 
 impl<C: Communicator> ScanInto for C {
-    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
         unsafe {
             ffi::MPI_Scan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.datatype().as_raw(), op.as_raw(), self.communicator().as_raw());
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
         }
     }
 }
@@ -428,20 +433,20 @@ pub trait ExclusiveScanInto {
     /// # Examples
     ///
     /// See `examples/scan.rs`
-    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
+    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
 }
 
 impl<C: Communicator> ExclusiveScanInto for C {
-    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: RawOperation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
         unsafe {
             ffi::MPI_Exscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.datatype().as_raw(), op.as_raw(), self.communicator().as_raw());
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
         }
     }
 }
 
 /// A request object for an immediate (non-blocking) barrier operation
-pub type BarrierRequest = Request;
+pub type BarrierRequest = PlainRequest;
 
 /// Non-blocking barrier synchronization among all processes in a `Communicator`
 ///
@@ -463,7 +468,7 @@ pub trait ImmediateBarrier {
 impl<C: Communicator> ImmediateBarrier for C {
     fn immediate_barrier(&self) -> BarrierRequest {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe { ffi::MPI_Ibarrier(self.communicator().as_raw(), &mut request); }
+        unsafe { ffi::MPI_Ibarrier(self.as_raw(), &mut request); }
         BarrierRequest::from_raw(request)
     }
 }
@@ -489,8 +494,8 @@ impl<R: Root> ImmediateBroadcastInto for R {
     fn immediate_broadcast_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> BroadcastRequest<'b, Buf> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ibcast(buf.pointer_mut(), buf.count(), buf.datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw(), &mut request);
+            ffi::MPI_Ibcast(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
         }
         BroadcastRequest::from_raw(request, buf)
     }
@@ -529,24 +534,24 @@ pub trait ImmediateGatherInto {
 
 impl<T: Root> ImmediateGatherInto for T {
     fn immediate_gather_into<'s, S: 's + Buffer + ?Sized>(&self, sendbuf: &'s S) -> GatherRequest<'s, S> {
-        assert!(self.communicator().rank() != self.root_rank());
+        assert!(self.as_communicator().rank() != self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Igather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(),
+            ffi::MPI_Igather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
                 ptr::null_mut(), 0, u8::equivalent_datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw(), &mut request);
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
         }
         GatherRequest::from_raw(request, sendbuf)
     }
 
     fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> GatherRootRequest<'s, 'r, S, R> {
-        assert!(self.communicator().rank() == self.root_rank());
+        assert!(self.as_communicator().rank() == self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            let recvcount = recvbuf.count() / self.communicator().size();
-            ffi::MPI_Igather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(),
-                recvbuf.pointer_mut(), recvcount, recvbuf.datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw(), &mut request);
+            let recvcount = recvbuf.count() / self.as_communicator().size();
+            ffi::MPI_Igather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvcount, recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
         }
         GatherRootRequest::from_raw(request, sendbuf, recvbuf)
     }
@@ -574,10 +579,10 @@ impl<C: Communicator> ImmediateAllGatherInto for C {
     fn immediate_all_gather_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllGatherRequest<'s, 'r, S, R> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            let recvcount = recvbuf.count() / self.communicator().size();
-            ffi::MPI_Iallgather(sendbuf.pointer(), sendbuf.count(), sendbuf.datatype().as_raw(),
-                recvbuf.pointer_mut(), recvcount, recvbuf.datatype().as_raw(),
-                self.communicator().as_raw(), &mut request);
+            let recvcount = recvbuf.count() / self.size();
+            ffi::MPI_Iallgather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvcount, recvbuf.as_datatype().as_raw(),
+                self.as_raw(), &mut request);
         }
         AllGatherRequest::from_raw(request, sendbuf, recvbuf)
     }
@@ -616,24 +621,24 @@ pub trait ImmediateScatterInto {
 
 impl<T: Root> ImmediateScatterInto for T {
     fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &'r mut R) -> ScatterRequest<'r, R> {
-        assert!(self.communicator().rank() != self.root_rank());
+        assert!(self.as_communicator().rank() != self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Iscatter(ptr::null(), 0, u8::equivalent_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw(), &mut request);
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
         }
         ScatterRequest::from_raw(request, recvbuf)
     }
 
     fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> ScatterRootRequest<'s, 'r, S, R> {
-        assert!(self.communicator().rank() == self.root_rank());
+        assert!(self.as_communicator().rank() == self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            let sendcount = sendbuf.count() / self.communicator().size();
-            ffi::MPI_Iscatter(sendbuf.pointer(), sendcount, sendbuf.datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.datatype().as_raw(),
-                self.root_rank(), self.communicator().as_raw(), &mut request);
+            let sendcount = sendbuf.count() / self.as_communicator().size();
+            ffi::MPI_Iscatter(sendbuf.pointer(), sendcount, sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
         }
         ScatterRootRequest::from_raw(request, sendbuf, recvbuf)
     }
@@ -659,11 +664,11 @@ pub trait ImmediateAllToAllInto {
 impl<C: Communicator> ImmediateAllToAllInto for C {
     fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllToAllRequest<'s, 'r, S, R> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        let c_size = self.communicator().size();
+        let c_size = self.size();
         unsafe {
-            ffi::MPI_Ialltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.datatype().as_raw(),
-                self.communicator().as_raw(), &mut request);
+            ffi::MPI_Ialltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.as_datatype().as_raw(),
+                self.as_raw(), &mut request);
         }
         AllToAllRequest::from_raw(request, sendbuf, recvbuf)
     }
