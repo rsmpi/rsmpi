@@ -24,8 +24,7 @@ use std::{mem, ptr};
 use std::cmp::Ordering;
 use std::marker::PhantomData;
 use std::string::{FromUtf8Error};
-
-use libc::{c_char, c_int, c_double};
+use std::os::raw::{c_char, c_int, c_double};
 
 use conv::ConvUtil;
 

@@ -17,7 +17,6 @@ license = "MIT OR Apache-2.0"
 build = "build.rs"
 
 [dependencies]
-libc = "0.2"
 conv = "0.3"
 clippy = {version = "0.0.37", optional = true}
 

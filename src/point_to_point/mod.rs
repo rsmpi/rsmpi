@@ -12,8 +12,7 @@
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 
 use std::{mem, fmt};
-
-use libc::c_int;
+use std::os::raw::c_int;
 
 use conv::ConvUtil;
 

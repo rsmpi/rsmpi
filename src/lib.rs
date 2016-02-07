@@ -117,10 +117,7 @@
 
 use std::mem;
 use std::string::{FromUtf8Error};
-
-extern crate libc;
-
-use libc::{c_char, c_int};
+use std::os::raw::{c_char, c_int};
 
 extern crate conv;
 
