@@ -33,7 +33,7 @@ echo "Tarball name: ${TARBALL_NAME}"
 mkdir -p "${DOWNLOAD_DIR}"
 cd "${DOWNLOAD_DIR}"
 rm -rf "${TARBALL_NAME}"
-wget -O "${TARBALL_NAME}" "${SOURCE_URL}"
+wget --no-check-certificate -O "${TARBALL_NAME}" "${SOURCE_URL}"
 rm -rf "${PACKAGE_NAME}"
 tar -xzf "${TARBALL_NAME}"
 
