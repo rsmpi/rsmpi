@@ -23,7 +23,7 @@ clippy = {version = "0.0.37", optional = true}
 
 [build-dependencies]
 gcc = "0.3"
-bindgen = "0.15"
+bindgen = { git = "https://github.com/crabtw/rust-bindgen.git", rev = "bfcc9e16fa3385c4c243beda61a683eb812d19df" }
 
 #[dependencies.c_import]
 #git = "https://github.com/vojtechkral/rust-c-import.git"
