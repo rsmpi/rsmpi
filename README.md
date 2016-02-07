@@ -119,9 +119,9 @@ Currently supported:
   - (all) gather
   - scatter
   - all to all
+  - varying counts operations
   - reductions/scans
-  - no varying counts operations
-  - no user-defined operators for reductions/scans
+  - blocking and non-blocking variants
 - **Datatypes**: Bridging between Rust types and MPI basic types as well as custom MPI datatypes which can act as views into buffers.
 
 Not supported (yet):
