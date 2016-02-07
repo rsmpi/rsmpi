@@ -50,7 +50,7 @@ Add the `mpi` crate as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mpi = "0.2"
+mpi = { git = "https://github.com/bsteinb/rsmpi.git", tag = "0.3.0" }
 ```
 
 Then use it in your program like this:
