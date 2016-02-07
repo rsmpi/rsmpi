@@ -1,24 +1,19 @@
 [package]
 name = "mpi"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Benedikt Steinbusch <benedikt.steinbusch@googlemail.com>"]
 description = "Message Passing Interface bindings for Rust"
-
 homepage = "https://github.com/bsteinb/rsmpi"
 repository = "https://github.com/bsteinb/rsmpi"
 documentation = "http://bsteinb.github.io/rsmpi/"
-
 readme = "README.md"
-
 keywords = [ "message-passing", "parallel" ]
-
 license = "MIT OR Apache-2.0"
-
 build = "build.rs"
 
 [dependencies]
 conv = "0.3"
-clippy = {version = "0.0.37", optional = true}
+clippy = { version = "0.0.37", optional = true }
 
 [build-dependencies]
 gcc = "0.3"
