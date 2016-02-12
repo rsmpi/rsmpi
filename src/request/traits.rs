@@ -1,2 +1,4 @@
 //! Request object traits
-pub use super::{Request};
+pub use super::{
+    Request
+};
