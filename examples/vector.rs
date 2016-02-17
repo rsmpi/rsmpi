@@ -2,6 +2,7 @@ extern crate mpi;
 
 use mpi::traits::*;
 use mpi::datatype::{UserDatatype, View, MutView};
+use mpi::point_to_point as p2p;
 use mpi::topology::Rank;
 
 fn main() {
@@ -11,7 +12,9 @@ fn main() {
     let size = world.size();
 
     let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
+    let next_process = world.process_at_rank(next_rank);
     let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
+    let previous_process = world.process_at_rank(previous_rank);
 
     let b1 = (1..).map(|x| rank * x).take(6).collect::<Vec<_>>();
     let mut b2 = std::iter::repeat(-1).take(6).collect::<Vec<_>>();
@@ -23,7 +26,7 @@ fn main() {
     {
         let v1 = unsafe { View::with_count_and_datatype(&b1[..], 1, &t) };
         let mut v2 = unsafe { MutView::with_count_and_datatype(&mut b2[..], 1, &t) };
-        status = world.send_receive_into(&v1, next_rank, &mut v2, previous_rank);
+        status = p2p::send_receive_into(&v1, &next_process, &mut v2, &previous_process);
     }
 
     println!("Rank {} received message: {:?}, status: {:?}.", rank, b2, status);

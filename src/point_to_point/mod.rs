@@ -25,7 +25,7 @@ use datatype::traits::*;
 use raw::traits::*;
 use request::{PlainRequest, ReadRequest, WriteRequest};
 use request::traits::*;
-use topology::{Rank, ProcessIdentifier, AnyProcess};
+use topology::{Rank, ProcessIdentifier, AnyProcess, CommunicatorRelation};
 use topology::traits::*;
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
@@ -505,184 +505,128 @@ impl<Src: Source> ReceiveVec for Src {
     }
 }
 
-// TODO: rewrite these as free-standing functions taking `Destination` and `Source` and assert
-// s.comm == d.comm?
-
-/// Simultaneously send and receive single instances of types `S` and `R`.
+/// Sends `msg` to `destination` tagging it `sendtag` and simultaneously receives an
+/// instance of `R` tagged `receivetag` from `source` or receives `None` if receiving
+/// from the null process.
 ///
 /// # Standard section(s)
 ///
 /// 3.10
-pub trait SendReceive {
-    /// Sends `msg` to `Rank` `destination` tagging it `sendtag` and simultaneously receives an
-    /// instance of `R` tagged `receivetag` from `Rank` `source` or receives `None` if receiving
-    /// from the null process.
-    fn send_receive_with_tags<S, R>(&self,
-                                    msg: &S,
-                                    destination: Rank,
-                                    sendtag: Tag,
-                                    source: Rank,
-                                    receivetag: Tag)
-                                    -> (Option<R>, Status)
-        where S: EquivalentDatatype,
-              R: EquivalentDatatype;
-
-    /// Sends `msg` to `Rank` `destination` and simultaneously receives an instance of `R` from
-    /// `Rank` `source` or receives `None` if receiving from the null process.
-    ///
-    /// # Examples
-    /// See `examples/send_receive.rs`
-    fn send_receive<S, R>(&self,
-                          msg: &S,
-                          destination: Rank,
-                          source: Rank)
-                          -> (Option<R>, Status)
-        where S: EquivalentDatatype,
-              R: EquivalentDatatype
-    {
-        self.send_receive_with_tags(msg, destination, Tag::default(), source, ffi::RSMPI_ANY_TAG)
-    }
+pub fn send_receive_with_tags<M, D, R, S>(msg: &M, destination: &D, sendtag: Tag, source: &S, receivetag: Tag) -> (Option<R>, Status)
+    where M: EquivalentDatatype,
+          D: Destination,
+          R: EquivalentDatatype,
+          S: Source
+{
+    let mut res: R = unsafe { mem::uninitialized() };
+    let status = send_receive_into_with_tags(msg, destination, sendtag, &mut res, source, receivetag);
+    (
+        if source.source_rank() == ffi::RSMPI_PROC_NULL { None } else { Some(res) },
+        status
+    )
 }
 
-impl<T: SendReceiveInto> SendReceive for T {
-    fn send_receive_with_tags<S, R>(&self,
-                                    msg: &S,
-                                    destination: Rank,
-                                    sendtag: Tag,
-                                    source: Rank,
-                                    receivetag: Tag)
-                                    -> (Option<R>, Status)
-        where S: EquivalentDatatype,
-              R: EquivalentDatatype
-    {
-        let mut res: R = unsafe { mem::uninitialized() };
-        let status = self.send_receive_into_with_tags(
-            msg, destination, sendtag,
-            &mut res, source, receivetag);
-        (
-            if source == ffi::RSMPI_PROC_NULL { None } else { Some(res) },
-            status
-        )
-    }
-}
-
-/// Simultaneously send and receive the contents of buffers.
+/// Sends `msg` to `destination` and simultaneously receives an instance of `R` from
+/// `source` or receives `None` if receiving from the null process.
+///
+/// # Examples
+/// See `examples/send_receive.rs`
 ///
 /// # Standard section(s)
 ///
 /// 3.10
-pub trait SendReceiveInto {
-    /// Sends the contents of `sendbuf` to `Rank` `destination` tagging it `sendtag` and
-    /// simultaneously receives a message tagged `receivetag` from `Rank` `source` into
-    /// `receivebuf`.
-    ///
-    /// Receiving from the null process leaves `receivebuf` untouched.
-    fn send_receive_into_with_tags<S: ?Sized, R: ?Sized>(&self,
-                                                         sendbuf: &S,
-                                                         destination: Rank,
-                                                         sendtag: Tag,
-                                                         receivebuf: &mut R,
-                                                         source: Rank,
-                                                         receivetag: Tag)
-                                                         -> Status
-        where S: Buffer,
-              R: BufferMut;
-
-    /// Sends the contents of `sendbuf` to `Rank` `destination` and
-    /// simultaneously receives a message from `Rank` `source` into
-    /// `receivebuf`.
-    ///
-    /// Receiving from the null process leaves `receivebuf` untouched.
-    fn send_receive_into<S: ?Sized, R: ?Sized>(&self,
-                                               sendbuf: &S,
-                                               destination: Rank,
-                                               receivebuf: &mut R,
-                                               source: Rank)
-                                               -> Status
-        where S: Buffer,
-              R: BufferMut
-    {
-        self.send_receive_into_with_tags(sendbuf, destination, Tag::default(), receivebuf, source, ffi::RSMPI_ANY_TAG)
-    }
+pub fn send_receive<R, M, D, S>(msg: &M, destination: &D, source: &S) -> (Option<R>, Status)
+    where M: EquivalentDatatype,
+          D: Destination,
+          R: EquivalentDatatype,
+          S: Source
+{
+    send_receive_with_tags(msg, destination, Tag::default(), source, ffi::RSMPI_ANY_TAG)
 }
 
-impl<C: Communicator> SendReceiveInto for C {
-    fn send_receive_into_with_tags<S: ?Sized, R: ?Sized>(&self,
-                                                         sendbuf: &S,
-                                                         destination: Rank,
-                                                         sendtag: Tag,
-                                                         receivebuf: &mut R,
-                                                         source: Rank,
-                                                         receivetag: Tag)
-                                                         -> Status
-        where S: Buffer,
-              R: BufferMut
-    {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Sendrecv(
-                sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(), destination, sendtag,
-                receivebuf.pointer_mut(), receivebuf.count(), receivebuf.as_datatype().as_raw(), source, receivetag,
-                self.as_raw(), &mut status);
-        }
-        Status(status)
-    }
-}
-
-/// Simultaneously send and receive the contents of the same buffer.
+/// Sends the contents of `msg` to `destination` tagging it `sendtag` and
+/// simultaneously receives a message tagged `receivetag` from `source` into
+/// `buf`.
+///
+/// Receiving from the null process leaves `buf` untouched.
 ///
 /// # Standard section(s)
 ///
 /// 3.10
-pub trait SendReceiveReplaceInto {
-    /// Sends the contents of `buf` to `Rank` `destination` tagging it `sendtag` and
-    /// simultaneously receives a message tagged `receivetag` from `Rank` `source` and replaces the
-    /// contents of `buf` with it.
-    ///
-    /// Receiving from the null process leaves `buf` untouched.
-    fn send_receive_replace_into_with_tags<B: ?Sized>(&self,
-                                                      buf: &mut B,
-                                                      destination: Rank,
-                                                      sendtag: Tag,
-                                                      source: Rank,
-                                                      receivetag: Tag)
-                                                      -> Status
-        where B: BufferMut;
-
-    /// Sends the contents of `buf` to `Rank` `destination` and
-    /// simultaneously receives a message from `Rank` `source` into and replaces the contents of
-    /// `buf` with it.
-    ///
-    /// Receiving from the null process leaves `buf` untouched.
-    fn send_receive_replace_into<B: ?Sized>(&self,
-                                            buf: &mut B,
-                                            destination: Rank,
-                                            source: Rank)
-                                            -> Status
-        where B: BufferMut
-    {
-        self.send_receive_replace_into_with_tags(buf, destination, Tag::default(), source, Tag::default())
+pub fn send_receive_into_with_tags<M: ?Sized, D, B: ?Sized, S>(msg: &M, destination: &D, sendtag: Tag, buf: &mut B, source: &S, receivetag: Tag) -> Status
+    where M: Buffer,
+          D: Destination,
+          B: BufferMut,
+          S: Source
+{
+    assert_eq!(source.as_communicator().compare(destination.as_communicator()), CommunicatorRelation::Identical);
+    let mut status: MPI_Status = unsafe { mem::uninitialized() };
+    unsafe {
+        ffi::MPI_Sendrecv(
+            msg.pointer(), msg.count(), msg.as_datatype().as_raw(), destination.destination_rank(), sendtag,
+            buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(), source.source_rank(), receivetag,
+            source.as_communicator().as_raw(), &mut status);
     }
+    Status(status)
 }
 
-impl<C: Communicator> SendReceiveReplaceInto for C {
-    fn send_receive_replace_into_with_tags<B: ?Sized>(&self,
-                                                      buf: &mut B,
-                                                      destination: Rank,
-                                                      sendtag: Tag,
-                                                      source: Rank,
-                                                      receivetag: Tag)
-                                                      -> Status
-        where B: BufferMut
-    {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Sendrecv_replace(
-                buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(), destination, sendtag,
-                source, receivetag, self.as_raw(), &mut status);
-        }
-        Status(status)
+/// Sends the contents of `msg` to `destination` and
+/// simultaneously receives a message from `source` into
+/// `buf`.
+///
+/// Receiving from the null process leaves `buf` untouched.
+///
+/// # Standard section(s)
+///
+/// 3.10
+pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(msg: &M, destination: &D, buf: &mut B, source: &S) -> Status
+    where M: Buffer,
+          D: Destination,
+          B: BufferMut,
+          S: Source
+{
+    send_receive_into_with_tags(msg, destination, Tag::default(), buf, source, ffi::RSMPI_ANY_TAG)
+}
+
+/// Sends the contents of `buf` to `destination` tagging it `sendtag` and
+/// simultaneously receives a message tagged `receivetag` from `source` and replaces the
+/// contents of `buf` with it.
+///
+/// Receiving from the null process leaves `buf` untouched.
+///
+/// # Standard section(s)
+///
+/// 3.10
+pub fn send_receive_replace_into_with_tags<B: ?Sized, D, S>(buf: &mut B, destination: &D, sendtag: Tag, source: &S, receivetag: Tag) -> Status
+    where B: BufferMut,
+          D: Destination,
+          S: Source
+{
+    assert_eq!(source.as_communicator().compare(destination.as_communicator()), CommunicatorRelation::Identical);
+    let mut status: MPI_Status = unsafe { mem::uninitialized() };
+    unsafe {
+        ffi::MPI_Sendrecv_replace(
+            buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(), destination.destination_rank(), sendtag,
+            source.source_rank(), receivetag, source.as_communicator().as_raw(), &mut status);
     }
+    Status(status)
+}
+
+/// Sends the contents of `buf` to `destination` and
+/// simultaneously receives a message from `source` and replaces the contents of
+/// `buf` with it.
+///
+/// Receiving from the null process leaves `buf` untouched.
+///
+/// # Standard section(s)
+///
+/// 3.10
+pub fn send_receive_replace_into<B: ?Sized, D, S>(buf: &mut B, destination: &D, source: &S) -> Status
+    where B: BufferMut,
+          D: Destination,
+          S: Source
+{
+    send_receive_replace_into_with_tags(buf, destination, Tag::default(), source, ffi::RSMPI_ANY_TAG)
 }
 
 /// A request object associated with a send operation

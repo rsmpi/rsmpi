@@ -1,6 +1,7 @@
 extern crate mpi;
 
 use mpi::traits::*;
+use mpi::point_to_point as p2p;
 use mpi::topology::Rank;
 
 fn main() {
@@ -10,11 +11,13 @@ fn main() {
     let rank = world.rank();
 
     let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
+    let next_process = world.process_at_rank(next_rank);
     let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
+    let previous_process = world.process_at_rank(previous_rank);
 
-    let (msg, status) = world.send_receive::<_, mpi::topology::Rank>(&rank, previous_rank, next_rank);
+    let (msg, status) = p2p::send_receive(&rank, &previous_process, &next_process);
     assert!(msg.is_some());
-    let msg = msg.unwrap();
+    let msg: Rank = msg.unwrap();
     println!("Process {} got message {}.\nStatus is: {:?}", rank, msg, status);
     world.barrier();
     assert_eq!(msg, next_rank);
@@ -37,6 +40,6 @@ fn main() {
     world.barrier();
 
     let mut x = rank;
-    world.send_receive_replace_into(&mut x, next_rank, previous_rank);
+    p2p::send_receive_replace_into(&mut x, &next_process, &previous_process);
     assert_eq!(x, previous_rank);
 }
