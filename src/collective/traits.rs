@@ -1,25 +1,6 @@
 //! Collective communication traits
 pub use super::{
-    Barrier,
+    CommunicatorCollectives,
     Root,
-    BroadcastInto,
-    GatherInto,
-    GatherVarcountInto,
-    AllGatherInto,
-    AllGatherVarcountInto,
-    ScatterInto,
-    ScatterVarcountInto,
-    AllToAllInto,
-    AllToAllVarcountInto,
     Operation,
-    ReduceInto,
-    AllReduceInto,
-    ScanInto,
-    ExclusiveScanInto,
-    ImmediateBarrier,
-    ImmediateBroadcastInto,
-    ImmediateGatherInto,
-    ImmediateAllGatherInto,
-    ImmediateScatterInto,
-    ImmediateAllToAllInto
 };

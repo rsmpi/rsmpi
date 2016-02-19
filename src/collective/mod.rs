@@ -26,103 +26,280 @@ use topology::{Rank, ProcessIdentifier};
 
 pub mod traits;
 
-/// Barrier synchronization among all processes in a `Communicator`
-///
-/// Calling processes (or threads within the calling processes) will enter the barrier and block
-/// execution until all processes in the `Communicator` `&self` have entered the barrier.
-///
-/// # Standard section(s)
-///
-/// 5.3
-pub trait Barrier {
+/// Collective communication patterns defined on `Communicator`s
+pub trait CommunicatorCollectives: Communicator {
+    /// Barrier synchronization among all processes in a `Communicator`
+    ///
     /// Partake in a barrier synchronization across all processes in the `Communicator` `&self`.
+    ///
+    /// Calling processes (or threads within the calling processes) will enter the barrier and block
+    /// execution until all processes in the `Communicator` `&self` have entered the barrier.
     ///
     /// # Examples
     ///
     /// See `examples/barrier.rs`
-    fn barrier(&self);
-}
-
-impl<C: Communicator> Barrier for C {
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.3
     fn barrier(&self) {
         unsafe { ffi::MPI_Barrier(self.as_raw()); }
     }
+
+    /// Gather contents of buffers on all participating processes.
+    ///
+    /// After the call completes, the contents of the send `Buffer`s on all processes will be
+    /// concatenated into the receive `Buffer`s on all ranks.
+    ///
+    /// All send `Buffer`s must contain the same count of elements.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/all_gather.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.7
+    fn all_gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
+        unsafe {
+            ffi::MPI_Allgather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / self.size(),
+                recvbuf.as_datatype().as_raw(), self.as_raw());
+        }
+    }
+
+    /// Gather contents of buffers on all participating processes.
+    ///
+    /// After the call completes, the contents of the send `Buffer`s on all processes will be
+    /// concatenated into the receive `Buffer`s on all ranks.
+    ///
+    /// The send `Buffer`s may contain different counts of elements on different processes. The
+    /// distribution of elements in the receive `Buffer`s is specified via `Partitioned`.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/all_gather_varcount.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.7
+    fn all_gather_varcount_into<
+        S: Buffer + ?Sized,
+        R: PartitionedBufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    ) {
+        unsafe {
+            ffi::MPI_Allgatherv(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.counts_ptr(),
+                recvbuf.displs_ptr(), recvbuf.as_datatype().as_raw(),
+                self.as_raw());
+        }
+    }
+
+    /// Distribute the send `Buffer`s from all processes to the receive `Buffer`s on all processes.
+    ///
+    /// Each process sends and receives the same count of elements to and from each process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/all_to_all.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.8
+    fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
+        let c_size = self.size();
+        unsafe {
+            ffi::MPI_Alltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.as_datatype().as_raw(),
+                self.as_raw());
+        }
+    }
+
+    /// Distribute the send `Buffer`s from all processes to the receive `Buffer`s on all processes.
+    ///
+    /// The count of elements to send and receive to and from each process can vary and is specified
+    /// using `Partitioned`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.8
+    fn all_to_all_varcount_into<
+        S: PartitionedBuffer + ?Sized,
+        R: PartitionedBufferMut + ?Sized
+    >(
+        &self,
+        sendbuf: &S,
+        recvbuf: &mut R
+    ) {
+        unsafe {
+            ffi::MPI_Alltoallv(
+                sendbuf.pointer(), sendbuf.counts_ptr(), sendbuf.displs_ptr(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.counts_ptr(), recvbuf.displs_ptr(), recvbuf.as_datatype().as_raw(),
+                self.as_raw());
+        }
+    }
+
+    /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
+    /// stores the result in `recvbuf` on all processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/reduce.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.9.6
+    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        unsafe {
+            ffi::MPI_Allreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
+        }
+    }
+
+    /// Performs a global inclusive prefix reduction of the data in `sendbuf` into `recvbuf` under
+    /// operation `op`.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scan.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.11.1
+    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        unsafe {
+            ffi::MPI_Scan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
+        }
+    }
+
+    /// Performs a global exclusive prefix reduction of the data in `sendbuf` into `recvbuf` under
+    /// operation `op`.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scan.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.11.2
+    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        unsafe {
+            ffi::MPI_Exscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
+        }
+    }
+
+    /// Non-blocking barrier synchronization among all processes in a `Communicator`
+    ///
+    /// Calling processes (or threads within the calling processes) enter the barrier. Completion
+    /// methods on the associated request object will block until all processes have entered.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_barrier.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.1
+    fn immediate_barrier(&self) -> BarrierRequest {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe { ffi::MPI_Ibarrier(self.as_raw(), &mut request); }
+        BarrierRequest::from_raw(request)
+    }
+
+    /// Initiate non-blocking gather of the contents of all `sendbuf`s into all `rcevbuf`s on all
+    /// processes in the communicator.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_all_gather.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.5
+    fn immediate_all_gather_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllGatherRequest<'s, 'r, S, R> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            let recvcount = recvbuf.count() / self.size();
+            ffi::MPI_Iallgather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvcount, recvbuf.as_datatype().as_raw(),
+                self.as_raw(), &mut request);
+        }
+        AllGatherRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
+    /// Initiate non-blocking all-to-all communication.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_all_to_all.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.6
+    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllToAllRequest<'s, 'r, S, R> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        let c_size = self.size();
+        unsafe {
+            ffi::MPI_Ialltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.as_datatype().as_raw(),
+                self.as_raw(), &mut request);
+        }
+        AllToAllRequest::from_raw(request, sendbuf, recvbuf)
+    }
 }
+
+impl<C: Communicator> CommunicatorCollectives for C { }
 
 /// Something that can take the role of 'root' in a collective operation.
 ///
 /// Many collective operations define a 'root' process that takes a special role in the
-/// communication. These collective operations are implemented as traits that have blanket
-/// implementations for every type that implements the `Root` trait.
+/// communication. These collective operations are implemented as default methods of this trait.
 pub trait Root: AsCommunicator
 {
     /// Rank of the root process
     fn root_rank(&self) -> Rank;
-}
 
-impl<'a, C: 'a + Communicator> Root for ProcessIdentifier<'a, C> {
-    fn root_rank(&self) -> Rank {
-        self.rank()
-    }
-}
-
-/// Broadcast of the contents of a buffer
-///
-/// After the call completes, the `Buffer` on all processes in the `Communicator` of the `Root`
-/// `&self` will contain what it contains on the `Root`.
-///
-/// # Standard section(s)
-///
-/// 5.4
-pub trait BroadcastInto {
-    /// Broadcast the contents of `buffer` from the `Root` to the `buffer`s on all other processes.
+    /// Broadcast of the contents of a buffer
+    ///
+    /// After the call completes, the `Buffer` on all processes in the `Communicator` of the `Root`
+    /// `&self` will contain what it contains on the `Root`.
     ///
     /// # Examples
     ///
     /// See `examples/broadcast.rs`
-    fn broadcast_into<Buf: BufferMut + ?Sized>(&self, buffer: &mut Buf);
-}
-
-impl<T: Root> BroadcastInto for T {
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.4
     fn broadcast_into<Buf: BufferMut + ?Sized>(&self, buffer: &mut Buf) {
         unsafe {
             ffi::MPI_Bcast(buffer.pointer_mut(), buffer.count(), buffer.as_datatype().as_raw(),
                 self.root_rank(), self.as_communicator().as_raw());
         }
     }
-}
 
-/// Gather contents of buffers on `Root`.
-///
-/// After the call completes, the contents of the `Buffer`s on all ranks will be
-/// concatenated into the `Buffer` on `Root`.
-///
-/// All send `Buffer`s must have the same count of elements.
-///
-/// # Standard section(s)
-///
-/// 5.5
-pub trait GatherInto {
-    /// Gather the contents of all `sendbuf`s on `Root` `&self`.
+    /// Gather contents of buffers on `Root`.
+    ///
+    /// After the call completes, the contents of the `Buffer`s on all ranks will be
+    /// concatenated into the `Buffer` on `Root`.
+    ///
+    /// All send `Buffer`s must have the same count of elements.
     ///
     /// This function must be called on all non-root processes.
     ///
     /// # Examples
     ///
     /// See `examples/gather.rs`
-    fn gather_into<S: Buffer + ?Sized>(&self, sendbuf: &S);
-
-    /// Gather the contents of all `sendbuf`s into `recvbuf` on `Root` `&self`.
     ///
-    /// This function must be called on the root process.
+    /// # Standard section(s)
     ///
-    /// # Examples
-    ///
-    /// See `examples/gather.rs`
-    fn gather_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
-}
-
-impl<T: Root> GatherInto for T {
+    /// 5.5
     fn gather_into<S: Buffer + ?Sized>(&self, sendbuf: &S) {
         assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
@@ -132,6 +309,22 @@ impl<T: Root> GatherInto for T {
         }
     }
 
+    /// Gather contents of buffers on `Root`.
+    ///
+    /// After the call completes, the contents of the `Buffer`s on all ranks will be
+    /// concatenated into the `Buffer` on `Root`.
+    ///
+    /// All send `Buffer`s must have the same count of elements.
+    ///
+    /// This function must be called on the root process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/gather.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.5
     fn gather_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
         assert!(self.as_communicator().rank() == self.root_rank());
         unsafe {
@@ -141,47 +334,24 @@ impl<T: Root> GatherInto for T {
                 self.root_rank(), self.as_communicator().as_raw());
         }
     }
-}
 
-/// Gather contents of buffers on `Root`.
-///
-/// After the call completes, the contents of the `Buffer`s on all ranks will be
-/// concatenated into the `Buffer` on `Root`.
-///
-/// The send `Buffer`s may contain different counts of elements on different processes. The
-/// distribution of elements in the receive `Buffer` is specified via `Partitioned`.
-///
-/// # Standard section(s)
-///
-/// 5.5
-pub trait GatherVarcountInto {
-    /// Gather the contents of all `sendbuf`s on `Root` `&self`.
+    /// Gather contents of buffers on `Root`.
+    ///
+    /// After the call completes, the contents of the `Buffer`s on all ranks will be
+    /// concatenated into the `Buffer` on `Root`.
+    ///
+    /// The send `Buffer`s may contain different counts of elements on different processes. The
+    /// distribution of elements in the receive `Buffer` is specified via `Partitioned`.
     ///
     /// This function must be called on all non-root processes.
     ///
     /// # Examples
     ///
     /// See `examples/gather_varcount.rs`
-    fn gather_varcount_into<S: Buffer + ?Sized>(&self, sendbuf: &S);
-
-    /// Gather the contents of all `sendbuf`s into `recvbuf` on `Root` `&self`.
     ///
-    /// This function must be called on the root process.
+    /// # Standard section(s)
     ///
-    /// # Examples
-    ///
-    /// See `examples/gather_varcount.rs`
-    fn gather_varcount_into_root<
-        S: Buffer + ?Sized,
-        R: PartitionedBufferMut + ?Sized,
-    >(
-        &self,
-        sendbuf: &S,
-        recvbuf: &mut R
-    );
-}
-
-impl<T: Root> GatherVarcountInto for T {
+    /// 5.5
     fn gather_varcount_into<S: Buffer + ?Sized>(&self, sendbuf: &S) {
         assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
@@ -191,6 +361,23 @@ impl<T: Root> GatherVarcountInto for T {
         }
     }
 
+    /// Gather contents of buffers on `Root`.
+    ///
+    /// After the call completes, the contents of the `Buffer`s on all ranks will be
+    /// concatenated into the `Buffer` on `Root`.
+    ///
+    /// The send `Buffer`s may contain different counts of elements on different processes. The
+    /// distribution of elements in the receive `Buffer` is specified via `Partitioned`.
+    ///
+    /// This function must be called on the root process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/gather_varcount.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.5
     fn gather_varcount_into_root<
         S: Buffer + ?Sized,
         R: PartitionedBufferMut + ?Sized
@@ -208,115 +395,23 @@ impl<T: Root> GatherVarcountInto for T {
                 self.root_rank(), self.as_communicator().as_raw());
         }
     }
-}
 
-/// Gather contents of buffers on all participating processes.
-///
-/// After the call completes, the contents of the send `Buffer`s on all processes will be
-/// concatenated into the receive `Buffer`s on all ranks.
-///
-/// All send `Buffer`s must contain the same count of elements.
-///
-/// # Standard section(s)
-///
-/// 5.7
-pub trait AllGatherInto {
-    /// Gather the contents of all `sendbuf`s into all `rcevbuf`s on all processes in the
-    /// communicator.
+    /// Scatter contents of a buffer on the root process to all processes.
     ///
-    /// # Examples
+    /// After the call completes each participating process will have received a part of the send
+    /// `Buffer` on the root process.
     ///
-    /// See `examples/all_gather.rs`
-    fn all_gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
-}
-
-impl<C: Communicator> AllGatherInto for C {
-    fn all_gather_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
-        unsafe {
-            ffi::MPI_Allgather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count() / self.size(),
-                recvbuf.as_datatype().as_raw(), self.as_raw());
-        }
-    }
-}
-
-/// Gather contents of buffers on all participating processes.
-///
-/// After the call completes, the contents of the send `Buffer`s on all processes will be
-/// concatenated into the receive `Buffer`s on all ranks.
-///
-/// The send `Buffer`s may contain different counts of elements on different processes. The
-/// distribution of elements in the receive `Buffer`s is specified via `Partitioned`.
-///
-/// # Standard section(s)
-///
-/// 5.7
-pub trait AllGatherVarcountInto {
-    /// Gather the contents of all `sendbuf`s into all `rcevbuf`s on all processes in the
-    /// communicator.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/all_gather_varcount.rs`
-    fn all_gather_varcount_into<
-        S: Buffer + ?Sized,
-        R: PartitionedBufferMut + ?Sized
-    >(
-        &self,
-        sendbuf: &S,
-        recvbuf: &mut R
-    );
-}
-
-impl<T: Communicator> AllGatherVarcountInto for T {
-    fn all_gather_varcount_into<
-        S: Buffer + ?Sized,
-        R: PartitionedBufferMut + ?Sized
-    >(
-        &self,
-        sendbuf: &S,
-        recvbuf: &mut R
-    ) {
-        unsafe {
-            ffi::MPI_Allgatherv(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.counts_ptr(),
-                recvbuf.displs_ptr(), recvbuf.as_datatype().as_raw(),
-                self.as_raw());
-        }
-    }
-}
-
-/// Scatter contents of a buffer on the root process to all processes.
-///
-/// After the call completes each participating process will have received a part of the send
-/// `Buffer` on the root process.
-///
-/// All send `Buffer`s must have the same count of elements.
-///
-/// # Standard section(s)
-///
-/// 5.6
-pub trait ScatterInto {
-    /// Scatter data from the root process to all participating processes.
+    /// All send `Buffer`s must have the same count of elements.
     ///
     /// This function must be called on all non-root processes.
     ///
     /// # Examples
     ///
     /// See `examples/scatter.rs`
-    fn scatter_into<R: BufferMut + ?Sized>(&self, recvbuf: &mut R);
-
-    /// Scatter the contents of `sendbuf` to all participating processes.
     ///
-    /// This function must be called on the root process.
+    /// # Standard section(s)
     ///
-    /// # Examples
-    ///
-    /// See `examples/scatter.rs`
-    fn scatter_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
-}
-
-impl<T: Root> ScatterInto for T {
+    /// 5.6
     fn scatter_into<R: BufferMut + ?Sized>(&self, recvbuf: &mut R) {
         assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
@@ -326,6 +421,26 @@ impl<T: Root> ScatterInto for T {
         }
     }
 
+    /// Scatter contents of a buffer on the root process to all processes.
+    ///
+    /// After the call completes each participating process will have received a part of the send
+    /// `Buffer` on the root process.
+    ///
+    /// All send `Buffer`s must have the same count of elements.
+    ///
+    /// This function must be called on the root process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scatter.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.6
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scatter.rs`
     fn scatter_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
         assert!(self.as_communicator().rank() == self.root_rank());
         let sendcount = sendbuf.count() / self.as_communicator().size();
@@ -335,47 +450,24 @@ impl<T: Root> ScatterInto for T {
                 self.root_rank(), self.as_communicator().as_raw());
         }
     }
-}
 
-/// Scatter contents of a buffer on the root process to all processes.
-///
-/// After the call completes each participating process will have received a part of the send
-/// `Buffer` on the root process.
-///
-/// The send `Buffer` may contain different counts of elements for different processes. The
-/// distribution of elements in the send `Buffer` is specified via `Partitioned`.
-///
-/// # Standard section(s)
-///
-/// 5.6
-pub trait ScatterVarcountInto {
-    /// Scatter data from the root process to all participating processes.
+    /// Scatter contents of a buffer on the root process to all processes.
+    ///
+    /// After the call completes each participating process will have received a part of the send
+    /// `Buffer` on the root process.
+    ///
+    /// The send `Buffer` may contain different counts of elements for different processes. The
+    /// distribution of elements in the send `Buffer` is specified via `Partitioned`.
     ///
     /// This function must be called on all non-root processes.
     ///
     /// # Examples
     ///
     /// See `examples/scatter_varcount.rs`
-    fn scatter_varcount_into<R: BufferMut + ?Sized>(&self, recvbuf: &mut R);
-
-    /// Scatter the contents of `sendbuf` to all participating processes.
     ///
-    /// This function must be called on the root process.
+    /// # Standard section(s)
     ///
-    /// # Examples
-    ///
-    /// See `examples/scatter_varcount.rs`
-    fn scatter_varcount_into_root<
-        S: PartitionedBuffer + ?Sized,
-        R: BufferMut + ?Sized
-    >(
-        &self,
-        sendbuf: &S,
-        recvbuf: &mut R
-    );
-}
-
-impl<T: Root> ScatterVarcountInto for T {
+    /// 5.6
     fn scatter_varcount_into<R: BufferMut + ?Sized>(&self, recvbuf: &mut R) {
         assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
@@ -385,6 +477,23 @@ impl<T: Root> ScatterVarcountInto for T {
         }
     }
 
+    /// Scatter contents of a buffer on the root process to all processes.
+    ///
+    /// After the call completes each participating process will have received a part of the send
+    /// `Buffer` on the root process.
+    ///
+    /// The send `Buffer` may contain different counts of elements for different processes. The
+    /// distribution of elements in the send `Buffer` is specified via `Partitioned`.
+    ///
+    /// This function must be called on the root process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/scatter_varcount.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.6
     fn scatter_varcount_into_root<
         S: PartitionedBuffer + ?Sized,
         R: BufferMut + ?Sized
@@ -401,70 +510,172 @@ impl<T: Root> ScatterVarcountInto for T {
                 self.root_rank(), self.as_communicator().as_raw());
         }
     }
-}
 
-/// Distribute the send `Buffer`s from all processes to the receive `Buffer`s on all processes.
-///
-/// Each process sends and receives the same count of elements to and from each process.
-///
-/// # Standard section(s)
-///
-/// 5.8
-pub trait AllToAllInto {
-    /// Distribute the `sendbuf` from all ranks to the `recvbuf` on all ranks.
+    /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
+    /// stores the result on the `Root` process.
+    ///
+    /// This function must be called on all non-root processes.
     ///
     /// # Examples
     ///
-    /// See `examples/all_to_all.rs`
-    fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R);
-}
-
-impl<C: Communicator> AllToAllInto for C {
-    fn all_to_all_into<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: &mut R) {
-        let c_size = self.size();
+    /// See `examples/reduce.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.9.1
+    fn reduce_into<S: Buffer + ?Sized, O: Operation>(&self, sendbuf: &S, op: O) {
+        assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
-            ffi::MPI_Alltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.as_datatype().as_raw(),
-                self.as_raw());
+            ffi::MPI_Reduce(sendbuf.pointer(), ptr::null_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                op.as_raw(), self.root_rank(), self.as_communicator().as_raw());
         }
+    }
+
+    /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
+    /// stores the result on the `Root` process.
+    ///
+    /// This function must be called on the root process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/reduce.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.9.1
+    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        assert!(self.as_communicator().rank() == self.root_rank());
+        unsafe {
+            ffi::MPI_Reduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                op.as_raw(), self.root_rank(), self.as_communicator().as_raw());
+        }
+    }
+
+//    reduce_into_specializations! {
+//        max_into => SystemOperation::max(),
+//        min_into => SystemOperation::min(),
+//        sum_into => SystemOperation::sum(),
+//        product_into => SystemOperation::product(),
+//        logical_and_into => SystemOperation::logical_and(),
+//        bitwise_and_into => SystemOperation::bitwise_and(),
+//        logical_or_into => SystemOperation::logical_or(),
+//        bitwise_or_into => SystemOperation::bitwise_or(),
+//        logical_xor_into => SystemOperation::logical_xor(),
+//        bitwise_xor_into => SystemOperation::bitwise_xor()
+//    }
+
+    /// Initiate broadcast of a value from the `Root` process to all other processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_broadcast.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.2
+    fn immediate_broadcast_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> BroadcastRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Ibcast(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
+        }
+        BroadcastRequest::from_raw(request, buf)
+    }
+
+    /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
+    ///
+    /// This function must be called on all non-root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_gather.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.3
+    fn immediate_gather_into<'s, S: 's + Buffer + ?Sized>(&self, sendbuf: &'s S) -> GatherRequest<'s, S> {
+        assert!(self.as_communicator().rank() != self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Igather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                ptr::null_mut(), 0, u8::equivalent_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
+        }
+        GatherRequest::from_raw(request, sendbuf)
+    }
+
+    /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
+    ///
+    /// This function must be called on the root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_gather.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.3
+    fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> GatherRootRequest<'s, 'r, S, R> {
+        assert!(self.as_communicator().rank() == self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            let recvcount = recvbuf.count() / self.as_communicator().size();
+            ffi::MPI_Igather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvcount, recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
+        }
+        GatherRootRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
+    /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
+    ///
+    /// This function must be called on all non-root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_scatter.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.4
+    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &'r mut R) -> ScatterRequest<'r, R> {
+        assert!(self.as_communicator().rank() != self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iscatter(ptr::null(), 0, u8::equivalent_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
+        }
+        ScatterRequest::from_raw(request, recvbuf)
+    }
+
+    /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
+    ///
+    /// This function must be called on the root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_scatter.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.4
+    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> ScatterRootRequest<'s, 'r, S, R> {
+        assert!(self.as_communicator().rank() == self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            let sendcount = sendbuf.count() / self.as_communicator().size();
+            ffi::MPI_Iscatter(sendbuf.pointer(), sendcount, sendbuf.as_datatype().as_raw(),
+                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
+                self.root_rank(), self.as_communicator().as_raw(), &mut request);
+        }
+        ScatterRootRequest::from_raw(request, sendbuf, recvbuf)
     }
 }
 
-/// Distribute the send `Buffer`s from all processes to the receive `Buffer`s on all processes.
-///
-/// The count of elements to send and receive to and from each process can vary and is specified
-/// using `Partitioned`.
-///
-/// # Standard section(s)
-///
-/// 5.8
-pub trait AllToAllVarcountInto {
-    /// Distribute the `sendbuf` from all ranks to the `recvbuf` on all ranks.
-    fn all_to_all_varcount_into<
-        S: PartitionedBuffer + ?Sized,
-        R: PartitionedBufferMut + ?Sized
-    >(
-        &self,
-        sendbuf: &S,
-        recvbuf: &mut R
-    );
-}
-
-impl<T: Communicator> AllToAllVarcountInto for T {
-    fn all_to_all_varcount_into<
-        S: PartitionedBuffer + ?Sized,
-        R: PartitionedBufferMut + ?Sized
-    >(
-        &self,
-        sendbuf: &S,
-        recvbuf: &mut R
-    ) {
-        unsafe {
-            ffi::MPI_Alltoallv(
-                sendbuf.pointer(), sendbuf.counts_ptr(), sendbuf.displs_ptr(), sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.counts_ptr(), recvbuf.displs_ptr(), recvbuf.as_datatype().as_raw(),
-                self.as_raw());
-        }
+impl<'a, C: 'a + Communicator> Root for ProcessIdentifier<'a, C> {
+    fn root_rank(&self) -> Rank {
+        self.rank()
     }
 }
 
@@ -519,88 +730,6 @@ macro_rules! reduce_into_specializations {
     )
 }
 
-/// Perform a global reduction, storing the result on the `Root` process.
-///
-/// # Standard section(s)
-///
-/// 5.9.1
-pub trait ReduceInto {
-    /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
-    /// stores the result on the `Root` process.
-    ///
-    /// This function must be called on all non-root processes.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/reduce.rs`
-    fn reduce_into<S: Buffer + ?Sized, O: Operation>(&self, sendbuf: &S, op: O);
-
-    /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
-    /// stores the result in `recvbuf` on the `Root` process.
-    ///
-    /// This function must be called on the root process.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/reduce.rs`
-    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
-
-//    reduce_into_specializations! {
-//        max_into => SystemOperation::max(),
-//        min_into => SystemOperation::min(),
-//        sum_into => SystemOperation::sum(),
-//        product_into => SystemOperation::product(),
-//        logical_and_into => SystemOperation::logical_and(),
-//        bitwise_and_into => SystemOperation::bitwise_and(),
-//        logical_or_into => SystemOperation::logical_or(),
-//        bitwise_or_into => SystemOperation::bitwise_or(),
-//        logical_xor_into => SystemOperation::logical_xor(),
-//        bitwise_xor_into => SystemOperation::bitwise_xor()
-//    }
-}
-
-impl<T: Root> ReduceInto for T {
-    fn reduce_into<S: Buffer + ?Sized, O: Operation>(&self, sendbuf: &S, op: O) {
-        assert!(self.as_communicator().rank() != self.root_rank());
-        unsafe {
-            ffi::MPI_Reduce(sendbuf.pointer(), ptr::null_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
-                op.as_raw(), self.root_rank(), self.as_communicator().as_raw());
-        }
-    }
-
-    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
-        assert!(self.as_communicator().rank() == self.root_rank());
-        unsafe {
-            ffi::MPI_Reduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
-                op.as_raw(), self.root_rank(), self.as_communicator().as_raw());
-        }
-    }
-}
-
-/// Perform a global reduction, storing the result on all processes.
-///
-/// # Standard section(s)
-///
-/// 5.9.6
-pub trait AllReduceInto {
-    /// Performs a global reduction under the operation `op` of the input data in `sendbuf` and
-    /// stores the result in `recvbuf` on all processes.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/reduce.rs`
-    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
-}
-
-impl<C: Communicator> AllReduceInto for C {
-    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
-        unsafe {
-            ffi::MPI_Allreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
-        }
-    }
-}
-
 /// Perform a local reduction.
 ///
 /// # Standard section(s)
@@ -617,109 +746,11 @@ pub fn reduce_local_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation
     }
 }
 
-/// Perform a global inclusive prefix reduction.
-///
-/// # Standard section(s)
-///
-/// 5.11.1
-pub trait ScanInto {
-    /// Performs a global inclusive prefix reduction of the data in `sendbuf` into `recvbuf` under
-    /// operation `op`.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/scan.rs`
-    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
-}
-
-impl<C: Communicator> ScanInto for C {
-    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
-        unsafe {
-            ffi::MPI_Scan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
-        }
-    }
-}
-
-/// Perform a global exclusive prefix reduction.
-///
-/// # Standard section(s)
-///
-/// 5.11.2
-pub trait ExclusiveScanInto {
-    /// Performs a global exclusive prefix reduction of the data in `sendbuf` into `recvbuf` under
-    /// operation `op`.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/scan.rs`
-    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O);
-}
-
-impl<C: Communicator> ExclusiveScanInto for C {
-    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
-        unsafe {
-            ffi::MPI_Exscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
-                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
-        }
-    }
-}
-
 /// A request object for an immediate (non-blocking) barrier operation
 pub type BarrierRequest = PlainRequest;
 
-/// Non-blocking barrier synchronization among all processes in a `Communicator`
-///
-/// Calling processes (or threads within the calling processes) enter the barrier. Completion
-/// methods on the associated request object will block until all processes have entered.
-///
-/// # Standard section(s)
-///
-/// 5.12.1
-pub trait ImmediateBarrier {
-    /// Partake in a barrier synchronization across all processes in the `Communicator` `&self`.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate_barrier.rs`
-    fn immediate_barrier(&self) -> BarrierRequest;
-}
-
-impl<C: Communicator> ImmediateBarrier for C {
-    fn immediate_barrier(&self) -> BarrierRequest {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe { ffi::MPI_Ibarrier(self.as_raw(), &mut request); }
-        BarrierRequest::from_raw(request)
-    }
-}
-
 /// A request object for an immediate (non-blocking) broadcast operation
 pub type BroadcastRequest<'b, Buf> = WriteRequest<'b, Buf>;
-
-/// Non-blocking broadcast of a value from a `Root` process to all other processes.
-///
-/// # Standard section(s)
-///
-/// 5.12.2
-pub trait ImmediateBroadcastInto {
-    /// Initiate broadcast of a value from the `Root` process to all other processes.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate_broadcast.rs`
-    fn immediate_broadcast_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> BroadcastRequest<'b, Buf>;
-}
-
-impl<R: Root> ImmediateBroadcastInto for R {
-    fn immediate_broadcast_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> BroadcastRequest<'b, Buf> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Ibcast(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
-                self.root_rank(), self.as_communicator().as_raw(), &mut request);
-        }
-        BroadcastRequest::from_raw(request, buf)
-    }
-}
 
 /// A request object for an immediate (non-blocking) gather operation
 pub type GatherRequest<'s, S> = ReadRequest<'s, S>;
@@ -727,86 +758,8 @@ pub type GatherRequest<'s, S> = ReadRequest<'s, S>;
 /// A request object for an immediate (non-blocking) gather operation on the root process
 pub type GatherRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
 
-/// Non-blocking gather of values at the `Root` process
-///
-/// # Standard section(s)
-///
-/// 5.12.3
-pub trait ImmediateGatherInto {
-    /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
-    ///
-    /// This function must be called on all non-root processes.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate_gather.rs`
-    fn immediate_gather_into<'s, S: 's + Buffer + ?Sized>(&self, sendbuf: &'s S) -> GatherRequest<'s, S>;
-
-    /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
-    ///
-    /// This function must be called on the root processes.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate_gather.rs`
-    fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> GatherRootRequest<'s, 'r, S, R>;
-}
-
-impl<T: Root> ImmediateGatherInto for T {
-    fn immediate_gather_into<'s, S: 's + Buffer + ?Sized>(&self, sendbuf: &'s S) -> GatherRequest<'s, S> {
-        assert!(self.as_communicator().rank() != self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Igather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
-                ptr::null_mut(), 0, u8::equivalent_datatype().as_raw(),
-                self.root_rank(), self.as_communicator().as_raw(), &mut request);
-        }
-        GatherRequest::from_raw(request, sendbuf)
-    }
-
-    fn immediate_gather_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> GatherRootRequest<'s, 'r, S, R> {
-        assert!(self.as_communicator().rank() == self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            let recvcount = recvbuf.count() / self.as_communicator().size();
-            ffi::MPI_Igather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvcount, recvbuf.as_datatype().as_raw(),
-                self.root_rank(), self.as_communicator().as_raw(), &mut request);
-        }
-        GatherRootRequest::from_raw(request, sendbuf, recvbuf)
-    }
-}
-
 /// A request object for an immediate (non-blocking) all-gather operation
 pub type AllGatherRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// Non-blocking gather of contents of buffers on all participating processes.
-///
-/// # Standard section(s)
-///
-/// 5.12.5
-pub trait ImmediateAllGatherInto {
-    /// Initiate non-blocking gather of the contents of all `sendbuf`s into all `rcevbuf`s on all
-    /// processes in the communicator.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate_all_gather.rs`
-    fn immediate_all_gather_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllGatherRequest<'s, 'r, S, R>;
-}
-
-impl<C: Communicator> ImmediateAllGatherInto for C {
-    fn immediate_all_gather_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllGatherRequest<'s, 'r, S, R> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            let recvcount = recvbuf.count() / self.size();
-            ffi::MPI_Iallgather(sendbuf.pointer(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvcount, recvbuf.as_datatype().as_raw(),
-                self.as_raw(), &mut request);
-        }
-        AllGatherRequest::from_raw(request, sendbuf, recvbuf)
-    }
-}
 
 /// A request object for an immediate (non-blocking) scatter operation
 pub type ScatterRequest<'r, R> = WriteRequest<'r, R>;
@@ -814,82 +767,5 @@ pub type ScatterRequest<'r, R> = WriteRequest<'r, R>;
 /// A request object for an immediate (non-blocking) scatter operation on the root process
 pub type ScatterRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
 
-/// Non-blocking scatter of values from the `Root` process
-///
-/// # Standard section(s)
-///
-/// 5.12.4
-pub trait ImmediateScatterInto {
-    /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
-    ///
-    /// This function must be called on all non-root processes.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate_scatter.rs`
-    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &'r mut R) -> ScatterRequest<'r, R>;
-
-    /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
-    ///
-    /// This function must be called on the root processes.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate_scatter.rs`
-    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> ScatterRootRequest<'s, 'r, S, R>;
-}
-
-impl<T: Root> ImmediateScatterInto for T {
-    fn immediate_scatter_into<'r, R: 'r + BufferMut + ?Sized>(&self, recvbuf: &'r mut R) -> ScatterRequest<'r, R> {
-        assert!(self.as_communicator().rank() != self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Iscatter(ptr::null(), 0, u8::equivalent_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
-                self.root_rank(), self.as_communicator().as_raw(), &mut request);
-        }
-        ScatterRequest::from_raw(request, recvbuf)
-    }
-
-    fn immediate_scatter_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> ScatterRootRequest<'s, 'r, S, R> {
-        assert!(self.as_communicator().rank() == self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            let sendcount = sendbuf.count() / self.as_communicator().size();
-            ffi::MPI_Iscatter(sendbuf.pointer(), sendcount, sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count(), recvbuf.as_datatype().as_raw(),
-                self.root_rank(), self.as_communicator().as_raw(), &mut request);
-        }
-        ScatterRootRequest::from_raw(request, sendbuf, recvbuf)
-    }
-}
-
 /// A request object for an immediate (non-blocking) all-to-all operation
 pub type AllToAllRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// Non-blocking all-to-all communication.
-///
-/// # Standard section(s)
-///
-/// 5.12.6
-pub trait ImmediateAllToAllInto {
-    /// Initiate non-blocking all-to-all communication.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate_all_to_all.rs`
-    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllToAllRequest<'s, 'r, S, R>;
-}
-
-impl<C: Communicator> ImmediateAllToAllInto for C {
-    fn immediate_all_to_all_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized>(&self, sendbuf: &'s S, recvbuf: &'r mut R) -> AllToAllRequest<'s, 'r, S, R> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        let c_size = self.size();
-        unsafe {
-            ffi::MPI_Ialltoall(sendbuf.pointer(), sendbuf.count() / c_size, sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(), recvbuf.count() / c_size, recvbuf.as_datatype().as_raw(),
-                self.as_raw(), &mut request);
-        }
-        AllToAllRequest::from_raw(request, sendbuf, recvbuf)
-    }
-}
