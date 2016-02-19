@@ -7,7 +7,7 @@
 //! - **5.8**: All-to-all, `MPI_Alltoallw()`
 //! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
 //! `MPI_Op_commutative()`
-//! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter_block()`, `MPI_Reduce_scatter()`
+//! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter()`
 //! - **5.12**: Nonblocking collective operations, `MPI_Igatherv()`, `MPI_Iscatterv()`,
 //! `MPI_Iallgatherv()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`,
 //! `MPI_Ireduce()`, `MPI_Iallreduce()`, `MPI_Ireduce_scatter_block()`, `MPI_Ireduce_scatter()`,
@@ -157,6 +157,25 @@ pub trait CommunicatorCollectives: Communicator {
         unsafe {
             ffi::MPI_Allreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
                 sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
+        }
+    }
+
+    /// Performs an element-wise global reduction under the operation `op` of the input data in
+    /// `sendbuf` and scatters the result into equal sized blocks in the receive buffers on all
+    /// processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/reduce.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.10.1
+    fn reduce_scatter_block_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+        assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
+        unsafe {
+            ffi::MPI_Reduce_scatter_block(sendbuf.pointer(), recvbuf.pointer_mut(),
+                recvbuf.count(), sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
         }
     }
 

@@ -38,4 +38,10 @@ fn main() {
     let mut e = b;
     collective::reduce_local_into(&a, &mut e, SystemOperation::bitwise_xor());
     assert_eq!(e, 0b0011001111001100);
+
+    let f = (0..size).collect::<Vec<_>>();
+    let mut g: Rank = 0;
+
+    world.reduce_scatter_block_into(&f[..], &mut g, SystemOperation::product());
+    assert_eq!(g, rank.pow(size as u32));
 }
