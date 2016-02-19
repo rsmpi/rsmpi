@@ -1,8 +1,8 @@
 //! Point to point communication
 //!
 //! Endpoints of communication are mostly described by types that implement the `Source` and
-//! `Destination` trait. Communication operations are implemented as traits that have blanket
-//! implementations for these two traits.
+//! `Destination` trait. Communication operations are implemented as default methods on those
+//! traits.
 //!
 //! # Unfinished features
 //!
@@ -47,6 +47,316 @@ pub mod traits;
 pub trait Source: AsCommunicator {
     /// `Rank` that identifies the source
     fn source_rank(&self) -> Rank;
+
+    /// Probe a source for incoming messages.
+    ///
+    /// Probe `Source` `&self` for incoming messages with a certain tag.
+    ///
+    /// An ordinary `probe()` returns a `Status` which allows inspection of the properties of the
+    /// incoming message, but does not guarantee reception by a subsequent `receive()` (especially in a
+    /// multi-threaded set-up). For a probe operation with stronger guarantees, see
+    /// `matched_probe()`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.1
+    fn probe_with_tag(&self, tag: Tag) -> Status {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Probe(self.source_rank(), tag, self.as_communicator().as_raw(),
+                &mut status);
+        };
+        Status(status)
+    }
+
+    /// Probe a source for incoming messages.
+    ///
+    /// Probe `Source` `&self` for incoming messages with any tag.
+    ///
+    /// An ordinary `probe()` returns a `Status` which allows inspection of the properties of the
+    /// incoming message, but does not guarantee reception by a subsequent `receive()` (especially in a
+    /// multi-threaded set-up). For a probe operation with stronger guarantees, see
+    /// `matched_probe()`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.1
+    fn probe(&self) -> Status {
+        self.probe_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+
+    /// Probe a source for incoming messages with guaranteed reception.
+    ///
+    /// Probe `Source` `&self` for incoming messages with a certain tag.
+    ///
+    /// A `matched_probe()` returns both a `Status` that describes the properties of a pending incoming
+    /// message and a `Message` which can and *must* subsequently be used in a `matched_receive()`
+    /// to receive the probed message.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.2
+    fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status) {
+        let mut message: MPI_Message = unsafe { mem::uninitialized() };
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Mprobe(self.source_rank(), tag, self.as_communicator().as_raw(),
+                &mut message, &mut status);
+        }
+        (Message(message), Status(status))
+    }
+
+    /// Probe a source for incoming messages with guaranteed reception.
+    ///
+    /// Probe `Source` `&self` for incoming messages with any tag.
+    ///
+    /// A `matched_probe()` returns both a `Status` that describes the properties of a pending incoming
+    /// message and a `Message` which can and *must* subsequently be used in a `matched_receive()`
+    /// to receive the probed message.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.2
+    fn matched_probe(&self) -> (Message, Status) {
+        self.matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+
+    /// Receive a message containing a single instance of type `Msg`.
+    ///
+    /// Receive a message from `Source` `&self` tagged `tag` containing a single instance of type
+    /// `Msg` or `None` if receiving from the null process.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.2.4
+    fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Msg>, Status) {
+        let mut res: Msg = unsafe { mem::uninitialized() };
+        let status = self.receive_into_with_tag(&mut res, tag);
+        (
+            if self.source_rank() == ffi::RSMPI_PROC_NULL { None } else { Some(res) },
+            status
+        )
+    }
+
+    /// Receive a message containing a single instance of type `Msg`.
+    ///
+    /// Receive a message from `Source` `&self` containing a single instance of type `Msg` or
+    /// `None` if receiving from the null process.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use mpi::traits::*;
+    ///
+    /// let universe = mpi::initialize().unwrap();
+    /// let world = universe.world();
+    ///
+    /// let x = world.any_process().receive::<f64>();
+    /// ```
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.2.4
+    fn receive<Msg: EquivalentDatatype>(&self) -> (Option<Msg>, Status) {
+        self.receive_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+
+    /// Receive a message into a `Buffer`.
+    ///
+    /// Receive a message from `Source` `&self` tagged `tag` into `Buffer` `buf`.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.2.4
+    fn receive_into_with_tag<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Recv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
+                self.source_rank(), tag, self.as_communicator().as_raw(), &mut status);
+        }
+        Status(status)
+    }
+
+    /// Receive a message into a `Buffer`.
+    ///
+    /// Receive a message from `Source` `&self` into `Buffer` `buf`.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.2.4
+    fn receive_into<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf) -> Status {
+        self.receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
+    }
+
+    /// Receive a message containing multiple instances of type `Msg` into a `Vec`.
+    ///
+    /// Receive a message from `Source` `&self` tagged `tag` containing multiple instances of type
+    /// `Msg` into a `Vec` or `None` if receiving from the null process.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.2.4
+    fn receive_vec_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Vec<Msg>>, Status) {
+        self.matched_probe_with_tag(tag).matched_receive_vec()
+    }
+
+    /// Receive a message containing multiple instances of type `Msg` into a `Vec`.
+    ///
+    /// Receive a message from `Source` `&self` containing multiple instances of type `Msg` into a
+    /// `Vec` or `None` if receiving from the null process.
+    ///
+    /// # Examples
+    /// See `examples/send_receive.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.2.4
+    fn receive_vec<Msg: EquivalentDatatype>(&self) -> (Option<Vec<Msg>>, Status) {
+        self.receive_vec_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+
+    /// Initiate an immediate (non-blocking) receive operation.
+    ///
+    /// Initiate receiving a message matching `tag` into `buf`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Irecv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
+                self.source_rank(), tag, self.as_communicator().as_raw(),
+                &mut request);
+        }
+        ReceiveRequest::from_raw(request, buf)
+    }
+
+    /// Initiate an immediate (non-blocking) receive operation.
+    ///
+    /// Initiate receiving a message into `buf`.
+    ///
+    /// # Examples
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf> {
+        self.immediate_receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
+    }
+
+    /// Initiate a non-blocking receive operation for messages matching tag `tag`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> ReceiveFuture<Msg> {
+        let mut val: Box<Msg> = Box::new(unsafe { mem::uninitialized() });
+        let mut req: MPI_Request = unsafe { mem::uninitialized() };
+
+        unsafe {
+            ffi::MPI_Irecv((&mut *(val)).pointer_mut(), val.count(),
+                Msg::equivalent_datatype().as_raw(), self.source_rank(), tag,
+                self.as_communicator().as_raw(), &mut req);
+        }
+
+        ReceiveFuture {
+            val: val,
+            req: PlainRequest::from_raw(req)
+        }
+    }
+
+    /// Initiate a non-blocking receive operation.
+    ///
+    /// # Examples
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_receive<Msg: EquivalentDatatype>(&self) -> ReceiveFuture<Msg> {
+        self.immediate_receive_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+
+    /// Asynchronously probe a source for incoming messages.
+    ///
+    /// Asynchronously probe `Source` `&self` for incoming messages with a certain tag.
+    ///
+    /// Like `Probe` but returns a `None` immediately if there is no incoming message to be probed.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.1
+    fn immediate_probe_with_tag(&self, tag: Tag) -> Option<Status> {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        let mut flag: c_int = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iprobe(self.source_rank(), tag, self.as_communicator().as_raw(),
+                &mut flag, &mut status);
+        };
+        if flag != 0 {
+            Some(Status(status))
+        } else {
+            None
+        }
+    }
+
+    /// Asynchronously probe a source for incoming messages.
+    ///
+    /// Asynchronously probe `Source` `&self` for incoming messages with any tag.
+    ///
+    /// Like `Probe` but returns a `None` immediately if there is no incoming message to be probed.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.1
+    fn immediate_probe(&self) -> Option<Status> {
+        self.immediate_probe_with_tag(ffi::RSMPI_ANY_TAG)
+    }
+
+    /// Asynchronously probe a source for incoming messages with guaranteed reception.
+    ///
+    /// Asynchronously probe `Source` `&self` for incoming messages with a certain tag.
+    ///
+    /// Like `MatchedProbe` but returns a `None` immediately if there is no incoming message to be
+    /// probed.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.2
+    fn immediate_matched_probe_with_tag(&self, tag: Tag) -> Option<(Message, Status)> {
+        let mut message: MPI_Message = unsafe { mem::uninitialized() };
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        let mut flag: c_int = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Improbe(self.source_rank(), tag, self.as_communicator().as_raw(),
+                &mut flag, &mut message, &mut status);
+        }
+        if flag != 0 {
+            Some((Message(message), Status(status)))
+        } else {
+            None
+        }
+    }
+
+    /// Asynchronously probe a source for incoming messages with guaranteed reception.
+    ///
+    /// Asynchronously probe `Source` `&self` for incoming messages with any tag.
+    ///
+    /// Like `MatchedProbe` but returns a `None` immediately if there is no incoming message to be
+    /// probed.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.2
+    fn immediate_matched_probe(&self) -> Option<(Message, Status)> {
+        self.immediate_matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
+    }
 }
 
 impl<'a, C: 'a + Communicator> Source for AnyProcess<'a, C> {
@@ -72,130 +382,252 @@ impl<'a, C: 'a + Communicator> Source for ProcessIdentifier<'a, C> {
 pub trait Destination: AsCommunicator {
     /// `Rank` that identifies the destination
     fn destination_rank(&self) -> Rank;
-}
 
-impl<'a, C: 'a + Communicator> Destination for ProcessIdentifier<'a, C> {
-    fn destination_rank(&self) -> Rank {
-        self.rank()
-    }
-}
-
-/// Blocking standard mode send operation
-///
-/// # Examples
-///
-/// ```no_run
-/// use mpi::traits::*;
-///
-/// let universe = mpi::initialize().unwrap();
-/// let world = universe.world();
-///
-/// let v = vec![ 1.0f64, 2.0, 3.0 ];
-/// world.process_at_rank(1).send(&v[..]);
-/// ```
-///
-/// # Standard section(s)
-///
-/// 3.2.1
-pub trait Send {
-    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
-    fn send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag);
-
-    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    /// Blocking standard mode send operation
     ///
-    /// # Examples
-    /// See `examples/send_receive.rs`
-    fn send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
-        self.send_with_tag(buf, Tag::default())
-    }
-}
-
-impl<Dest: Destination> Send for Dest {
+    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.2.1
     fn send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
             ffi::MPI_Send(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
                 self.destination_rank(), tag, self.as_communicator().as_raw());
         }
     }
-}
 
-/// Blocking buffered mode send operation
-///
-/// # Standard section(s)
-///
-/// 3.4
-pub trait BufferedSend {
-    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
-    fn buffered_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag);
-
+    /// Blocking standard mode send operation
+    ///
     /// Send the contents of a `Buffer` to the `Destination` `&self`.
-    fn buffered_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
-        self.buffered_send_with_tag(buf, Tag::default())
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use mpi::traits::*;
+    ///
+    /// let universe = mpi::initialize().unwrap();
+    /// let world = universe.world();
+    ///
+    /// let v = vec![ 1.0f64, 2.0, 3.0 ];
+    /// world.process_at_rank(1).send(&v[..]);
+    /// ```
+    ///
+    /// See also `examples/send_receive.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.2.1
+    fn send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
+        self.send_with_tag(buf, Tag::default())
     }
-}
 
-impl<Dest: Destination> BufferedSend for Dest {
+    /// Blocking buffered mode send operation
+    ///
+    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.4
     fn buffered_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
             ffi::MPI_Bsend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
                 self.destination_rank(), tag, self.as_communicator().as_raw());
         }
     }
-}
 
-/// Blocking synchronous mode send operation
-///
-/// # Standard section(s)
-///
-/// 3.4
-pub trait SynchronousSend {
+    /// Blocking buffered mode send operation
+    ///
+    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.4
+    fn buffered_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
+        self.buffered_send_with_tag(buf, Tag::default())
+    }
+
+    /// Blocking synchronous mode send operation
+    ///
     /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
     ///
     /// Completes only once the matching receive operation has started.
-    fn synchronous_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag);
-
-    /// Send the contents of a `Buffer` to the `Destination` `&self`.
     ///
-    /// Completes only once the matching receive operation has started.
-    fn synchronous_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
-        self.synchronous_send_with_tag(buf, Tag::default())
-    }
-}
-
-impl<Dest: Destination> SynchronousSend for Dest {
+    /// # Standard section(s)
+    ///
+    /// 3.4
     fn synchronous_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
             ffi::MPI_Ssend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
                 self.destination_rank(), tag, self.as_communicator().as_raw());
         }
     }
-}
 
-/// Blocking ready mode send operation
-///
-/// # Standard section(s)
-///
-/// 3.4
-pub trait ReadySend {
+    /// Blocking synchronous mode send operation
+    ///
+    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    ///
+    /// Completes only once the matching receive operation has started.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.4
+    fn synchronous_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
+        self.synchronous_send_with_tag(buf, Tag::default())
+    }
+
+    /// Blocking ready mode send operation
+    ///
     /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
     ///
     /// Fails if the matching receive operation has not been posted.
-    fn ready_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag);
-
-    /// Send the contents of a `Buffer` to the `Destination` `&self`.
     ///
-    /// Fails if the matching receive operation has not been posted.
-    fn ready_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
-        self.ready_send_with_tag(buf, Tag::default())
-    }
-}
-
-impl<Dest: Destination> ReadySend for Dest {
+    /// # Standard section(s)
+    ///
+    /// 3.4
     fn ready_send_with_tag<Buf: Buffer + ?Sized>(&self, buf: &Buf, tag: Tag) {
         unsafe {
             ffi::MPI_Rsend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
                 self.destination_rank(), tag, self.as_communicator().as_raw());
         }
+    }
+
+    /// Blocking ready mode send operation
+    ///
+    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    ///
+    /// Fails if the matching receive operation has not been posted.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.4
+    fn ready_send<Buf: Buffer + ?Sized>(&self, buf: &Buf) {
+        self.ready_send_with_tag(buf, Tag::default())
+    }
+
+    /// Initiate an immediate (non-blocking) standard mode send operation.
+    ///
+    /// Initiate sending the data in `buf` in standard mode and tag it.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Isend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
+                self.destination_rank(), tag, self.as_communicator().as_raw(),
+                &mut request);
+        }
+        SendRequest::from_raw(request, buf)
+    }
+
+    /// Initiate an immediate (non-blocking) standard mode send operation.
+    ///
+    /// Initiate sending the data in `buf` in standard mode.
+    ///
+    /// # Examples
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
+        self.immediate_send_with_tag(buf, Tag::default())
+    }
+
+    /// Initiate an immediate (non-blocking) buffered mode send operation.
+    ///
+    /// Initiate sending the data in `buf` in buffered mode and tag it.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_buffered_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Ibsend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
+                self.destination_rank(), tag, self.as_communicator().as_raw(),
+                &mut request);
+        }
+        SendRequest::from_raw(request, buf)
+    }
+
+    /// Initiate an immediate (non-blocking) buffered mode send operation.
+    ///
+    /// Initiate sending the data in `buf` in buffered mode.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_buffered_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
+        self.immediate_buffered_send_with_tag(buf, Tag::default())
+    }
+
+    /// Initiate an immediate (non-blocking) synchronous mode send operation.
+    ///
+    /// Initiate sending the data in `buf` in synchronous mode and tag it.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_synchronous_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Issend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
+                self.destination_rank(), tag, self.as_communicator().as_raw(),
+                &mut request);
+        }
+        SendRequest::from_raw(request, buf)
+    }
+
+    /// Initiate an immediate (non-blocking) synchronous mode send operation.
+    ///
+    /// Initiate sending the data in `buf` in synchronous mode.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_synchronous_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
+        self.immediate_synchronous_send_with_tag(buf, Tag::default())
+    }
+
+    /// Initiate an immediate (non-blocking) ready mode send operation.
+    ///
+    /// Initiate sending the data in `buf` in ready mode and tag it.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_ready_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Irsend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
+                self.destination_rank(), tag, self.as_communicator().as_raw(),
+                &mut request);
+        }
+        SendRequest::from_raw(request, buf)
+    }
+
+    /// Initiate an immediate (non-blocking) ready mode send operation.
+    ///
+    /// Initiate sending the data in `buf` in ready mode.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.2
+    fn immediate_ready_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
+        self.immediate_ready_send_with_tag(buf, Tag::default())
+    }
+}
+
+impl<'a, C: 'a + Communicator> Destination for ProcessIdentifier<'a, C> {
+    fn destination_rank(&self) -> Rank {
+        self.rank()
     }
 }
 
@@ -242,36 +674,6 @@ impl fmt::Debug for Status {
     }
 }
 
-/// Probe a source for incoming messages.
-///
-/// An ordinary `probe()` returns a `Status` which allows inspection of the properties of the
-/// incoming message, but does not guarantee reception by a subsequent `receive()` (especially in a
-/// multi-threaded set-up). For a probe operation with stronger guarantees, see `MatchedProbe`.
-///
-/// # Standard section(s)
-///
-/// 3.8.1
-pub trait Probe {
-    /// Probe `Source` `&self` for incoming messages with a certain tag.
-    fn probe_with_tag(&self, tag: Tag) -> Status;
-
-    /// Probe `Source` `&self` for incoming messages with any tag.
-    fn probe(&self) -> Status {
-        self.probe_with_tag(ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src: Source> Probe for Src {
-    fn probe_with_tag(&self, tag: Tag) -> Status {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Probe(self.source_rank(), tag, self.as_communicator().as_raw(),
-                &mut status);
-        };
-        Status(status)
-    }
-}
-
 /// Describes a pending incoming message, probed by a `matched_probe()`.
 ///
 /// # Standard section(s)
@@ -284,6 +686,62 @@ impl Message {
     /// True if the `Source` for the probe was the null process.
     pub fn is_no_proc(&self) -> bool {
         unsafe { self.as_raw() == ffi::RSMPI_MESSAGE_NO_PROC }
+    }
+
+    /// Receive a previously probed message containing a single instance of type `Msg`.
+    ///
+    /// Receives the message `&self` which contains a single instance of type `Msg` or None if
+    /// receiving from the null process.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.3
+    pub fn matched_receive<Msg: EquivalentDatatype>(self) -> (Option<Msg>, Status) {
+        let is_no_proc = self.is_no_proc();
+        let mut res: Msg = unsafe { mem::uninitialized() };
+        let status = self.matched_receive_into(&mut res);
+        (
+            if is_no_proc { None } else { Some(res) },
+            status
+        )
+    }
+
+    /// Receive a previously probed message into a `Buffer`.
+    ///
+    /// Receive the message `&self` with contents matching `buf`.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.3
+    pub fn matched_receive_into<Buf: BufferMut + ?Sized>(mut self, buf: &mut Buf) -> Status {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Mrecv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
+                self.as_raw_mut(), &mut status);
+            assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
+        }
+        Status(status)
+    }
+
+    /// Asynchronously receive a previously probed message into a `Buffer`.
+    ///
+    /// Asynchronously receive the message `&self` with contents matching `buf`.
+    ///
+    /// Receiving from the null process leaves `buf` untouched.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.3
+    pub fn immediate_matched_receive_into<Buf: BufferMut + ?Sized>(mut self, buf: &mut Buf) -> ReceiveRequest<Buf> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Imrecv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
+                self.as_raw_mut(), &mut request);
+            assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
+        }
+        ReceiveRequest::from_raw(request, buf)
     }
 }
 
@@ -302,84 +760,6 @@ impl Drop for Message {
             assert!(self.as_raw() == ffi::RSMPI_MESSAGE_NULL,
                 "matched message dropped without receiving.");
         }
-    }
-}
-
-/// Probe a source for incoming messages with guaranteed reception.
-///
-/// A `matched_probe()` returns both a `Status` that describes the properties of a pending incoming
-/// message and a `Message` which can and *must* subsequently be used in a `matched_receive()`
-/// to receive the probed message.
-///
-/// # Standard section(s)
-///
-/// 3.8.2
-pub trait MatchedProbe {
-    /// Probe `Source` `&self` for incoming messages with a certain tag.
-    fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status);
-
-    /// Probe `Source` `&self` for incoming messages with any tag.
-    fn matched_probe(&self) -> (Message, Status) {
-        self.matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src: Source> MatchedProbe for Src {
-    fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status) {
-        let mut message: MPI_Message = unsafe { mem::uninitialized() };
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Mprobe(self.source_rank(), tag, self.as_communicator().as_raw(),
-                &mut message, &mut status);
-        }
-        (Message(message), Status(status))
-    }
-}
-
-/// Receive a previously probed message containing a single instance of type `Msg`.
-///
-/// # Standard section(s)
-///
-/// 3.8.3
-pub trait MatchedReceive {
-    /// Receives the message `&self` which contains a single instance of type `Msg` or None if
-    /// receiving from the null process.
-    fn matched_receive<Msg: EquivalentDatatype>(self) -> (Option<Msg>, Status);
-}
-
-impl MatchedReceive for Message {
-    fn matched_receive<Msg: EquivalentDatatype>(self) -> (Option<Msg>, Status) {
-        let is_no_proc = self.is_no_proc();
-        let mut res: Msg = unsafe { mem::uninitialized() };
-        let status = self.matched_receive_into(&mut res);
-        (
-            if is_no_proc { None } else { Some(res) },
-            status
-        )
-    }
-}
-
-/// Receive a previously probed message into a `Buffer`.
-///
-/// # Standard section(s)
-///
-/// 3.8.3
-pub trait MatchedReceiveInto {
-    /// Receive the message `&self` with contents matching `buf`.
-    ///
-    /// Receiving from the null process leaves `buf` untouched.
-    fn matched_receive_into<Buf: BufferMut + ?Sized>(self, buf: &mut Buf) -> Status;
-}
-
-impl MatchedReceiveInto for Message {
-    fn matched_receive_into<Buf: BufferMut + ?Sized>(mut self, buf: &mut Buf) -> Status {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Mrecv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
-                self.as_raw_mut(), &mut status);
-            assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
-        }
-        Status(status)
     }
 }
 
@@ -407,101 +787,6 @@ impl MatchedReceiveVec for (Message, Status) {
             if is_no_proc { None } else { Some(res) },
             status
         )
-    }
-}
-
-/// Receive a message containing a single instance of type `Msg`.
-///
-/// # Examples
-///
-/// ```no_run
-/// use mpi::traits::*;
-///
-/// let universe = mpi::initialize().unwrap();
-/// let world = universe.world();
-///
-/// let x = world.any_process().receive::<f64>();
-/// ```
-///
-/// # Standard section(s)
-///
-/// 3.2.4
-pub trait Receive {
-    /// Receive a message from `Source` `&self` tagged `tag` containing a single instance of type
-    /// `Msg` or `None` if receiving from the null process.
-    fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Msg>, Status);
-
-    /// Receive a message from `Source` `&self` containing a single instance of type `Msg` or
-    /// `None` if receiving from the null process.
-    fn receive<Msg: EquivalentDatatype>(&self) -> (Option<Msg>, Status) {
-        self.receive_with_tag(ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src: Source> Receive for Src {
-    fn receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Msg>, Status) {
-        let mut res: Msg = unsafe { mem::uninitialized() };
-        let status = self.receive_into_with_tag(&mut res, tag);
-        (
-            if self.source_rank() == ffi::RSMPI_PROC_NULL { None } else { Some(res) },
-            status
-        )
-    }
-}
-
-/// Receive a message into a `Buffer`.
-///
-/// # Standard section(s)
-///
-/// 3.2.4
-pub trait ReceiveInto {
-    /// Receive a message from `Source` `&self` tagged `tag` into `Buffer` `buf`.
-    ///
-    /// Receiving from the null process leaves `buf` untouched.
-    fn receive_into_with_tag<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status;
-
-    /// Receive a message from `Source` `&self` into `Buffer` `buf`.
-    ///
-    /// Receiving from the null process leaves `buf` untouched.
-    fn receive_into<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf) -> Status {
-        self.receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src: Source> ReceiveInto for Src {
-    fn receive_into_with_tag<Buf: BufferMut + ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Recv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
-                self.source_rank(), tag, self.as_communicator().as_raw(), &mut status);
-        }
-        Status(status)
-    }
-}
-
-/// Receive a message containing multiple instances of type `Msg` into a `Vec`.
-///
-/// # Standard section(s)
-///
-/// 3.2.4
-pub trait ReceiveVec {
-    /// Receive a message from `Source` `&self` tagged `tag` containing multiple instances of type
-    /// `Msg` into a `Vec` or `None` if receiving from the null process.
-    fn receive_vec_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Vec<Msg>>, Status);
-
-    /// Receive a message from `Source` `&self` containing multiple instances of type `Msg` into a
-    /// `Vec` or `None` if receiving from the null process.
-    ///
-    /// # Examples
-    /// See `examples/send_receive.rs`
-    fn receive_vec<Msg: EquivalentDatatype>(&self) -> (Option<Vec<Msg>>, Status) {
-        self.receive_vec_with_tag(ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src: Source> ReceiveVec for Src {
-    fn receive_vec_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> (Option<Vec<Msg>>, Status) {
-        self.matched_probe_with_tag(tag).matched_receive_vec()
     }
 }
 
@@ -632,153 +917,8 @@ pub fn send_receive_replace_into<B: ?Sized, D, S>(buf: &mut B, destination: &D, 
 /// A request object associated with a send operation
 pub type SendRequest<'b, Buf> = ReadRequest<'b, Buf>;
 
-/// Initiate an immediate (non-blocking) standard mode send operation.
-///
-/// # Examples
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.2
-pub trait ImmediateSend {
-    /// Initiate sending the data in `buf` in standard mode and tag it.
-    fn immediate_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
-
-    /// Initiate sending the data in `buf` in standard mode.
-    fn immediate_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
-        self.immediate_send_with_tag(buf, Tag::default())
-    }
-}
-
-impl<Dest: Destination> ImmediateSend for Dest {
-    fn immediate_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Isend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
-                self.destination_rank(), tag, self.as_communicator().as_raw(),
-                &mut request);
-        }
-        SendRequest::from_raw(request, buf)
-    }
-}
-
-/// Initiate an immediate (non-blocking) buffered mode send operation.
-///
-/// # Standard section(s)
-///
-/// 3.7.2
-pub trait ImmediateBufferedSend {
-    /// Initiate sending the data in `buf` in buffered mode and tag it.
-    fn immediate_buffered_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
-
-    /// Initiate sending the data in `buf` in buffered mode.
-    fn immediate_buffered_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
-        self.immediate_buffered_send_with_tag(buf, Tag::default())
-    }
-}
-
-impl<Dest: Destination> ImmediateBufferedSend for Dest {
-    fn immediate_buffered_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Ibsend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
-                self.destination_rank(), tag, self.as_communicator().as_raw(),
-                &mut request);
-        }
-        SendRequest::from_raw(request, buf)
-    }
-}
-
-/// Initiate an immediate (non-blocking) synchronous mode send operation.
-///
-/// # Standard section(s)
-///
-/// 3.7.2
-pub trait ImmediateSynchronousSend {
-    /// Initiate sending the data in `buf` in synchronous mode and tag it.
-    fn immediate_synchronous_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
-
-    /// Initiate sending the data in `buf` in synchronous mode.
-    fn immediate_synchronous_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
-        self.immediate_synchronous_send_with_tag(buf, Tag::default())
-    }
-}
-
-impl<Dest: Destination> ImmediateSynchronousSend for Dest {
-    fn immediate_synchronous_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Issend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
-                self.destination_rank(), tag, self.as_communicator().as_raw(),
-                &mut request);
-        }
-        SendRequest::from_raw(request, buf)
-    }
-}
-
-/// Initiate an immediate (non-blocking) ready mode send operation.
-///
-/// # Examples
-///
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.2
-pub trait ImmediateReadySend {
-    /// Initiate sending the data in `buf` in ready mode and tag it.
-    fn immediate_ready_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf>;
-
-    /// Initiate sending the data in `buf` in ready mode.
-    fn immediate_ready_send<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf> {
-        self.immediate_ready_send_with_tag(buf, Tag::default())
-    }
-}
-
-impl<Dest: Destination> ImmediateReadySend for Dest {
-    fn immediate_ready_send_with_tag<'b, Buf: 'b + Buffer + ?Sized>(&self, buf: &'b Buf, tag: Tag) -> SendRequest<'b, Buf> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Irsend(buf.pointer(), buf.count(), buf.as_datatype().as_raw(),
-                self.destination_rank(), tag, self.as_communicator().as_raw(),
-                &mut request);
-        }
-        SendRequest::from_raw(request, buf)
-    }
-}
-
 /// A request object associated with a receive operation
 pub type ReceiveRequest<'b, Buf> = WriteRequest<'b, Buf>;
-
-/// Initiate an immediate (non-blocking) receive operation.
-///
-/// # Examples
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.2
-pub trait ImmediateReceiveInto {
-    /// Initiate receiving a message matching `tag` into `buf`.
-    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf>;
-
-    /// Initiate receiving a message into `buf`.
-    fn immediate_receive_into<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf> {
-        self.immediate_receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src:Source> ImmediateReceiveInto for Src {
-    fn immediate_receive_into_with_tag<'b, Buf: 'b + BufferMut + ?Sized>(&self, buf: &'b mut Buf, tag: Tag) -> ReceiveRequest<'b, Buf> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Irecv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
-                self.source_rank(), tag, self.as_communicator().as_raw(),
-                &mut request);
-        }
-        ReceiveRequest::from_raw(request, buf)
-    }
-}
 
 /// Will contain a value of type `T` received via a non-blocking receive operation.
 #[must_use]
@@ -818,133 +958,5 @@ impl<T> ReceiveFuture<T> {
                 Err(self)
             }
         }
-    }
-}
-
-/// Initiate a non-blocking receive operation.
-///
-/// # Examples
-/// See `examples/immediate.rs`
-///
-/// # Standard section(s)
-///
-/// 3.7.2
-pub trait ImmediateReceive {
-    /// Initiate a non-blocking receive operation for messages matching tag `tag`.
-    fn immediate_receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> ReceiveFuture<Msg>;
-
-    /// Initiate a non-blocking receive operation.
-    fn immediate_receive<Msg: EquivalentDatatype>(&self) -> ReceiveFuture<Msg> {
-        self.immediate_receive_with_tag(ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src: Source> ImmediateReceive for Src {
-    fn immediate_receive_with_tag<Msg: EquivalentDatatype>(&self, tag: Tag) -> ReceiveFuture<Msg> {
-        let mut val: Box<Msg> = Box::new(unsafe { mem::uninitialized() });
-        let mut req: MPI_Request = unsafe { mem::uninitialized() };
-
-        unsafe {
-            ffi::MPI_Irecv((&mut *(val)).pointer_mut(), val.count(),
-                Msg::equivalent_datatype().as_raw(), self.source_rank(), tag,
-                self.as_communicator().as_raw(), &mut req);
-        }
-
-        ReceiveFuture {
-            val: val,
-            req: PlainRequest::from_raw(req)
-        }
-    }
-}
-
-/// Asynchronously probe a source for incoming messages.
-///
-/// Like `Probe` but returns a `None` immediately if there is no incoming message to be probed.
-///
-/// # Standard section(s)
-///
-/// 3.8.1
-pub trait ImmediateProbe {
-    /// Asynchronously probe `Source` `&self` for incoming messages with a certain tag.
-    fn immediate_probe_with_tag(&self, tag: Tag) -> Option<Status>;
-
-    /// Asynchronously probe `Source` `&self` for incoming messages with any tag.
-    fn immediate_probe(&self) -> Option<Status> {
-        self.immediate_probe_with_tag(ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src: Source> ImmediateProbe for Src {
-    fn immediate_probe_with_tag(&self, tag: Tag) -> Option<Status> {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        let mut flag: c_int = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Iprobe(self.source_rank(), tag, self.as_communicator().as_raw(),
-                &mut flag, &mut status);
-        };
-        if flag != 0 {
-            Some(Status(status))
-        } else {
-            None
-        }
-    }
-}
-
-/// Asynchronously probe a source for incoming messages with guaranteed reception.
-///
-/// Like `MatchedProbe` but returns a `None` immediately if there is no incoming message to be
-/// probed.
-///
-/// # Standard section(s)
-///
-/// 3.8.2
-pub trait ImmediateMatchedProbe {
-    /// Asynchronously probe `Source` `&self` for incoming messages with a certain tag.
-    fn immediate_matched_probe_with_tag(&self, tag: Tag) -> Option<(Message, Status)>;
-
-    /// Asynchronously probe `Source` `&self` for incoming messages with any tag.
-    fn immediate_matched_probe(&self) -> Option<(Message, Status)> {
-        self.immediate_matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
-    }
-}
-
-impl<Src: Source> ImmediateMatchedProbe for Src {
-    fn immediate_matched_probe_with_tag(&self, tag: Tag) -> Option<(Message, Status)> {
-        let mut message: MPI_Message = unsafe { mem::uninitialized() };
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        let mut flag: c_int = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Improbe(self.source_rank(), tag, self.as_communicator().as_raw(),
-                &mut flag, &mut message, &mut status);
-        }
-        if flag != 0 {
-            Some((Message(message), Status(status)))
-        } else {
-            None
-        }
-    }
-}
-
-/// Asynchronously receive a previously probed message into a `Buffer`.
-///
-/// # Standard section(s)
-///
-/// 3.8.3
-pub trait ImmediateMatchedReceiveInto {
-    /// Asynchronously receive the message `&self` with contents matching `buf`.
-    ///
-    /// Receiving from the null process leaves `buf` untouched.
-    fn immediate_matched_receive_into<Buf: BufferMut + ?Sized>(self, buf: &mut Buf) -> ReceiveRequest<Buf>;
-}
-
-impl ImmediateMatchedReceiveInto for Message {
-    fn immediate_matched_receive_into<Buf: BufferMut + ?Sized>(mut self, buf: &mut Buf) -> ReceiveRequest<Buf> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Imrecv(buf.pointer_mut(), buf.count(), buf.as_datatype().as_raw(),
-                self.as_raw_mut(), &mut request);
-            assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
-        }
-        ReceiveRequest::from_raw(request, buf)
     }
 }
