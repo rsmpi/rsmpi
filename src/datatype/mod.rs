@@ -105,6 +105,16 @@ equivalent_system_datatype!(u16, ffi::RSMPI_UINT16_T);
 equivalent_system_datatype!(u32, ffi::RSMPI_UINT32_T);
 equivalent_system_datatype!(u64, ffi::RSMPI_UINT64_T);
 
+#[cfg(target_pointer_width = "32")]
+equivalent_system_datatype!(usize, ffi::RSMPI_UINT32_T);
+#[cfg(target_pointer_width = "32")]
+equivalent_system_datatype!(isize, ffi::RSMPI_INT32_T);
+
+#[cfg(target_pointer_width = "64")]
+equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
+#[cfg(target_pointer_width = "64")]
+equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
+
 /// A user defined MPI datatype
 ///
 /// # Standard section(s)
