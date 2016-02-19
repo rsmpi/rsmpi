@@ -29,7 +29,12 @@ use datatype::traits::*;
 use point_to_point::{Status};
 use raw::traits::*;
 
-pub mod traits;
+/// Request object traits
+pub mod traits {
+    pub use super::{
+        Request
+    };
+}
 
 /// A request for a non-blocking operation
 pub trait Request: AsRaw<Raw = MPI_Request> + AsRawMut {

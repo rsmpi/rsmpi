@@ -22,7 +22,14 @@ use request::{PlainRequest, ReadRequest, WriteRequest, ReadWriteRequest};
 use topology::traits::*;
 use topology::{Rank, ProcessIdentifier};
 
-pub mod traits;
+/// Collective communication traits
+pub mod traits {
+    pub use super::{
+        CommunicatorCollectives,
+        Root,
+        Operation
+    };
+}
 
 /// Collective communication patterns defined on `Communicator`s
 pub trait CommunicatorCollectives: Communicator {

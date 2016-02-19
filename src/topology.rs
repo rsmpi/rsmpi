@@ -36,7 +36,14 @@ use raw::traits::*;
 
 use datatype::traits::*;
 
-pub mod traits;
+/// Topology traits
+pub mod traits {
+    pub use super::{
+        Communicator,
+        AsCommunicator,
+        Group
+    };
+}
 
 /// Something that has a communicator associated with it
 pub trait AsCommunicator {

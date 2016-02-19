@@ -54,7 +54,22 @@ use ffi::MPI_Datatype;
 
 use raw::traits::*;
 
-pub mod traits;
+/// Datatype traits
+pub mod traits {
+    pub use super::{
+        EquivalentDatatype,
+        Datatype,
+        AsDatatype,
+        Collection,
+        Pointer,
+        PointerMut,
+        Buffer,
+        BufferMut,
+        Partitioned,
+        PartitionedBuffer,
+        PartitionedBufferMut
+    };
+}
 
 /// A system datatype, e.g. `MPI_FLOAT`
 ///

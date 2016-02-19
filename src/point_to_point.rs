@@ -30,7 +30,14 @@ use topology::traits::*;
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
 
-pub mod traits;
+/// Point to point communication traits
+pub mod traits {
+    pub use super::{
+        Source,
+        Destination,
+        MatchedReceiveVec
+    };
+}
 
 /// Something that can be used as the source in a point to point receive operation
 ///

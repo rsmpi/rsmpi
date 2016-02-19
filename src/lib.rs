@@ -137,7 +137,16 @@ pub mod point_to_point;
 pub mod raw;
 pub mod request;
 pub mod topology;
-pub mod traits;
+
+/// Re-exports all traits.
+pub mod traits {
+    pub use collective::traits::*;
+    pub use datatype::traits::*;
+    pub use point_to_point::traits::*;
+    pub use raw::traits::*;
+    pub use request::traits::*;
+    pub use topology::traits::*;
+}
 
 #[doc(inline)]
 pub use topology::{initialize, initialize_with_threading, Threading};

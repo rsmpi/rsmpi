@@ -17,7 +17,7 @@ fn main() {
     // Use `mpicc` wrapper rather than the system C compiler.
     env::set_var("CC", "mpicc");
     // Build the `rsmpi` C shim library.
-    gcc::compile_library("librsmpi.a", &["src/rsmpi.c"]);
+    gcc::compile_library("librsmpi.a", &["src/ffi/rsmpi.c"]);
 
     // Capture the output of `mpicc -show`. This usually gives the actual compiler command line
     // invoked by the `mpicc` compiler wrapper.
@@ -46,7 +46,7 @@ fn main() {
     }
     // Generate Rust bindings for the MPI C API.
     let bindings = builder
-        .header("src/rsmpi.h")
+        .header("src/ffi/rsmpi.h")
         .emit_builtins()
         .generate()
         .unwrap();
