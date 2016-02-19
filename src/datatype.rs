@@ -146,7 +146,9 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn contiguous<D: Datatype>(count: Count, oldtype: D) -> UserDatatype {
+    pub fn contiguous<D>(count: Count, oldtype: D) -> UserDatatype
+        where D: Datatype
+    {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_contiguous(count, oldtype.as_raw(), &mut newtype);
@@ -164,7 +166,9 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn vector<D: Datatype>(count: Count, blocklength: Count, stride: Count, oldtype: D) -> UserDatatype {
+    pub fn vector<D>(count: Count, blocklength: Count, stride: Count, oldtype: D) -> UserDatatype
+        where D: Datatype
+    {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_vector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
@@ -178,7 +182,9 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn heterogeneous_vector<D: Datatype>(count: Count, blocklength: Count, stride: Address, oldtype: D) -> UserDatatype {
+    pub fn heterogeneous_vector<D>(count: Count, blocklength: Count, stride: Address, oldtype: D) -> UserDatatype
+        where D: Datatype
+    {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_hvector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
@@ -194,7 +200,9 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn indexed<D: Datatype>(blocklengths: &[Count], displacements: &[Count], oldtype: D) -> UserDatatype {
+    pub fn indexed<D>(blocklengths: &[Count], displacements: &[Count], oldtype: D) -> UserDatatype
+        where D: Datatype
+    {
         assert_eq!(blocklengths.len(), displacements.len());
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
@@ -212,7 +220,9 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn heterogeneous_indexed<D: Datatype>(blocklengths: &[Count], displacements: &[Address], oldtype: D) -> UserDatatype {
+    pub fn heterogeneous_indexed<D>(blocklengths: &[Count], displacements: &[Address], oldtype: D) -> UserDatatype
+        where D: Datatype
+    {
         assert_eq!(blocklengths.len(), displacements.len());
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
@@ -228,7 +238,9 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn indexed_block<D: Datatype>(blocklength: Count, displacements: &[Count], oldtype: D) -> UserDatatype {
+    pub fn indexed_block<D>(blocklength: Count, displacements: &[Count], oldtype: D) -> UserDatatype
+        where D: Datatype
+    {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_indexed_block(displacements.count(), blocklength,
@@ -244,7 +256,9 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn heterogeneous_indexed_block<D: Datatype>(blocklength: Count, displacements: &[Address], oldtype: D) -> UserDatatype {
+    pub fn heterogeneous_indexed_block<D>(blocklength: Count, displacements: &[Address], oldtype: D) -> UserDatatype
+        where D: Datatype
+    {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_hindexed_block(displacements.count(), blocklength,
@@ -273,7 +287,7 @@ impl Datatype for UserDatatype { }
 
 /// A Datatype describes the layout of messages in memory.
 pub trait Datatype: AsRaw<Raw = MPI_Datatype> { }
-impl<'a, D: 'a + Datatype> Datatype for &'a D { }
+impl<'a, D> Datatype for &'a D where D: 'a + Datatype { }
 
 /// Something that has an associated datatype
 pub trait AsDatatype {
@@ -356,15 +370,13 @@ impl<T> BufferMut for [T] where T: EquivalentDatatype { }
 /// Views can be used to instruct the underlying MPI library to rummage around at arbitrary
 /// locations in memory. This might be controlled later on using datatype bounds an slice lengths
 /// but for now, all View constructors are marked `unsafe`.
-pub struct View<'d, 'b, D: 'd, B: 'b + ?Sized>
-where D: Datatype, B: Pointer {
+pub struct View<'d, 'b, D, B: ?Sized> where D: 'd + Datatype, B: 'b + Pointer {
     datatype: &'d D,
     count: Count,
     buffer: &'b B
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> View<'d, 'b, D, B>
-where D: Datatype, B: Pointer {
+impl<'d, 'b, D, B: ?Sized> View<'d, 'b, D, B> where D: 'd + Datatype, B: 'b + Pointer {
     /// Return a view of `buffer` containing `count` instances of MPI datatype `datatype`.
     ///
     /// # Examples
@@ -374,24 +386,26 @@ where D: Datatype, B: Pointer {
     }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> AsDatatype for View<'d, 'b, D, B>
-where D: Datatype, B: Pointer {
+impl<'d, 'b, D, B: ?Sized> AsDatatype for View<'d, 'b, D, B>
+    where D: 'd + Datatype,
+          B: 'b + Pointer
+{
     type Out = &'d D;
     fn as_datatype(&self) -> Self::Out { self.datatype }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> Collection for View<'d, 'b, D, B>
-where D: Datatype, B: Pointer {
+impl<'d, 'b, D, B: ?Sized> Collection for View<'d, 'b, D, B>
+    where D: 'd + Datatype,
+          B: 'b + Pointer
+{
     fn count(&self) -> Count { self.count }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> Pointer for View<'d, 'b, D, B>
-where D: Datatype, B: Pointer {
+impl<'d, 'b, D, B: ?Sized> Pointer for View<'d, 'b, D, B> where D: 'd  + Datatype, B: 'b + Pointer {
     unsafe fn pointer(&self) -> *const c_void { self.buffer.pointer() }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> Buffer for View<'d, 'b, D, B>
-where D: Datatype, B: Pointer { }
+impl<'d, 'b, D, B: ?Sized> Buffer for View<'d, 'b, D, B> where D: 'd + Datatype, B: 'b + Pointer { }
 
 /// A buffer with a user specified count and datatype
 ///
@@ -400,15 +414,13 @@ where D: Datatype, B: Pointer { }
 /// Views can be used to instruct the underlying MPI library to rummage around at arbitrary
 /// locations in memory. This might be controlled later on using datatype bounds an slice lengths
 /// but for now, all View constructors are marked `unsafe`.
-pub struct MutView<'d, 'b, D: 'd, B: 'b + ?Sized>
-where D: Datatype, B: PointerMut {
+pub struct MutView<'d, 'b, D, B: ?Sized> where D: 'd + Datatype, B: 'b + PointerMut {
     datatype: &'d D,
     count: Count,
     buffer: &'b mut B
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> MutView<'d, 'b, D, B>
-where D: Datatype, B: PointerMut {
+impl<'d, 'b, D, B: ?Sized> MutView<'d, 'b, D, B> where D: 'd + Datatype, B: 'b + PointerMut {
     /// Return a view of `buffer` containing `count` instances of MPI datatype `datatype`.
     ///
     /// # Examples
@@ -418,24 +430,32 @@ where D: Datatype, B: PointerMut {
     }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> AsDatatype for MutView<'d, 'b, D, B>
-where D: Datatype, B: PointerMut {
+impl<'d, 'b, D, B: ?Sized> AsDatatype for MutView<'d, 'b, D, B>
+    where D: 'd + Datatype,
+          B: 'b + PointerMut
+{
     type Out = &'d D;
     fn as_datatype(&self) -> Self::Out { self.datatype }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> Collection for MutView<'d, 'b, D, B>
-where D: Datatype, B: PointerMut {
+impl<'d, 'b, D, B: ?Sized> Collection for MutView<'d, 'b, D, B>
+    where D: 'd + Datatype,
+          B: 'b + PointerMut
+{
     fn count(&self) -> Count { self.count }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> PointerMut for MutView<'d, 'b, D, B>
-where D: Datatype, B: PointerMut {
+impl<'d, 'b, D, B: ?Sized> PointerMut for MutView<'d, 'b, D, B>
+    where D: 'd + Datatype,
+          B: 'b + PointerMut
+{
     unsafe fn pointer_mut(&mut self) -> *mut c_void { self.buffer.pointer_mut() }
 }
 
-impl<'d, 'b, D: 'd, B: 'b + ?Sized> BufferMut for MutView<'d, 'b, D, B>
-where D: Datatype, B: PointerMut { }
+impl<'d, 'b, D, B: ?Sized> BufferMut for MutView<'d, 'b, D, B>
+where D: 'd + Datatype,
+      B: 'b + PointerMut
+{ }
 
 /// Describes how a `Buffer` is partitioned by specifying the count of elements and displacement
 /// from the start of the buffer for each partition.
@@ -464,12 +484,11 @@ pub struct Partition<'b, B: 'b + ?Sized, C, D> {
     displs: D
 }
 
-impl<
-    'b,
-    B: 'b + Buffer + ?Sized,
-    C: Borrow<[Count]>,
-    D: Borrow<[Count]>
-> Partition<'b, B, C, D> {
+impl<'b, B: ?Sized, C, D> Partition<'b, B, C, D>
+    where B: 'b + Buffer,
+          C: Borrow<[Count]>,
+          D: Borrow<[Count]>
+{
     /// Partition `buf` using `counts` and `displs`
     pub fn new(buf: &B, counts: C, displs: D) -> Partition<B, C, D> {
         let n = buf.count();
@@ -483,26 +502,29 @@ impl<
     }
 }
 
-impl<'b, B: 'b + AsDatatype + ?Sized, C, D> AsDatatype for Partition<'b, B, C, D> {
+impl<'b, B: ?Sized, C, D> AsDatatype for Partition<'b, B, C, D> where B: 'b + AsDatatype {
     type Out = <B as AsDatatype>::Out;
     fn as_datatype(&self) -> Self::Out { self.buf.as_datatype() }
 }
 
-impl<'b, B: 'b + Pointer + ?Sized, C, D> Pointer for Partition<'b, B, C, D> {
+impl<'b, B: ?Sized, C, D> Pointer for Partition<'b, B, C, D> where B: 'b + Pointer {
     unsafe fn pointer(&self) -> *const c_void { self.buf.pointer() }
 }
 
-impl<'b, B: 'b + ?Sized, C: Borrow<[Count]>, D: Borrow<[Count]>> Partitioned for Partition<'b, B, C, D> {
+impl<'b, B: ?Sized, C, D> Partitioned for Partition<'b, B, C, D>
+    where B: 'b,
+          C: Borrow<[Count]>,
+          D: Borrow<[Count]>
+{
     fn counts(&self) -> &[Count] { self.counts.borrow() }
     fn displs(&self) -> &[Count] { self.displs.borrow() }
 }
 
-impl<
-    'b,
-    B: 'b + Pointer + AsDatatype + ?Sized,
-    C: Borrow<[Count]>,
-    D: Borrow<[Count]>
-> PartitionedBuffer for Partition<'b, B, C, D> { }
+impl<'b, B: ?Sized, C, D> PartitionedBuffer for Partition<'b, B, C, D>
+    where B: 'b + Pointer + AsDatatype,
+          C: Borrow<[Count]>,
+          D: Borrow<[Count]>
+{ }
 
 /// Adds a partitioning to an existing `BufferMut` so that it becomes `Partitioned`
 pub struct PartitionMut<'b, B: 'b + ?Sized, C, D> {
@@ -511,12 +533,11 @@ pub struct PartitionMut<'b, B: 'b + ?Sized, C, D> {
     displs: D
 }
 
-impl<
-    'b,
-    B: 'b + BufferMut + ?Sized,
-    C: Borrow<[Count]>,
-    D: Borrow<[Count]>
-> PartitionMut<'b, B, C, D> {
+impl<'b, B: ?Sized, C, D> PartitionMut<'b, B, C, D>
+    where B: 'b + BufferMut,
+          C: Borrow<[Count]>,
+          D: Borrow<[Count]>
+{
     /// Partition `buf` using `counts` and `displs`
     pub fn new(buf: &mut B, counts: C, displs: D) -> PartitionMut<B, C, D> {
         let n = buf.count();
@@ -530,23 +551,26 @@ impl<
     }
 }
 
-impl<'b, B: 'b + AsDatatype + ?Sized, C, D> AsDatatype for PartitionMut<'b, B, C, D> {
+impl<'b, B: ?Sized, C, D> AsDatatype for PartitionMut<'b, B, C, D> where B: 'b + AsDatatype {
     type Out = <B as AsDatatype>::Out;
     fn as_datatype(&self) -> Self::Out { self.buf.as_datatype() }
 }
 
-impl<'b, B: 'b + PointerMut + ?Sized, C, D> PointerMut for PartitionMut<'b, B, C, D> {
+impl<'b, B: ?Sized, C, D> PointerMut for PartitionMut<'b, B, C, D> where B: 'b + PointerMut {
     unsafe fn pointer_mut(&mut self) -> *mut c_void { self.buf.pointer_mut() }
 }
 
-impl<'b, B: 'b + ?Sized, C: Borrow<[Count]>, D: Borrow<[Count]>> Partitioned for PartitionMut<'b, B, C, D> {
+impl<'b, B: ?Sized, C, D> Partitioned for PartitionMut<'b, B, C, D>
+    where B: 'b,
+          C: Borrow<[Count]>,
+          D: Borrow<[Count]>
+{
     fn counts(&self) -> &[Count] { self.counts.borrow() }
     fn displs(&self) -> &[Count] { self.displs.borrow() }
 }
 
-impl<
-    'b,
-    B: 'b + PointerMut + AsDatatype + ?Sized,
-    C: Borrow<[Count]>,
-    D: Borrow<[Count]>
-> PartitionedBufferMut for PartitionMut<'b, B, C, D> { }
+impl<'b, B: ?Sized, C, D> PartitionedBufferMut for PartitionMut<'b, B, C, D>
+    where B: 'b + PointerMut + AsDatatype,
+          C: Borrow<[Count]>,
+          D: Borrow<[Count]>
+{ }
