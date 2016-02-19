@@ -158,7 +158,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.9.6
-    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+    fn all_reduce_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: &O) {
         unsafe {
             ffi::MPI_Allreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
                 sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
@@ -176,7 +176,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.10.1
-    fn reduce_scatter_block_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+    fn reduce_scatter_block_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: &O) {
         assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
         unsafe {
             ffi::MPI_Reduce_scatter_block(sendbuf.pointer(), recvbuf.pointer_mut(),
@@ -194,7 +194,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.11.1
-    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+    fn scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: &O) {
         unsafe {
             ffi::MPI_Scan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
                 sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
@@ -211,7 +211,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.11.2
-    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+    fn exclusive_scan_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: &O) {
         unsafe {
             ffi::MPI_Exscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
                 sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw());
@@ -283,7 +283,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.8
-    fn immediate_all_reduce_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> AllReduceRequest<'s, 'r, S, R> {
+    fn immediate_all_reduce_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: &O) -> AllReduceRequest<'s, 'r, S, R> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Iallreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
@@ -299,7 +299,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.9
-    fn immediate_reduce_scatter_block_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> ReduceScatterBlockRequest<'s, 'r, S, R> {
+    fn immediate_reduce_scatter_block_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: &O) -> ReduceScatterBlockRequest<'s, 'r, S, R> {
         assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
@@ -316,7 +316,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.11
-    fn immediate_scan_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> ScanRequest<'s, 'r, S, R> {
+    fn immediate_scan_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: &O) -> ScanRequest<'s, 'r, S, R> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Iscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
@@ -331,7 +331,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.12
-    fn immediate_exclusive_scan_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> ExclusiveScanRequest<'s, 'r, S, R> {
+    fn immediate_exclusive_scan_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: &O) -> ExclusiveScanRequest<'s, 'r, S, R> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Iexscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
@@ -610,7 +610,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.9.1
-    fn reduce_into<S: Buffer + ?Sized, O: Operation>(&self, sendbuf: &S, op: O) {
+    fn reduce_into<S: Buffer + ?Sized, O: Operation>(&self, sendbuf: &S, op: &O) {
         assert!(self.as_communicator().rank() != self.root_rank());
         unsafe {
             ffi::MPI_Reduce(sendbuf.pointer(), ptr::null_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
@@ -630,7 +630,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.9.1
-    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: O) {
+    fn reduce_into_root<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(&self, sendbuf: &S, recvbuf: &mut R, op: &O) {
         assert!(self.as_communicator().rank() == self.root_rank());
         unsafe {
             ffi::MPI_Reduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
@@ -767,7 +767,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.12.7
-    fn immediate_reduce_into<'s, S: 's + Buffer + ?Sized, O: Operation>(&self, sendbuf: &'s S, op: O) -> ReduceRequest<'s, S> {
+    fn immediate_reduce_into<'s, S: 's + Buffer + ?Sized, O: Operation>(&self, sendbuf: &'s S, op: &O) -> ReduceRequest<'s, S> {
         assert!(self.as_communicator().rank() != self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
@@ -785,7 +785,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.12.7
-    fn immediate_reduce_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> ReduceRootRequest<'s, 'r, S, R> {
+    fn immediate_reduce_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: &O) -> ReduceRootRequest<'s, 'r, S, R> {
         assert!(self.as_communicator().rank() == self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
@@ -863,7 +863,7 @@ macro_rules! reduce_into_specializations {
 /// # Examples
 ///
 /// See `examples/redure.rs`
-pub fn reduce_local_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(inbuf: &S, inoutbuf: &mut R, op: O) {
+pub fn reduce_local_into<S: Buffer + ?Sized, R: BufferMut + ?Sized, O: Operation>(inbuf: &S, inoutbuf: &mut R, op: &O) {
     unsafe {
         ffi::MPI_Reduce_local(inbuf.pointer(), inoutbuf.pointer_mut(), inbuf.count(),
           inbuf.as_datatype().as_raw(), op.as_raw());

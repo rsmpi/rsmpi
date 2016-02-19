@@ -14,12 +14,12 @@ fn main() {
     let rank = world.rank();
 
     let mut x = 0;
-    world.scan_into(&rank, &mut x, SystemOperation::sum());
+    world.scan_into(&rank, &mut x, &SystemOperation::sum());
     assert_eq!(x, (rank * (rank + 1)) / 2);
 
     let y = rank + 1;
     let mut z = 0;
-    world.exclusive_scan_into(&y, &mut z, SystemOperation::product());
+    world.exclusive_scan_into(&y, &mut z, &SystemOperation::product());
     if rank > 0 {
         assert_eq!(z, fac(y - 1));
     }
