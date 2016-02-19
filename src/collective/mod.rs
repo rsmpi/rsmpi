@@ -9,9 +9,7 @@
 //! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter()`
 //! - **5.12**: Nonblocking collective operations, `MPI_Igatherv()`, `MPI_Iscatterv()`,
-//! `MPI_Iallgatherv()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`,
-//! `MPI_Ireduce()`, `MPI_Iallreduce()`, `MPI_Ireduce_scatter_block()`, `MPI_Ireduce_scatter()`,
-//! `MPI_Iscan()`, `MPI_Iexscan()`
+//! `MPI_Iallgatherv()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
 use std::{mem, ptr};
 
@@ -270,6 +268,69 @@ pub trait CommunicatorCollectives: Communicator {
                 self.as_raw(), &mut request);
         }
         AllToAllRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
+    /// Initiates a non-blocking global reduction under the operation `op` of the input data in
+    /// `sendbuf` and stores the result in `recvbuf` on all processes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.8
+    fn immediate_all_reduce_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> AllReduceRequest<'s, 'r, S, R> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iallreduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw(), &mut request);
+        }
+        AllReduceRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
+    /// Initiates a non-blocking element-wise global reduction under the operation `op` of the
+    /// input data in `sendbuf` and scatters the result into equal sized blocks in the receive
+    /// buffers on all processes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.9
+    fn immediate_reduce_scatter_block_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> ReduceScatterBlockRequest<'s, 'r, S, R> {
+        assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Ireduce_scatter_block(sendbuf.pointer(), recvbuf.pointer_mut(),
+                recvbuf.count(), sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw(),
+                &mut request);
+        }
+        ReduceScatterBlockRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
+    /// Initiates a non-blocking global inclusive prefix reduction of the data in `sendbuf` into
+    /// `recvbuf` under operation `op`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.11
+    fn immediate_scan_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> ScanRequest<'s, 'r, S, R> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw(), &mut request);
+        }
+        ScanRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
+    /// Initiates a non-blocking global exclusive prefix reduction of the data in `sendbuf` into
+    /// `recvbuf` under operation `op`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.12
+    fn immediate_exclusive_scan_into<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> ExclusiveScanRequest<'s, 'r, S, R> {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iexscan(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.as_raw(), &mut request);
+        }
+        ExclusiveScanRequest::from_raw(request, sendbuf, recvbuf)
     }
 }
 
@@ -690,6 +751,43 @@ pub trait Root: AsCommunicator
         }
         ScatterRootRequest::from_raw(request, sendbuf, recvbuf)
     }
+
+    /// Initiates a non-blacking global reduction under the operation `op` of the input data in
+    /// `sendbuf` and stores the result on the `Root` process.
+    ///
+    /// This function must be called on all non-root processes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.7
+    fn immediate_reduce_into<'s, S: 's + Buffer + ?Sized, O: Operation>(&self, sendbuf: &'s S, op: O) -> ReduceRequest<'s, S> {
+        assert!(self.as_communicator().rank() != self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Ireduce(sendbuf.pointer(), ptr::null_mut(), sendbuf.count(), sendbuf.as_datatype().as_raw(),
+                op.as_raw(), self.root_rank(), self.as_communicator().as_raw(), &mut request);
+        }
+        ReduceRequest::from_raw(request, sendbuf)
+    }
+
+    /// Initiates a non-blocking global reduction under the operation `op` of the input data in
+    /// `sendbuf` and stores the result on the `Root` process.
+    ///
+    /// This function must be called on the root process.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.7
+    fn immediate_reduce_into_root<'s, 'r, S: 's + Buffer + ?Sized, R: 'r + BufferMut + ?Sized, O: Operation>(&self, sendbuf: &'s S, recvbuf: &'r mut R, op: O) -> ReduceRootRequest<'s, 'r, S, R> {
+        assert!(self.as_communicator().rank() == self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Ireduce(sendbuf.pointer(), recvbuf.pointer_mut(), sendbuf.count(),
+                sendbuf.as_datatype().as_raw(), op.as_raw(), self.root_rank(), self.as_communicator().as_raw(),
+                &mut request);
+        }
+        ReduceRootRequest::from_raw(request, sendbuf, recvbuf)
+    }
 }
 
 impl<'a, C: 'a + Communicator> Root for ProcessIdentifier<'a, C> {
@@ -788,3 +886,21 @@ pub type ScatterRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
 
 /// A request object for an immediate (non-blocking) all-to-all operation
 pub type AllToAllRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
+
+/// A request object for an immediat (non-blocking) reduce operation
+pub type ReduceRequest<'s, S> = ReadRequest<'s, S>;
+
+/// A request object for an immediat (non-blocking) reduce operation on the root process
+pub type ReduceRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
+
+/// A request object for an immediate (non-blocking) all-reduce operation
+pub type AllReduceRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
+
+/// A request object for an immediate (non-blocking) reduce-scatter-block operation
+pub type ReduceScatterBlockRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
+
+/// A request object for an immediate (non-blocking) scan operation
+pub type ScanRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
+
+/// A request object for an immediate (non-blocking) exclusive scan operation
+pub type ExclusiveScanRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
