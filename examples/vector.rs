@@ -21,7 +21,7 @@ fn main() {
     println!("Rank {} sending message: {:?}.", rank, b1);
     world.barrier();
 
-    let t = UserDatatype::vector(2, 2, 3, Rank::equivalent_datatype());
+    let t = UserDatatype::vector(2, 2, 3, &Rank::equivalent_datatype());
     let status;
     {
         let v1 = unsafe { View::with_count_and_datatype(&b1[..], 1, &t) };

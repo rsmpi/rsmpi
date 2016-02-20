@@ -37,7 +37,7 @@ fn main () {
         root_process.gather_into(&a[..]);
     }
 
-    let d = UserDatatype::contiguous(count as Count, u64::equivalent_datatype());
+    let d = UserDatatype::contiguous(count as Count, &u64::equivalent_datatype());
     let sv = unsafe { View::with_count_and_datatype(&a[..], 1, &d) };
 
     if world.rank() == root_rank {

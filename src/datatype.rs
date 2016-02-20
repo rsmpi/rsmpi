@@ -137,7 +137,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn contiguous<D>(count: Count, oldtype: D) -> UserDatatype
+    pub fn contiguous<D>(count: Count, oldtype: &D) -> UserDatatype
         where D: Datatype
     {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
@@ -157,7 +157,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn vector<D>(count: Count, blocklength: Count, stride: Count, oldtype: D) -> UserDatatype
+    pub fn vector<D>(count: Count, blocklength: Count, stride: Count, oldtype: &D) -> UserDatatype
         where D: Datatype
     {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
@@ -176,7 +176,7 @@ impl UserDatatype {
     pub fn heterogeneous_vector<D>(count: Count,
                                    blocklength: Count,
                                    stride: Address,
-                                   oldtype: D)
+                                   oldtype: &D)
                                    -> UserDatatype
         where D: Datatype
     {
@@ -195,7 +195,7 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn indexed<D>(blocklengths: &[Count], displacements: &[Count], oldtype: D) -> UserDatatype
+    pub fn indexed<D>(blocklengths: &[Count], displacements: &[Count], oldtype: &D) -> UserDatatype
         where D: Datatype
     {
         assert_eq!(blocklengths.len(), displacements.len());
@@ -220,7 +220,7 @@ impl UserDatatype {
     /// 4.1.2
     pub fn heterogeneous_indexed<D>(blocklengths: &[Count],
                                     displacements: &[Address],
-                                    oldtype: D)
+                                    oldtype: &D)
                                     -> UserDatatype
         where D: Datatype
     {
@@ -242,7 +242,10 @@ impl UserDatatype {
     /// # Standard section(s)
     ///
     /// 4.1.2
-    pub fn indexed_block<D>(blocklength: Count, displacements: &[Count], oldtype: D) -> UserDatatype
+    pub fn indexed_block<D>(blocklength: Count,
+                            displacements: &[Count],
+                            oldtype: &D)
+                            -> UserDatatype
         where D: Datatype
     {
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
@@ -265,7 +268,7 @@ impl UserDatatype {
     /// 4.1.2
     pub fn heterogeneous_indexed_block<D>(blocklength: Count,
                                           displacements: &[Address],
-                                          oldtype: D)
+                                          oldtype: &D)
                                           -> UserDatatype
         where D: Datatype
     {

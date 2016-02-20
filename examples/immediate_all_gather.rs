@@ -32,7 +32,7 @@ fn main () {
     }
     assert!((0_u64..).zip(t.iter()).all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
 
-    let d = UserDatatype::contiguous(count as Count, u64::equivalent_datatype());
+    let d = UserDatatype::contiguous(count as Count, &u64::equivalent_datatype());
     t = vec![0u64; count * count];
 
     {
