@@ -833,19 +833,6 @@ pub trait Root: AsCommunicator
         }
     }
 
-    //    reduce_into_specializations! {
-    //        max_into => SystemOperation::max(),
-    //        min_into => SystemOperation::min(),
-    //        sum_into => SystemOperation::sum(),
-    //        product_into => SystemOperation::product(),
-    //        logical_and_into => SystemOperation::logical_and(),
-    //        bitwise_and_into => SystemOperation::bitwise_and(),
-    //        logical_or_into => SystemOperation::logical_or(),
-    //        bitwise_or_into => SystemOperation::bitwise_or(),
-    //        logical_xor_into => SystemOperation::logical_xor(),
-    //        bitwise_xor_into => SystemOperation::bitwise_xor()
-    //    }
-
     /// Initiate broadcast of a value from the `Root` process to all other processes.
     ///
     /// # Examples
@@ -1118,14 +1105,6 @@ impl AsRaw for SystemOperation {
 }
 
 impl Operation for SystemOperation {}
-
-macro_rules! reduce_into_specializations {
-    ($($name:ident => $operation:expr),*) => (
-        $(fn $name<S: Buffer + ?Sized, R: BufferMut + ?Sized>(&self, sendbuf: &S, recvbuf: Option<&mut R>) {
-            self.reduce_into(sendbuf, recvbuf, $operation)
-        })*
-    )
-}
 
 /// Perform a local reduction.
 ///
