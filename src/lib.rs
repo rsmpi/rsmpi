@@ -116,7 +116,7 @@
 //! [MPIspec]: http://www.mpi-forum.org/docs/docs.html
 
 use std::mem;
-use std::string::{FromUtf8Error};
+use std::string::FromUtf8Error;
 use std::os::raw::{c_char, c_int};
 
 extern crate conv;
@@ -170,7 +170,9 @@ pub type Address = MPI_Aint;
 pub fn get_version() -> (c_int, c_int) {
     let mut version: c_int = unsafe { mem::uninitialized() };
     let mut subversion: c_int = unsafe { mem::uninitialized() };
-    unsafe { ffi::MPI_Get_version(&mut version, &mut subversion); }
+    unsafe {
+        ffi::MPI_Get_version(&mut version, &mut subversion);
+    }
     (version, subversion)
 }
 
@@ -187,8 +189,11 @@ pub fn get_library_version() -> Result<String, FromUtf8Error> {
     let mut buf = vec![0u8; bufsize];
     let mut len: c_int = 0;
 
-    unsafe { ffi::MPI_Get_library_version(buf.as_mut_ptr() as *mut c_char, &mut len); }
-    buf.truncate(len.value_as().expect(
-        &format!("Length of library version string ({}) cannot be expressed as a usize.", len)));
+    unsafe {
+        ffi::MPI_Get_library_version(buf.as_mut_ptr() as *mut c_char, &mut len);
+    }
+    buf.truncate(len.value_as().expect(&format!("Length of library version string ({}) cannot \
+                                                 be expressed as a usize.",
+                                                len)));
     String::from_utf8(buf)
 }

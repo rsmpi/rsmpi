@@ -13,9 +13,12 @@ pub trait AsRaw {
     unsafe fn as_raw(&self) -> Self::Raw;
 }
 
-impl<'a, T> AsRaw for &'a T where T: 'a + AsRaw {
+impl<'a, T> AsRaw for &'a T where T: 'a + AsRaw
+{
     type Raw = <T as AsRaw>::Raw;
-    unsafe fn as_raw(&self) -> Self::Raw { (*self).as_raw() }
+    unsafe fn as_raw(&self) -> Self::Raw {
+        (*self).as_raw()
+    }
 }
 
 /// A rust type than can provide a mutable pointer to a raw value understood by the MPI C API.
