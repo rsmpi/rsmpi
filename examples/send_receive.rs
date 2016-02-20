@@ -15,9 +15,7 @@ fn main() {
     let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
     let previous_process = world.process_at_rank(previous_rank);
 
-    let (msg, status) = p2p::send_receive(&rank, &previous_process, &next_process);
-    assert!(msg.is_some());
-    let msg: Rank = msg.unwrap();
+    let (msg, status): (Rank, _) = p2p::send_receive(&rank, &previous_process, &next_process);
     println!("Process {} got message {}.\nStatus is: {:?}", rank, msg, status);
     world.barrier();
     assert_eq!(msg, next_rank);
@@ -28,8 +26,6 @@ fn main() {
     } else {
         for _ in 1..size {
             let (msg, status) = world.any_process().receive_vec::<Rank>();
-            assert!(msg.is_some());
-            let msg = msg.unwrap();
             println!("Process {} got long message {:?}.\nStatus is: {:?}", rank, msg, status);
 
             let x = status.source_rank();

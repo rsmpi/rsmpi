@@ -403,10 +403,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         where Self: Sized
     {
         assert!(0 <= r && r < self.size());
-        ProcessIdentifier {
-            comm: self,
-            rank: r
-        }
+        ProcessIdentifier::by_rank_unchecked(self, r)
     }
 
     /// Returns an `AnyProcess` identifier that can be used, e.g. as a `Source` in point to point
@@ -417,35 +414,12 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         AnyProcess(self)
     }
 
-    /// The null process
-    ///
-    /// Point to point send/receive operations involving the null process as source/destination
-    /// have no effect.
-    ///
-    /// # Examples
-    /// See `examples/null_process.rs`
-    ///
-    /// # Standard section(s)
-    ///
-    /// 3.11
-    fn null_process(&self) -> ProcessIdentifier<Self>
-        where Self: Sized
-    {
-        ProcessIdentifier {
-            comm: self,
-            rank: ffi::RSMPI_PROC_NULL
-        }
-    }
-
     /// A `ProcessIdentifier` for the calling process
     fn this_process(&self) -> ProcessIdentifier<Self>
         where Self: Sized
     {
         let rank = self.rank();
-        ProcessIdentifier {
-            comm: self,
-            rank: rank
-        }
+        ProcessIdentifier::by_rank_unchecked(self, rank)
     }
 
     /// Compare two communicators.
@@ -637,6 +611,19 @@ pub struct ProcessIdentifier<'a, C>
 
 impl<'a, C> ProcessIdentifier<'a, C> where C: 'a + Communicator
 {
+    #[allow(dead_code)]
+    fn by_rank(c: &'a C, r: Rank) -> Option<Self> {
+        if r != ffi::RSMPI_PROC_NULL {
+            Some(ProcessIdentifier { comm: c, rank: r })
+        } else {
+            None
+        }
+    }
+
+    fn by_rank_unchecked(c: &'a C, r: Rank) -> Self {
+        ProcessIdentifier { comm: c, rank: r }
+    }
+
     /// The process rank
     pub fn rank(&self) -> Rank {
         self.rank

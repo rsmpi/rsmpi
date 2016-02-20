@@ -46,8 +46,7 @@ fn main() {
     let future = world.any_process().immediate_receive();
     world.this_process().send(&x);
     let (msg, _) = future.get();
-    assert!(msg.is_some());
-    assert_eq!(x, msg.unwrap());
+    assert_eq!(x, msg);
 
     let future = world.any_process().immediate_receive();
     let res = future.try();
@@ -57,8 +56,7 @@ fn main() {
     loop {
         match future.try() {
             Ok((msg, _)) => {
-                assert!(msg.is_some());
-                assert_eq!(x, msg.unwrap());
+                assert_eq!(x, msg);
                 break;
             }
             Err(f) => { future = f; }
