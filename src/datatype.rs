@@ -8,16 +8,16 @@
 //! An MPI datatype describes a memory layout and semantics (e.g. in a collective reduce
 //! operation). There are several pre-defined `SystemDatatype`s which directly correspond to Rust
 //! primitive types, such as `MPI_DOUBLE` and `f64`. A direct relationship between a Rust type and
-//! an MPI datatype is covered by the `EquivalentDatatype` trait. Starting from the
+//! an MPI datatype is covered by the `Equivalence` trait. Starting from the
 //! `SystemDatatype`s, the user can build various `UserDatatype`s, e.g. to describe the layout of a
-//! struct (which should then implement `EquivalentDatatype`) or to intrusively describe parts of
+//! struct (which should then implement `Equivalence`) or to intrusively describe parts of
 //! an object in memory like all elements below the diagonal of a dense matrix stored in row-major
 //! order.
 //!
 //! A `Buffer` describes a specific piece of data in memory that MPI should operate on. In addition
 //! to specifying the datatype of the data. It knows the address in memory where the data begins
 //! and how many instances of the datatype are contained in the data. The `Buffer` trait is
-//! implemented for slices that contain types implementing `EquivalentDatatype`.
+//! implemented for slices that contain types implementing `Equivalence`.
 //!
 //! In order to use arbitrary datatypes to describe the contents of a slice, the `View` type is
 //! provided. However, since it can be used to instruct the underlying MPI implementation to
@@ -56,8 +56,8 @@ use raw::traits::*;
 
 /// Datatype traits
 pub mod traits {
-    pub use super::{EquivalentDatatype, Datatype, AsDatatype, Collection, Pointer, PointerMut,
-                    Buffer, BufferMut, Partitioned, PartitionedBuffer, PartitionedBufferMut};
+    pub use super::{Equivalence, Datatype, AsDatatype, Collection, Pointer, PointerMut, Buffer,
+                    BufferMut, Partitioned, PartitionedBuffer, PartitionedBufferMut};
 }
 
 /// A system datatype, e.g. `MPI_FLOAT`
@@ -82,7 +82,7 @@ impl Datatype for SystemDatatype {}
 /// # Standard section(s)
 ///
 /// 3.2.2
-pub trait EquivalentDatatype {
+pub trait Equivalence {
     /// The type of the equivalent MPI datatype (e.g. `SystemDatatype` or `UserDatatype`)
     type Out: Datatype;
     /// The MPI datatype that is equivalent to this Rust type
@@ -91,7 +91,7 @@ pub trait EquivalentDatatype {
 
 macro_rules! equivalent_system_datatype {
     ($rstype:path, $mpitype:path) => (
-        impl EquivalentDatatype for $rstype {
+        impl Equivalence for $rstype {
             type Out = SystemDatatype;
             fn equivalent_datatype() -> Self::Out { SystemDatatype($mpitype) }
         }
@@ -313,19 +313,19 @@ pub trait AsDatatype {
     fn as_datatype(&self) -> Self::Out;
 }
 
-impl<T> AsDatatype for T where T: EquivalentDatatype
+impl<T> AsDatatype for T where T: Equivalence
 {
-    type Out = <T as EquivalentDatatype>::Out;
+    type Out = <T as Equivalence>::Out;
     fn as_datatype(&self) -> Self::Out {
-        <T as EquivalentDatatype>::equivalent_datatype()
+        <T as Equivalence>::equivalent_datatype()
     }
 }
 
-impl<T> AsDatatype for [T] where T: EquivalentDatatype
+impl<T> AsDatatype for [T] where T: Equivalence
 {
-    type Out = <T as EquivalentDatatype>::Out;
+    type Out = <T as Equivalence>::Out;
     fn as_datatype(&self) -> Self::Out {
-        <T as EquivalentDatatype>::equivalent_datatype()
+        <T as Equivalence>::equivalent_datatype()
     }
 }
 
@@ -335,14 +335,14 @@ pub trait Collection {
     fn count(&self) -> Count;
 }
 
-impl<T> Collection for T where T: EquivalentDatatype
+impl<T> Collection for T where T: Equivalence
 {
     fn count(&self) -> Count {
         1
     }
 }
 
-impl<T> Collection for [T] where T: EquivalentDatatype
+impl<T> Collection for [T] where T: Equivalence
 {
     fn count(&self) -> Count {
         self.len().value_as().expect("Length of slice cannot be expressed as an MPI Count.")
@@ -355,14 +355,14 @@ pub trait Pointer {
     unsafe fn pointer(&self) -> *const c_void;
 }
 
-impl<T> Pointer for T where T: EquivalentDatatype
+impl<T> Pointer for T where T: Equivalence
 {
     unsafe fn pointer(&self) -> *const c_void {
         mem::transmute(self)
     }
 }
 
-impl<T> Pointer for [T] where T: EquivalentDatatype
+impl<T> Pointer for [T] where T: Equivalence
 {
     unsafe fn pointer(&self) -> *const c_void {
         mem::transmute(self.as_ptr())
@@ -375,14 +375,14 @@ pub trait PointerMut {
     unsafe fn pointer_mut(&mut self) -> *mut c_void;
 }
 
-impl<T> PointerMut for T where T: EquivalentDatatype
+impl<T> PointerMut for T where T: Equivalence
 {
     unsafe fn pointer_mut(&mut self) -> *mut c_void {
         mem::transmute(self)
     }
 }
 
-impl<T> PointerMut for [T] where T: EquivalentDatatype
+impl<T> PointerMut for [T] where T: Equivalence
 {
     unsafe fn pointer_mut(&mut self) -> *mut c_void {
         mem::transmute(self.as_mut_ptr())
@@ -392,17 +392,17 @@ impl<T> PointerMut for [T] where T: EquivalentDatatype
 /// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
 /// `as_datatype()`.
 pub trait Buffer: Pointer + Collection + AsDatatype { }
-impl<T> Buffer for T where T: EquivalentDatatype
+impl<T> Buffer for T where T: Equivalence
 {}
-impl<T> Buffer for [T] where T: EquivalentDatatype
+impl<T> Buffer for [T] where T: Equivalence
 {}
 
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
 /// copies of `as_datatype()`.
 pub trait BufferMut: PointerMut + Collection + AsDatatype { }
-impl<T> BufferMut for T where T: EquivalentDatatype
+impl<T> BufferMut for T where T: Equivalence
 {}
-impl<T> BufferMut for [T] where T: EquivalentDatatype
+impl<T> BufferMut for [T] where T: Equivalence
 {}
 
 /// A buffer with a user specified count and datatype

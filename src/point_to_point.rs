@@ -138,7 +138,7 @@ pub trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive_with_tag<Msg>(&self, tag: Tag) -> (Option<Msg>, Status)
-        where Msg: EquivalentDatatype
+        where Msg: Equivalence
     {
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.receive_into_with_tag(&mut res, tag);
@@ -170,7 +170,7 @@ pub trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive<Msg>(&self) -> (Option<Msg>, Status)
-        where Msg: EquivalentDatatype
+        where Msg: Equivalence
     {
         self.receive_with_tag(ffi::RSMPI_ANY_TAG)
     }
@@ -224,7 +224,7 @@ pub trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive_vec_with_tag<Msg>(&self, tag: Tag) -> (Option<Vec<Msg>>, Status)
-        where Msg: EquivalentDatatype
+        where Msg: Equivalence
     {
         self.matched_probe_with_tag(tag).matched_receive_vec()
     }
@@ -241,7 +241,7 @@ pub trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive_vec<Msg>(&self) -> (Option<Vec<Msg>>, Status)
-        where Msg: EquivalentDatatype
+        where Msg: Equivalence
     {
         self.receive_vec_with_tag(ffi::RSMPI_ANY_TAG)
     }
@@ -294,7 +294,7 @@ pub trait Source: AsCommunicator {
     ///
     /// 3.7.2
     fn immediate_receive_with_tag<Msg>(&self, tag: Tag) -> ReceiveFuture<Msg>
-        where Msg: EquivalentDatatype
+        where Msg: Equivalence
     {
         let mut val: Box<Msg> = Box::new(unsafe { mem::uninitialized() });
         let mut req: MPI_Request = unsafe { mem::uninitialized() };
@@ -324,7 +324,7 @@ pub trait Source: AsCommunicator {
     ///
     /// 3.7.2
     fn immediate_receive<Msg>(&self) -> ReceiveFuture<Msg>
-        where Msg: EquivalentDatatype
+        where Msg: Equivalence
     {
         self.immediate_receive_with_tag(ffi::RSMPI_ANY_TAG)
     }
@@ -832,7 +832,7 @@ impl Message {
     ///
     /// 3.8.3
     pub fn matched_receive<Msg>(self) -> (Option<Msg>, Status)
-        where Msg: EquivalentDatatype
+        where Msg: Equivalence
     {
         let is_no_proc = self.is_no_proc();
         let mut res: Msg = unsafe { mem::uninitialized() };
@@ -926,12 +926,12 @@ impl Drop for Message {
 pub trait MatchedReceiveVec {
     /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`
     /// or `None` if receiving from the null process.
-    fn matched_receive_vec<Msg>(self) -> (Option<Vec<Msg>>, Status) where Msg: EquivalentDatatype;
+    fn matched_receive_vec<Msg>(self) -> (Option<Vec<Msg>>, Status) where Msg: Equivalence;
 }
 
 impl MatchedReceiveVec for (Message, Status) {
     fn matched_receive_vec<Msg>(self) -> (Option<Vec<Msg>>, Status)
-        where Msg: EquivalentDatatype
+        where Msg: Equivalence
     {
         let (message, status) = self;
         let is_no_proc = message.is_no_proc();
@@ -965,9 +965,9 @@ pub fn send_receive_with_tags<M, D, R, S>(msg: &M,
                                           source: &S,
                                           receivetag: Tag)
                                           -> (Option<R>, Status)
-    where M: EquivalentDatatype,
+    where M: Equivalence,
           D: Destination,
-          R: EquivalentDatatype,
+          R: Equivalence,
           S: Source
 {
     let mut res: R = unsafe { mem::uninitialized() };
@@ -995,9 +995,9 @@ pub fn send_receive_with_tags<M, D, R, S>(msg: &M,
 ///
 /// 3.10
 pub fn send_receive<R, M, D, S>(msg: &M, destination: &D, source: &S) -> (Option<R>, Status)
-    where M: EquivalentDatatype,
+    where M: Equivalence,
           D: Destination,
-          R: EquivalentDatatype,
+          R: Equivalence,
           S: Source
 {
     send_receive_with_tags(msg, destination, Tag::default(), source, ffi::RSMPI_ANY_TAG)
