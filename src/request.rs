@@ -25,7 +25,6 @@ use std::os::raw::c_int;
 use ffi;
 use ffi::{MPI_Request, MPI_Status};
 
-use datatype::traits::*;
 use point_to_point::Status;
 use raw::traits::*;
 
@@ -164,36 +163,31 @@ impl Drop for PlainRequest {
 ///
 /// 3.7.1
 #[must_use]
-pub struct ReadRequest<'b, Buf: ?Sized>(MPI_Request, PhantomData<&'b Buf>) where Buf: 'b + Buffer;
+pub struct ReadRequest<'b, Buf: 'b + ?Sized>(MPI_Request, PhantomData<&'b Buf>);
 
-impl<'b, Buf: ?Sized> ReadRequest<'b, Buf> where Buf: 'b + Buffer
-{
+impl<'b, Buf: 'b + ?Sized> ReadRequest<'b, Buf> {
     /// Construct a request object from the raw MPI type
     pub fn from_raw(request: MPI_Request, _: &'b Buf) -> ReadRequest<'b, Buf> {
         ReadRequest(request, PhantomData)
     }
 }
 
-impl<'b, Buf: ?Sized> AsRaw for ReadRequest<'b, Buf> where Buf: 'b + Buffer
-{
+impl<'b, Buf: 'b + ?Sized> AsRaw for ReadRequest<'b, Buf> {
     type Raw = MPI_Request;
     unsafe fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
 
-impl<'b, Buf: ?Sized> AsRawMut for ReadRequest<'b, Buf> where Buf: 'b + Buffer
-{
+impl<'b, Buf: 'b + ?Sized> AsRawMut for ReadRequest<'b, Buf> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
         &mut (self.0)
     }
 }
 
-impl<'b, Buf: ?Sized> Request for ReadRequest<'b, Buf> where Buf: 'b + Buffer
-{}
+impl<'b, Buf: 'b + ?Sized> Request for ReadRequest<'b, Buf> {}
 
-impl<'b, Buf: ?Sized> Drop for ReadRequest<'b, Buf> where Buf: 'b + Buffer
-{
+impl<'b, Buf: 'b + ?Sized> Drop for ReadRequest<'b, Buf> {
     fn drop(&mut self) {
         assert!(self.is_null(),
                 "read request dropped without ascertaining completion.");
@@ -210,37 +204,31 @@ impl<'b, Buf: ?Sized> Drop for ReadRequest<'b, Buf> where Buf: 'b + Buffer
 ///
 /// 3.7.1
 #[must_use]
-pub struct WriteRequest<'b, Buf: ?Sized>(MPI_Request, PhantomData<&'b mut Buf>)
-    where Buf: 'b + BufferMut;
+pub struct WriteRequest<'b, Buf: 'b + ?Sized>(MPI_Request, PhantomData<&'b mut Buf>);
 
-impl<'b, Buf: ?Sized> WriteRequest<'b, Buf> where Buf: 'b + BufferMut
-{
+impl<'b, Buf: 'b + ?Sized> WriteRequest<'b, Buf> {
     /// Construct a request object from the raw MPI type
     pub fn from_raw(request: MPI_Request, _: &'b Buf) -> WriteRequest<'b, Buf> {
         WriteRequest(request, PhantomData)
     }
 }
 
-impl<'b, Buf: ?Sized> AsRaw for WriteRequest<'b, Buf> where Buf: 'b + BufferMut
-{
+impl<'b, Buf: 'b + ?Sized> AsRaw for WriteRequest<'b, Buf> {
     type Raw = MPI_Request;
     unsafe fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
 
-impl<'b, Buf: ?Sized> AsRawMut for WriteRequest<'b, Buf> where Buf: 'b + BufferMut
-{
+impl<'b, Buf: 'b + ?Sized> AsRawMut for WriteRequest<'b, Buf> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
         &mut (self.0)
     }
 }
 
-impl<'b, Buf: ?Sized> Request for WriteRequest<'b, Buf> where Buf: 'b + BufferMut
-{}
+impl<'b, Buf: 'b + ?Sized> Request for WriteRequest<'b, Buf> {}
 
-impl<'b, Buf: ?Sized> Drop for WriteRequest<'b, Buf> where Buf: 'b + BufferMut
-{
+impl<'b, Buf: 'b + ?Sized> Drop for WriteRequest<'b, Buf> {
     fn drop(&mut self) {
         assert!(self.is_null(),
                 "write request dropped without ascertaining completion.");
@@ -258,50 +246,33 @@ impl<'b, Buf: ?Sized> Drop for WriteRequest<'b, Buf> where Buf: 'b + BufferMut
 ///
 /// 3.7.1
 #[must_use]
-pub struct ReadWriteRequest<'s, 'r, S: ?Sized, R: ?Sized>(MPI_Request,
-                                                          PhantomData<&'s S>,
-                                                          PhantomData<&'r mut R>)
-    where S: 's + Buffer,
-          R: 'r + BufferMut;
+pub struct ReadWriteRequest<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized>(MPI_Request,
+                                                                    PhantomData<&'s S>,
+                                                                    PhantomData<&'r mut R>);
 
-impl<'s, 'r, S: ?Sized, R: ?Sized> ReadWriteRequest<'s, 'r, S, R>
-    where S: 's + Buffer,
-          R: 'r + BufferMut
-{
+impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> ReadWriteRequest<'s, 'r, S, R> {
     /// Construct a request object from the raw MPI type
     pub fn from_raw(request: MPI_Request, _: &'s S, _: &'r R) -> ReadWriteRequest<'s, 'r, S, R> {
         ReadWriteRequest(request, PhantomData, PhantomData)
     }
 }
 
-impl<'s, 'r, S: ?Sized, R: ?Sized> AsRaw for ReadWriteRequest<'s, 'r, S, R>
-    where S: 's + Buffer,
-          R: 'r + BufferMut
-{
+impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> AsRaw for ReadWriteRequest<'s, 'r, S, R> {
     type Raw = MPI_Request;
     unsafe fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
 
-impl<'s, 'r, S: ?Sized, R: ?Sized> AsRawMut for ReadWriteRequest<'s, 'r, S, R>
-    where S: 's + Buffer,
-          R: 'r + BufferMut
-{
+impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> AsRawMut for ReadWriteRequest<'s, 'r, S, R> {
     unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
         &mut (self.0)
     }
 }
 
-impl<'s, 'r, S: ?Sized, R: ?Sized> Request for ReadWriteRequest<'s, 'r, S, R>
-    where S: 's + Buffer,
-          R: 'r + BufferMut
-{}
+impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> Request for ReadWriteRequest<'s, 'r, S, R> {}
 
-impl<'s, 'r, S: ?Sized, R: ?Sized> Drop for ReadWriteRequest<'s, 'r, S, R>
-    where S: 's + Buffer,
-          R: 'r + BufferMut
-{
+impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> Drop for ReadWriteRequest<'s, 'r, S, R> {
     fn drop(&mut self) {
         assert!(self.is_null(),
                 "read-write request dropped without ascertaining completion.");
@@ -313,7 +284,7 @@ impl<'s, 'r, S: ?Sized, R: ?Sized> Drop for ReadWriteRequest<'s, 'r, S, R>
 /// # Examples
 ///
 /// See `examples/immediate.rs`
-pub struct WaitGuard<Req: Request>(Option<Req>);
+pub struct WaitGuard<Req>(Option<Req>) where Req: Request;
 
 impl<Req> Drop for WaitGuard<Req> where Req: Request
 {
