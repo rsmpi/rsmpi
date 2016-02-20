@@ -5,7 +5,7 @@
 //! the computation are organized in a context called the 'world communicator' which is available
 //! as a property of the `Universe`. From the world communicator, other communicators can be
 //! created. Processes can be addressed via their `Rank` within a specific communicator. This
-//! information is encapsulated in a `ProcessIdentifier`.
+//! information is encapsulated in a `Process`.
 //!
 //! # Unfinished features
 //!
@@ -395,15 +395,15 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         res
     }
 
-    /// Bundles a reference to this communicator with a specific `Rank` into a `ProcessIdentifier`.
+    /// Bundles a reference to this communicator with a specific `Rank` into a `Process`.
     ///
     /// # Examples
     /// See `examples/broadcast.rs` `examples/gather.rs` `examples/send_receive.rs`
-    fn process_at_rank(&self, r: Rank) -> ProcessIdentifier<Self>
+    fn process_at_rank(&self, r: Rank) -> Process<Self>
         where Self: Sized
     {
         assert!(0 <= r && r < self.size());
-        ProcessIdentifier::by_rank_unchecked(self, r)
+        Process::by_rank_unchecked(self, r)
     }
 
     /// Returns an `AnyProcess` identifier that can be used, e.g. as a `Source` in point to point
@@ -414,12 +414,12 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         AnyProcess(self)
     }
 
-    /// A `ProcessIdentifier` for the calling process
-    fn this_process(&self) -> ProcessIdentifier<Self>
+    /// A `Process` for the calling process
+    fn this_process(&self) -> Process<Self>
         where Self: Sized
     {
         let rank = self.rank();
-        ProcessIdentifier::by_rank_unchecked(self, rank)
+        Process::by_rank_unchecked(self, rank)
     }
 
     /// Compare two communicators.
@@ -602,26 +602,26 @@ impl From<c_int> for CommunicatorRelation {
 
 /// Identifies a process by its `Rank` within a certain communicator.
 #[derive(Copy, Clone)]
-pub struct ProcessIdentifier<'a, C>
+pub struct Process<'a, C>
     where C: 'a + Communicator
 {
     comm: &'a C,
     rank: Rank
 }
 
-impl<'a, C> ProcessIdentifier<'a, C> where C: 'a + Communicator
+impl<'a, C> Process<'a, C> where C: 'a + Communicator
 {
     #[allow(dead_code)]
     fn by_rank(c: &'a C, r: Rank) -> Option<Self> {
         if r != ffi::RSMPI_PROC_NULL {
-            Some(ProcessIdentifier { comm: c, rank: r })
+            Some(Process { comm: c, rank: r })
         } else {
             None
         }
     }
 
     fn by_rank_unchecked(c: &'a C, r: Rank) -> Self {
-        ProcessIdentifier { comm: c, rank: r }
+        Process { comm: c, rank: r }
     }
 
     /// The process rank
@@ -630,7 +630,7 @@ impl<'a, C> ProcessIdentifier<'a, C> where C: 'a + Communicator
     }
 }
 
-impl<'a, C> AsCommunicator for ProcessIdentifier<'a, C> where C: 'a + Communicator
+impl<'a, C> AsCommunicator for Process<'a, C> where C: 'a + Communicator
 {
     type Out = C;
     fn as_communicator(&self) -> &Self::Out {

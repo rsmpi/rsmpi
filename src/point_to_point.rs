@@ -25,7 +25,7 @@ use datatype::traits::*;
 use raw::traits::*;
 use request::{PlainRequest, ReadRequest, WriteRequest};
 use request::traits::*;
-use topology::{Rank, ProcessIdentifier, AnyProcess, CommunicatorRelation};
+use topology::{Rank, Process, AnyProcess, CommunicatorRelation};
 use topology::traits::*;
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
@@ -39,10 +39,9 @@ pub mod traits {
 ///
 /// # Examples
 ///
-/// - A `ProcessIdentifier` used as a source for a receive operation will receive data only from the
+/// - A `Process` used as a source for a receive operation will receive data only from the
 /// identified process.
-/// - A communicator can also be used as a source. The receive operation will receive data from
-/// any process in the communicator.
+/// - A communicator can also be used as a source via the `AnyProcess` identifier.
 ///
 /// # Standard section(s)
 ///
@@ -409,7 +408,7 @@ impl<'a, C> Source for AnyProcess<'a, C> where C: 'a + Communicator
     }
 }
 
-impl<'a, C> Source for ProcessIdentifier<'a, C> where C: 'a + Communicator
+impl<'a, C> Source for Process<'a, C> where C: 'a + Communicator
 {
     fn source_rank(&self) -> Rank {
         self.rank()
@@ -419,7 +418,7 @@ impl<'a, C> Source for ProcessIdentifier<'a, C> where C: 'a + Communicator
 /// Something that can be used as the destination in a point to point send operation
 ///
 /// # Examples
-/// - Using a `ProcessIdentifier` as the destination will send data to that specific process.
+/// - Using a `Process` as the destination will send data to that specific process.
 ///
 /// # Standard section(s)
 ///
@@ -746,7 +745,7 @@ pub trait Destination: AsCommunicator {
     }
 }
 
-impl<'a, C> Destination for ProcessIdentifier<'a, C> where C: 'a + Communicator
+impl<'a, C> Destination for Process<'a, C> where C: 'a + Communicator
 {
     fn destination_rank(&self) -> Rank {
         self.rank()
