@@ -8,8 +8,8 @@
 //! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
 //! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter()`
-//! - **5.12**: Nonblocking collective operations, `MPI_Igatherv()`, `MPI_Iscatterv()`,
-//! `MPI_Iallgatherv()`, `MPI_Ialltoallv()`, `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
+//! - **5.12**: Nonblocking collective operations,
+//! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
 use std::{mem, ptr};
 
@@ -318,6 +318,35 @@ pub trait CommunicatorCollectives: Communicator {
         ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
+    /// Initiate non-blocking gather of the contents of all `sendbuf`s into all `rcevbuf`s on all
+    /// processes in the communicator.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.5
+    fn immediate_all_gather_varcount_into<'s, 'r, S: ?Sized, R: ?Sized>
+        (&self,
+         sendbuf: &'s S,
+         recvbuf: &'r mut R)
+         -> ReadWriteRequest<'s, 'r, S, R>
+        where S: 's + Buffer,
+              R: 'r + PartitionedBufferMut
+    {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iallgatherv(sendbuf.pointer(),
+                                 sendbuf.count(),
+                                 sendbuf.as_datatype().as_raw(),
+                                 recvbuf.pointer_mut(),
+                                 recvbuf.counts_ptr(),
+                                 recvbuf.displs_ptr(),
+                                 recvbuf.as_datatype().as_raw(),
+                                 self.as_raw(),
+                                 &mut request);
+        }
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
     /// Initiate non-blocking all-to-all communication.
     ///
     /// # Examples
@@ -345,6 +374,35 @@ pub trait CommunicatorCollectives: Communicator {
                                recvbuf.as_datatype().as_raw(),
                                self.as_raw(),
                                &mut request);
+        }
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
+    /// Initiate non-blocking all-to-all communication.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.6
+    fn immediate_all_to_all_varcount_into<'s, 'r, S: ?Sized, R: ?Sized>
+        (&self,
+         sendbuf: &'s S,
+         recvbuf: &'r mut R)
+         -> ReadWriteRequest<'s, 'r, S, R>
+        where S: 's + PartitionedBuffer,
+              R: 'r + PartitionedBufferMut
+    {
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Ialltoallv(sendbuf.pointer(),
+                                sendbuf.counts_ptr(),
+                                sendbuf.displs_ptr(),
+                                sendbuf.as_datatype().as_raw(),
+                                recvbuf.pointer_mut(),
+                                recvbuf.counts_ptr(),
+                                recvbuf.displs_ptr(),
+                                recvbuf.as_datatype().as_raw(),
+                                self.as_raw(),
+                                &mut request);
         }
         ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
@@ -918,6 +976,65 @@ pub trait Root: AsCommunicator
         ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
+    /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
+    ///
+    /// This function must be called on all non-root processes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.3
+    fn immediate_gather_varcount_into<'s, S: ?Sized>(&self, sendbuf: &'s S) -> ReadRequest<'s, S>
+        where S: 's + Buffer
+    {
+        assert!(self.as_communicator().rank() != self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Igatherv(sendbuf.pointer(),
+                              sendbuf.count(),
+                              sendbuf.as_datatype().as_raw(),
+                              ptr::null_mut(),
+                              ptr::null(),
+                              ptr::null(),
+                              u8::equivalent_datatype().as_raw(),
+                              self.root_rank(),
+                              self.as_communicator().as_raw(),
+                              &mut request);
+        }
+        ReadRequest::from_raw(request, sendbuf)
+    }
+
+    /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
+    ///
+    /// This function must be called on the root processes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.3
+    fn immediate_gather_varcount_into_root<'s, 'r, S: ?Sized, R: ?Sized>
+        (&self,
+         sendbuf: &'s S,
+         recvbuf: &'r mut R)
+         -> ReadWriteRequest<'s, 'r, S, R>
+        where S: 's + Buffer,
+              R: 'r + PartitionedBufferMut
+    {
+        assert!(self.as_communicator().rank() == self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Igatherv(sendbuf.pointer(),
+                              sendbuf.count(),
+                              sendbuf.as_datatype().as_raw(),
+                              recvbuf.pointer_mut(),
+                              recvbuf.counts_ptr(),
+                              recvbuf.displs_ptr(),
+                              recvbuf.as_datatype().as_raw(),
+                              self.root_rank(),
+                              self.as_communicator().as_raw(),
+                              &mut request);
+        }
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
     /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
     ///
     /// This function must be called on all non-root processes.
@@ -980,6 +1097,67 @@ pub trait Root: AsCommunicator
                               self.root_rank(),
                               self.as_communicator().as_raw(),
                               &mut request);
+        }
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
+    }
+
+    /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
+    ///
+    /// This function must be called on all non-root processes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.4
+    fn immediate_scatter_varcount_into<'r, R: ?Sized>(&self,
+                                                      recvbuf: &'r mut R)
+                                                      -> WriteRequest<'r, R>
+        where R: 'r + BufferMut
+    {
+        assert!(self.as_communicator().rank() != self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iscatterv(ptr::null(),
+                               ptr::null(),
+                               ptr::null(),
+                               u8::equivalent_datatype().as_raw(),
+                               recvbuf.pointer_mut(),
+                               recvbuf.count(),
+                               recvbuf.as_datatype().as_raw(),
+                               self.root_rank(),
+                               self.as_communicator().as_raw(),
+                               &mut request);
+        }
+        WriteRequest::from_raw(request, recvbuf)
+    }
+
+    /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
+    ///
+    /// This function must be called on the root processes.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.12.4
+    fn immediate_scatter_varcount_into_root<'s, 'r, S: ?Sized, R: ?Sized>
+        (&self,
+         sendbuf: &'s S,
+         recvbuf: &'r mut R)
+         -> ReadWriteRequest<'s, 'r, S, R>
+        where S: 's + PartitionedBuffer,
+              R: 'r + BufferMut
+    {
+        assert!(self.as_communicator().rank() == self.root_rank());
+        let mut request: MPI_Request = unsafe { mem::uninitialized() };
+        unsafe {
+            ffi::MPI_Iscatterv(sendbuf.pointer(),
+                               sendbuf.counts_ptr(),
+                               sendbuf.displs_ptr(),
+                               sendbuf.as_datatype().as_raw(),
+                               recvbuf.pointer_mut(),
+                               recvbuf.count(),
+                               recvbuf.as_datatype().as_raw(),
+                               self.root_rank(),
+                               self.as_communicator().as_raw(),
+                               &mut request);
         }
         ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
