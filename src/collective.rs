@@ -685,10 +685,6 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.6
-    ///
-    /// # Examples
-    ///
-    /// See `examples/scatter.rs`
     fn scatter_into_root<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
         where S: Buffer,
               R: BufferMut
