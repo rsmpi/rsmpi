@@ -321,6 +321,10 @@ pub trait CommunicatorCollectives: Communicator {
     /// Initiate non-blocking gather of the contents of all `sendbuf`s into all `rcevbuf`s on all
     /// processes in the communicator.
     ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_all_gather_varcount.rs`
+    ///
     /// # Standard section(s)
     ///
     /// 5.12.5
@@ -410,6 +414,10 @@ pub trait CommunicatorCollectives: Communicator {
     /// Initiates a non-blocking global reduction under the operation `op` of the input data in
     /// `sendbuf` and stores the result in `recvbuf` on all processes.
     ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_reduce.rs`
+    ///
     /// # Standard section(s)
     ///
     /// 5.12.8
@@ -439,6 +447,10 @@ pub trait CommunicatorCollectives: Communicator {
     /// Initiates a non-blocking element-wise global reduction under the operation `op` of the
     /// input data in `sendbuf` and scatters the result into equal sized blocks in the receive
     /// buffers on all processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_reduce.rs`
     ///
     /// # Standard section(s)
     ///
@@ -470,6 +482,10 @@ pub trait CommunicatorCollectives: Communicator {
     /// Initiates a non-blocking global inclusive prefix reduction of the data in `sendbuf` into
     /// `recvbuf` under operation `op`.
     ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_scan.rs`
+    ///
     /// # Standard section(s)
     ///
     /// 5.12.11
@@ -497,6 +513,10 @@ pub trait CommunicatorCollectives: Communicator {
 
     /// Initiates a non-blocking global exclusive prefix reduction of the data in `sendbuf` into
     /// `recvbuf` under operation `op`.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_scan.rs`
     ///
     /// # Standard section(s)
     ///
@@ -980,6 +1000,10 @@ pub trait Root: AsCommunicator
     ///
     /// This function must be called on all non-root processes.
     ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_gather_varcount.rs`
+    ///
     /// # Standard section(s)
     ///
     /// 5.12.3
@@ -1006,6 +1030,10 @@ pub trait Root: AsCommunicator
     /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
     ///
     /// This function must be called on the root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_gather_varcount.rs`
     ///
     /// # Standard section(s)
     ///
@@ -1105,6 +1133,10 @@ pub trait Root: AsCommunicator
     ///
     /// This function must be called on all non-root processes.
     ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_scatter_varcount.rs`
+    ///
     /// # Standard section(s)
     ///
     /// 5.12.4
@@ -1133,6 +1165,10 @@ pub trait Root: AsCommunicator
     /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
     ///
     /// This function must be called on the root processes.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_scatter_varcount.rs`
     ///
     /// # Standard section(s)
     ///
@@ -1167,6 +1203,10 @@ pub trait Root: AsCommunicator
     ///
     /// This function must be called on all non-root processes.
     ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_reduce.rs`
+    ///
     /// # Standard section(s)
     ///
     /// 5.12.7
@@ -1191,6 +1231,10 @@ pub trait Root: AsCommunicator
 
     /// Initiates a non-blocking global reduction under the operation `op` of the input data in
     /// `sendbuf` and stores the result on the `Root` process.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate_reduce.rs`
     ///
     /// This function must be called on the root process.
     ///
@@ -1235,6 +1279,10 @@ impl<'a, T: 'a + Operation> Operation for &'a T {}
 
 /// A built-in operation like `MPI_SUM`
 ///
+/// # Examples
+///
+/// See `examples/reduce.rs`
+///
 /// # Standard section(s)
 ///
 /// 5.9.2
@@ -1276,13 +1324,13 @@ impl Operation for SystemOperation {}
 
 /// Perform a local reduction.
 ///
-/// # Standard section(s)
-///
-/// 5.9.7
-///
 /// # Examples
 ///
 /// See `examples/redure.rs`
+///
+/// # Standard section(s)
+///
+/// 5.9.7
 pub fn reduce_local_into<S: ?Sized, R: ?Sized, O>(inbuf: &S, inoutbuf: &mut R, op: &O)
     where S: Buffer,
           R: BufferMut,
