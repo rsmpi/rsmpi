@@ -245,7 +245,7 @@ pub trait Source: AsCommunicator {
     fn immediate_receive_into_with_tag<'b, Buf: ?Sized>(&self,
                                                         buf: &'b mut Buf,
                                                         tag: Tag)
-                                                        -> ReceiveRequest<'b, Buf>
+                                                        -> WriteRequest<'b, Buf>
         where Buf: 'b + BufferMut
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -258,7 +258,7 @@ pub trait Source: AsCommunicator {
                            self.as_communicator().as_raw(),
                            &mut request);
         }
-        ReceiveRequest::from_raw(request, buf)
+        WriteRequest::from_raw(request, buf)
     }
 
     /// Initiate an immediate (non-blocking) receive operation.
@@ -271,7 +271,7 @@ pub trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_receive_into<'b, Buf: ?Sized>(&self, buf: &'b mut Buf) -> ReceiveRequest<'b, Buf>
+    fn immediate_receive_into<'b, Buf: ?Sized>(&self, buf: &'b mut Buf) -> WriteRequest<'b, Buf>
         where Buf: 'b + BufferMut
     {
         self.immediate_receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
@@ -591,7 +591,7 @@ pub trait Destination: AsCommunicator {
     fn immediate_send_with_tag<'b, Buf: ?Sized>(&self,
                                                 buf: &'b Buf,
                                                 tag: Tag)
-                                                -> SendRequest<'b, Buf>
+                                                -> ReadRequest<'b, Buf>
         where Buf: 'b + Buffer
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -604,7 +604,7 @@ pub trait Destination: AsCommunicator {
                            self.as_communicator().as_raw(),
                            &mut request);
         }
-        SendRequest::from_raw(request, buf)
+        ReadRequest::from_raw(request, buf)
     }
 
     /// Initiate an immediate (non-blocking) standard mode send operation.
@@ -617,7 +617,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_send<'b, Buf: ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf>
+    fn immediate_send<'b, Buf: ?Sized>(&self, buf: &'b Buf) -> ReadRequest<'b, Buf>
         where Buf: 'b + Buffer
     {
         self.immediate_send_with_tag(buf, Tag::default())
@@ -633,7 +633,7 @@ pub trait Destination: AsCommunicator {
     fn immediate_buffered_send_with_tag<'b, Buf: ?Sized>(&self,
                                                          buf: &'b Buf,
                                                          tag: Tag)
-                                                         -> SendRequest<'b, Buf>
+                                                         -> ReadRequest<'b, Buf>
         where Buf: 'b + Buffer
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -646,7 +646,7 @@ pub trait Destination: AsCommunicator {
                             self.as_communicator().as_raw(),
                             &mut request);
         }
-        SendRequest::from_raw(request, buf)
+        ReadRequest::from_raw(request, buf)
     }
 
     /// Initiate an immediate (non-blocking) buffered mode send operation.
@@ -656,7 +656,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_buffered_send<'b, Buf: ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf>
+    fn immediate_buffered_send<'b, Buf: ?Sized>(&self, buf: &'b Buf) -> ReadRequest<'b, Buf>
         where Buf: 'b + Buffer
     {
         self.immediate_buffered_send_with_tag(buf, Tag::default())
@@ -672,7 +672,7 @@ pub trait Destination: AsCommunicator {
     fn immediate_synchronous_send_with_tag<'b, Buf: ?Sized>(&self,
                                                             buf: &'b Buf,
                                                             tag: Tag)
-                                                            -> SendRequest<'b, Buf>
+                                                            -> ReadRequest<'b, Buf>
         where Buf: 'b + Buffer
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -685,7 +685,7 @@ pub trait Destination: AsCommunicator {
                             self.as_communicator().as_raw(),
                             &mut request);
         }
-        SendRequest::from_raw(request, buf)
+        ReadRequest::from_raw(request, buf)
     }
 
     /// Initiate an immediate (non-blocking) synchronous mode send operation.
@@ -695,7 +695,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_synchronous_send<'b, Buf: ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf>
+    fn immediate_synchronous_send<'b, Buf: ?Sized>(&self, buf: &'b Buf) -> ReadRequest<'b, Buf>
         where Buf: 'b + Buffer
     {
         self.immediate_synchronous_send_with_tag(buf, Tag::default())
@@ -711,7 +711,7 @@ pub trait Destination: AsCommunicator {
     fn immediate_ready_send_with_tag<'b, Buf: ?Sized>(&self,
                                                       buf: &'b Buf,
                                                       tag: Tag)
-                                                      -> SendRequest<'b, Buf>
+                                                      -> ReadRequest<'b, Buf>
         where Buf: 'b + Buffer
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -724,7 +724,7 @@ pub trait Destination: AsCommunicator {
                             self.as_communicator().as_raw(),
                             &mut request);
         }
-        SendRequest::from_raw(request, buf)
+        ReadRequest::from_raw(request, buf)
     }
 
     /// Initiate an immediate (non-blocking) ready mode send operation.
@@ -738,7 +738,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_ready_send<'b, Buf: ?Sized>(&self, buf: &'b Buf) -> SendRequest<'b, Buf>
+    fn immediate_ready_send<'b, Buf: ?Sized>(&self, buf: &'b Buf) -> ReadRequest<'b, Buf>
         where Buf: 'b + Buffer
     {
         self.immediate_ready_send_with_tag(buf, Tag::default())
@@ -856,9 +856,7 @@ impl Message {
     /// # Standard section(s)
     ///
     /// 3.8.3
-    pub fn immediate_matched_receive_into<Buf: ?Sized>(mut self,
-                                                       buf: &mut Buf)
-                                                       -> ReceiveRequest<Buf>
+    pub fn immediate_matched_receive_into<Buf: ?Sized>(mut self, buf: &mut Buf) -> WriteRequest<Buf>
         where Buf: BufferMut
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -870,7 +868,7 @@ impl Message {
                             &mut request);
             assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
         }
-        ReceiveRequest::from_raw(request, buf)
+        WriteRequest::from_raw(request, buf)
     }
 }
 
@@ -1087,12 +1085,6 @@ pub fn send_receive_replace_into<B: ?Sized, D, S>(buf: &mut B,
                                         source,
                                         ffi::RSMPI_ANY_TAG)
 }
-
-/// A request object associated with a send operation
-pub type SendRequest<'b, Buf> = ReadRequest<'b, Buf>;
-
-/// A request object associated with a receive operation
-pub type ReceiveRequest<'b, Buf> = WriteRequest<'b, Buf>;
 
 /// Will contain a value of type `T` received via a non-blocking receive operation.
 #[must_use]

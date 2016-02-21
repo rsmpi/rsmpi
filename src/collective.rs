@@ -278,12 +278,12 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.1
-    fn immediate_barrier(&self) -> BarrierRequest {
+    fn immediate_barrier(&self) -> PlainRequest {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Ibarrier(self.as_raw(), &mut request);
         }
-        BarrierRequest::from_raw(request)
+        PlainRequest::from_raw(request)
     }
 
     /// Initiate non-blocking gather of the contents of all `sendbuf`s into all `rcevbuf`s on all
@@ -299,7 +299,7 @@ pub trait CommunicatorCollectives: Communicator {
     fn immediate_all_gather_into<'s, 'r, S: ?Sized, R: ?Sized>(&self,
                                                                sendbuf: &'s S,
                                                                recvbuf: &'r mut R)
-                                                               -> AllGatherRequest<'s, 'r, S, R>
+                                                               -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut
     {
@@ -315,7 +315,7 @@ pub trait CommunicatorCollectives: Communicator {
                                 self.as_raw(),
                                 &mut request);
         }
-        AllGatherRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
     /// Initiate non-blocking all-to-all communication.
@@ -330,7 +330,7 @@ pub trait CommunicatorCollectives: Communicator {
     fn immediate_all_to_all_into<'s, 'r, S: ?Sized, R: ?Sized>(&self,
                                                                sendbuf: &'s S,
                                                                recvbuf: &'r mut R)
-                                                               -> AllToAllRequest<'s, 'r, S, R>
+                                                               -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut
     {
@@ -346,7 +346,7 @@ pub trait CommunicatorCollectives: Communicator {
                                self.as_raw(),
                                &mut request);
         }
-        AllToAllRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
     /// Initiates a non-blocking global reduction under the operation `op` of the input data in
@@ -360,7 +360,7 @@ pub trait CommunicatorCollectives: Communicator {
          sendbuf: &'s S,
          recvbuf: &'r mut R,
          op: &O)
-         -> AllReduceRequest<'s, 'r, S, R>
+         -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut,
               O: Operation
@@ -375,7 +375,7 @@ pub trait CommunicatorCollectives: Communicator {
                                 self.as_raw(),
                                 &mut request);
         }
-        AllReduceRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
     /// Initiates a non-blocking element-wise global reduction under the operation `op` of the
@@ -390,7 +390,7 @@ pub trait CommunicatorCollectives: Communicator {
          sendbuf: &'s S,
          recvbuf: &'r mut R,
          op: &O)
-         -> ReduceScatterBlockRequest<'s, 'r, S, R>
+         -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut,
               O: Operation
@@ -406,7 +406,7 @@ pub trait CommunicatorCollectives: Communicator {
                                            self.as_raw(),
                                            &mut request);
         }
-        ReduceScatterBlockRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
     /// Initiates a non-blocking global inclusive prefix reduction of the data in `sendbuf` into
@@ -419,7 +419,7 @@ pub trait CommunicatorCollectives: Communicator {
                                                             sendbuf: &'s S,
                                                             recvbuf: &'r mut R,
                                                             op: &O)
-                                                            -> ScanRequest<'s, 'r, S, R>
+                                                            -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut,
               O: Operation
@@ -434,7 +434,7 @@ pub trait CommunicatorCollectives: Communicator {
                            self.as_raw(),
                            &mut request);
         }
-        ScanRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
     /// Initiates a non-blocking global exclusive prefix reduction of the data in `sendbuf` into
@@ -448,7 +448,7 @@ pub trait CommunicatorCollectives: Communicator {
          sendbuf: &'s S,
          recvbuf: &'r mut R,
          op: &O)
-         -> ExclusiveScanRequest<'s, 'r, S, R>
+         -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut,
               O: Operation
@@ -463,7 +463,7 @@ pub trait CommunicatorCollectives: Communicator {
                              self.as_raw(),
                              &mut request);
         }
-        ExclusiveScanRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 }
 
@@ -842,9 +842,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.12.2
-    fn immediate_broadcast_into<'b, Buf: ?Sized>(&self,
-                                                 buf: &'b mut Buf)
-                                                 -> BroadcastRequest<'b, Buf>
+    fn immediate_broadcast_into<'b, Buf: ?Sized>(&self, buf: &'b mut Buf) -> WriteRequest<'b, Buf>
         where Buf: 'b + BufferMut
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -856,7 +854,7 @@ pub trait Root: AsCommunicator
                             self.as_communicator().as_raw(),
                             &mut request);
         }
-        BroadcastRequest::from_raw(request, buf)
+        WriteRequest::from_raw(request, buf)
     }
 
     /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
@@ -870,7 +868,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.12.3
-    fn immediate_gather_into<'s, S: ?Sized>(&self, sendbuf: &'s S) -> GatherRequest<'s, S>
+    fn immediate_gather_into<'s, S: ?Sized>(&self, sendbuf: &'s S) -> ReadRequest<'s, S>
         where S: 's + Buffer
     {
         assert!(self.as_communicator().rank() != self.root_rank());
@@ -886,7 +884,7 @@ pub trait Root: AsCommunicator
                              self.as_communicator().as_raw(),
                              &mut request);
         }
-        GatherRequest::from_raw(request, sendbuf)
+        ReadRequest::from_raw(request, sendbuf)
     }
 
     /// Initiate non-blocking gather of the contents of all `sendbuf`s on `Root` `&self`.
@@ -900,11 +898,10 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.12.3
-    fn immediate_gather_into_root<'s, 'r, S: ?Sized, R: ?Sized>
-        (&self,
-         sendbuf: &'s S,
-         recvbuf: &'r mut R)
-         -> GatherRootRequest<'s, 'r, S, R>
+    fn immediate_gather_into_root<'s, 'r, S: ?Sized, R: ?Sized>(&self,
+                                                                sendbuf: &'s S,
+                                                                recvbuf: &'r mut R)
+                                                                -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut
     {
@@ -922,7 +919,7 @@ pub trait Root: AsCommunicator
                              self.as_communicator().as_raw(),
                              &mut request);
         }
-        GatherRootRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
     /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
@@ -936,7 +933,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.12.4
-    fn immediate_scatter_into<'r, R: ?Sized>(&self, recvbuf: &'r mut R) -> ScatterRequest<'r, R>
+    fn immediate_scatter_into<'r, R: ?Sized>(&self, recvbuf: &'r mut R) -> WriteRequest<'r, R>
         where R: 'r + BufferMut
     {
         assert!(self.as_communicator().rank() != self.root_rank());
@@ -952,7 +949,7 @@ pub trait Root: AsCommunicator
                               self.as_communicator().as_raw(),
                               &mut request);
         }
-        ScatterRequest::from_raw(request, recvbuf)
+        WriteRequest::from_raw(request, recvbuf)
     }
 
     /// Initiate non-blocking scatter of the contents of `sendbuf` from `Root` `&self`.
@@ -970,7 +967,7 @@ pub trait Root: AsCommunicator
         (&self,
          sendbuf: &'s S,
          recvbuf: &'r mut R)
-         -> ScatterRootRequest<'s, 'r, S, R>
+         -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut
     {
@@ -988,7 +985,7 @@ pub trait Root: AsCommunicator
                               self.as_communicator().as_raw(),
                               &mut request);
         }
-        ScatterRootRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 
     /// Initiates a non-blacking global reduction under the operation `op` of the input data in
@@ -999,10 +996,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.12.7
-    fn immediate_reduce_into<'s, S: ?Sized, O>(&self,
-                                               sendbuf: &'s S,
-                                               op: &O)
-                                               -> ReduceRequest<'s, S>
+    fn immediate_reduce_into<'s, S: ?Sized, O>(&self, sendbuf: &'s S, op: &O) -> ReadRequest<'s, S>
         where S: 's + Buffer,
               O: Operation
     {
@@ -1018,7 +1012,7 @@ pub trait Root: AsCommunicator
                              self.as_communicator().as_raw(),
                              &mut request);
         }
-        ReduceRequest::from_raw(request, sendbuf)
+        ReadRequest::from_raw(request, sendbuf)
     }
 
     /// Initiates a non-blocking global reduction under the operation `op` of the input data in
@@ -1034,7 +1028,7 @@ pub trait Root: AsCommunicator
          sendbuf: &'s S,
          recvbuf: &'r mut R,
          op: &O)
-         -> ReduceRootRequest<'s, 'r, S, R>
+         -> ReadWriteRequest<'s, 'r, S, R>
         where S: 's + Buffer,
               R: 'r + BufferMut,
               O: Operation
@@ -1051,7 +1045,7 @@ pub trait Root: AsCommunicator
                              self.as_communicator().as_raw(),
                              &mut request);
         }
-        ReduceRootRequest::from_raw(request, sendbuf, recvbuf)
+        ReadWriteRequest::from_raw(request, sendbuf, recvbuf)
     }
 }
 
@@ -1128,45 +1122,3 @@ pub fn reduce_local_into<S: ?Sized, R: ?Sized, O>(inbuf: &S, inoutbuf: &mut R, o
                               op.as_raw());
     }
 }
-
-/// A request object for an immediate (non-blocking) barrier operation
-pub type BarrierRequest = PlainRequest;
-
-/// A request object for an immediate (non-blocking) broadcast operation
-pub type BroadcastRequest<'b, Buf> = WriteRequest<'b, Buf>;
-
-/// A request object for an immediate (non-blocking) gather operation
-pub type GatherRequest<'s, S> = ReadRequest<'s, S>;
-
-/// A request object for an immediate (non-blocking) gather operation on the root process
-pub type GatherRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// A request object for an immediate (non-blocking) all-gather operation
-pub type AllGatherRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// A request object for an immediate (non-blocking) scatter operation
-pub type ScatterRequest<'r, R> = WriteRequest<'r, R>;
-
-/// A request object for an immediate (non-blocking) scatter operation on the root process
-pub type ScatterRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// A request object for an immediate (non-blocking) all-to-all operation
-pub type AllToAllRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// A request object for an immediat (non-blocking) reduce operation
-pub type ReduceRequest<'s, S> = ReadRequest<'s, S>;
-
-/// A request object for an immediat (non-blocking) reduce operation on the root process
-pub type ReduceRootRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// A request object for an immediate (non-blocking) all-reduce operation
-pub type AllReduceRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// A request object for an immediate (non-blocking) reduce-scatter-block operation
-pub type ReduceScatterBlockRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// A request object for an immediate (non-blocking) scan operation
-pub type ScanRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
-
-/// A request object for an immediate (non-blocking) exclusive scan operation
-pub type ExclusiveScanRequest<'s, 'r, S, R> = ReadWriteRequest<'s, 'r, S, R>;
