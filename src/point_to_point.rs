@@ -16,7 +16,7 @@ use std::os::raw::c_int;
 
 use conv::ConvUtil;
 
-use super::{Error, Count, Tag};
+use super::{Count, Tag};
 
 use ffi;
 use ffi::{MPI_Status, MPI_Message, MPI_Request};
@@ -775,11 +775,6 @@ impl Status {
         self.0.MPI_TAG
     }
 
-    /// An error code
-    pub fn error(&self) -> Error {
-        self.0.MPI_ERROR
-    }
-
     /// Number of instances of the type contained in the message
     pub fn count<D: Datatype>(&self, d: D) -> Count {
         let mut count: Count = unsafe { mem::uninitialized() };
@@ -791,10 +786,9 @@ impl Status {
 impl fmt::Debug for Status {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f,
-               "Status {{ source_rank: {}, tag: {}, error: {} }}",
+               "Status {{ source_rank: {}, tag: {} }}",
                self.source_rank(),
-               self.tag(),
-               self.error())
+               self.tag())
     }
 }
 
