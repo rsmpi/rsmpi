@@ -22,9 +22,8 @@
 //! - **Parts of sections**: 8, 10, 12
 use std::{mem, ptr};
 use std::cmp::Ordering;
-use std::marker::PhantomData;
 use std::string::FromUtf8Error;
-use std::os::raw::{c_char, c_int, c_double};
+use std::os::raw::{c_char, c_int, c_double, c_void};
 
 use conv::ConvUtil;
 
@@ -53,7 +52,9 @@ pub trait AsCommunicator {
 pub type Rank = c_int;
 
 /// Global context
-pub struct Universe(PhantomData<()>);
+pub struct Universe {
+    buffer: Option<Vec<u8>>
+}
 
 impl Universe {
     /// The 'world communicator'
@@ -113,10 +114,48 @@ impl Universe {
     pub fn get_time_res(&self) -> c_double {
         unsafe { ffi::RSMPI_Wtick() }
     }
+
+    /// The size in bytes of the buffer used for buffered communication.
+    pub fn buffer_size(&self) -> usize {
+        self.buffer.as_ref().map_or(0, |buffer| buffer.len())
+    }
+
+    /// Set the size in bytes of the buffer used for buffered communication.
+    pub fn set_buffer_size(&mut self, size: usize) {
+        self.detach_buffer();
+
+        if size > 0 {
+            let mut buffer = vec![0; size];
+            unsafe {
+                ffi::MPI_Buffer_attach(
+                    mem::transmute(buffer.as_mut_ptr()),
+                    buffer.len().value_as().expect("Buffer length exceeds the range of a C int.")
+                );
+            }
+            self.buffer = Some(buffer);
+        }
+    }
+
+    /// Detach the buffer used for buffered communication.
+    pub fn detach_buffer(&mut self) {
+        if let Some(buffer) = self.buffer.take() {
+            let mut addr: *const c_void = ptr::null();
+            let mut size: c_int = 0;
+            unsafe {
+                ffi::MPI_Buffer_detach(mem::transmute(&mut addr), &mut size);
+                assert_eq!(addr, mem::transmute(buffer.as_ptr()));
+            }
+            assert_eq!(
+                size,
+                buffer.len().value_as().expect("Buffer length exceeds the range of a C int.")
+            );
+        }
+    }
 }
 
 impl Drop for Universe {
     fn drop(&mut self) {
+        self.detach_buffer();
         unsafe {
             ffi::MPI_Finalize();
         }
@@ -238,7 +277,7 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
                                  threading.as_raw(),
                                  &mut provided);
         }
-        Some((Universe(PhantomData), provided.into()))
+        Some((Universe { buffer: None }, provided.into()))
     }
 }
 

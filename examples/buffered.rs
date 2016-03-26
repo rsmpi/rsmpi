@@ -1,0 +1,28 @@
+extern crate mpi;
+
+use mpi::traits::*;
+use mpi::request::{WaitGuard};
+
+const BUFFER_SIZE: usize = 10 * 1024 * 1024;
+
+fn main() {
+    let mut universe = mpi::initialize().unwrap();
+    // Try to attach a buffer.
+    universe.set_buffer_size(BUFFER_SIZE);
+    // Check buffer size matches.
+    assert_eq!(universe.buffer_size(), BUFFER_SIZE);
+    // Try to detach the buffer.
+    universe.detach_buffer();
+    // Attach another buffer.
+    universe.set_buffer_size(BUFFER_SIZE);
+
+    let world = universe.world();
+
+    let x = vec![3.1415f32; 1024];
+    let mut y = vec![0.0; 1024];
+    {
+        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(&mut y[..]));
+        world.this_process().buffered_send(&x[..]);
+    }
+    assert_eq!(x, y);
+}
