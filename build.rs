@@ -4,6 +4,7 @@ extern crate gcc;
 extern crate bindgen;
 
 use std::{env, process};
+use std::path::Path;
 
 /// splits a command line by space and collects all arguments that start with `prefix`
 fn collect_args_with_prefix<'a>(cmd: &'a str, prefix: &str) -> Vec<&'a str> {
@@ -52,7 +53,9 @@ fn main() {
         .unwrap();
 
     // Write the bindings to disk.
+    let out_dir = env::var("OUT_DIR").expect("cargo did not set OUT_DIR");
+    let out_file = Path::new(&out_dir).join("functions_and_types.rs");
     bindings
-        .write_to_file("src/ffi/functions_and_types.rs")
+        .write_to_file(out_file)
         .unwrap()
 }
