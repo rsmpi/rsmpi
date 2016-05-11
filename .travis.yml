@@ -11,16 +11,7 @@ addons:
       # bindgen dependency
       - libclang-3.4-dev
 
-rust:
-  - stable
-  - beta
-
 env:
-  matrix:
-    - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2
-    - MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4
-    - MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.10.1
-    - MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.8.8
   global:
     - RELEASE_LIBRARY=mpich
     - RELEASE_LIBRARY_VERSION=3.2
@@ -29,6 +20,22 @@ env:
     - secure: "hbB6EhELjgI79FKuov4M11ZWiIIZLyOikV+gcE9KpoedLgHbnhSgpbSBlMZ6QFbsXKNAFX7uHlnNkweqJB+pMHYCL8qL9Vxu4vFd1YRyexJSRo7Ly9T7U0aFYR7XCIboCwu26BKqWRPioWL/3W+e0dFctPDZ9Fp1dlFOGZKW1aAMC15r0ekFY0z7lvY4ph2eA45EygKyYnM3t1VAEzk+vq1cRqOL8zRpkB0ydeLkgW0JUWzM+tLdZCou7bsoqwPGEQgx+rUpBSpDEuB5FW0Bbbyhwhc5B1NKVLSTXpwKYY5sVG2YnC4B/hatagLUUpvXb0ncxzFah5rFL/qNZMiP2MB3G6Xn7SBZhapbnYClc7nsBsk8SQlSCKTnq6ypU1/0ZhR/UKhfZK4Yb5+k1TdQ4MeQUj+6elJOKmnIcrUQxGqVxFjuY5WarARjgyDoeG50iXqmVtC0jDdqpHEahIEzCHj79/KIiARsHss3Hm+eblRaWEQZzUzCSFQhoIUH1rzdSJ2twQyEpGpVVTttQjIGVRdhtute98NyvPz6Mk0hE9HO2m/RnYKieI3NG0TUzDkLANFYic/L8YxSek5uoJaZ3MNfEKELYxvZE7rtKm1TyDpwyJEDO7Sx2jSNX7ahqTX+e6a0so93vE+Wt5BlR9R6oVj7v9H9HfsGeTKpiis1Ol8="
     # CRATES_IO_TOKEN=...
     - secure: "FYoav+St+90i6AQzyMw+NJdtktG2UMK7szt7ar88ww7bkkCd9I9qgtqqW6mopzpnguRhBusxoCsmiroFbXVO1R3vSP1ugECUTDCK7x/Tqkc/wa0MOqlmBneG+bZOF3YjiDTfaAIUI8r10RstfRhRwIKgZI3vE/8TEgTGlWW+cZuHaz7U4wesHUY+euuSoLuD7XrlI1N9EBAbHwTtLpfHoONSw8fxVQc0nQ7vTBrC+UQiRZA8oFP7qpJ/9xfsCMWSyVihuSzdHoCRIxCs+rWROBpULAqvPa0vYdxE7oQHPwbaQ8bsv088Mowjaq5Dp8NimodimQsx7D58g/e+INEk9q3dwj/RN0iMgNYqhYv9Wu+vMWNMbvReSHlJtIYWtl2varXQI2hOPC/+6OhfzlAT1hBsrkJjZ6bQ9Yv9NUGNQHNrFvdCKOEvSG3wHNB10mfBB/KSVzB/ya8suEBR07CjzbrzTlH2SUYfSHS5iNbP791kAYp2MyMn69ZajeEZ3iYwwG2lHH2CONB/QiAX6ZDc5J3jM8gmxu2S5QkZkZieBnDZG/OsYjOw7Zka3ktlGW+Khn3RRRsDYMrpAN5qmiEO6vdDP/XcRZw4ERfHQd8A9kEhnhJGOlg6KGyNM0pi7s4IX8VWkbxAmY53HqsyK1eagIVLsxkzCn3GKfVQuufHBBc="
+
+
+matrix:
+  include:
+    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2
+      rust: stable
+    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4
+      rust: stable
+    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.10.2
+      rust: stable
+    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=1.8.8
+      rust: stable
+    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2
+      rust: beta
+    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2
+      rust: nightly
 
 install:
   - sh ci/install-mpi.sh
