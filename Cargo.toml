@@ -1,7 +1,7 @@
 [package]
 name = "mpi"
 version = "0.4.0"
-authors = ["Benedikt Steinbusch <benedikt.steinbusch@googlemail.com>"]
+authors = ["Benedikt Steinbusch <ben@rockshrub.de>"]
 description = "Message Passing Interface bindings for Rust"
 homepage = "https://github.com/bsteinb/rsmpi"
 repository = "https://github.com/bsteinb/rsmpi"
@@ -18,6 +18,7 @@ clippy = { version = "0.0.43", optional = true }
 [build-dependencies]
 gcc = "0.3"
 bindgen = { git = "https://github.com/japaric/rust-bindgen.git", rev = "19043ea5d8a525b6b8de211ff63f4b6a406fcb49" }
+build-probe-mpi = { path = "./build-probe-mpi" }
 
 #[dependencies.c_import]
 #git = "https://github.com/vojtechkral/rust-c-import.git"

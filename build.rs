@@ -2,17 +2,11 @@
 extern crate gcc;
 // Generates the Rust header for the C API.
 extern crate bindgen;
+// Finds out information about the MPI library
+extern crate build_probe_mpi;
 
-use std::{env, process};
+use std::env;
 use std::path::Path;
-
-/// splits a command line by space and collects all arguments that start with `prefix`
-fn collect_args_with_prefix<'a>(cmd: &'a str, prefix: &str) -> Vec<&'a str> {
-    cmd
-        .split_whitespace()
-        .filter(|arg| arg.starts_with(prefix))
-        .collect()
-}
 
 fn main() {
     // Use `mpicc` wrapper rather than the system C compiler.
@@ -20,31 +14,35 @@ fn main() {
     // Build the `rsmpi` C shim library.
     gcc::compile_library("librsmpi.a", &["src/ffi/rsmpi.c"]);
 
-    // Capture the output of `mpicc -show`. This usually gives the actual compiler command line
-    // invoked by the `mpicc` compiler wrapper.
-    let output = String::from_utf8(
-        process::Command::new("mpicc").arg("-show").output().unwrap().stdout).unwrap();
-    // Collect the libraries that an MPI C program should be linked to...
-    let libs = collect_args_with_prefix(output.as_ref(), "-l");
-    // ... and the library search directories...
-    let libdirs = collect_args_with_prefix(output.as_ref(), "-L");
-    // ... and the header search directories.
-    let headerdirs = collect_args_with_prefix(output.as_ref(), "-I");
+    // Try to find an MPI library
+    let lib = match build_probe_mpi::probe() {
+        Ok(lib) => lib,
+        Err(errs) => {
+            println!("Could not find MPI library for various reasons:\n");
+            for (i, err) in errs.iter().enumerate() {
+                println!("Reason #{}:\n{}\n", i, err);
+            }
+            panic!();
+        }
+    };
 
     // Let `rustc` know about the library search directories.
-    for dir in libdirs.iter() { println!("cargo:rustc-link-search=native={}", &dir[2..]); }
+    for dir in &lib.lib_paths {
+        println!("cargo:rustc-link-search=native={}", dir.display());
+    }
 
     let mut builder = bindgen::builder();
     // Let `bindgen` know about libraries and search directories.
-    for lib in libs.iter() { builder.link(&lib[2..]); }
-    for dir in libdirs.iter() { builder.clang_arg(*dir); }
-    for dir in headerdirs.iter() { builder.clang_arg(*dir); }
+    for lib in &lib.libs { builder.link(lib.clone()); }
+    for dir in &lib.lib_paths { builder.clang_arg(format!("-L{}", dir.display())); }
+    for dir in &lib.include_paths { builder.clang_arg(format!("-I{}", dir.display())); }
 
     // Tell `bindgen` where to find system headers.
     if let Some(clang_include_dir) = bindgen::get_include_dir() {
         builder.clang_arg("-I");
         builder.clang_arg(clang_include_dir);
     }
+
     // Generate Rust bindings for the MPI C API.
     let bindings = builder
         .header("src/ffi/rsmpi.h")
