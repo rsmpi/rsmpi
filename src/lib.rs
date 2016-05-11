@@ -1,23 +1,25 @@
 // #![feature(plugin, custom_attribute)]
 // #![plugin(c_import)]
 
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", warn(cast_possible_truncation))]
 #![cfg_attr(feature="clippy", warn(cast_possible_wrap))]
 #![cfg_attr(feature="clippy", warn(cast_precision_loss))]
 #![cfg_attr(feature="clippy", warn(cast_sign_loss))]
+#![cfg_attr(feature="clippy", warn(enum_glob_use))]
 #![cfg_attr(feature="clippy", warn(mut_mut))]
 #![cfg_attr(feature="clippy", warn(mutex_integer))]
 #![cfg_attr(feature="clippy", warn(non_ascii_literal))]
+#![cfg_attr(feature="clippy", warn(nonminimal_bool))]
 #![cfg_attr(feature="clippy", warn(option_unwrap_used))]
 #![cfg_attr(feature="clippy", warn(result_unwrap_used))]
+#![cfg_attr(feature="clippy", warn(single_match_else))]
 #![cfg_attr(feature="clippy", warn(string_add))]
 #![cfg_attr(feature="clippy", warn(string_add_assign))]
 #![cfg_attr(feature="clippy", warn(unicode_not_nfc))]
 #![cfg_attr(feature="clippy", warn(wrong_pub_self_convention))]
 
 #![deny(missing_docs)]
+#![deny(warnings)]
 
 //! Message Passing Interface bindings for Rust
 //!

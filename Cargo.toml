@@ -13,7 +13,6 @@ build = "build.rs"
 
 [dependencies]
 conv = "0.3"
-clippy = { version = "0.0.43", optional = true }
 
 [build-dependencies]
 gcc = "0.3"
@@ -25,3 +24,5 @@ build-probe-mpi = { path = "./build-probe-mpi" }
 
 [features]
 default=[]
+lint = [ "clippy" ]
+clippy = []
