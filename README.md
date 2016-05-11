@@ -8,7 +8,7 @@ parallel computation on High Performance Computing systems. The MPI specificatio
 bindings for the C programming language (and through it C++) as well as for the Fortran
 programming language. This library tries to bridge the gap into a more rustic world.
 
-[travis-shield]: https://img.shields.io/travis/bsteinb/rsmpi.svg?style=flat-square
+[travis-shield]: https://img.shields.io/travis/bsteinb/rsmpi/master.svg?style=flat-square
 [travis]: https://travis-ci.org/bsteinb/rsmpi
 [doc-shield]: https://img.shields.io/badge/documentation-hosted-blue.svg?style=flat-square
 [doc]: http://bsteinb.github.io/rsmpi/
