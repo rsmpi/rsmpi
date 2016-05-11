@@ -17,7 +17,7 @@ clippy = { version = "0.0.43", optional = true }
 
 [build-dependencies]
 gcc = "0.3"
-bindgen = { git = "https://github.com/japaric/rust-bindgen.git", rev = "19043ea5d8a525b6b8de211ff63f4b6a406fcb49" }
+bindgen = { git = "https://github.com/crabtw/rust-bindgen.git", rev = "0433980286a5264e3d69214aa42e314c37238cf6" }
 build-probe-mpi = { path = "./build-probe-mpi" }
 
 #[dependencies.c_import]
