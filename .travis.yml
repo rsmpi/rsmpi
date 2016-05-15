@@ -36,6 +36,8 @@ matrix:
       rust: beta
     - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2
       rust: nightly
+  allow_failures:
+    - rust: nightly
 
 install:
   - sh ci/install-mpi.sh
