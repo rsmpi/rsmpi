@@ -85,9 +85,9 @@ pub trait Request: AsRaw<Raw = MPI_Request> + AsRawMut {
         assert!(flag == 0 || self.is_null());
         if flag != 0 {
             mem::forget(self);
-            Result::Ok(Status::from_raw(status))
+            Ok(Status::from_raw(status))
         } else {
-            Result::Err(self)
+            Err(self)
         }
     }
 

@@ -757,6 +757,7 @@ impl<'a, C> Destination for Process<'a, C> where C: 'a + Communicator
 /// # Standard section(s)
 ///
 /// 3.2.5
+#[derive(Copy, Clone)]
 pub struct Status(MPI_Status);
 
 impl Status {

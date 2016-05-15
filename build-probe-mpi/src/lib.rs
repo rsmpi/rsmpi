@@ -64,7 +64,7 @@ fn collect_args_with_prefix(cmd: &str, prefix: &str) -> Vec<String> {
 pub fn probe() -> Result<Library, Vec<Box<Error>>> {
     let mut errs = vec![];
 
-    match probe_via_mpicc(&env::var("MPICC").unwrap_or(String::from("mpicc"))) {
+    match probe_via_mpicc(&env::var("MPICC").unwrap_or_else(|_| String::from("mpicc"))) {
         Ok(lib) => return Ok(lib),
         Err(err) => errs.push(Box::new(err) as Box<Error>)
     }
@@ -79,5 +79,5 @@ pub fn probe() -> Result<Library, Vec<Box<Error>>> {
         Err(err) => errs.push(Box::new(err) as Box<Error>)
     }
 
-    return Err(errs);
+    Err(errs)
 }

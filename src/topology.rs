@@ -373,6 +373,7 @@ impl Drop for UserCommunicator {
 }
 
 /// A color used in a communicator split
+#[derive(Copy, Clone, Debug)]
 pub struct Color(c_int);
 
 impl Color {
