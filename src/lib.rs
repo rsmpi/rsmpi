@@ -1,6 +1,18 @@
 // #![feature(plugin, custom_attribute)]
 // #![plugin(c_import)]
 
+#![deny(missing_docs)]
+
+#![warn(missing_copy_implementations)]
+#![warn(trivial_casts)]
+#![warn(trivial_numeric_casts)]
+// This has false positives on #[macro_use],
+// see https://github.com/rust-lang/rust/issues/30849
+// #![warn(unused_extern_crates)]
+#![warn(unused_import_braces)]
+#![warn(unused_qualifications)]
+#![deny(warnings)]
+
 #![cfg_attr(feature="clippy", warn(cast_possible_truncation))]
 #![cfg_attr(feature="clippy", warn(cast_possible_wrap))]
 #![cfg_attr(feature="clippy", warn(cast_precision_loss))]
@@ -17,9 +29,6 @@
 #![cfg_attr(feature="clippy", warn(string_add_assign))]
 #![cfg_attr(feature="clippy", warn(unicode_not_nfc))]
 #![cfg_attr(feature="clippy", warn(wrong_pub_self_convention))]
-
-#![deny(missing_docs)]
-#![deny(warnings)]
 
 //! Message Passing Interface bindings for Rust
 //!
