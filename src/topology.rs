@@ -307,9 +307,9 @@ impl SystemCommunicator {
     }
 }
 
-impl AsRaw for SystemCommunicator {
+unsafe impl AsRaw for SystemCommunicator {
     type Raw = MPI_Comm;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
@@ -354,9 +354,9 @@ impl AsCommunicator for UserCommunicator {
     }
 }
 
-impl AsRaw for UserCommunicator {
+unsafe impl AsRaw for UserCommunicator {
     type Raw = MPI_Comm;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
@@ -705,9 +705,9 @@ impl SystemGroup {
     }
 }
 
-impl AsRaw for SystemGroup {
+unsafe impl AsRaw for SystemGroup {
     type Raw = MPI_Group;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
@@ -730,9 +730,9 @@ impl Drop for UserGroup {
     }
 }
 
-impl AsRaw for UserGroup {
+unsafe impl AsRaw for UserGroup {
     type Raw = MPI_Group;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }

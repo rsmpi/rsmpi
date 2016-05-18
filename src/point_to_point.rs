@@ -46,7 +46,7 @@ pub mod traits {
 /// # Standard section(s)
 ///
 /// 3.2.3
-pub trait Source: AsCommunicator {
+pub unsafe trait Source: AsCommunicator {
     /// `Rank` that identifies the source
     fn source_rank(&self) -> Rank;
 
@@ -401,14 +401,14 @@ pub trait Source: AsCommunicator {
     }
 }
 
-impl<'a, C> Source for AnyProcess<'a, C> where C: 'a + Communicator
+unsafe impl<'a, C> Source for AnyProcess<'a, C> where C: 'a + Communicator
 {
     fn source_rank(&self) -> Rank {
         ffi::RSMPI_ANY_SOURCE
     }
 }
 
-impl<'a, C> Source for Process<'a, C> where C: 'a + Communicator
+unsafe impl<'a, C> Source for Process<'a, C> where C: 'a + Communicator
 {
     fn source_rank(&self) -> Rank {
         self.rank()
@@ -804,7 +804,7 @@ pub struct Message(MPI_Message);
 impl Message {
     /// True if the `Source` for the probe was the null process.
     pub fn is_no_proc(&self) -> bool {
-        unsafe { self.as_raw() == ffi::RSMPI_MESSAGE_NO_PROC }
+        self.as_raw() == ffi::RSMPI_MESSAGE_NO_PROC
     }
 
     /// Receive a previously probed message containing a single instance of type `Msg`.
@@ -867,25 +867,23 @@ impl Message {
     }
 }
 
-impl AsRaw for Message {
+unsafe impl AsRaw for Message {
     type Raw = MPI_Message;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
 
-impl AsRawMut for Message {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
+unsafe impl AsRawMut for Message {
+    fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
         &mut self.0
     }
 }
 
 impl Drop for Message {
     fn drop(&mut self) {
-        unsafe {
-            assert!(self.as_raw() == ffi::RSMPI_MESSAGE_NULL,
-                    "matched message dropped without receiving.");
-        }
+        assert!(self.as_raw() == ffi::RSMPI_MESSAGE_NULL,
+                "matched message dropped without receiving.");
     }
 }
 

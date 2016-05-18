@@ -37,7 +37,7 @@ pub mod traits {
 pub trait Request: AsRaw<Raw = MPI_Request> + AsRawMut {
     /// Returns true for a null request handle.
     fn is_null(&self) -> bool {
-        unsafe { self.as_raw() == ffi::RSMPI_REQUEST_NULL }
+        self.as_raw() == ffi::RSMPI_REQUEST_NULL
     }
 
     /// Wait for an operation to finish.
@@ -131,15 +131,15 @@ impl PlainRequest {
     }
 }
 
-impl AsRaw for PlainRequest {
+unsafe impl AsRaw for PlainRequest {
     type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
 
-impl AsRawMut for PlainRequest {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
+unsafe impl AsRawMut for PlainRequest {
+    fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
         &mut (self.0)
     }
 }
@@ -172,15 +172,15 @@ impl<'b, Buf: 'b + ?Sized> ReadRequest<'b, Buf> {
     }
 }
 
-impl<'b, Buf: 'b + ?Sized> AsRaw for ReadRequest<'b, Buf> {
+unsafe impl<'b, Buf: 'b + ?Sized> AsRaw for ReadRequest<'b, Buf> {
     type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
 
-impl<'b, Buf: 'b + ?Sized> AsRawMut for ReadRequest<'b, Buf> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
+unsafe impl<'b, Buf: 'b + ?Sized> AsRawMut for ReadRequest<'b, Buf> {
+    fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
         &mut (self.0)
     }
 }
@@ -213,15 +213,15 @@ impl<'b, Buf: 'b + ?Sized> WriteRequest<'b, Buf> {
     }
 }
 
-impl<'b, Buf: 'b + ?Sized> AsRaw for WriteRequest<'b, Buf> {
+unsafe impl<'b, Buf: 'b + ?Sized> AsRaw for WriteRequest<'b, Buf> {
     type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
 
-impl<'b, Buf: 'b + ?Sized> AsRawMut for WriteRequest<'b, Buf> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
+unsafe impl<'b, Buf: 'b + ?Sized> AsRawMut for WriteRequest<'b, Buf> {
+    fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
         &mut (self.0)
     }
 }
@@ -257,15 +257,15 @@ impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> ReadWriteRequest<'s, 'r, S, R> {
     }
 }
 
-impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> AsRaw for ReadWriteRequest<'s, 'r, S, R> {
+unsafe impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> AsRaw for ReadWriteRequest<'s, 'r, S, R> {
     type Raw = MPI_Request;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
 
-impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> AsRawMut for ReadWriteRequest<'s, 'r, S, R> {
-    unsafe fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
+unsafe impl<'s, 'r, S: 's + ?Sized, R: 'r + ?Sized> AsRawMut for ReadWriteRequest<'s, 'r, S, R> {
+    fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw {
         &mut (self.0)
     }
 }

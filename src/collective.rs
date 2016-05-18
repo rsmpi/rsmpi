@@ -1313,9 +1313,9 @@ impl SystemOperation {
     }
 }
 
-impl AsRaw for SystemOperation {
+unsafe impl AsRaw for SystemOperation {
     type Raw = MPI_Op;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }

@@ -68,9 +68,9 @@ pub mod traits {
 #[derive(Copy, Clone)]
 pub struct SystemDatatype(MPI_Datatype);
 
-impl AsRaw for SystemDatatype {
+unsafe impl AsRaw for SystemDatatype {
     type Raw = MPI_Datatype;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
@@ -82,7 +82,7 @@ impl Datatype for SystemDatatype {}
 /// # Standard section(s)
 ///
 /// 3.2.2
-pub trait Equivalence {
+pub unsafe trait Equivalence {
     /// The type of the equivalent MPI datatype (e.g. `SystemDatatype` or `UserDatatype`)
     type Out: Datatype;
     /// The MPI datatype that is equivalent to this Rust type
@@ -91,7 +91,7 @@ pub trait Equivalence {
 
 macro_rules! equivalent_system_datatype {
     ($rstype:path, $mpitype:path) => (
-        impl Equivalence for $rstype {
+        unsafe impl Equivalence for $rstype {
             type Out = SystemDatatype;
             fn equivalent_datatype() -> Self::Out { SystemDatatype($mpitype) }
         }
@@ -294,9 +294,9 @@ impl Drop for UserDatatype {
     }
 }
 
-impl AsRaw for UserDatatype {
+unsafe impl AsRaw for UserDatatype {
     type Raw = MPI_Datatype;
-    unsafe fn as_raw(&self) -> Self::Raw {
+    fn as_raw(&self) -> Self::Raw {
         self.0
     }
 }
@@ -309,14 +309,14 @@ impl<'a, D> Datatype for &'a D where D: 'a + Datatype
 {}
 
 /// Something that has an associated datatype
-pub trait AsDatatype {
+pub unsafe trait AsDatatype {
     /// The type of the associated MPI datatype (e.g. `SystemDatatype` or `UserDatatype`)
     type Out: Datatype;
     /// The associated MPI datatype
     fn as_datatype(&self) -> Self::Out;
 }
 
-impl<T> AsDatatype for T where T: Equivalence
+unsafe impl<T> AsDatatype for T where T: Equivalence
 {
     type Out = <T as Equivalence>::Out;
     fn as_datatype(&self) -> Self::Out {
@@ -324,7 +324,7 @@ impl<T> AsDatatype for T where T: Equivalence
     }
 }
 
-impl<T> AsDatatype for [T] where T: Equivalence
+unsafe impl<T> AsDatatype for [T] where T: Equivalence
 {
     type Out = <T as Equivalence>::Out;
     fn as_datatype(&self) -> Self::Out {
@@ -333,19 +333,19 @@ impl<T> AsDatatype for [T] where T: Equivalence
 }
 
 /// A countable collection of things.
-pub trait Collection {
+pub unsafe trait Collection {
     /// How many things are in this collection.
     fn count(&self) -> Count;
 }
 
-impl<T> Collection for T where T: Equivalence
+unsafe impl<T> Collection for T where T: Equivalence
 {
     fn count(&self) -> Count {
         1
     }
 }
 
-impl<T> Collection for [T] where T: Equivalence
+unsafe impl<T> Collection for [T] where T: Equivalence
 {
     fn count(&self) -> Count {
         self.len().value_as().expect("Length of slice cannot be expressed as an MPI Count.")
@@ -353,19 +353,19 @@ impl<T> Collection for [T] where T: Equivalence
 }
 
 /// Provides a pointer to the starting address in memory.
-pub trait Pointer {
+pub unsafe trait Pointer {
     /// A pointer to the starting address in memory
     unsafe fn pointer(&self) -> *const c_void;
 }
 
-impl<T> Pointer for T where T: Equivalence
+unsafe impl<T> Pointer for T where T: Equivalence
 {
     unsafe fn pointer(&self) -> *const c_void {
         mem::transmute(self)
     }
 }
 
-impl<T> Pointer for [T] where T: Equivalence
+unsafe impl<T> Pointer for [T] where T: Equivalence
 {
     unsafe fn pointer(&self) -> *const c_void {
         mem::transmute(self.as_ptr())
@@ -373,19 +373,19 @@ impl<T> Pointer for [T] where T: Equivalence
 }
 
 /// Provides a mutable pointer to the starting address in memory.
-pub trait PointerMut {
+pub unsafe trait PointerMut {
     /// A mutable pointer to the starting address in memory
     unsafe fn pointer_mut(&mut self) -> *mut c_void;
 }
 
-impl<T> PointerMut for T where T: Equivalence
+unsafe impl<T> PointerMut for T where T: Equivalence
 {
     unsafe fn pointer_mut(&mut self) -> *mut c_void {
         mem::transmute(self)
     }
 }
 
-impl<T> PointerMut for [T] where T: Equivalence
+unsafe impl<T> PointerMut for [T] where T: Equivalence
 {
     unsafe fn pointer_mut(&mut self) -> *mut c_void {
         mem::transmute(self.as_mut_ptr())
@@ -394,18 +394,18 @@ impl<T> PointerMut for [T] where T: Equivalence
 
 /// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
 /// `as_datatype()`.
-pub trait Buffer: Pointer + Collection + AsDatatype { }
-impl<T> Buffer for T where T: Equivalence
+pub unsafe trait Buffer: Pointer + Collection + AsDatatype { }
+unsafe impl<T> Buffer for T where T: Equivalence
 {}
-impl<T> Buffer for [T] where T: Equivalence
+unsafe impl<T> Buffer for [T] where T: Equivalence
 {}
 
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
 /// copies of `as_datatype()`.
-pub trait BufferMut: PointerMut + Collection + AsDatatype { }
-impl<T> BufferMut for T where T: Equivalence
+pub unsafe trait BufferMut: PointerMut + Collection + AsDatatype { }
+unsafe impl<T> BufferMut for T where T: Equivalence
 {}
-impl<T> BufferMut for [T] where T: Equivalence
+unsafe impl<T> BufferMut for [T] where T: Equivalence
 {}
 
 /// A buffer with a user specified count and datatype
@@ -444,7 +444,7 @@ impl<'d, 'b, D, B: ?Sized> View<'d, 'b, D, B>
     }
 }
 
-impl<'d, 'b, D, B: ?Sized> AsDatatype for View<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> AsDatatype for View<'d, 'b, D, B>
     where D: 'd + Datatype,
           B: 'b + Pointer
 {
@@ -454,7 +454,7 @@ impl<'d, 'b, D, B: ?Sized> AsDatatype for View<'d, 'b, D, B>
     }
 }
 
-impl<'d, 'b, D, B: ?Sized> Collection for View<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> Collection for View<'d, 'b, D, B>
     where D: 'd + Datatype,
           B: 'b + Pointer
 {
@@ -463,7 +463,7 @@ impl<'d, 'b, D, B: ?Sized> Collection for View<'d, 'b, D, B>
     }
 }
 
-impl<'d, 'b, D, B: ?Sized> Pointer for View<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> Pointer for View<'d, 'b, D, B>
     where D: 'd + Datatype,
           B: 'b + Pointer
 {
@@ -472,7 +472,7 @@ impl<'d, 'b, D, B: ?Sized> Pointer for View<'d, 'b, D, B>
     }
 }
 
-impl<'d, 'b, D, B: ?Sized> Buffer for View<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> Buffer for View<'d, 'b, D, B>
     where D: 'd + Datatype,
           B: 'b + Pointer
 {}
@@ -513,7 +513,7 @@ impl<'d, 'b, D, B: ?Sized> MutView<'d, 'b, D, B>
     }
 }
 
-impl<'d, 'b, D, B: ?Sized> AsDatatype for MutView<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> AsDatatype for MutView<'d, 'b, D, B>
     where D: 'd + Datatype,
           B: 'b + PointerMut
 {
@@ -523,7 +523,7 @@ impl<'d, 'b, D, B: ?Sized> AsDatatype for MutView<'d, 'b, D, B>
     }
 }
 
-impl<'d, 'b, D, B: ?Sized> Collection for MutView<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> Collection for MutView<'d, 'b, D, B>
     where D: 'd + Datatype,
           B: 'b + PointerMut
 {
@@ -532,7 +532,7 @@ impl<'d, 'b, D, B: ?Sized> Collection for MutView<'d, 'b, D, B>
     }
 }
 
-impl<'d, 'b, D, B: ?Sized> PointerMut for MutView<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> PointerMut for MutView<'d, 'b, D, B>
     where D: 'd + Datatype,
           B: 'b + PointerMut
 {
@@ -541,7 +541,7 @@ impl<'d, 'b, D, B: ?Sized> PointerMut for MutView<'d, 'b, D, B>
     }
 }
 
-impl<'d, 'b, D, B: ?Sized> BufferMut for MutView<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> BufferMut for MutView<'d, 'b, D, B>
     where D: 'd + Datatype,
           B: 'b + PointerMut
 {}
@@ -595,7 +595,7 @@ impl<'b, B: ?Sized, C, D> Partition<'b, B, C, D>
     }
 }
 
-impl<'b, B: ?Sized, C, D> AsDatatype for Partition<'b, B, C, D> where B: 'b + AsDatatype
+unsafe impl<'b, B: ?Sized, C, D> AsDatatype for Partition<'b, B, C, D> where B: 'b + AsDatatype
 {
     type Out = <B as AsDatatype>::Out;
     fn as_datatype(&self) -> Self::Out {
@@ -603,7 +603,7 @@ impl<'b, B: ?Sized, C, D> AsDatatype for Partition<'b, B, C, D> where B: 'b + As
     }
 }
 
-impl<'b, B: ?Sized, C, D> Pointer for Partition<'b, B, C, D> where B: 'b + Pointer
+unsafe impl<'b, B: ?Sized, C, D> Pointer for Partition<'b, B, C, D> where B: 'b + Pointer
 {
     unsafe fn pointer(&self) -> *const c_void {
         self.buf.pointer()
@@ -654,7 +654,7 @@ impl<'b, B: ?Sized, C, D> PartitionMut<'b, B, C, D>
     }
 }
 
-impl<'b, B: ?Sized, C, D> AsDatatype for PartitionMut<'b, B, C, D> where B: 'b + AsDatatype
+unsafe impl<'b, B: ?Sized, C, D> AsDatatype for PartitionMut<'b, B, C, D> where B: 'b + AsDatatype
 {
     type Out = <B as AsDatatype>::Out;
     fn as_datatype(&self) -> Self::Out {
@@ -662,7 +662,7 @@ impl<'b, B: ?Sized, C, D> AsDatatype for PartitionMut<'b, B, C, D> where B: 'b +
     }
 }
 
-impl<'b, B: ?Sized, C, D> PointerMut for PartitionMut<'b, B, C, D> where B: 'b + PointerMut
+unsafe impl<'b, B: ?Sized, C, D> PointerMut for PartitionMut<'b, B, C, D> where B: 'b + PointerMut
 {
     unsafe fn pointer_mut(&mut self) -> *mut c_void {
         self.buf.pointer_mut()
