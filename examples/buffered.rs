@@ -1,7 +1,7 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::request::{WaitGuard};
+use mpi::request::WaitGuard;
 
 const BUFFER_SIZE: usize = 10 * 1024 * 1024;
 

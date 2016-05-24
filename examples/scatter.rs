@@ -12,7 +12,7 @@ fn main() {
     let root_process = world.process_at_rank(root_rank);
 
     let mut x = 0 as Rank;
-    if rank == root_rank { 
+    if rank == root_rank {
         let v = (0..size).collect::<Vec<_>>();
         root_process.scatter_into_root(&v[..], &mut x);
     } else {
