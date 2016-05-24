@@ -126,13 +126,9 @@
 //!
 //! [MPIspec]: http://www.mpi-forum.org/docs/docs.html
 
-use std::mem;
-use std::string::FromUtf8Error;
-use std::os::raw::{c_char, c_int};
+use std::os::raw::c_int;
 
 extern crate conv;
-
-use conv::ConvUtil;
 
 /// The raw C language MPI API
 ///
@@ -144,6 +140,7 @@ pub mod ffi;
 
 pub mod collective;
 pub mod datatype;
+pub mod environment;
 pub mod point_to_point;
 pub mod raw;
 pub mod request;
@@ -160,7 +157,7 @@ pub mod traits {
 }
 
 #[doc(inline)]
-pub use topology::{initialize, initialize_with_threading, Threading};
+pub use environment::{initialize, initialize_with_threading, Threading, time, time_resolution};
 
 use ffi::MPI_Aint;
 
@@ -172,39 +169,3 @@ pub type Count = c_int;
 pub type Tag = c_int;
 /// An address in memory
 pub type Address = MPI_Aint;
-
-/// Identifies the version of the MPI standard implemented by the library.
-///
-/// Returns a tuple of `(version, subversion)`, e.g. `(3, 0)`.
-///
-/// Can be called without initializing MPI.
-pub fn get_version() -> (c_int, c_int) {
-    let mut version: c_int = unsafe { mem::uninitialized() };
-    let mut subversion: c_int = unsafe { mem::uninitialized() };
-    unsafe {
-        ffi::MPI_Get_version(&mut version, &mut subversion);
-    }
-    (version, subversion)
-}
-
-/// Describes the version of the MPI library itself.
-///
-/// Can return an `Err` if the description of the MPI library is not a UTF-8 string.
-///
-/// Can be called without initializing MPI.
-pub fn get_library_version() -> Result<String, FromUtf8Error> {
-    let bufsize = ffi::RSMPI_MAX_LIBRARY_VERSION_STRING.value_as().expect(
-        &format!("MPI_MAX_LIBRARY_SIZE ({}) cannot be expressed as a usize.",
-            ffi::RSMPI_MAX_LIBRARY_VERSION_STRING)
-        );
-    let mut buf = vec![0u8; bufsize];
-    let mut len: c_int = 0;
-
-    unsafe {
-        ffi::MPI_Get_library_version(buf.as_mut_ptr() as *mut c_char, &mut len);
-    }
-    buf.truncate(len.value_as().expect(&format!("Length of library version string ({}) cannot \
-                                                 be expressed as a usize.",
-                                                len)));
-    String::from_utf8(buf)
-}

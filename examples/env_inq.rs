@@ -1,11 +1,11 @@
 extern crate mpi;
 
 fn main() {
-    let (version, subversion) = mpi::get_version();
+    let (version, subversion) = mpi::environment::version();
     println!("This is MPI-{}.{}.", version, subversion);
-    println!("{}", mpi::get_library_version().unwrap());
-    let universe = mpi::initialize().unwrap();
-    println!("{}", universe.get_processor_name().unwrap());
+    println!("{}", mpi::environment::library_version().unwrap());
+    let _universe = mpi::initialize().unwrap();
+    println!("{}", mpi::environment::processor_name().unwrap());
 
     assert!(version >= 3, "Rust MPI bindings require MPI standard 3.0 and up.");
 }
