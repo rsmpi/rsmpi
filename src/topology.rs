@@ -379,6 +379,17 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         }
         UserGroup(group)
     }
+
+    /// Abort program execution
+    ///
+    /// # Standard section(s)
+    ///
+    /// 8.7
+    fn abort(&self, errorcode: c_int) {
+        unsafe {
+            ffi::MPI_Abort(self.as_raw(), errorcode);
+        }
+    }
 }
 
 /// The relation between two communicators.
