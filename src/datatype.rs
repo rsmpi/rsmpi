@@ -283,6 +283,27 @@ impl UserDatatype {
         }
         UserDatatype(newtype)
     }
+
+    /// Constructs a new datatype out of blocks of different length, displacement and datatypes
+    ///
+    /// # Examples
+    /// See `examples/structured.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 4.1.2
+    pub fn structured(count: Count, blocklengths: &[Count], displacements: &[Address],
+                      types: &[&Datatype<Raw = MPI_Datatype>]) -> UserDatatype
+    {
+        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
+        let types = types.iter().map(|t| t.as_raw()).collect::<Vec<_>>();
+        unsafe {
+            ffi::MPI_Type_create_struct(count, blocklengths.as_ptr(), displacements.as_ptr(),
+                types.as_ptr(), &mut newtype);
+            ffi::MPI_Type_commit(&mut newtype);
+        }
+        UserDatatype(newtype)
+    }
 }
 
 impl Drop for UserDatatype {
@@ -687,3 +708,19 @@ impl<'b, B: ?Sized, C, D> PartitionedBufferMut for PartitionMut<'b, B, C, D>
           C: Borrow<[Count]>,
           D: Borrow<[Count]>
 {}
+
+/// Returns the address of the argument in a format suitable for use with datatype constructors
+///
+/// # Examples
+/// See `examples/structured.rs`
+///
+/// # Standard section(s)
+///
+/// 4.1.5
+pub fn address_of<T>(x: &T) -> Address {
+    let mut address = unsafe { mem::uninitialized() };
+    unsafe {
+        ffi::MPI_Get_address(mem::transmute(x), &mut address);
+    }
+    address
+}
