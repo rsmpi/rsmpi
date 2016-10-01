@@ -4,6 +4,8 @@ extern crate gcc;
 extern crate bindgen;
 // Finds out information about the MPI library
 extern crate build_probe_mpi;
+// Inspect version of rustc compiler
+extern crate rustc_version;
 
 use std::env;
 use std::path::Path;
@@ -55,5 +57,10 @@ fn main() {
     let out_file = Path::new(&out_dir).join("functions_and_types.rs");
     bindings
         .write_to_file(out_file)
-        .unwrap()
+        .unwrap();
+
+    // Access to extern statics has to be marked unsafe after 1.13.0
+    if rustc_version::version_matches(">=1.13.0") {
+        println!("cargo:rustc-cfg=extern_statics_are_unsafe");
+    }
 }

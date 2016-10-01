@@ -18,6 +18,7 @@ conv = "0.3"
 gcc = "0.3"
 bindgen = { git = "https://github.com/crabtw/rust-bindgen.git", rev = "0433980286a5264e3d69214aa42e314c37238cf6" }
 build-probe-mpi = { path = "./build-probe-mpi" }
+rustc_version = "0.1"
 
 #[dependencies.c_import]
 #git = "https://github.com/vojtechkral/rust-c-import.git"
