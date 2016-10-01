@@ -382,7 +382,8 @@ pub unsafe trait Pointer {
 unsafe impl<T> Pointer for T where T: Equivalence
 {
     unsafe fn pointer(&self) -> *const c_void {
-        mem::transmute(self)
+        let p: *const T = self;
+        p as *const c_void
     }
 }
 
@@ -402,7 +403,8 @@ pub unsafe trait PointerMut {
 unsafe impl<T> PointerMut for T where T: Equivalence
 {
     unsafe fn pointer_mut(&mut self) -> *mut c_void {
-        mem::transmute(self)
+        let p: *mut T = self;
+        p as *mut c_void
     }
 }
 
@@ -719,8 +721,9 @@ impl<'b, B: ?Sized, C, D> PartitionedBufferMut for PartitionMut<'b, B, C, D>
 /// 4.1.5
 pub fn address_of<T>(x: &T) -> Address {
     let mut address = unsafe { mem::uninitialized() };
+    let x: *const T = x;
     unsafe {
-        ffi::MPI_Get_address(mem::transmute(x), &mut address);
+        ffi::MPI_Get_address(x as *const c_void, &mut address);
     }
     address
 }

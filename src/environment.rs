@@ -58,9 +58,10 @@ impl Universe {
     pub fn detach_buffer(&mut self) {
         if let Some(buffer) = self.buffer.take() {
             let mut addr: *const c_void = ptr::null();
+            let addr_ptr: *mut *const c_void = &mut addr;
             let mut size: c_int = 0;
             unsafe {
-                ffi::MPI_Buffer_detach(mem::transmute(&mut addr), &mut size);
+                ffi::MPI_Buffer_detach(addr_ptr as *mut c_void, &mut size);
                 assert_eq!(addr, mem::transmute(buffer.as_ptr()));
             }
             assert_eq!(
