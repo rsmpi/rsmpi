@@ -141,6 +141,9 @@ pub unsafe trait Source: AsCommunicator {
     {
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.receive_into_with_tag(&mut res, tag);
+        if status.count(Msg::equivalent_datatype()) == 0 {
+            panic!("Received an empty message.");
+        }
         (res, status)
     }
 
@@ -819,6 +822,9 @@ impl Message {
     {
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.matched_receive_into(&mut res);
+        if status.count(Msg::equivalent_datatype()) == 0 {
+            panic!("Received an empty message.");
+        }
         (res, status)
     }
 
@@ -1086,10 +1092,13 @@ pub struct ReceiveFuture<T> {
     req: PlainRequest
 }
 
-impl<T> ReceiveFuture<T> {
+impl<T> ReceiveFuture<T> where T: Equivalence {
     /// Wait for the receive operation to finish and return the received data.
     pub fn get(self) -> (T, Status) {
         let status = self.req.wait();
+        if status.count(T::equivalent_datatype()) == 0 {
+            panic!("Received an empty message into a ReceiveFuture.");
+        }
         (*self.val, status)
     }
 
@@ -1099,7 +1108,12 @@ impl<T> ReceiveFuture<T> {
     /// is returned.
     pub fn try(mut self) -> Result<(T, Status), Self> {
         match self.req.test() {
-            Ok(status) => Ok((*self.val, status)),
+            Ok(status) => {
+                if status.count(T::equivalent_datatype()) == 0 {
+                    panic!("Received an empty message into a ReceiveFuture.");
+                }
+                Ok((*self.val, status))
+            },
             Err(request) => {
                 self.req = request;
                 Err(self)
