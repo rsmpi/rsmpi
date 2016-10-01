@@ -25,5 +25,3 @@ rustc_version = "0.1"
 
 [features]
 default=[]
-lint = [ "clippy" ]
-clippy = []
