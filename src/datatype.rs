@@ -93,7 +93,9 @@ macro_rules! equivalent_system_datatype {
     ($rstype:path, $mpitype:path) => (
         unsafe impl Equivalence for $rstype {
             type Out = SystemDatatype;
-            fn equivalent_datatype() -> Self::Out { SystemDatatype($mpitype) }
+            fn equivalent_datatype() -> Self::Out {
+                SystemDatatype(unsafe_extern_static!($mpitype))
+            }
         }
     )
 }
@@ -311,7 +313,7 @@ impl Drop for UserDatatype {
         unsafe {
             ffi::MPI_Type_free(&mut self.0);
         }
-        assert_eq!(self.0, ffi::RSMPI_DATATYPE_NULL);
+        assert_eq!(self.0, unsafe_extern_static!(ffi::RSMPI_DATATYPE_NULL));
     }
 }
 

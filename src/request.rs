@@ -37,7 +37,7 @@ pub mod traits {
 pub trait Request: AsRaw<Raw = MPI_Request> + AsRawMut {
     /// Returns true for a null request handle.
     fn is_null(&self) -> bool {
-        self.as_raw() == ffi::RSMPI_REQUEST_NULL
+        self.as_raw() == unsafe_extern_static!(ffi::RSMPI_REQUEST_NULL)
     }
 
     /// Wait for an operation to finish.

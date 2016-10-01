@@ -86,7 +86,7 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.8.1
     fn probe(&self) -> Status {
-        self.probe_with_tag(ffi::RSMPI_ANY_TAG)
+        self.probe_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
     /// Probe a source for incoming messages with guaranteed reception.
@@ -125,7 +125,7 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.8.2
     fn matched_probe(&self) -> (Message, Status) {
-        self.matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
+        self.matched_probe_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
     /// Receive a message containing a single instance of type `Msg`.
@@ -165,7 +165,7 @@ pub unsafe trait Source: AsCommunicator {
     fn receive<Msg>(&self) -> (Msg, Status)
         where Msg: Equivalence
     {
-        self.receive_with_tag(ffi::RSMPI_ANY_TAG)
+        self.receive_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
     /// Receive a message into a `Buffer`.
@@ -201,7 +201,7 @@ pub unsafe trait Source: AsCommunicator {
     fn receive_into<Buf: ?Sized>(&self, buf: &mut Buf) -> Status
         where Buf: BufferMut
     {
-        self.receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
+        self.receive_into_with_tag(buf, unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
     /// Receive a message containing multiple instances of type `Msg` into a `Vec`.
@@ -232,7 +232,7 @@ pub unsafe trait Source: AsCommunicator {
     fn receive_vec<Msg>(&self) -> (Vec<Msg>, Status)
         where Msg: Equivalence
     {
-        self.receive_vec_with_tag(ffi::RSMPI_ANY_TAG)
+        self.receive_vec_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
     /// Initiate an immediate (non-blocking) receive operation.
@@ -274,7 +274,7 @@ pub unsafe trait Source: AsCommunicator {
     fn immediate_receive_into<'b, Buf: ?Sized>(&self, buf: &'b mut Buf) -> WriteRequest<'b, Buf>
         where Buf: 'b + BufferMut
     {
-        self.immediate_receive_into_with_tag(buf, ffi::RSMPI_ANY_TAG)
+        self.immediate_receive_into_with_tag(buf, unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
     /// Initiate a non-blocking receive operation for messages matching tag `tag`.
@@ -315,7 +315,7 @@ pub unsafe trait Source: AsCommunicator {
     fn immediate_receive<Msg>(&self) -> ReceiveFuture<Msg>
         where Msg: Equivalence
     {
-        self.immediate_receive_with_tag(ffi::RSMPI_ANY_TAG)
+        self.immediate_receive_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
     /// Asynchronously probe a source for incoming messages.
@@ -354,7 +354,7 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.8.1
     fn immediate_probe(&self) -> Option<Status> {
-        self.immediate_probe_with_tag(ffi::RSMPI_ANY_TAG)
+        self.immediate_probe_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
     /// Asynchronously probe a source for incoming messages with guaranteed reception.
@@ -397,14 +397,14 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.8.2
     fn immediate_matched_probe(&self) -> Option<(Message, Status)> {
-        self.immediate_matched_probe_with_tag(ffi::RSMPI_ANY_TAG)
+        self.immediate_matched_probe_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 }
 
 unsafe impl<'a, C> Source for AnyProcess<'a, C> where C: 'a + Communicator
 {
     fn source_rank(&self) -> Rank {
-        ffi::RSMPI_ANY_SOURCE
+        unsafe_extern_static!(ffi::RSMPI_ANY_SOURCE)
     }
 }
 
@@ -804,7 +804,7 @@ pub struct Message(MPI_Message);
 impl Message {
     /// True if the `Source` for the probe was the null process.
     pub fn is_no_proc(&self) -> bool {
-        self.as_raw() == ffi::RSMPI_MESSAGE_NO_PROC
+        self.as_raw() == unsafe_extern_static!(ffi::RSMPI_MESSAGE_NO_PROC)
     }
 
     /// Receive a previously probed message containing a single instance of type `Msg`.
@@ -882,7 +882,7 @@ unsafe impl AsRawMut for Message {
 
 impl Drop for Message {
     fn drop(&mut self) {
-        assert!(self.as_raw() == ffi::RSMPI_MESSAGE_NULL,
+        assert!(self.as_raw() == unsafe_extern_static!(ffi::RSMPI_MESSAGE_NULL),
                 "matched message dropped without receiving.");
     }
 }
@@ -956,7 +956,7 @@ pub fn send_receive<R, M, D, S>(msg: &M, destination: &D, source: &S) -> (R, Sta
           R: Equivalence,
           S: Source
 {
-    send_receive_with_tags(msg, destination, Tag::default(), source, ffi::RSMPI_ANY_TAG)
+    send_receive_with_tags(msg, destination, Tag::default(), source, unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
 }
 
 /// Sends the contents of `msg` to `destination` tagging it `sendtag` and
@@ -1020,7 +1020,7 @@ pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(msg: &M,
                                 Tag::default(),
                                 buf,
                                 source,
-                                ffi::RSMPI_ANY_TAG)
+                                unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
 }
 
 /// Sends the contents of `buf` to `destination` tagging it `sendtag` and
@@ -1076,7 +1076,7 @@ pub fn send_receive_replace_into<B: ?Sized, D, S>(buf: &mut B,
                                         destination,
                                         Tag::default(),
                                         source,
-                                        ffi::RSMPI_ANY_TAG)
+                                        unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
 }
 
 /// Will contain a value of type `T` received via a non-blocking receive operation.
