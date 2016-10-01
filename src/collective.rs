@@ -1293,7 +1293,7 @@ macro_rules! system_operation_constructors {
     ($($ctor:ident => $val:path),*) => (
         $(pub fn $ctor() -> SystemOperation {
             //! A built-in operation
-            SystemOperation($val)
+            SystemOperation(unsafe_extern_static!($val))
         })*
     )
 }

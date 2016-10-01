@@ -109,10 +109,10 @@ impl Threading {
     fn as_raw(&self) -> c_int {
         use self::Threading::*;
         match *self {
-            Single => ffi::RSMPI_THREAD_SINGLE,
-            Funneled => ffi::RSMPI_THREAD_FUNNELED,
-            Serialized => ffi::RSMPI_THREAD_SERIALIZED,
-            Multiple => ffi::RSMPI_THREAD_MULTIPLE,
+            Single => unsafe_extern_static!(ffi::RSMPI_THREAD_SINGLE),
+            Funneled => unsafe_extern_static!(ffi::RSMPI_THREAD_FUNNELED),
+            Serialized => unsafe_extern_static!(ffi::RSMPI_THREAD_SERIALIZED),
+            Multiple => unsafe_extern_static!(ffi::RSMPI_THREAD_MULTIPLE),
         }
     }
 }
@@ -132,13 +132,13 @@ impl Ord for Threading {
 impl From<c_int> for Threading {
     fn from(i: c_int) -> Threading {
         use self::Threading::*;
-        if i == ffi::RSMPI_THREAD_SINGLE {
+        if i == unsafe_extern_static!(ffi::RSMPI_THREAD_SINGLE) {
             return Single;
-        } else if i == ffi::RSMPI_THREAD_FUNNELED {
+        } else if i == unsafe_extern_static!(ffi::RSMPI_THREAD_FUNNELED) {
             return Funneled;
-        } else if i == ffi::RSMPI_THREAD_SERIALIZED {
+        } else if i == unsafe_extern_static!(ffi::RSMPI_THREAD_SERIALIZED) {
             return Serialized;
-        } else if i == ffi::RSMPI_THREAD_MULTIPLE {
+        } else if i == unsafe_extern_static!(ffi::RSMPI_THREAD_MULTIPLE) {
             return Multiple;
         }
         panic!("Unknown threading level: {}", i)
@@ -234,9 +234,9 @@ pub fn version() -> (c_int, c_int) {
 ///
 /// Can be called without initializing MPI.
 pub fn library_version() -> Result<String, FromUtf8Error> {
-    let bufsize = ffi::RSMPI_MAX_LIBRARY_VERSION_STRING.value_as().expect(
+    let bufsize = unsafe_extern_static!(ffi::RSMPI_MAX_LIBRARY_VERSION_STRING).value_as().expect(
         &format!("MPI_MAX_LIBRARY_SIZE ({}) cannot be expressed as a usize.",
-            ffi::RSMPI_MAX_LIBRARY_VERSION_STRING)
+            unsafe_extern_static!(ffi::RSMPI_MAX_LIBRARY_VERSION_STRING))
         );
     let mut buf = vec![0u8; bufsize];
     let mut len: c_int = 0;
@@ -254,11 +254,11 @@ pub fn library_version() -> Result<String, FromUtf8Error> {
 ///
 /// Can return an `Err` if the processor name is not a UTF-8 string.
 pub fn processor_name() -> Result<String, FromUtf8Error> {
-    let bufsize = ffi::RSMPI_MAX_PROCESSOR_NAME.value_as()
+    let bufsize = unsafe_extern_static!(ffi::RSMPI_MAX_PROCESSOR_NAME).value_as()
                                                .expect(&format!("MPI_MAX_LIBRARY_SIZE ({}) \
                                                                  cannot be expressed as a \
                                                                  usize.",
-                                                                ffi::RSMPI_MAX_PROCESSOR_NAME));
+                                                                unsafe_extern_static!(ffi::RSMPI_MAX_PROCESSOR_NAME)));
     let mut buf = vec![0u8; bufsize];
     let mut len: c_int = 0;
 
