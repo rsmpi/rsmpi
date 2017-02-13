@@ -32,23 +32,21 @@ fn main() {
     for dir in &lib.lib_paths {
         println!("cargo:rustc-link-search=native={}", dir.display());
     }
+    for lib in &lib.libs {
+        println!("cargo:rustc-link-lib={}", lib);
+    }
 
     let mut builder = bindgen::builder();
     // Let `bindgen` know about libraries and search directories.
-    for lib in &lib.libs { builder.link(lib.clone()); }
-    for dir in &lib.lib_paths { builder.clang_arg(format!("-L{}", dir.display())); }
-    for dir in &lib.include_paths { builder.clang_arg(format!("-I{}", dir.display())); }
-
-    // Tell `bindgen` where to find system headers.
-    if let Some(clang_include_dir) = bindgen::get_include_dir() {
-        builder.clang_arg("-I");
-        builder.clang_arg(clang_include_dir);
-    }
+    for lib in &lib.libs { builder = builder.link(lib.clone()); }
+    for dir in &lib.lib_paths { builder = builder.clang_arg(format!("-L{}", dir.display())); }
+    for dir in &lib.include_paths { builder = builder.clang_arg(format!("-I{}", dir.display())); }
 
     // Generate Rust bindings for the MPI C API.
     let bindings = builder
         .header("src/ffi/rsmpi.h")
         .emit_builtins()
+        .no_unstable_rust()
         .generate()
         .unwrap();
 
