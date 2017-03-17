@@ -47,6 +47,7 @@ fn main() {
         .header("src/ffi/rsmpi.h")
         .emit_builtins()
         .no_unstable_rust()
+        .hide_type("mpich_struct_mpi_long_double_int")
         .generate()
         .unwrap();
 
