@@ -39,3 +39,4 @@ do
 done
 
 printf "\nexample result: ${result}. ${num_ok} passed; ${num_failed} failed\n\n"
+exit ${num_failed}
