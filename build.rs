@@ -48,6 +48,7 @@ fn main() {
         .emit_builtins()
         .no_unstable_rust()
         .hide_type("mpich_struct_mpi_long_double_int")
+        .hide_type("max_align_t") // https://github.com/servo/rust-bindgen/issues/550
         .generate()
         .unwrap();
 
