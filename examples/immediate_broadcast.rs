@@ -15,7 +15,9 @@ fn main() {
     } else {
         x = 0_u64;
     }
-    root_process.immediate_broadcast_into(&mut x).wait();
+    mpi::request::scope(|scope| {
+        root_process.immediate_broadcast_into(scope, &mut x).wait();
+    });
     println!("Rank {} received value: {}.", world.rank(), x);
     assert_eq!(x, 1024);
     println!("");
@@ -28,7 +30,9 @@ fn main() {
     } else {
         a = std::iter::repeat(0_u64).take(n).collect::<Vec<_>>();
     }
-    root_process.immediate_broadcast_into(&mut a[..]).wait();
+    mpi::request::scope(|scope| {
+        root_process.immediate_broadcast_into(scope, &mut a[..]).wait();
+    });
     println!("Rank {} received value: {:?}.", world.rank(), &a[..]);
     assert_eq!(&a[..], &[2, 4, 8, 16]);
 }

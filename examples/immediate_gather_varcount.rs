@@ -27,12 +27,16 @@ fn main() {
         let mut buf = vec![0; (size * (size - 1) / 2) as usize];
         {
             let mut partition = PartitionMut::new(&mut buf[..], counts, &displs[..]);
-            root_process.immediate_gather_varcount_into_root(&msg[..], &mut partition).wait();
+            mpi::request::scope(|scope| {
+                root_process.immediate_gather_varcount_into_root(scope, &msg[..], &mut partition).wait();
+            })
         }
 
         assert!(buf.iter().zip((0..size).flat_map(|r| (0..r))).all(|(&i, j)| i == j));
         println!("{:?}", buf);
     } else {
-        root_process.immediate_gather_varcount_into(&msg[..]).wait();
+        mpi::request::scope(|scope| {
+            root_process.immediate_gather_varcount_into(scope, &msg[..]).wait();
+        });
     }
 }

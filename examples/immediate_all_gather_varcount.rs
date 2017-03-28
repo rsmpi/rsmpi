@@ -23,8 +23,10 @@ fn main() {
     let mut buf = vec![0; (size * (size - 1) / 2) as usize];
     {
         let mut partition = PartitionMut::new(&mut buf[..], counts, &displs[..]);
-        let req = world.immediate_all_gather_varcount_into(&msg[..], &mut partition);
-        req.wait();
+        mpi::request::scope(|scope| {
+            let req = world.immediate_all_gather_varcount_into(scope, &msg[..], &mut partition);
+            req.wait();
+        });
     }
 
     assert!(buf.iter().zip((0..size).flat_map(|r| (0..r))).all(|(&i, j)| i == j));

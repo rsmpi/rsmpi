@@ -13,7 +13,9 @@ fn main () {
     let i = 2_u64.pow(world.rank() as u32 + 1);
     let mut a = vec![0u64; count];
 
-    world.immediate_all_gather_into(&i, &mut a[..]).wait();
+    mpi::request::scope(|scope| {
+        world.immediate_all_gather_into(scope, &i, &mut a[..]).wait();
+    });
 
     if world.rank() == root_rank { println!("Root gathered sequence: {:?}.", a); }
     assert!(a.iter().enumerate().all(|(a, &b)| b == 2u64.pow(a as u32 + 1)));
@@ -22,7 +24,9 @@ fn main () {
     let a = (1_u64..).take(count).map(|x| x * factor).collect::<Vec<_>>();
     let mut t = vec![0u64; count * count];
 
-    world.immediate_all_gather_into(&a[..], &mut t[..]).wait();
+    mpi::request::scope(|scope| {
+        world.immediate_all_gather_into(scope, &a[..], &mut t[..]).wait();
+    });
 
     if world.rank() == root_rank {
         println!("Root gathered table:");
@@ -38,8 +42,9 @@ fn main () {
     {
         let sv = unsafe { View::with_count_and_datatype(&a[..], 1, &d) };
         let mut rv = unsafe { MutView::with_count_and_datatype(&mut t[..], count as Count, &d) };
-
-        world.immediate_all_gather_into(&sv, &mut rv).wait();
+        mpi::request::scope(|scope| {
+            world.immediate_all_gather_into(scope, &sv, &mut rv).wait();
+        });
     }
 
     if world.rank() == root_rank {
