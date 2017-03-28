@@ -20,9 +20,9 @@ fn main() {
 
     let x = vec![3.1415f32; 1024];
     let mut y = vec![0.0; 1024];
-    {
-        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(&mut y[..]));
+    mpi::request::scope(|scope| {
+        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(scope, &mut y[..]));
         world.this_process().buffered_send(&x[..]);
-    }
+    });
     assert_eq!(x, y);
 }
