@@ -26,8 +26,7 @@
 //! - **3.8**:
 //!   - Cancellation, `MPI_Test_cancelled()`
 
-use std::cell::RefCell;
-use std::collections::HashSet;
+use std::cell::Cell;
 use std::mem;
 use std::marker::PhantomData;
 use std::os::raw::c_int;
@@ -218,14 +217,14 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
 pub struct WaitGuard<'a, S: Scope<'a> = StaticScope> {
     request: MPI_Request,
     scope: S,
-    phantom: PhantomData<RefCell<&'a ()>>,
+    phantom: PhantomData<Cell<&'a ()>>,
 }
 
 impl<'a, S: Scope<'a>> Drop for WaitGuard<'a, S> {
     fn drop(&mut self) {
         unsafe {
             self.raw_wait(None);
-            self.scope.unregister(&self.as_raw());
+            self.scope.unregister();
         }
     }
 }
@@ -259,7 +258,7 @@ impl<'a, S: Scope<'a>> WaitGuard<'a, S> {
     ///
     unsafe fn from_raw(request: MPI_Request, scope: S) -> Self {
         debug_assert!(!is_null(request));
-        scope.register(request);
+        scope.register();
         WaitGuard { request: request, scope: scope, phantom: Default::default() }
     }
 
@@ -271,7 +270,7 @@ impl<'a, S: Scope<'a>> WaitGuard<'a, S> {
         let scope = mem::replace(&mut self.scope, mem::uninitialized());
         mem::replace(&mut self.phantom, mem::uninitialized());
         mem::forget(self);
-        scope.unregister(&request);
+        scope.unregister();
         (request, scope)
     }
 
@@ -325,11 +324,11 @@ impl<'a, S: Scope<'a>> From<Request<'a, S>> for CancelGuard<'a, S> {
 ///
 /// This trait is an implementation detail.  You shouldn’t have to use or implement this trait.
 pub unsafe trait Scope<'a> {
-    /// Registers the request with the scope.
-    unsafe fn register(&self, request: MPI_Request);
+    /// Registers a request with the scope.
+    unsafe fn register(&self);
 
-    /// Unregisters the request from the scope.
-    unsafe fn unregister(&self, request: &MPI_Request);
+    /// Unregisters a request from the scope.
+    unsafe fn unregister(&self);
 }
 
 /// The scope that lasts as long as the entire execution of the program
@@ -346,9 +345,9 @@ pub unsafe trait Scope<'a> {
 pub struct StaticScope;
 
 unsafe impl Scope<'static> for StaticScope {
-    unsafe fn register(&self, _: MPI_Request) {}
+    unsafe fn register(&self) {}
 
-    unsafe fn unregister(&self, _: &MPI_Request) {}
+    unsafe fn unregister(&self) {}
 }
 
 /// A temporary scope that lasts no more than the lifetime `'a`
@@ -360,33 +359,33 @@ unsafe impl Scope<'static> for StaticScope {
 /// # Invariant
 ///
 /// For any `Request` attached to a `LocalScope<'a>`, its associated buffers must outlive `'a`.
+///
+/// # Panics
+///
+/// When `LocalScope` is dropped, it will panic if there are any lingering `Requests` that have not
+/// yet been completed.
 #[derive(Debug)]
 pub struct LocalScope<'a> {
-    requests: RefCell<HashSet<MPI_Request>>,
-    phantom: PhantomData<RefCell<&'a ()>>, // RefCell needed to ensure 'a is invariant
+    num_requests: Cell<usize>,
+    phantom: PhantomData<Cell<&'a ()>>, // Cell needed to ensure 'a is invariant
 }
 
 impl<'a> Drop for LocalScope<'a> {
     fn drop(&mut self) {
-        for &request in &*self.requests.borrow() {
-            unsafe {
-                let _ = WaitGuard::from_raw(request, StaticScope);
-            }
+        if self.num_requests.get() != 0 {
+            panic!("at least one request was dropped without being completed");
         }
     }
 }
 
 unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
-    unsafe fn register(&self, request: MPI_Request) {
-        if !self.requests.borrow_mut().insert(request) {
-            panic!("request already registered");
-        }
+    unsafe fn register(&self) {
+        self.num_requests.set(self.num_requests.get() + 1)
     }
 
-    unsafe fn unregister(&self, request: &MPI_Request) {
-        if !self.requests.borrow_mut().remove(request) {
-            panic!("can't unregister a request that wasn't registered");
-        }
+    unsafe fn unregister(&self) {
+        self.num_requests.set(self.num_requests.get().checked_sub(1)
+                              .expect("unregister has been called more times than register"))
     }
 }
 
@@ -405,7 +404,7 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
 /// mpi::request::scope(|scope| {
 ///     /* perform sends and/or receives using 'scope' */
 /// });
-/// /* when scope ends, all associated requests are automatically waited for */
+/// /* at end of scope, panic if there are requests that have not yet completed */
 /// ```
 ///
 /// # Examples
@@ -414,7 +413,7 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
 pub fn scope<'a, F, R>(f: F) -> R
     where F: FnOnce(&LocalScope<'a>) -> R {
     f(&LocalScope {
-        requests: Default::default(),
+        num_requests: Default::default(),
         phantom: Default::default(),
     })
 }
