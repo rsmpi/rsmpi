@@ -43,75 +43,6 @@ fn is_null(request: MPI_Request) -> bool {
     request == unsafe_extern_static!(ffi::RSMPI_REQUEST_NULL)
 }
 
-/// A request object for a non-blocking operation registered with a `Scope`.
-#[must_use]
-#[derive(Debug)]
-struct RawRequest<'a, S> {
-    request: MPI_Request,
-    scope: S,
-    phantom: PhantomData<Cell<&'a ()>>,
-}
-
-unsafe impl<'a, S> AsRaw for RawRequest<'a, S> {
-    type Raw = MPI_Request;
-    fn as_raw(&self) -> Self::Raw {
-        self.request
-    }
-}
-
-impl<'a, S> RawRequest<'a, S> {
-    /// Mark the request for cancellation.
-    fn cancel(&self) {
-        let mut request = self.as_raw();
-        unsafe {
-            ffi::MPI_Cancel(&mut request);
-        }
-    }
-}
-
-impl<'a, S: Scope<'a>> RawRequest<'a, S> {
-    /// Construct a scoped request from the raw MPI type and register it with the given scope.
-    ///
-    /// # Requirements
-    ///
-    /// - The request is a valid, active request.  It must not be `MPI_REQUEST_NULL`.
-    /// - The request must not be persistent.
-    /// - All buffers associated with the request must outlive `'a`.
-    /// - The request must not be registered with the given scope.
-    ///
-    unsafe fn from_raw(request: MPI_Request, scope: S) -> Self {
-        debug_assert!(!is_null(request));
-        scope.register();
-        Self {
-            request: request,
-            scope: scope,
-            phantom: Default::default(),
-        }
-    }
-
-    /// Unregister the request object from its scope and deconstruct it into its raw parts.
-    ///
-    /// This is unsafe because the request may outlive its associated buffers.
-    unsafe fn into_raw(self) -> (MPI_Request, S) {
-        self.scope.unregister();
-        (self.request, self.scope)
-    }
-
-    /// Wait for the request to finish and unregister the request object from its scope.
-    ///
-    /// This is unsafe because afterward the request is left in an unspecified but droppable state.
-    unsafe fn wait(&self, status: Option<&mut MPI_Status>) {
-        let mut request = self.as_raw();
-        let status = match status {
-            Some(r) => r,
-            None => ffi::RSMPI_STATUS_IGNORE,
-        };
-        ffi::MPI_Wait(&mut request, status);
-        assert!(is_null(request));
-        self.scope.unregister();
-    }
-}
-
 /// A request object for a non-blocking operation registered with a `Scope` of lifetime `'a`
 ///
 /// The `Scope` is needed to ensure that all buffers associated request will outlive the request
@@ -131,40 +62,22 @@ impl<'a, S: Scope<'a>> RawRequest<'a, S> {
 /// 3.7.1
 #[must_use]
 #[derive(Debug)]
-pub struct Request<'a, S: Scope<'a> = StaticScope>(RawRequest<'a, S>);
+pub struct Request<'a, S: Scope<'a> = StaticScope> {
+    request: MPI_Request,
+    scope: S,
+    phantom: PhantomData<Cell<&'a ()>>,
+}
 
 unsafe impl<'a, S: Scope<'a>> AsRaw for Request<'a, S> {
     type Raw = MPI_Request;
     fn as_raw(&self) -> Self::Raw {
-        self.0.as_raw()
+        self.request
     }
 }
 
 impl<'a, S: Scope<'a>> Drop for Request<'a, S> {
     fn drop(&mut self) {
         panic!("request was dropped without being completed");
-    }
-}
-
-impl<'a, S: Scope<'a>> From<Request<'a, S>> for RawRequest<'a, S> {
-    fn from(mut req: Request<'a, S>) -> Self {
-        unsafe {
-            let inner = mem::replace(&mut req.0, mem::uninitialized());
-            mem::forget(req);
-            inner
-        }
-    }
-}
-
-impl<'a, S: Scope<'a>> From<WaitGuard<'a, S>> for Request<'a, S> {
-    fn from(guard: WaitGuard<'a, S>) -> Self {
-        Request(RawRequest::from(guard))
-    }
-}
-
-impl<'a, S: Scope<'a>> From<CancelGuard<'a, S>> for Request<'a, S> {
-    fn from(guard: CancelGuard<'a, S>) -> Self {
-        Request(RawRequest::from(WaitGuard::from(guard)))
     }
 }
 
@@ -179,14 +92,40 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     /// - The request must not be registered with the given scope.
     ///
     pub unsafe fn from_raw(request: MPI_Request, scope: S) -> Self {
-        Request(RawRequest::from_raw(request, scope))
+        debug_assert!(!is_null(request));
+        scope.register();
+        Self {
+            request: request,
+            scope: scope,
+            phantom: Default::default(),
+        }
     }
 
     /// Unregister the request object from its scope and deconstruct it into its raw parts.
     ///
     /// This is unsafe because the request may outlive its associated buffers.
-    pub unsafe fn into_raw(self) -> (MPI_Request, S) {
-        RawRequest::from(self).into_raw()
+    pub unsafe fn into_raw(mut self) -> (MPI_Request, S) {
+        let request = mem::replace(&mut self.request, mem::uninitialized());
+        let scope = mem::replace(&mut self.scope, mem::uninitialized());
+        let _ = mem::replace(&mut self.phantom, mem::uninitialized());
+        mem::forget(self);
+        scope.unregister();
+        (request, scope)
+    }
+
+    /// Wait for the request to finish and unregister the request object from its scope.
+    ///
+    /// This is unsafe because afterward the request is left in an unspecified but droppable state.
+    fn wait_with(self, status: Option<&mut MPI_Status>) {
+        unsafe {
+            let (mut request, _) = self.into_raw();
+            let status = match status {
+                Some(r) => r,
+                None => ffi::RSMPI_STATUS_IGNORE,
+            };
+            ffi::MPI_Wait(&mut request, status);
+            assert!(is_null(request));  // persistent requests are not supported
+        }
     }
 
     /// Wait for an operation to finish.
@@ -203,7 +142,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     pub fn wait(self) -> Status {
         unsafe {
             let mut status: MPI_Status = mem::uninitialized();
-            self.0.wait(Some(&mut status));
+            self.wait_with(Some(&mut status));
             Status::from_raw(status)
         }
     }
@@ -216,9 +155,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// 3.7.3
     pub fn wait_without_status(self) {
-        unsafe {
-            self.0.wait(None);
-        }
+        self.wait_with(None);
     }
 
     /// Test whether an operation has finished.
@@ -265,7 +202,10 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// 3.8.4
     pub fn cancel(&self) {
-        self.0.cancel();
+        let mut request = self.as_raw();
+        unsafe {
+            ffi::MPI_Cancel(&mut request);
+        }
     }
 
     /// Reduce the scope of a request.
@@ -287,42 +227,38 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
 ///
 /// See `examples/immediate.rs`
 #[derive(Debug)]
-pub struct WaitGuard<'a, S: Scope<'a> = StaticScope>(RawRequest<'a, S>);
+pub struct WaitGuard<'a, S: Scope<'a> = StaticScope>(Option<Request<'a, S>>);
 
 impl<'a, S: Scope<'a>> Drop for WaitGuard<'a, S> {
     fn drop(&mut self) {
-        unsafe {
-            self.0.wait(None);
-        }
+        self.0.take().expect("invalid WaitGuard").wait();
     }
 }
 
 unsafe impl<'a, S: Scope<'a>> AsRaw for WaitGuard<'a, S> {
     type Raw = MPI_Request;
     fn as_raw(&self) -> Self::Raw {
-        self.0.as_raw()
+        self.0.as_ref().expect("invalid WaitGuard").as_raw()
     }
 }
 
-impl<'a, S: Scope<'a>> From<WaitGuard<'a, S>> for RawRequest<'a, S> {
+impl<'a, S: Scope<'a>> From<WaitGuard<'a, S>> for Request<'a, S> {
     fn from(mut guard: WaitGuard<'a, S>) -> Self {
-        unsafe {
-            let inner = mem::replace(&mut guard.0, mem::uninitialized());
-            mem::forget(guard);
-            inner
-        }
+        guard.0.take().expect("invalid WaitGuard")
     }
 }
 
 impl<'a, S: Scope<'a>> From<Request<'a, S>> for WaitGuard<'a, S> {
     fn from(req: Request<'a, S>) -> Self {
-        WaitGuard(RawRequest::from(req))
+        WaitGuard(Some(req))
     }
 }
 
 impl<'a, S: Scope<'a>> WaitGuard<'a, S> {
     fn cancel(&self) {
-        self.0.cancel();
+        if let Some(ref req) = self.0 {
+            req.cancel();
+        }
     }
 }
 
