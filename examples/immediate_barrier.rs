@@ -1,3 +1,4 @@
+#![deny(warnings)]
 extern crate mpi;
 
 use mpi::traits::*;
@@ -20,10 +21,10 @@ fn main() {
         println!("{:?}", buf);
         // messages "1" and "2" may be interleaved, but all have to be contained within the first
         // 2 * n slots of the buffer
-        assert!(buf[0..2 * n].iter().filter(|&&x| x == 1).count() == n);
-        assert!(buf[0..2 * n].iter().filter(|&&x| x == 2).count() == n);
+        assert_eq!(buf[0..2 * n].iter().filter(|&&x| x == 1).count(), n);
+        assert_eq!(buf[0..2 * n].iter().filter(|&&x| x == 2).count(), n);
         // the last n slots in the buffer may only contain message "3"
-        assert!(buf[2 * n..3 * n].iter().all(|&x| { x == 3 }));
+        assert!(buf[2 * n..3 * n].iter().all(|&x| x == 3));
         // clean up the barrier request
         breq.wait();
     } else { // sender processes

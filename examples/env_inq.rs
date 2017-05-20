@@ -1,3 +1,4 @@
+#![deny(warnings)]
 extern crate mpi;
 
 fn main() {

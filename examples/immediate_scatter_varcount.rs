@@ -1,3 +1,4 @@
+#![deny(warnings)]
 extern crate mpi;
 
 use mpi::traits::*;
@@ -34,6 +35,6 @@ fn main() {
         });
     }
 
-    assert!(buf.iter().zip((0..rank)).all(|(&i, j)| i == j));
+    assert!(buf.iter().zip(0..rank).all(|(&i, j)| i == j));
     println!("Process {} got message: {:?}", rank, buf);
 }

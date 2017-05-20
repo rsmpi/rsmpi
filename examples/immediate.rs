@@ -1,3 +1,5 @@
+#![deny(warnings)]
+#![cfg_attr(feature = "cargo-clippy", allow(float_cmp))]
 extern crate mpi;
 
 use mpi::traits::*;
@@ -7,7 +9,7 @@ fn main() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
 
-    let x = 3.1415f32;
+    let x = std::f32::consts::PI;
     let mut y: f32 = 0.0;
 
     mpi::request::scope(|scope| {

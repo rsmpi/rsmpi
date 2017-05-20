@@ -1,3 +1,4 @@
+#![deny(warnings)]
 extern crate mpi;
 
 use mpi::traits::*;
@@ -18,5 +19,5 @@ fn main() {
     println!("u: {:?}", u);
     println!("v: {:?}", v);
 
-    assert!(v.into_iter().zip((0..size)).all(|(i, j)| i == j));
+    assert!(v.into_iter().zip(0..size).all(|(i, j)| i == j));
 }

@@ -1,3 +1,4 @@
+#![deny(warnings)]
 extern crate mpi;
 
 use mpi::traits::*;
@@ -18,7 +19,7 @@ fn main() {
 
     let world = universe.world();
 
-    let x = vec![3.1415f32; 1024];
+    let x = vec![std::f32::consts::PI; 1024];
     let mut y = vec![0.0; 1024];
     mpi::request::scope(|scope| {
         let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(scope, &mut y[..]));

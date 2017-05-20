@@ -1,3 +1,4 @@
+#![deny(warnings)]
 extern crate mpi;
 
 use mpi::traits::*;
