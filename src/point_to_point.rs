@@ -913,7 +913,7 @@ unsafe impl AsRawMut for Message {
 
 impl Drop for Message {
     fn drop(&mut self) {
-        assert!(self.as_raw() == unsafe_extern_static!(ffi::RSMPI_MESSAGE_NULL),
+        assert_eq!(self.as_raw(), unsafe_extern_static!(ffi::RSMPI_MESSAGE_NULL),
                 "matched message dropped without receiving.");
     }
 }

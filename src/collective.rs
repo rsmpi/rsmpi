@@ -615,7 +615,7 @@ pub trait Root: AsCommunicator
     fn gather_into<S: ?Sized>(&self, sendbuf: &S)
         where S: Buffer
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             ffi::MPI_Gather(sendbuf.pointer(),
                             sendbuf.count(),
@@ -648,7 +648,7 @@ pub trait Root: AsCommunicator
         where S: Buffer,
               R: BufferMut
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             let recvcount = recvbuf.count() / self.as_communicator().size();
             ffi::MPI_Gather(sendbuf.pointer(),
@@ -682,7 +682,7 @@ pub trait Root: AsCommunicator
     fn gather_varcount_into<S: ?Sized>(&self, sendbuf: &S)
         where S: Buffer
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             ffi::MPI_Gatherv(sendbuf.pointer(),
                              sendbuf.count(),
@@ -717,7 +717,7 @@ pub trait Root: AsCommunicator
         where S: Buffer,
               R: PartitionedBufferMut
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             ffi::MPI_Gatherv(sendbuf.pointer(),
                              sendbuf.count(),
@@ -750,7 +750,7 @@ pub trait Root: AsCommunicator
     fn scatter_into<R: ?Sized>(&self, recvbuf: &mut R)
         where R: BufferMut
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             ffi::MPI_Scatter(ptr::null(),
                              0,
@@ -783,7 +783,7 @@ pub trait Root: AsCommunicator
         where S: Buffer,
               R: BufferMut
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         let sendcount = sendbuf.count() / self.as_communicator().size();
         unsafe {
             ffi::MPI_Scatter(sendbuf.pointer(),
@@ -817,7 +817,7 @@ pub trait Root: AsCommunicator
     fn scatter_varcount_into<R: ?Sized>(&self, recvbuf: &mut R)
         where R: BufferMut
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             ffi::MPI_Scatterv(ptr::null(),
                               ptr::null(),
@@ -852,7 +852,7 @@ pub trait Root: AsCommunicator
         where S: PartitionedBuffer,
               R: BufferMut
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             ffi::MPI_Scatterv(sendbuf.pointer(),
                               sendbuf.counts_ptr(),
@@ -882,7 +882,7 @@ pub trait Root: AsCommunicator
         where S: Buffer,
               O: Operation
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             ffi::MPI_Reduce(sendbuf.pointer(),
                             ptr::null_mut(),
@@ -911,7 +911,7 @@ pub trait Root: AsCommunicator
               R: BufferMut,
               O: Operation
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             ffi::MPI_Reduce(sendbuf.pointer(),
                             recvbuf.pointer_mut(),
@@ -967,7 +967,7 @@ pub trait Root: AsCommunicator
         where S: 'a + Buffer,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Igather(sendbuf.pointer(),
@@ -1003,7 +1003,7 @@ pub trait Root: AsCommunicator
               R: 'a + BufferMut,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             let recvcount = recvbuf.count() / self.as_communicator().size();
@@ -1038,7 +1038,7 @@ pub trait Root: AsCommunicator
         where S: 'a + Buffer,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Igatherv(sendbuf.pointer(),
@@ -1076,7 +1076,7 @@ pub trait Root: AsCommunicator
               R: 'a + PartitionedBufferMut,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Igatherv(sendbuf.pointer(),
@@ -1111,7 +1111,7 @@ pub trait Root: AsCommunicator
         where R: 'a + BufferMut,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Iscatter(ptr::null(),
@@ -1148,7 +1148,7 @@ pub trait Root: AsCommunicator
               R: 'a + BufferMut,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             let sendcount = sendbuf.count() / self.as_communicator().size();
@@ -1183,7 +1183,7 @@ pub trait Root: AsCommunicator
         where R: 'a + BufferMut,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Iscatterv(ptr::null(),
@@ -1221,7 +1221,7 @@ pub trait Root: AsCommunicator
               R: 'a + BufferMut,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Iscatterv(sendbuf.pointer(),
@@ -1259,7 +1259,7 @@ pub trait Root: AsCommunicator
               O: Operation,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() != self.root_rank());
+        assert_ne!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Ireduce(sendbuf.pointer(),
@@ -1298,7 +1298,7 @@ pub trait Root: AsCommunicator
               O: Operation,
               Sc: Scope<'a>
     {
-        assert!(self.as_communicator().rank() == self.root_rank());
+        assert_eq!(self.as_communicator().rank(), self.root_rank());
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Ireduce(sendbuf.pointer(),

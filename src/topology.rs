@@ -77,7 +77,7 @@ impl SystemCommunicator {
 
     /// Wraps the raw value without checking for null handle
     fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicator {
-        debug_assert!(raw != unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
+        debug_assert_ne!(raw, unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
         SystemCommunicator(raw)
     }
 }
@@ -117,7 +117,7 @@ impl UserCommunicator {
 
     /// Wraps the raw value without checking for null handle
     fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
-        debug_assert!(raw != unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
+        debug_assert_ne!(raw, unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
         UserCommunicator(raw)
     }
 }
