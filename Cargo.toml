@@ -22,8 +22,3 @@ rustc_version = "0.1"
 
 #[dependencies.c_import]
 #git = "https://github.com/vojtechkral/rust-c-import.git"
-
-[features]
-default=[]
-lint = [ "clippy" ]
-clippy = []
