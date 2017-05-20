@@ -114,8 +114,8 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     }
 
     /// Wait for the request to finish and unregister the request object from its scope.
-    ///
-    /// This is unsafe because afterward the request is left in an unspecified but droppable state.
+    /// If provided, the status is written to the referent of the given reference.
+    /// The referent `MPI_Status` object is never read.
     fn wait_with(self, status: Option<&mut MPI_Status>) {
         unsafe {
             let (mut request, _) = self.into_raw();
@@ -140,11 +140,9 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// 3.7.3
     pub fn wait(self) -> Status {
-        unsafe {
-            let mut status: MPI_Status = mem::uninitialized();
-            self.wait_with(Some(&mut status));
-            Status::from_raw(status)
-        }
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        self.wait_with(Some(&mut status));
+        Status::from_raw(status)
     }
 
     /// Wait for an operation to finish, but don’t bother retrieving the `Status` information.
