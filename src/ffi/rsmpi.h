@@ -34,7 +34,10 @@ extern const MPI_Message RSMPI_MESSAGE_NO_PROC;
 
 extern const MPI_Request RSMPI_REQUEST_NULL;
 
+// FIXME: bindgen issue #511
+// extern MPI_Status* const RSMPI_STATUS_IGNORE;
 extern MPI_Status* RSMPI_STATUS_IGNORE;
+// extern MPI_Status* const RSMPI_STATUSES_IGNORE;
 extern MPI_Status* RSMPI_STATUSES_IGNORE;
 
 extern const int RSMPI_IDENT;
