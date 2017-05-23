@@ -10,6 +10,8 @@ extern crate rustc_version;
 use std::env;
 use std::path::Path;
 
+use rustc_version::Version as RustcVersion;
+
 fn main() {
     // Use `mpicc` wrapper rather than the system C compiler.
     env::set_var("CC", "mpicc");
@@ -60,7 +62,7 @@ fn main() {
         .unwrap();
 
     // Access to extern statics has to be marked unsafe after 1.13.0
-    if rustc_version::version_matches(">=1.13.0") {
+    if rustc_version::version().unwrap() >= RustcVersion::parse("1.13.0").unwrap() {
         println!("cargo:rustc-cfg=extern_statics_are_unsafe");
     }
 }
