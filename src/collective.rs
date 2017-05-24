@@ -1373,7 +1373,7 @@ impl Operation for SystemOperation {}
 ///
 /// # Examples
 ///
-/// See `examples/redure.rs`
+/// See `examples/reduce.rs`
 ///
 /// # Standard section(s)
 ///
