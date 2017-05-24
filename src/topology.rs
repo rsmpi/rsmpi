@@ -19,7 +19,7 @@
 //! - **6.8**: Naming objects
 //! - **7**: Process topologies
 //! - **Parts of sections**: 8, 10, 12
-use std::mem;
+use std::{mem, process};
 use std::os::raw::c_int;
 
 use super::Tag;
@@ -385,10 +385,11 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 8.7
-    fn abort(&self, errorcode: c_int) {
+    fn abort(&self, errorcode: c_int) -> ! {
         unsafe {
             ffi::MPI_Abort(self.as_raw(), errorcode);
         }
+        process::abort();
     }
 }
 
