@@ -41,7 +41,7 @@
 //! - **4.3**: Canonical pack and unpack, `MPI_Pack_external()`, `MPI_Unpack_external()`,
 //! `MPI_Pack_external_size()`
 
-use std::mem;
+use std::{mem, slice};
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 use std::os::raw::c_void;
@@ -448,6 +448,197 @@ unsafe impl<T> BufferMut for T where T: Equivalence
 {}
 unsafe impl<T> BufferMut for [T] where T: Equivalence
 {}
+
+/// An immutable dynamically-typed buffer.
+///
+/// The buffer has a definite length and MPI datatype, but it is not yet known which Rust type it
+/// corresponds to.  This is the MPI analogue of `&Any`.  It is semantically equivalent to the trait
+/// object reference `&Buffer`.
+#[derive(Copy, Clone, Debug)]
+pub struct DynBuffer<'a> {
+    ptr: *const c_void,
+    len: Count,
+    datatype: DatatypeRef<'a>,
+}
+
+unsafe impl<'a> Send for DynBuffer<'a> {}
+
+unsafe impl<'a> Sync for DynBuffer<'a> {}
+
+unsafe impl<'a> Collection for DynBuffer<'a> {
+    fn count(&self) -> Count {
+        self.len
+    }
+}
+
+unsafe impl<'a> Pointer for DynBuffer<'a> {
+    unsafe fn pointer(&self) -> *const c_void {
+        self.ptr
+    }
+}
+
+unsafe impl<'a> AsDatatype for DynBuffer<'a> {
+    type Out = DatatypeRef<'a>;
+    fn as_datatype(&self) -> Self::Out {
+        self.datatype
+    }
+}
+
+unsafe impl<'a> Buffer for DynBuffer<'a> {}
+
+impl<'a> DynBuffer<'a> {
+    /// Creates a buffer from a slice with whose type has an MPI equivalent.
+    pub fn new<T: Equivalence>(buf: &'a [T]) -> Self {
+        unsafe {
+            let datatype = DatatypeRef::from_raw(
+                T::equivalent_datatype().as_raw());
+            Self::from_raw(buf.as_ptr(), buf.count(), datatype)
+        }
+    }
+
+    /// Tests whether the buffer type matches `T`.
+    pub fn is<T: Equivalence>(&self) -> bool {
+        self.as_datatype().as_raw() == T::equivalent_datatype().as_raw()
+    }
+
+    /// Returns some slice if the type matches `T`, or `None` if it doesn't.
+    pub fn downcast<T: Equivalence>(self) -> Option<&'a [T]> {
+        if self.is::<T>() {
+            unsafe { Some(slice::from_raw_parts(self.as_ptr() as _, self.len())) }
+        } else {
+            None
+        }
+    }
+
+    /// Creates a buffer from its raw components.  The buffer must remain valid for `'a`.
+    pub unsafe fn from_raw<T>(ptr: *const T,
+                              len: Count,
+                              datatype: DatatypeRef<'a>) -> Self {
+        Self { ptr: ptr as _, len, datatype }
+    }
+
+    /// Returns the number of elements in the buffer.
+    pub fn len(&self) -> usize {
+        self.count().value_as().expect("Length of DynBuffer cannot be expressed as a usize")
+    }
+
+    /// Returns the underlying raw pointer.
+    pub fn as_ptr(&self) -> *const c_void {
+        self.ptr
+    }
+}
+
+/// A mutable dynamically-typed buffer.
+///
+/// The buffer has a definite length and MPI datatype, but it is not yet known which Rust type it
+/// corresponds to.  This is the MPI analogue of `&mut Any`.  It is semantically equivalent to the
+/// mutable trait object reference `&mut BufferMut`.
+#[derive(Debug)]
+pub struct DynBufferMut<'a> {
+    ptr: *mut c_void,
+    len: Count,
+    datatype: DatatypeRef<'a>,
+}
+
+unsafe impl<'a> Send for DynBufferMut<'a> {}
+
+unsafe impl<'a> Sync for DynBufferMut<'a> {}
+
+unsafe impl<'a> Collection for DynBufferMut<'a> {
+    fn count(&self) -> Count {
+        self.len
+    }
+}
+
+unsafe impl<'a> Pointer for DynBufferMut<'a> {
+    unsafe fn pointer(&self) -> *const c_void {
+        self.ptr
+    }
+}
+
+unsafe impl<'a> PointerMut for DynBufferMut<'a> {
+    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+        self.ptr
+    }
+}
+
+unsafe impl<'a> Buffer for DynBufferMut<'a> {}
+
+unsafe impl<'a> BufferMut for DynBufferMut<'a> {}
+
+unsafe impl<'a> AsDatatype for DynBufferMut<'a> {
+    type Out = DatatypeRef<'a>;
+    fn as_datatype(&self) -> Self::Out {
+        self.datatype
+    }
+}
+
+impl<'a> DynBufferMut<'a> {
+    /// Creates a mutable buffer from a mutable slice with whose type has an MPI equivalent.
+    pub fn new<T: Equivalence>(buf: &'a mut [T]) -> Self {
+        unsafe {
+            let datatype = DatatypeRef::from_raw(T::equivalent_datatype().as_raw());
+            Self::from_raw(buf.as_mut_ptr(), buf.count(), datatype)
+        }
+    }
+
+    /// Tests whether the buffer type matches `T`.
+    pub fn is<T: Equivalence>(&self) -> bool {
+        self.as_datatype().as_raw() == T::equivalent_datatype().as_raw()
+    }
+
+    /// Returns some mutable slice if the type matches `T`, or `None` if it doesn't.
+    pub fn downcast<T: Equivalence>(mut self) -> Option<&'a mut [T]> {
+        if self.is::<T>() {
+            unsafe { Some(slice::from_raw_parts_mut(self.as_mut_ptr() as _, self.len())) }
+        } else {
+            None
+        }
+    }
+
+    /// Creates a buffer from its raw components.  The buffer must remain valid for `'a`.
+    pub unsafe fn from_raw<T>(ptr: *mut T,
+                              len: Count,
+                              datatype: DatatypeRef<'a>) -> Self {
+        Self { ptr: ptr as _, len, datatype }
+    }
+
+    /// Returns the number of elements in the buffer.
+    pub fn len(&self) -> usize {
+        self.count().value_as().expect("Length of DynBufferMut cannot be expressed as a usize")
+    }
+
+    /// Returns the underlying raw pointer.
+    pub fn as_ptr(&self) -> *const c_void {
+        self.ptr
+    }
+
+    /// Returns the underlying raw pointer.
+    pub fn as_mut_ptr(&mut self) -> *mut c_void {
+        self.ptr
+    }
+
+    /// Reborrows the buffer with a shorter lifetime.
+    pub fn reborrow(&self) -> DynBuffer {
+        unsafe { DynBuffer::from_raw(self.as_ptr(),
+                                     self.count(),
+                                     self.as_datatype()) }
+    }
+
+    /// Reborrows the buffer mutably with a shorter lifetime.
+    pub fn reborrow_mut(&mut self) -> DynBufferMut {
+        unsafe { DynBufferMut::from_raw(self.as_mut_ptr(),
+                                        self.count(),
+                                        self.as_datatype()) }
+    }
+
+    /// Makes the buffer immutable.
+    pub fn downgrade(self) -> DynBuffer<'a> {
+        unsafe { DynBuffer::from_raw(self.as_ptr(),
+                                     self.count(),
+                                     self.as_datatype()) }
+    }
+}
 
 /// A buffer with a user specified count and datatype
 ///
