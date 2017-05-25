@@ -43,6 +43,7 @@
 
 use std::mem;
 use std::borrow::Borrow;
+use std::marker::PhantomData;
 use std::os::raw::c_void;
 
 use conv::ConvUtil;
@@ -58,6 +59,31 @@ use raw::traits::*;
 pub mod traits {
     pub use super::{Equivalence, Datatype, AsDatatype, Collection, Pointer, PointerMut, Buffer,
                     BufferMut, Partitioned, PartitionedBuffer, PartitionedBufferMut};
+}
+
+/// A reference to an MPI data type.
+///
+/// This is similar to a raw `MPI_Datatype` but is guaranteed to be a valid for `'a`.
+#[derive(Copy, Clone, Debug)]
+pub struct DatatypeRef<'a> {
+    datatype: MPI_Datatype,
+    phantom: PhantomData<&'a ()>,
+}
+
+unsafe impl<'a> AsRaw for DatatypeRef<'a> {
+    type Raw = MPI_Datatype;
+    fn as_raw(&self) -> Self::Raw {
+        self.datatype
+    }
+}
+
+impl<'a> Datatype for DatatypeRef<'a> {}
+
+impl<'a> DatatypeRef<'a> {
+    /// Wrap a raw handle.  The handle must remain valid for `'a`.
+    pub unsafe fn from_raw(datatype: MPI_Datatype) -> Self {
+        Self { datatype, phantom: PhantomData }
+    }
 }
 
 /// A system datatype, e.g. `MPI_FLOAT`
