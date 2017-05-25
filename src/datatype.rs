@@ -91,17 +91,7 @@ impl<'a> DatatypeRef<'a> {
 /// # Standard section(s)
 ///
 /// 3.2.2
-#[derive(Copy, Clone)]
-pub struct SystemDatatype(MPI_Datatype);
-
-unsafe impl AsRaw for SystemDatatype {
-    type Raw = MPI_Datatype;
-    fn as_raw(&self) -> Self::Raw {
-        self.0
-    }
-}
-
-impl Datatype for SystemDatatype {}
+pub type SystemDatatype = DatatypeRef<'static>;
 
 /// A direct equivalence exists between the implementing type and an MPI datatype
 ///
@@ -120,7 +110,7 @@ macro_rules! equivalent_system_datatype {
         unsafe impl Equivalence for $rstype {
             type Out = SystemDatatype;
             fn equivalent_datatype() -> Self::Out {
-                SystemDatatype(unsafe_extern_static!($mpitype))
+                unsafe { DatatypeRef::from_raw($mpitype) }
             }
         }
     )
