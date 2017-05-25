@@ -5,16 +5,19 @@
 //! # Unfinished features
 //!
 //! - **5.8**: All-to-all, `MPI_Alltoallw()`
-//! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter()`
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::{mem, ptr};
+use std::{fmt, mem, ptr};
+use std::os::raw::{c_int, c_void};
+
+use libffi::high::Closure4;
 
 use ffi;
 use ffi::{MPI_Request, MPI_Op};
 
+use datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use datatype::traits::*;
 use raw::traits::*;
 use request::{Request, Scope, StaticScope};
@@ -170,7 +173,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.9.6
-    fn all_reduce_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: &O)
+    fn all_reduce_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: O)
         where S: Buffer,
               R: BufferMut,
               O: Operation
@@ -199,7 +202,7 @@ pub trait CommunicatorCollectives: Communicator {
     fn reduce_scatter_block_into<S: ?Sized, R: ?Sized, O>(&self,
                                                           sendbuf: &S,
                                                           recvbuf: &mut R,
-                                                          op: &O)
+                                                          op: O)
         where S: Buffer,
               R: BufferMut,
               O: Operation
@@ -225,7 +228,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.11.1
-    fn scan_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: &O)
+    fn scan_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: O)
         where S: Buffer,
               R: BufferMut,
               O: Operation
@@ -250,7 +253,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.11.2
-    fn exclusive_scan_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: &O)
+    fn exclusive_scan_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: O)
         where S: Buffer,
               R: BufferMut,
               O: Operation
@@ -433,11 +436,11 @@ pub trait CommunicatorCollectives: Communicator {
          scope: Sc,
          sendbuf: &'a S,
          recvbuf: &'a mut R,
-         op: &O)
+         op: O)
          -> Request<'a, Sc>
         where S: 'a + Buffer,
               R: 'a + BufferMut,
-              O: Operation,
+              O: 'a + Operation,
               Sc: Scope<'a>
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -469,11 +472,11 @@ pub trait CommunicatorCollectives: Communicator {
          scope: Sc,
          sendbuf: &'a S,
          recvbuf: &'a mut R,
-         op: &O)
+         op: O)
          -> Request<'a, Sc>
         where S: 'a + Buffer,
               R: 'a + BufferMut,
-              O: Operation,
+              O: 'a + Operation,
               Sc: Scope<'a>
     {
         assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
@@ -504,11 +507,11 @@ pub trait CommunicatorCollectives: Communicator {
                                                             scope: Sc,
                                                             sendbuf: &'a S,
                                                             recvbuf: &'a mut R,
-                                                            op: &O)
+                                                            op: O)
                                                             -> Request<'a, Sc>
         where S: 'a + Buffer,
               R: 'a + BufferMut,
-              O: Operation,
+              O: 'a + Operation,
               Sc: Scope<'a>
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -539,11 +542,11 @@ pub trait CommunicatorCollectives: Communicator {
          scope: Sc,
          sendbuf: &'a S,
          recvbuf: &'a mut R,
-         op: &O)
+         op: O)
          -> Request<'a, Sc>
         where S: 'a + Buffer,
               R: 'a + BufferMut,
-              O: Operation,
+              O: 'a + Operation,
               Sc: Scope<'a>
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -877,7 +880,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.9.1
-    fn reduce_into<S: ?Sized, O>(&self, sendbuf: &S, op: &O)
+    fn reduce_into<S: ?Sized, O>(&self, sendbuf: &S, op: O)
         where S: Buffer,
               O: Operation
     {
@@ -905,7 +908,7 @@ pub trait Root: AsCommunicator
     /// # Standard section(s)
     ///
     /// 5.9.1
-    fn reduce_into_root<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: &O)
+    fn reduce_into_root<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: O)
         where S: Buffer,
               R: BufferMut,
               O: Operation
@@ -1252,10 +1255,10 @@ pub trait Root: AsCommunicator
     fn immediate_reduce_into<'a, Sc, S: ?Sized, O>(&self,
                                                    scope: Sc,
                                                    sendbuf: &'a S,
-                                                   op: &O)
+                                                   op: O)
                                                    -> Request<'a, Sc>
         where S: 'a + Buffer,
-              O: Operation,
+              O: 'a + Operation,
               Sc: Scope<'a>
     {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
@@ -1290,11 +1293,11 @@ pub trait Root: AsCommunicator
          scope: Sc,
          sendbuf: &'a S,
          recvbuf: &'a mut R,
-         op: &O)
+         op: O)
          -> Request<'a, Sc>
         where S: 'a + Buffer,
               R: 'a + BufferMut,
-              O: Operation,
+              O: 'a + Operation,
               Sc: Scope<'a>
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
@@ -1381,6 +1384,149 @@ unsafe impl AsRaw for SystemOperation {
 
 impl Operation for SystemOperation {}
 
+trait Erased {}
+
+impl<T> Erased for T {}
+
+/// A user-defined operation.
+///
+/// The lifetime `'a` of the operation is limited by the lifetime of the underlying closure.
+///
+/// For safety reasons, `UserOperation` is in of itself not considered an `Operation`, but a
+/// reference of it is.  This limitation may be lifted in the future when `Request` objects can
+/// store finalizers.
+///
+/// **Note:** When a `UserOperation` is passed to a non-blocking API call, it must outlive the
+/// completion of the request.  This is normally enforced by the safe API, so this is only a concern
+/// if you use the unsafe API.  Do not rely on MPI's internal reference-counting here, because once
+/// `UserOperation` is destroyed, the closure object will be deallocated even if the `MPI_Op` handle
+/// is still alive due to outstanding references.
+///
+/// # Examples
+///
+/// See `examples/reduce.rs` and `examples/immediate_reduce.rs`
+pub struct UserOperation<'a> {
+    op: MPI_Op,
+    anchor: Box<Erased + 'a>,           // keeps the internal data alive
+}
+
+impl<'a> fmt::Debug for UserOperation<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("UserOperation")
+            .field(&self.op)
+            .finish()
+    }
+}
+
+impl<'a> Drop for UserOperation<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::MPI_Op_free(&mut self.op);
+        }
+    }
+}
+
+unsafe impl<'a> AsRaw for UserOperation<'a> {
+    type Raw = MPI_Op;
+    fn as_raw(&self) -> Self::Raw {
+        self.op
+    }
+}
+
+impl<'a, 'b> Operation for &'b UserOperation<'a> {}
+
+impl<'a> UserOperation<'a> {
+
+    /// Define an operation using a closure.  The operation must be associative.
+    ///
+    /// This is a more readable shorthand for the `new` method.  Refer to [`new`](#method.new) for
+    /// more information.
+    pub fn associative<F>(function: F) -> Self
+        where F: Fn(DynBuffer, DynBufferMut) + Sync + 'a
+    {
+        Self::new(false, function)
+    }
+
+    /// Define an operation using a closure.  The operation must be both associative and
+    /// commutative.
+    ///
+    /// This is a more readable shorthand for the `new` method.  Refer to [`new`](#method.new) for
+    /// more information.
+    pub fn commutative<F>(function: F) -> Self
+        where F: Fn(DynBuffer, DynBufferMut) + Sync + 'a
+    {
+        Self::new(true, function)
+    }
+
+    /// Creates an associative and possibly commutative operation using a closure.
+    ///
+    /// The closure receives two arguments `invec` and `inoutvec` as dynamically typed buffers.  It
+    /// shall set `inoutvec` to the value of `f(invec, inoutvec)`, where `f` is a binary associative
+    /// operation.
+    ///
+    /// If the operation is also commutative, setting `commute` to `true` may yield performance
+    /// benefits.
+    ///
+    /// **Note:** If the closure panics, the entire program will abort.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.9.5
+    pub fn new<F>(commute: bool, function: F) -> Self
+        where F: Fn(DynBuffer, DynBufferMut) + Sync + 'a
+    {
+        struct Anchor<F> {
+            function: F,
+            wrapper: Option<Closure4<'static,
+                                     *mut c_void,
+                                     *mut c_void,
+                                     *mut c_int,
+                                     *mut ffi::MPI_Datatype,
+                                     ()>>,
+        }
+        // must box it to prevent moves
+        let mut anchor = Box::new(Anchor {
+            function: move |invec, inoutvec, len, datatype| {
+                unsafe {
+                    wrapper(&function, invec, inoutvec, len, datatype)
+                }
+            },
+            wrapper: None,
+        });
+        let mut op;
+        anchor.wrapper = Some(unsafe {
+            let wrapper = Closure4::new(&anchor.function);
+            op = mem::uninitialized();
+            ffi::MPI_Op_create(Some(*wrapper.code_ptr()),
+                               commute as _,
+                               &mut op);
+            mem::transmute(wrapper)     // erase the lifetime
+        });
+        UserOperation { op, anchor }
+    }
+
+    /// Creates a `UserOperation` from raw parts.
+    ///
+    /// Here, `anchor` is an arbitrary object that is stored alongside the `MPI_Op`.
+    /// This can be used to attach finalizers to the object.
+    pub unsafe fn from_raw<T: 'a>(op: MPI_Op, anchor: Box<T>) -> Self {
+        Self { op, anchor }
+    }
+}
+
+unsafe fn wrapper<F>(function: &F,
+                     invec: *mut c_void,
+                     inoutvec: *mut c_void,
+                     len: *mut c_int,
+                     datatype: *mut ffi::MPI_Datatype)
+    where F: Fn(DynBuffer, DynBufferMut)
+{
+    let len = *len;
+    let datatype = DatatypeRef::from_raw(*datatype);
+    function(DynBuffer::from_raw(invec, len, datatype),
+             DynBufferMut::from_raw(inoutvec, len, datatype));
+}
+
 /// Perform a local reduction.
 ///
 /// # Examples
@@ -1390,7 +1536,7 @@ impl Operation for SystemOperation {}
 /// # Standard section(s)
 ///
 /// 5.9.7
-pub fn reduce_local_into<S: ?Sized, R: ?Sized, O>(inbuf: &S, inoutbuf: &mut R, op: &O)
+pub fn reduce_local_into<S: ?Sized, R: ?Sized, O>(inbuf: &S, inoutbuf: &mut R, op: O)
     where S: Buffer,
           R: BufferMut,
           O: Operation

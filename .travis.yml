@@ -13,6 +13,8 @@ addons:
       - gfortran
       # bindgen dependency
       - libclang-3.9-dev
+      # libffi dependency
+      - texinfo
 
 env:
   global:
