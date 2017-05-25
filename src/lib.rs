@@ -129,6 +129,7 @@
 use std::os::raw::c_int;
 
 extern crate conv;
+extern crate libffi;
 
 /// The raw C language MPI API
 ///
