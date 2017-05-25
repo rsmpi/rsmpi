@@ -6,7 +6,6 @@
 //!
 //! - **5.8**: All-to-all, `MPI_Alltoallw()`
 //! - **5.9**: Global reduction operations, `MPI_Op_create()`, `MPI_Op_free()`,
-//! `MPI_Op_commutative()`
 //! - **5.10**: Reduce-scatter, `MPI_Reduce_scatter()`
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
@@ -1321,7 +1320,20 @@ impl<'a, C: 'a + Communicator> Root for Process<'a, C> {
 }
 
 /// An operation to be used in a reduction or scan type operation, e.g. `MPI_SUM`
-pub trait Operation: AsRaw<Raw = MPI_Op> { }
+pub trait Operation: AsRaw<Raw = MPI_Op> {
+    /// Returns whether the operation is commutative.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.9.7
+    fn is_commutative(&self) -> bool {
+        unsafe {
+            let mut commute = 0;
+            ffi::MPI_Op_commutative(self.as_raw(), &mut commute);
+            commute != 0
+        }
+    }
+}
 impl<'a, T: 'a + Operation> Operation for &'a T {}
 
 /// A built-in operation like `MPI_SUM`
