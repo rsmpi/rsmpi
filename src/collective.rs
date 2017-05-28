@@ -1515,14 +1515,19 @@ impl<'a> UserOperation<'a> {
 }
 
 unsafe fn wrapper<F>(function: &F,
-                     invec: *mut c_void,
-                     inoutvec: *mut c_void,
+                     mut invec: *mut c_void,
+                     mut inoutvec: *mut c_void,
                      len: *mut c_int,
                      datatype: *mut ffi::MPI_Datatype)
     where F: Fn(DynBuffer, DynBufferMut)
 {
     let len = *len;
     let datatype = DatatypeRef::from_raw(*datatype);
+    if len == 0 {
+        // precautionary measure: ensure pointers are not null
+        invec = [].as_mut_ptr();
+        inoutvec = [].as_mut_ptr();
+    }
     function(DynBuffer::from_raw(invec, len, datatype),
              DynBufferMut::from_raw(inoutvec, len, datatype));
 }
