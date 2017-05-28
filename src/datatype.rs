@@ -510,10 +510,12 @@ impl<'a> DynBuffer<'a> {
         }
     }
 
-    /// Creates a buffer from its raw components.  The buffer must remain valid for `'a`.
+    /// Creates a buffer from its raw components.  The buffer must remain valid for `'a` and the
+    /// pointer must not be null.
     pub unsafe fn from_raw<T>(ptr: *const T,
                               len: Count,
                               datatype: DatatypeRef<'a>) -> Self {
+        debug_assert!(!ptr.is_null());
         Self { ptr: ptr as _, len, datatype }
     }
 
@@ -596,10 +598,12 @@ impl<'a> DynBufferMut<'a> {
         }
     }
 
-    /// Creates a buffer from its raw components.  The buffer must remain valid for `'a`.
+    /// Creates a buffer from its raw components.  The buffer must remain valid for `'a` and the
+    /// pointer must not be null.
     pub unsafe fn from_raw<T>(ptr: *mut T,
                               len: Count,
                               datatype: DatatypeRef<'a>) -> Self {
+        debug_assert!(!ptr.is_null());
         Self { ptr: ptr as _, len, datatype }
     }
 
