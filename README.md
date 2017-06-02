@@ -100,6 +100,13 @@ fn main() {
 }
 ```
 
+To run:
+
+```bash
+cd target/debug
+mpirun -np 2 ./<project_name>
+```
+
 ## Features
 
 The bindings follow the MPI 3.1 specification.
