@@ -18,5 +18,5 @@ libffi = "0.6.0"
 [build-dependencies]
 gcc = "0.3"
 bindgen = "0.25"
-build-probe-mpi = { path = "./build-probe-mpi" }
+build-probe-mpi = { path = "./build-probe-mpi", version = "0.1" }
 rustc_version = "0.2"
