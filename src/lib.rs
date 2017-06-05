@@ -41,7 +41,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mpi = { git = "https://github.com/bsteinb/rsmpi.git", tag = "0.4.0" }
+//! mpi = "0.5"
 //! ```
 //!
 //! Then use it in your program like this:
