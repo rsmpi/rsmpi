@@ -22,7 +22,7 @@ env:
     - RELEASE_LIBRARY_VERSION=3.2
     - LIBCLANG_PATH=/usr/lib/llvm-3.9/lib
     # GH_TOKEN=...
-    - secure: "hbB6EhELjgI79FKuov4M11ZWiIIZLyOikV+gcE9KpoedLgHbnhSgpbSBlMZ6QFbsXKNAFX7uHlnNkweqJB+pMHYCL8qL9Vxu4vFd1YRyexJSRo7Ly9T7U0aFYR7XCIboCwu26BKqWRPioWL/3W+e0dFctPDZ9Fp1dlFOGZKW1aAMC15r0ekFY0z7lvY4ph2eA45EygKyYnM3t1VAEzk+vq1cRqOL8zRpkB0ydeLkgW0JUWzM+tLdZCou7bsoqwPGEQgx+rUpBSpDEuB5FW0Bbbyhwhc5B1NKVLSTXpwKYY5sVG2YnC4B/hatagLUUpvXb0ncxzFah5rFL/qNZMiP2MB3G6Xn7SBZhapbnYClc7nsBsk8SQlSCKTnq6ypU1/0ZhR/UKhfZK4Yb5+k1TdQ4MeQUj+6elJOKmnIcrUQxGqVxFjuY5WarARjgyDoeG50iXqmVtC0jDdqpHEahIEzCHj79/KIiARsHss3Hm+eblRaWEQZzUzCSFQhoIUH1rzdSJ2twQyEpGpVVTttQjIGVRdhtute98NyvPz6Mk0hE9HO2m/RnYKieI3NG0TUzDkLANFYic/L8YxSek5uoJaZ3MNfEKELYxvZE7rtKm1TyDpwyJEDO7Sx2jSNX7ahqTX+e6a0so93vE+Wt5BlR9R6oVj7v9H9HfsGeTKpiis1Ol8="
+    - secure: "b/XSfdfqZZCP+hG65bqi+wPPh0z5lMRCL7X4Y0vNPt01WGqu851RHF6XGvkBa8MQWWYylDAAZTFWHDHG0uAb94Dpvo2+XpU4PtRrTUd52lN3U66bRyR1H5wRlhCBYpqnke7S3zP2XKvHfTUFNPyF6NliCVKPsntTPsb7szYevZzYzIBIjsPq5IbUqezsV6aVvjJ6wcIjMdzhsDafefNGxEkSis6XhSPXif02enyglKCN6qhPcd+RdaCP4NyUhxxyNO7w6tGooCo1V534/EPH08u0tU78htV/TNzlvobjAvxrC4lnCY7MJW1lFkJL9tzTo1LC2xaFMzLwzsYr3b+PCBg94Iz4OcA7le630SiZC0iI2lLL7xsaSp+qSFK1YTp0nPH0LXE67XesAjFHnRh/EroJK9UK58L+enBWUzsm6Q4ey2k+AaOw9IkHvDXtgjAJknmG+na3dRVbmEetxVkxm9yucAzUxw12h4ZHwYv2LPWDtu+CL7TbUItqgHIkw0AGGX5eII3uThOib+aKuG8g86G16XHQ2aXEZmkA9BdXqlLG4P5qSDN1SiO+s8W6Q2WVgVHlk4tlpSEOXXx0AbeBndQzRAFHKEyBeVq3NKYLncikHjndR1/jvzTMSVIli2ptbUJbXTZMTT5B05QWIR9Xh95gxKunc1kfNJ6YSEhVDf0="
     # CRATES_IO_TOKEN=...
     - secure: "FYoav+St+90i6AQzyMw+NJdtktG2UMK7szt7ar88ww7bkkCd9I9qgtqqW6mopzpnguRhBusxoCsmiroFbXVO1R3vSP1ugECUTDCK7x/Tqkc/wa0MOqlmBneG+bZOF3YjiDTfaAIUI8r10RstfRhRwIKgZI3vE/8TEgTGlWW+cZuHaz7U4wesHUY+euuSoLuD7XrlI1N9EBAbHwTtLpfHoONSw8fxVQc0nQ7vTBrC+UQiRZA8oFP7qpJ/9xfsCMWSyVihuSzdHoCRIxCs+rWROBpULAqvPa0vYdxE7oQHPwbaQ8bsv088Mowjaq5Dp8NimodimQsx7D58g/e+INEk9q3dwj/RN0iMgNYqhYv9Wu+vMWNMbvReSHlJtIYWtl2varXQI2hOPC/+6OhfzlAT1hBsrkJjZ6bQ9Yv9NUGNQHNrFvdCKOEvSG3wHNB10mfBB/KSVzB/ya8suEBR07CjzbrzTlH2SUYfSHS5iNbP791kAYp2MyMn69ZajeEZ3iYwwG2lHH2CONB/QiAX6ZDc5J3jM8gmxu2S5QkZkZieBnDZG/OsYjOw7Zka3ktlGW+Khn3RRRsDYMrpAN5qmiEO6vdDP/XcRZw4ERfHQd8A9kEhnhJGOlg6KGyNM0pi7s4IX8VWkbxAmY53HqsyK1eagIVLsxkzCn3GKfVQuufHBBc="
 
@@ -48,7 +48,6 @@ matrix:
 
 install:
   - sh ci/install-mpi.sh
-  - pip install 'ghp-import' --user
   - export MPI_PREFIX="${HOME}/opt/${MPI_LIBRARY}-${MPI_LIBRARY_VERSION}"
   - export PATH="${HOME}/.local/bin:${MPI_PREFIX}/bin${PATH:+":${PATH}"}"
   - export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"
@@ -63,23 +62,27 @@ script:
     fi
 
 before_deploy:
-  # Set up credentials for deploying
-  # Decrypt GitHub deploy SSH key
-  - mkdir -p ${HOME}/.ssh && touch ${HOME}/.ssh/deploy_key && chmod 0600 ${HOME}/.ssh/deploy_key
-  - openssl aes-256-cbc -K $encrypted_180303504686_key -iv $encrypted_180303504686_iv -in ci/deploy_key.enc -out ${HOME}/.ssh/deploy_key -d
-  # Make SSH aware of key
-  - echo -e "Host github.com\n  IdentityFile ${HOME}/.ssh/deploy_key" >> ${HOME}/.ssh/config
-  # Make git push via SSH
-  - git remote set-url origin git@github.com:bsteinb/rsmpi.git
   # Login to cates.io
   - cargo login "${CRATES_IO_TOKEN}"
   # Build crate
   - cargo package -v --no-verify
+  # Build docs
+  - cargo doc -v --no-deps
+  - echo "<meta http-equiv=refresh content=0;url=mpi/index.html>" >> target/doc/index.html
 
 deploy:
-  # Build an upload documentation to GitHub pages
-  - provider: script
-    script: ci/deploy-docs.sh
+  # Build and upload documentation to GitHub pages
+  - provider: pages
+    github_token: $GH_TOKEN
+    local_dir: target/doc
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
+  # Deploy crate to GitHub releases
+  - provider: releases
+    api_key: $GH_TOKEN
+    file: target/package/mpi-${TRAVIS_TAG}.crate
     skip_cleanup: true
     on:
       tags: true
@@ -87,15 +90,6 @@ deploy:
   # Deploy the crate to crates.io
   - provider: script
     script: ci/deploy-crate.sh
-    skip_cleanup: true
-    on:
-      tags: true
-      condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
-  # Deploy crate to GitHub releases
-  - provider: releases
-    api_key:
-      secure: Ke5lOvpyyl1DvwCYlmbw8MH+mjMH2pnLKm29gJV12UsnLM/b3g0IiffcdQV6nnDGofFq6dvnVurz1EFoWG0IzgRrAMLSyA+V30rXp0AYCYgz4jUIXkJGAQz6OS0nDlE9R4Fnpu6qqHhwJV64ooyAaisIJUTXV7CJMhK5YXQh+MchEKgvwqbCkHUqpW4A9vKrlcZbZjYHF3xUAIwoQr+KO6nf3DVyYZJ4+NjLjZA0d7QNxMgpIqjHR5kvNhaS6fuxrMxuoH3PbmGIkmJInxpA5P4oWGH8Qmh3fQTUO7702zWCdpDwnw9mOBr67QIBfPDOefVQTFfvNOafZsRRQKSmSAvqMPSsJ1nVJNAoccObHp5wswdvSn+iG0SfTuFzUA5egx/h9Xd3jJ6Nt95M1ohvy40nOHhil5SqG9qXEMJVKoaDSL1ocgW59Tu+ZKk/h/jxQp38KDSNXBN/rGLmMWwYmk2QvyCEvMwgK3nPNSKLJ/SoAEf3SpLIWdQWEDArHFW72HaoR33sT58/cE4xHHDA0nuxE5BudBKiaUKXDPWwsmcxvA4usmPC9F45F+//JGXmZAuGgWsGl2DD0mBgfRQ2BBGHE++21xCIn2Vkwt0W0vfAKTjQwqCn2dBewhtuMl67Fz+cZ4aF11RvFAcZIxDFBEMCnvtHRzcx7Kkud4VOYe4=
-    file: target/package/mpi-${TRAVIS_TAG}.crate
     skip_cleanup: true
     on:
       tags: true
