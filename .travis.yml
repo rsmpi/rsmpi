@@ -74,7 +74,7 @@ before_deploy:
   # Login to cates.io
   - cargo login "${CRATES_IO_TOKEN}"
   # Build crate
-  - cargo package -v
+  - cargo package -v --no-verify
 
 deploy:
   # Build an upload documentation to GitHub pages
