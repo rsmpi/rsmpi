@@ -44,7 +44,7 @@ Second, to generate FFI definitions tailored to each MPI implementation, `rsmpi`
 [rsmpih]: https://github.com/bsteinb/rsmpi/blob/master/src/ffi/rsmpi.h
 [rsmpic]: https://github.com/bsteinb/rsmpi/blob/master/src/ffi/rsmpi.c
 [buildrs]: https://github.com/bsteinb/rsmpi/blob/master/build.rs
-[bindgen]: https://github.com/crabtw/rust-bindgen
+[bindgen]: https://github.com/servo/rust-bindgen
 
 ## Usage
 
