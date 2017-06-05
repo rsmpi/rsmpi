@@ -3,9 +3,7 @@
 #![warn(missing_copy_implementations)]
 #![warn(trivial_casts)]
 #![warn(trivial_numeric_casts)]
-// This has false positives on #[macro_use],
-// see https://github.com/rust-lang/rust/issues/30849
-// #![warn(unused_extern_crates)]
+#![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 #![deny(warnings)]
