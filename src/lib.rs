@@ -1,6 +1,3 @@
-// #![feature(plugin, custom_attribute)]
-// #![plugin(c_import)]
-
 #![deny(missing_docs)]
 
 #![warn(missing_copy_implementations)]

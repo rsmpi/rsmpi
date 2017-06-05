@@ -20,6 +20,3 @@ gcc = "0.3"
 bindgen = "0.25"
 build-probe-mpi = { path = "./build-probe-mpi" }
 rustc_version = "0.2"
-
-#[dependencies.c_import]
-#git = "https://github.com/vojtechkral/rust-c-import.git"
