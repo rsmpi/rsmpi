@@ -2,6 +2,10 @@
 name = "build-probe-mpi"
 version = "0.1.0"
 authors = ["Benedikt Steinbusch <ben@rockshrub.de>"]
+description = "Probes the system for an installation of an MPI library"
+homepage = "https://github.com/bsteinb/rsmpi"
+repository = "https://github.com/bsteinb/rsmpi"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 pkg-config = "0.3"
