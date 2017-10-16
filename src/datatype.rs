@@ -88,14 +88,14 @@ impl<'a> DatatypeRef<'a> {
 
 /// A system datatype, e.g. `MPI_FLOAT`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.2.2
 pub type SystemDatatype = DatatypeRef<'static>;
 
 /// A direct equivalence exists between the implementing type and an MPI datatype
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.2.2
 pub unsafe trait Equivalence {
@@ -141,7 +141,7 @@ equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
 
 /// A user defined MPI datatype
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 4
 pub struct UserDatatype(MPI_Datatype);
@@ -152,7 +152,7 @@ impl UserDatatype {
     /// # Examples
     /// See `examples/contiguous.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 4.1.2
     pub fn contiguous<D>(count: Count, oldtype: &D) -> UserDatatype
@@ -172,7 +172,7 @@ impl UserDatatype {
     /// # Examples
     /// See `examples/vector.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 4.1.2
     pub fn vector<D>(count: Count, blocklength: Count, stride: Count, oldtype: &D) -> UserDatatype
@@ -188,7 +188,7 @@ impl UserDatatype {
 
     /// Like `vector()` but `stride` is given in bytes rather than elements of `oldtype`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 4.1.2
     pub fn heterogeneous_vector<D>(count: Count,
@@ -210,7 +210,7 @@ impl UserDatatype {
     /// Block `i` will be `blocklengths[i]` items of datytpe `oldtype` long and displaced by
     /// `dispplacements[i]` items of the `oldtype`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 4.1.2
     pub fn indexed<D>(blocklengths: &[Count], displacements: &[Count], oldtype: &D) -> UserDatatype
@@ -233,7 +233,7 @@ impl UserDatatype {
     /// Block `i` will be `blocklengths[i]` items of datytpe `oldtype` long and displaced by
     /// `dispplacements[i]` bytes.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 4.1.2
     pub fn heterogeneous_indexed<D>(blocklengths: &[Count],
@@ -257,7 +257,7 @@ impl UserDatatype {
 
     /// Construct a new type out of blocks of the same length and individual displacements.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 4.1.2
     pub fn indexed_block<D>(blocklength: Count,
@@ -281,7 +281,7 @@ impl UserDatatype {
     /// Construct a new type out of blocks of the same length and individual displacements.
     /// Displacements are in bytes.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 4.1.2
     pub fn heterogeneous_indexed_block<D>(blocklength: Count,
@@ -307,7 +307,7 @@ impl UserDatatype {
     /// # Examples
     /// See `examples/structured.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 4.1.2
     pub fn structured(count: Count, blocklengths: &[Count], displacements: &[Address],
@@ -929,7 +929,7 @@ impl<'b, B: ?Sized, C, D> PartitionedBufferMut for PartitionMut<'b, B, C, D>
 /// # Examples
 /// See `examples/structured.rs`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 4.1.5
 pub fn address_of<T>(x: &T) -> Address {

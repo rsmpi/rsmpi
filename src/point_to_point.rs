@@ -42,7 +42,7 @@ pub mod traits {
 /// identified process.
 /// - A communicator can also be used as a source via the `AnyProcess` identifier.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.2.3
 pub unsafe trait Source: AsCommunicator {
@@ -58,7 +58,7 @@ pub unsafe trait Source: AsCommunicator {
     /// in a multi-threaded set-up). For a probe operation with stronger guarantees, see
     /// `matched_probe()`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.1
     fn probe_with_tag(&self, tag: Tag) -> Status {
@@ -81,7 +81,7 @@ pub unsafe trait Source: AsCommunicator {
     /// in a multi-threaded set-up). For a probe operation with stronger guarantees, see
     /// `matched_probe()`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.1
     fn probe(&self) -> Status {
@@ -96,7 +96,7 @@ pub unsafe trait Source: AsCommunicator {
     /// incoming message and a `Message` which can and *must* subsequently be used in a
     /// `matched_receive()` to receive the probed message.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.2
     fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status) {
@@ -120,7 +120,7 @@ pub unsafe trait Source: AsCommunicator {
     /// incoming message and a `Message` which can and *must* subsequently be used in a
     /// `matched_receive()` to receive the probed message.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.2
     fn matched_probe(&self) -> (Message, Status) {
@@ -132,7 +132,7 @@ pub unsafe trait Source: AsCommunicator {
     /// Receive a message from `Source` `&self` tagged `tag` containing a single instance of type
     /// `Msg`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.2.4
     fn receive_with_tag<Msg>(&self, tag: Tag) -> (Msg, Status)
@@ -161,7 +161,7 @@ pub unsafe trait Source: AsCommunicator {
     /// let x = world.any_process().receive::<f64>();
     /// ```
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.2.4
     fn receive<Msg>(&self) -> (Msg, Status)
@@ -174,7 +174,7 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// Receive a message from `Source` `&self` tagged `tag` into `Buffer` `buf`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.2.4
     fn receive_into_with_tag<Buf: ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status
@@ -197,7 +197,7 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// Receive a message from `Source` `&self` into `Buffer` `buf`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.2.4
     fn receive_into<Buf: ?Sized>(&self, buf: &mut Buf) -> Status
@@ -211,7 +211,7 @@ pub unsafe trait Source: AsCommunicator {
     /// Receive a message from `Source` `&self` tagged `tag` containing multiple instances of type
     /// `Msg` into a `Vec`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.2.4
     fn receive_vec_with_tag<Msg>(&self, tag: Tag) -> (Vec<Msg>, Status)
@@ -228,7 +228,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Examples
     /// See `examples/send_receive.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.2.4
     fn receive_vec<Msg>(&self) -> (Vec<Msg>, Status)
@@ -241,7 +241,7 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// Initiate receiving a message matching `tag` into `buf`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_receive_into_with_tag<'a, Sc, Buf: ?Sized>(&self,
@@ -272,7 +272,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Examples
     /// See `examples/immediate.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_receive_into<'a, Sc, Buf: ?Sized>(&self,
@@ -287,7 +287,7 @@ pub unsafe trait Source: AsCommunicator {
 
     /// Initiate a non-blocking receive operation for messages matching tag `tag`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_receive_with_tag<Msg>(&self, tag: Tag) -> ReceiveFuture<Msg>
@@ -316,7 +316,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Examples
     /// See `examples/immediate.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_receive<Msg>(&self) -> ReceiveFuture<Msg>
@@ -331,7 +331,7 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// Like `Probe` but returns a `None` immediately if there is no incoming message to be probed.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.1
     fn immediate_probe_with_tag(&self, tag: Tag) -> Option<Status> {
@@ -357,7 +357,7 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// Like `Probe` but returns a `None` immediately if there is no incoming message to be probed.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.1
     fn immediate_probe(&self) -> Option<Status> {
@@ -371,7 +371,7 @@ pub unsafe trait Source: AsCommunicator {
     /// Like `MatchedProbe` but returns a `None` immediately if there is no incoming message to be
     /// probed.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.2
     fn immediate_matched_probe_with_tag(&self, tag: Tag) -> Option<(Message, Status)> {
@@ -400,7 +400,7 @@ pub unsafe trait Source: AsCommunicator {
     /// Like `MatchedProbe` but returns a `None` immediately if there is no incoming message to be
     /// probed.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.2
     fn immediate_matched_probe(&self) -> Option<(Message, Status)> {
@@ -427,7 +427,7 @@ unsafe impl<'a, C> Source for Process<'a, C> where C: 'a + Communicator
 /// # Examples
 /// - Using a `Process` as the destination will send data to that specific process.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.2.3
 pub trait Destination: AsCommunicator {
@@ -438,7 +438,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.2.1
     fn send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
@@ -472,7 +472,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// See also `examples/send_receive.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.2.1
     fn send<Buf: ?Sized>(&self, buf: &Buf)
@@ -485,7 +485,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.4
     fn buffered_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
@@ -505,7 +505,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Send the contents of a `Buffer` to the `Destination` `&self`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.4
     fn buffered_send<Buf: ?Sized>(&self, buf: &Buf)
@@ -520,7 +520,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Completes only once the matching receive operation has started.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.4
     fn synchronous_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
@@ -542,7 +542,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Completes only once the matching receive operation has started.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.4
     fn synchronous_send<Buf: ?Sized>(&self, buf: &Buf)
@@ -557,7 +557,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Fails if the matching receive operation has not been posted.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.4
     fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
@@ -579,7 +579,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Fails if the matching receive operation has not been posted.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.4
     fn ready_send<Buf: ?Sized>(&self, buf: &Buf)
@@ -592,7 +592,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Initiate sending the data in `buf` in standard mode and tag it.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_send_with_tag<'a, Sc, Buf: ?Sized>(&self,
@@ -623,7 +623,7 @@ pub trait Destination: AsCommunicator {
     /// # Examples
     /// See `examples/immediate.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Sc>
@@ -637,7 +637,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Initiate sending the data in `buf` in buffered mode and tag it.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_buffered_send_with_tag<'a, Sc, Buf: ?Sized>(&self,
@@ -665,7 +665,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Initiate sending the data in `buf` in buffered mode.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_buffered_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf)
@@ -680,7 +680,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Initiate sending the data in `buf` in synchronous mode and tag it.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_synchronous_send_with_tag<'a, Sc, Buf: ?Sized>(&self,
@@ -708,7 +708,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Initiate sending the data in `buf` in synchronous mode.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_synchronous_send<'a, Sc, Buf: ?Sized>(&self,
@@ -725,7 +725,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// Initiate sending the data in `buf` in ready mode and tag it.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_ready_send_with_tag<'a, Sc, Buf: ?Sized>(&self,
@@ -757,7 +757,7 @@ pub trait Destination: AsCommunicator {
     ///
     /// See `examples/immediate.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.2
     fn immediate_ready_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf)
@@ -778,7 +778,7 @@ impl<'a, C> Destination for Process<'a, C> where C: 'a + Communicator
 
 /// Describes the result of a point to point receive operation.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.2.5
 #[derive(Copy, Clone)]
@@ -819,7 +819,7 @@ impl fmt::Debug for Status {
 
 /// Describes a pending incoming message, probed by a `matched_probe()`.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.8.2
 #[must_use]
@@ -835,7 +835,7 @@ impl Message {
     ///
     /// Receives the message `&self` which contains a single instance of type `Msg`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.3
     pub fn matched_receive<Msg>(self) -> (Msg, Status)
@@ -853,7 +853,7 @@ impl Message {
     ///
     /// Receive the message `&self` with contents matching `buf`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.3
     pub fn matched_receive_into<Buf: ?Sized>(mut self, buf: &mut Buf) -> Status
@@ -875,7 +875,7 @@ impl Message {
     ///
     /// Asynchronously receive the message `&self` with contents matching `buf`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.3
     pub fn immediate_matched_receive_into<'a, Sc, Buf: ?Sized + 'a>(mut self,
@@ -920,7 +920,7 @@ impl Drop for Message {
 
 /// Receive a previously probed message containing multiple instances of type `Msg` into a `Vec`.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.8.3
 pub trait MatchedReceiveVec {
@@ -948,7 +948,7 @@ impl MatchedReceiveVec for (Message, Status) {
 /// Sends `msg` to `destination` tagging it `sendtag` and simultaneously receives an
 /// instance of `R` tagged `receivetag` from `source`.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.10
 pub fn send_receive_with_tags<M, D, R, S>(msg: &M,
@@ -978,7 +978,7 @@ pub fn send_receive_with_tags<M, D, R, S>(msg: &M,
 /// # Examples
 /// See `examples/send_receive.rs`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.10
 pub fn send_receive<R, M, D, S>(msg: &M, destination: &D, source: &S) -> (R, Status)
@@ -994,7 +994,7 @@ pub fn send_receive<R, M, D, S>(msg: &M, destination: &D, source: &S) -> (R, Sta
 /// simultaneously receives a message tagged `receivetag` from `source` into
 /// `buf`.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.10
 pub fn send_receive_into_with_tags<M: ?Sized, D, B: ?Sized, S>(msg: &M,
@@ -1033,7 +1033,7 @@ pub fn send_receive_into_with_tags<M: ?Sized, D, B: ?Sized, S>(msg: &M,
 /// simultaneously receives a message from `source` into
 /// `buf`.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.10
 pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(msg: &M,
@@ -1058,7 +1058,7 @@ pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(msg: &M,
 /// simultaneously receives a message tagged `receivetag` from `source` and replaces the
 /// contents of `buf` with it.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.10
 pub fn send_receive_replace_into_with_tags<B: ?Sized, D, S>(buf: &mut B,
@@ -1092,7 +1092,7 @@ pub fn send_receive_replace_into_with_tags<B: ?Sized, D, S>(buf: &mut B,
 /// simultaneously receives a message from `source` and replaces the contents of
 /// `buf` with it.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.10
 pub fn send_receive_replace_into<B: ?Sized, D, S>(buf: &mut B,

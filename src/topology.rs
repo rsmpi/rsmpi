@@ -48,7 +48,7 @@ pub type Rank = c_int;
 
 /// A built-in communicator, e.g. `MPI_COMM_WORLD`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 6.4
 #[derive(Copy, Clone)]
@@ -100,7 +100,7 @@ impl AsCommunicator for SystemCommunicator {
 
 /// A user-defined communicator
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 6.4
 pub struct UserCommunicator(MPI_Comm);
@@ -183,7 +183,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Examples
     /// See `examples/simple.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.1
     fn size(&self) -> Rank {
@@ -199,7 +199,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Examples
     /// See `examples/simple.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.1
     fn rank(&self) -> Rank {
@@ -241,7 +241,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// See enum `CommunicatorRelation`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.1
     fn compare<C: ?Sized>(&self, other: &C) -> CommunicatorRelation
@@ -260,7 +260,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// See `examples/duplicate.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.2
     fn duplicate(&self) -> UserCommunicator {
@@ -281,7 +281,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// See `examples/split.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.2
     fn split_by_color(&self, color: Color) -> Option<UserCommunicator> {
@@ -293,7 +293,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// Like `split()` but orders processes according to the value of `key` in the new
     /// communicators.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.2
     fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<UserCommunicator> {
@@ -319,7 +319,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// See `examples/split.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.2
     fn split_by_subgroup_collective<G: ?Sized>(&self, group: &G) -> Option<UserCommunicator>
@@ -340,7 +340,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// See `examples/split.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.2
     fn split_by_subgroup<G: ?Sized>(&self, group: &G) -> Option<UserCommunicator>
@@ -354,7 +354,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// Like `split_by_subgroup()` but can avoid collision of concurrent calls
     /// (i.e. multithreaded) by passing in distinct tags.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.4.2
     fn split_by_subgroup_with_tag<G: ?Sized>(&self, group: &G, tag: Tag) -> Option<UserCommunicator>
@@ -369,7 +369,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
 
     /// The group associated with this communicator
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.2
     fn group(&self) -> UserGroup {
@@ -382,7 +382,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
 
     /// Abort program execution
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 8.7
     fn abort(&self, errorcode: c_int) -> ! {
@@ -395,7 +395,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
 
 /// The relation between two communicators.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 6.4.1
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -479,7 +479,7 @@ impl<'a, C> AsCommunicator for AnyProcess<'a, C> where C: 'a + Communicator
 
 /// A built-in group, e.g. `MPI_GROUP_EMPTY`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 6.2.1
 #[derive(Copy, Clone)]
@@ -503,7 +503,7 @@ impl Group for SystemGroup {}
 
 /// A user-defined group of processes
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 6.2.1
 pub struct UserGroup(MPI_Group);
@@ -533,7 +533,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     /// Constructs a new group that contains all members of the first group followed by all members
     /// of the second group that are not also members of the first group.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.2
     fn union<G>(&self, other: &G) -> UserGroup
@@ -551,7 +551,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     /// Constructs a new group that contains all processes that are members of both the first and
     /// second group in the order they have in the first group.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.2
     fn intersection<G>(&self, other: &G) -> UserGroup
@@ -569,7 +569,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     /// Constructs a new group that contains all members of the first group that are not also
     /// members of the second group in the order they have in the first group.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.2
     fn difference<G>(&self, other: &G) -> UserGroup
@@ -587,7 +587,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     /// Constructs a new group where the process with rank `ranks[i]` in the old group has rank `i`
     /// in the new group.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.2
     fn include(&self, ranks: &[Rank]) -> UserGroup {
@@ -603,7 +603,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     /// Constructs a new group containing those processes from the old group that are not mentioned
     /// in `ranks`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.2
     fn exclude(&self, ranks: &[Rank]) -> UserGroup {
@@ -616,7 +616,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
 
     /// Number of processes in the group.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.1
     fn size(&self) -> Rank {
@@ -629,7 +629,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
 
     /// Rank of this process within the group.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.1
     fn rank(&self) -> Option<Rank> {
@@ -648,7 +648,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// If the process is not a member of the other group, returns `None`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.1
     fn translate_rank<G>(&self, rank: Rank, other: &G) -> Option<Rank>
@@ -669,7 +669,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// If a process is not a member of the other group, returns `None`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.1
     fn translate_ranks<G>(&self, ranks: &[Rank], other: &G) -> Vec<Option<Rank>>
@@ -680,7 +680,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
 
     /// Compare two groups.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 6.3.1
     fn compare<G>(&self, other: &G) -> GroupRelation
@@ -696,7 +696,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
 
 /// The relation between two groups.
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 6.3.1
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
