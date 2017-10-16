@@ -57,7 +57,7 @@ fn is_null(request: MPI_Request) -> bool {
 ///
 /// See `examples/immediate.rs`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 3.7.1
 #[must_use]
@@ -136,7 +136,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// See `examples/immediate.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.3
     pub fn wait(self) -> Status {
@@ -149,7 +149,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// Will block execution of the calling thread until the associated operation has finished.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.3
     pub fn wait_without_status(self) {
@@ -165,7 +165,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// See `examples/immediate.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.7.3
     pub fn test(self) -> Result<Status, Self> {
@@ -196,7 +196,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// See `examples/immediate.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 3.8.4
     pub fn cancel(&self) {

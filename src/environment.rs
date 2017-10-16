@@ -86,7 +86,7 @@ impl Drop for Universe {
 /// # Examples
 /// See `examples/init_with_threading.rs`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 12.4.3
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -165,7 +165,7 @@ fn is_initialized() -> bool {
 /// # Examples
 /// See `examples/simple.rs`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 8.7
 pub fn initialize() -> Option<Universe> {
@@ -182,7 +182,7 @@ pub fn initialize() -> Option<Universe> {
 /// # Examples
 /// See `examples/init_with_threading.rs`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 12.4.3
 pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Threading)> {

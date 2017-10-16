@@ -42,7 +42,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/barrier.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.3
     fn barrier(&self) {
@@ -62,7 +62,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/all_gather.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.7
     fn all_gather_into<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
@@ -92,7 +92,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/all_gather_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.7
     fn all_gather_varcount_into<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
@@ -119,7 +119,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/all_to_all.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.8
     fn all_to_all_into<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
@@ -143,7 +143,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// The count of elements to send and receive to and from each process can vary and is specified
     /// using `Partitioned`.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.8
     fn all_to_all_varcount_into<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
@@ -170,7 +170,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/reduce.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.9.6
     fn all_reduce_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: O)
@@ -196,7 +196,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/reduce.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.10.1
     fn reduce_scatter_block_into<S: ?Sized, R: ?Sized, O>(&self,
@@ -225,7 +225,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/scan.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.11.1
     fn scan_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: O)
@@ -250,7 +250,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/scan.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.11.2
     fn exclusive_scan_into<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: O)
@@ -277,7 +277,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/immediate_barrier.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.1
     fn immediate_barrier(&self) -> Request<'static> {
@@ -295,7 +295,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/immediate_all_gather.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.5
     fn immediate_all_gather_into<'a, Sc, S: ?Sized, R: ?Sized>(&self,
@@ -329,7 +329,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/immediate_all_gather_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.5
     fn immediate_all_gather_varcount_into<'a, Sc, S: ?Sized, R: ?Sized>
@@ -363,7 +363,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/immediate_all_to_all.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.6
     fn immediate_all_to_all_into<'a, Sc, S: ?Sized, R: ?Sized>(&self,
@@ -392,7 +392,7 @@ pub trait CommunicatorCollectives: Communicator {
 
     /// Initiate non-blocking all-to-all communication.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.6
     fn immediate_all_to_all_varcount_into<'a, Sc, S: ?Sized, R: ?Sized>
@@ -428,7 +428,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/immediate_reduce.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.8
     fn immediate_all_reduce_into<'a, Sc, S: ?Sized, R: ?Sized, O>
@@ -464,7 +464,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/immediate_reduce.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.9
     fn immediate_reduce_scatter_block_into<'a, Sc, S: ?Sized, R: ?Sized, O>
@@ -500,7 +500,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/immediate_scan.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.11
     fn immediate_scan_into<'a, Sc, S: ?Sized, R: ?Sized, O>(&self,
@@ -534,7 +534,7 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// See `examples/immediate_scan.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.12
     fn immediate_exclusive_scan_into<'a, Sc, S: ?Sized, R: ?Sized, O>
@@ -583,7 +583,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/broadcast.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.4
     fn broadcast_into<Buf: ?Sized>(&self, buffer: &mut Buf)
@@ -611,7 +611,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/gather.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.5
     fn gather_into<S: ?Sized>(&self, sendbuf: &S)
@@ -643,7 +643,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/gather.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.5
     fn gather_into_root<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
@@ -678,7 +678,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/gather_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.5
     fn gather_varcount_into<S: ?Sized>(&self, sendbuf: &S)
@@ -712,7 +712,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/gather_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.5
     fn gather_varcount_into_root<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
@@ -746,7 +746,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/scatter.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.6
     fn scatter_into<R: ?Sized>(&self, recvbuf: &mut R)
@@ -778,7 +778,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/scatter.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.6
     fn scatter_into_root<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
@@ -813,7 +813,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/scatter_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.6
     fn scatter_varcount_into<R: ?Sized>(&self, recvbuf: &mut R)
@@ -847,7 +847,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/scatter_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.6
     fn scatter_varcount_into_root<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
@@ -877,7 +877,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/reduce.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.9.1
     fn reduce_into<S: ?Sized, O>(&self, sendbuf: &S, op: O)
@@ -905,7 +905,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/reduce.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.9.1
     fn reduce_into_root<S: ?Sized, R: ?Sized, O>(&self, sendbuf: &S, recvbuf: &mut R, op: O)
@@ -931,7 +931,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_broadcast.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.2
     fn immediate_broadcast_into<'a, Sc, Buf: ?Sized>(&self,
@@ -961,7 +961,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_gather.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.3
     fn immediate_gather_into<'a, Sc, S: ?Sized>(&self, scope: Sc, sendbuf: &'a S)
@@ -993,7 +993,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_gather.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.3
     fn immediate_gather_into_root<'a, Sc, S: ?Sized, R: ?Sized>(&self,
@@ -1030,7 +1030,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_gather_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.3
     fn immediate_gather_varcount_into<'a, Sc, S: ?Sized>(&self,
@@ -1065,7 +1065,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_gather_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.3
     fn immediate_gather_varcount_into_root<'a, Sc, S: ?Sized, R: ?Sized>
@@ -1103,7 +1103,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_scatter.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.4
     fn immediate_scatter_into<'a, Sc, R: ?Sized>(&self,
@@ -1137,7 +1137,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_scatter.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.4
     fn immediate_scatter_into_root<'a, Sc, S: ?Sized, R: ?Sized>
@@ -1175,7 +1175,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_scatter_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.4
     fn immediate_scatter_varcount_into<'a, Sc, R: ?Sized>(&self,
@@ -1210,7 +1210,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_scatter_varcount.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.4
     fn immediate_scatter_varcount_into_root<'a, Sc, S: ?Sized, R: ?Sized>
@@ -1249,7 +1249,7 @@ pub trait Root: AsCommunicator
     ///
     /// See `examples/immediate_reduce.rs`
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.7
     fn immediate_reduce_into<'a, Sc, S: ?Sized, O>(&self,
@@ -1285,7 +1285,7 @@ pub trait Root: AsCommunicator
     ///
     /// This function must be called on the root process.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.12.7
     fn immediate_reduce_into_root<'a, Sc, S: ?Sized, R: ?Sized, O>
@@ -1326,7 +1326,7 @@ impl<'a, C: 'a + Communicator> Root for Process<'a, C> {
 pub trait Operation: AsRaw<Raw = MPI_Op> {
     /// Returns whether the operation is commutative.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.9.7
     fn is_commutative(&self) -> bool {
@@ -1345,7 +1345,7 @@ impl<'a, T: 'a + Operation> Operation for &'a T {}
 ///
 /// See `examples/reduce.rs`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 5.9.2
 #[derive(Copy, Clone)]
@@ -1469,7 +1469,7 @@ impl<'a> UserOperation<'a> {
     ///
     /// **Note:** If the closure panics, the entire program will abort.
     ///
-    /// # Standard section(s)
+    /// # MPI standard section(s)
     ///
     /// 5.9.5
     pub fn new<F>(commute: bool, function: F) -> Self
@@ -1538,7 +1538,7 @@ unsafe fn wrapper<F>(function: &F,
 ///
 /// See `examples/reduce.rs`
 ///
-/// # Standard section(s)
+/// # MPI standard section(s)
 ///
 /// 5.9.7
 pub fn reduce_local_into<S: ?Sized, R: ?Sized, O>(inbuf: &S, inoutbuf: &mut R, op: O)
