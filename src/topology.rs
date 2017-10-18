@@ -20,7 +20,8 @@
 //! - **7**: Process topologies
 //! - **Parts of sections**: 8, 10, 12
 use std::{mem, process};
-use std::os::raw::c_int;
+use std::os::raw::{c_int, c_char};
+use std::ffi::{CStr, CString};
 
 use super::Tag;
 use ffi;
@@ -397,6 +398,35 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
             ffi::MPI_Abort(self.as_raw(), errorcode);
         }
         process::abort();
+    }
+
+    /// Set the communicator name
+    ///
+    /// # MPI standard reference
+    /// Section 6.8, see the `MPI_Comm_set_name` function
+    fn set_name(&self, name: &str) {
+        let c_name = CString::new(name).expect("Failed to convert the Rust string to a C string");
+        unsafe {
+            ffi::MPI_Comm_set_name(self.as_raw(), c_name.as_ptr());
+        }
+    }
+
+    /// Get the communicator name
+    ///
+    /// # MPI standard reference
+    /// Section 6.8, see the `MPI_Comm_get_name` function
+    fn get_name(&self) -> String {
+        type BufType = [c_char; ffi::MPI_MAX_OBJECT_NAME as usize];
+
+        unsafe {
+            let mut buf: BufType = mem::uninitialized();
+            let mut resultlen: c_int = mem::uninitialized();
+
+            ffi::MPI_Comm_get_name(self.as_raw(), buf.as_mut_ptr(), &mut resultlen);
+
+            let buf_cstr = CStr::from_ptr(buf.as_ptr());
+            buf_cstr.to_string_lossy().into_owned()
+        }
     }
 }
 
