@@ -16,7 +16,9 @@ fn main() {
     // Use `mpicc` wrapper rather than the system C compiler.
     env::set_var("CC", "mpicc");
     // Build the `rsmpi` C shim library.
-    gcc::compile_library("librsmpi.a", &["src/ffi/rsmpi.c"]);
+    gcc::Build::new()
+        .file("src/ffi/rsmpi.c")
+        .compile("librsmpi.a");
 
     // Try to find an MPI library
     let lib = match build_probe_mpi::probe() {
@@ -48,9 +50,8 @@ fn main() {
     let bindings = builder
         .header("src/ffi/rsmpi.h")
         .emit_builtins()
-        .no_unstable_rust()
-        .hide_type("mpich_struct_mpi_long_double_int")
-        .hide_type("max_align_t") // https://github.com/servo/rust-bindgen/issues/550
+        .blacklist_type("mpich_struct_mpi_long_double_int")
+        .blacklist_type("max_align_t") // https://github.com/servo/rust-bindgen/issues/550
         .generate()
         .unwrap();
 
