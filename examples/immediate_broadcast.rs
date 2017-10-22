@@ -21,7 +21,7 @@ fn main() {
     });
     println!("Rank {} received value: {}.", world.rank(), x);
     assert_eq!(x, 1024);
-    println!("");
+    println!();
 
     let mut a;
     let n = 4;

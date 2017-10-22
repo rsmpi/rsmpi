@@ -26,20 +26,20 @@ fn main() {
     world.all_reduce_into(&rank, &mut max, SystemOperation::max());
     assert_eq!(max, size - 1);
 
-    let a: u64 = 0b0000111111110000;
-    let b: u64 = 0b0011110000111100;
+    let a: u16 = 0b0000_1111_1111_0000;
+    let b: u16 = 0b0011_1100_0011_1100;
 
     let mut c = b;
     collective::reduce_local_into(&a, &mut c, SystemOperation::bitwise_and());
-    assert_eq!(c, 0b0000110000110000);
+    assert_eq!(c, 0b0000_1100_0011_0000);
 
     let mut d = b;
     collective::reduce_local_into(&a, &mut d, SystemOperation::bitwise_or());
-    assert_eq!(d, 0b0011111111111100);
+    assert_eq!(d, 0b0011_1111_1111_1100);
 
     let mut e = b;
     collective::reduce_local_into(&a, &mut e, SystemOperation::bitwise_xor());
-    assert_eq!(e, 0b0011001111001100);
+    assert_eq!(e, 0b0011_0011_1100_1100);
 
     let f = (0..size).collect::<Vec<_>>();
     let mut g: Rank = 0;

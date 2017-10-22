@@ -524,6 +524,11 @@ impl<'a> DynBuffer<'a> {
         self.count().value_as().expect("Length of DynBuffer cannot be expressed as a usize")
     }
 
+    /// Returns `true` if the buffer is empty
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Returns the underlying raw pointer.
     pub fn as_ptr(&self) -> *const c_void {
         self.ptr
@@ -610,6 +615,11 @@ impl<'a> DynBufferMut<'a> {
     /// Returns the number of elements in the buffer.
     pub fn len(&self) -> usize {
         self.count().value_as().expect("Length of DynBufferMut cannot be expressed as a usize")
+    }
+
+    /// Returns `true` if the buffer is empty
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Returns the underlying raw pointer.

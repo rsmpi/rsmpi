@@ -19,7 +19,7 @@ fn main() {
     root_process.broadcast_into(&mut x);
     println!("Rank {} received value: {}.", world.rank(), x);
     assert_eq!(x, 1024);
-    println!("");
+    println!();
 
     let mut a;
     let n = 4;
