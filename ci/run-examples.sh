@@ -2,6 +2,9 @@
 
 set -e
 
+# enable oversubscribing when using newer Open MPI
+export OMPI_MCA_rmaps_base_oversubscribe=1
+
 EXAMPLES_DIR="examples"
 BINARIES_DIR="target/debug/examples"
 
