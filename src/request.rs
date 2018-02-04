@@ -30,17 +30,124 @@
 use std::cell::Cell;
 use std::mem;
 use std::marker::PhantomData;
-use std::os::raw::c_int;
+use std::slice;
 
 use ffi;
 use ffi::{MPI_Request, MPI_Status};
 
 use point_to_point::Status;
 use raw::traits::*;
+use raw;
 
-/// Check if the request is `MPI_REQUEST_NULL`.
-fn is_null(request: MPI_Request) -> bool {
-    request == unsafe_extern_static!(ffi::RSMPI_REQUEST_NULL)
+/// Request traits
+pub mod traits {
+    pub use super::AsyncRequest;
+}
+
+/// A request object for a non-blocking operation registered with a `Scope` of lifetime `'a`
+///
+/// The `Scope` is needed to ensure that all buffers associated request will outlive the request
+/// itself, even if the destructor of the request fails to run.
+///
+/// # Panics
+///
+/// Panics if the request object is dropped.  To prevent this, call `wait`, `wait_without_status`,
+/// or `test`.  Alternatively, wrap the request inside a `WaitGuard` or `CancelGuard`.
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.1
+pub trait AsyncRequest<'a, S: Scope<'a>>: AsRaw<Raw = MPI_Request> + Sized {
+    /// Unregister the request object from its scope and deconstruct it into its raw parts.
+    ///
+    /// This is unsafe because the request may outlive its associated buffers.
+    unsafe fn into_raw(self) -> (MPI_Request, S);
+
+    /// Wait for an operation to finish.
+    ///
+    /// Will block execution of the calling thread until the associated operation has finished.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.3
+    fn wait(self) -> Status {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        raw::wait_with(unsafe { &mut self.into_raw().0 }, Some(&mut status));
+        Status::from_raw(status)
+    }
+
+    /// Wait for an operation to finish, but don’t bother retrieving the `Status` information.
+    ///
+    /// Will block execution of the calling thread until the associated operation has finished.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.3
+    fn wait_without_status(self) {
+        raw::wait_with(unsafe { &mut self.into_raw().0 }, None)
+    }
+
+    /// Test whether an operation has finished.
+    ///
+    /// If the operation has finished, `Status` is returned.  Otherwise returns the unfinished
+    /// `Request`.
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.3
+    fn test(self) -> Result<Status, Self> {
+        match raw::test(&mut self.as_raw()) {
+            Some(status) => {
+                unsafe { self.into_raw() };
+                Ok(Status::from_raw(status))
+            },
+            None => Err(self),
+        }
+    }
+
+    /// Initiate cancellation of the request.
+    ///
+    /// The MPI implementation is not guaranteed to fulfill this operation.  It may not even be
+    /// valid for certain types of requests.  In the future, the MPI forum may [deprecate
+    /// cancellation of sends][mpi26] entirely.
+    ///
+    /// [mpi26]: https://github.com/mpi-forum/mpi-issues/issues/26
+    ///
+    /// # Examples
+    ///
+    /// See `examples/immediate.rs`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.8.4
+    fn cancel(&self) {
+        let mut request = self.as_raw();
+        unsafe {
+            ffi::MPI_Cancel(&mut request);
+        }
+    }
+
+    /// Reduce the scope of a request.
+    fn shrink_scope_to<'b, S2>(self, scope: S2) -> Request<'b, S2>
+        where 'a: 'b, S2: Scope<'b>
+    {
+        unsafe {
+            let (request, _) = self.into_raw();
+            Request::from_raw(request, scope)
+        }
+    }
 }
 
 /// A request object for a non-blocking operation registered with a `Scope` of lifetime `'a`
@@ -92,7 +199,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     /// - The request must not be registered with the given scope.
     ///
     pub unsafe fn from_raw(request: MPI_Request, scope: S) -> Self {
-        debug_assert!(!is_null(request));
+        debug_assert!(!request.is_null());
         scope.register();
         Self {
             request: request,
@@ -100,120 +207,146 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
             phantom: Default::default(),
         }
     }
+}
 
-    /// Unregister the request object from its scope and deconstruct it into its raw parts.
-    ///
-    /// This is unsafe because the request may outlive its associated buffers.
-    pub unsafe fn into_raw(mut self) -> (MPI_Request, S) {
-        let request = mem::replace(&mut self.request, mem::uninitialized());
+impl<'a, S: Scope<'a>> AsyncRequest<'a, S> for Request<'a, S> {
+    unsafe fn into_raw(mut self) -> (MPI_Request, S) {
+        let request = mem::replace(&mut self.as_raw(), mem::uninitialized());
         let scope = mem::replace(&mut self.scope, mem::uninitialized());
         let _ = mem::replace(&mut self.phantom, mem::uninitialized());
         mem::forget(self);
         scope.unregister();
         (request, scope)
     }
+}
 
-    /// Wait for the request to finish and unregister the request object from its scope.
-    /// If provided, the status is written to the referent of the given reference.
-    /// The referent `MPI_Status` object is never read.
-    fn wait_with(self, status: Option<&mut MPI_Status>) {
-        unsafe {
-            let (mut request, _) = self.into_raw();
-            let status = match status {
-                Some(r) => r,
-                None => ffi::RSMPI_STATUS_IGNORE,
-            };
-            ffi::MPI_Wait(&mut request, status);
-            assert!(is_null(request));  // persistent requests are not supported
+/// A collection of request objects for a non-blocking operation registered
+/// with a `Scope` of lifetime `'a`.
+///
+/// The `Scope` is needed to ensure that all buffers associated request will
+/// outlive the request itself, even if the destructor of the request fails to
+/// run.
+///
+/// # Panics
+///
+/// Panics if the collection is dropped while it contains outstanding requests.
+/// To prevent this, call `wait_all`, `wait_all_without_status`, or `test`.
+/// Alternatively, wrap the request inside a `WaitAllGuard` or `CancelAllGuard`.
+///
+/// # Examples
+///
+/// See `examples/immediate_wait_all.rs`
+///
+/// # Standard section(s)
+///
+/// 3.7.5
+#[must_use]
+#[derive(Debug)]
+pub struct RequestCollection<'a, S: Scope<'a> = StaticScope> {
+    outstanding: usize,
+    requests: Vec<MPI_Request>,
+    scope: S,
+    phantom: PhantomData<Cell<&'a ()>>,
+}
+
+impl<'a, S: Scope<'a>> Drop for RequestCollection<'a, S> {
+    fn drop(&mut self) {
+        if self.outstanding() == 0 {
+            panic!("RequestCollection was dropped with outstanding requests not completed.");
         }
     }
+}
 
-    /// Wait for an operation to finish.
-    ///
-    /// Will block execution of the calling thread until the associated operation has finished.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate.rs`
-    ///
-    /// # Standard section(s)
-    ///
-    /// 3.7.3
-    pub fn wait(self) -> Status {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        self.wait_with(Some(&mut status));
-        Status::from_raw(status)
+impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
+    /// Returns the number of outstanding requests in the collection.
+    pub fn outstanding(&self) -> usize {
+        self.outstanding
     }
 
-    /// Wait for an operation to finish, but don’t bother retrieving the `Status` information.
-    ///
-    /// Will block execution of the calling thread until the associated operation has finished.
-    ///
-    /// # Standard section(s)
-    ///
-    /// 3.7.3
-    pub fn wait_without_status(self) {
-        self.wait_with(None);
+    /// Returns the underlying array of MPI_Request objects and their attached
+    /// scope.
+    pub unsafe fn into_raw(mut self) -> (Vec<MPI_Request>, S) {
+        let requests = mem::replace(&mut self.requests, mem::uninitialized());
+        let scope = mem::replace(&mut self.scope, mem::uninitialized());
+        let _ = mem::replace(&mut self.phantom, mem::uninitialized());
+        mem::forget(self);
+        scope.unregister();
+        (requests, scope)
     }
 
-    /// Test whether an operation has finished.
-    ///
-    /// If the operation has finished, `Status` is returned.  Otherwise returns the unfinished
-    /// `Request`.
-    ///
-    /// # Examples
-    ///
-    /// See `examples/immediate.rs`
-    ///
-    /// # Standard section(s)
-    ///
-    /// 3.7.3
-    pub fn test(self) -> Result<Status, Self> {
-        unsafe {
-            let mut status: MPI_Status = mem::uninitialized();
-            let mut flag: c_int = mem::uninitialized();
-            let mut request = self.as_raw();
-            ffi::MPI_Test(&mut request, &mut flag, &mut status);
-            if flag != 0 {
-                assert!(is_null(request));  // persistent requests are not supported
-                self.into_raw();
-                Ok(Status::from_raw(status))
-            } else {
-                Err(self)
+    /// Pops all trailing NULL requests. This makes it faster to append new
+    /// requests while minimizing memory usage.
+    /// 
+    /// This doesn't remove NULL requests that are before any other non-NULL
+    /// requests.
+    /// 
+    /// Called internally after any manipulation of the internal request array
+    /// by an MPI routine.
+    fn shrink(&mut self) {
+        while !self.requests.is_empty() {
+            if self.requests.last().unwrap().is_null() {
+                self.requests.pop();
             }
         }
     }
 
-    /// Initiate cancellation of the request.
+    // pub fn wait_any(&mut self) -> Option<(usize, Status)> {
+
+    // }
+
+    /// Wait for all requests in the collection to complete.
+    /// 
+    /// `outstanding()` shall be equal to 0 on completion.
+    /// 
+    /// # Standard section(s)
     ///
-    /// The MPI implementation is not guaranteed to fulfill this operation.  It may not even be
-    /// valid for certain types of requests.  In the future, the MPI forum may [deprecate
-    /// cancellation of sends][mpi26] entirely.
-    ///
-    /// [mpi26]: https://github.com/mpi-forum/mpi-issues/issues/26
+    /// 3.7.5
+    pub fn wait_all_into(&mut self, statuses: &mut [Status]) {
+        // This code assumes that the representation of point_to_point::Status
+        // is the same as ffi::MPI_Status.
+        let raw_statuses = unsafe {
+            slice::from_raw_parts_mut(
+                statuses.as_mut_ptr() as *mut _,
+                statuses.len())
+        };
+
+        raw::wait_all_with(&mut self.requests[..], Some(raw_statuses));
+        self.outstanding = 0;
+        self.shrink();
+    }
+    
+    /// Wait for all requests in the collection to complete.
+    /// 
+    /// `outstanding()` shall be equal to 0 on completion.
+    /// 
+    /// If you do not need the status of the completed requests,
+    /// `wait_all_without_status` is slightly more efficient because it does
+    /// not allocate memory.
     ///
     /// # Examples
     ///
-    /// See `examples/immediate.rs`
-    ///
+    /// See `examples/immediate_wait_all.rs`
+    /// 
     /// # Standard section(s)
     ///
-    /// 3.8.4
-    pub fn cancel(&self) {
-        let mut request = self.as_raw();
-        unsafe {
-            ffi::MPI_Cancel(&mut request);
-        }
+    /// 3.7.5
+    pub fn wait_all(&mut self) -> Vec<Status> {
+        let mut statuses = Vec::new();
+        self.wait_all_into(&mut statuses[..]);
+        statuses
     }
 
-    /// Reduce the scope of a request.
-    pub fn shrink_scope_to<'b, S2>(self, scope: S2) -> Request<'b, S2>
-        where 'a: 'b, S2: Scope<'b>
-    {
-        unsafe {
-            let (request, _) = self.into_raw();
-            Request::from_raw(request, scope)
-        }
+    /// Wait for all requests in the collection to complete.
+    /// 
+    /// `outstanding()` shall be equal to 0 on completion.
+    /// 
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
+    pub fn wait_all_without_status(&mut self) {
+        raw::wait_all_with(&mut self.requests[..], None);
+        self.outstanding = 0;
+        self.shrink()
     }
 }
 
