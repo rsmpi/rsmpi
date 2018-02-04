@@ -42,9 +42,15 @@ fn main() {
 
     let mut builder = bindgen::builder();
     // Let `bindgen` know about libraries and search directories.
-    for lib in &lib.libs { builder = builder.link(lib.clone()); }
-    for dir in &lib.lib_paths { builder = builder.clang_arg(format!("-L{}", dir.display())); }
-    for dir in &lib.include_paths { builder = builder.clang_arg(format!("-I{}", dir.display())); }
+    for lib in &lib.libs {
+        builder = builder.link(lib.clone());
+    }
+    for dir in &lib.lib_paths {
+        builder = builder.clang_arg(format!("-L{}", dir.display()));
+    }
+    for dir in &lib.include_paths {
+        builder = builder.clang_arg(format!("-I{}", dir.display()));
+    }
 
     // Generate Rust bindings for the MPI C API.
     let bindings = builder
@@ -58,9 +64,7 @@ fn main() {
     // Write the bindings to disk.
     let out_dir = env::var("OUT_DIR").expect("cargo did not set OUT_DIR");
     let out_file = Path::new(&out_dir).join("functions_and_types.rs");
-    bindings
-        .write_to_file(out_file)
-        .unwrap();
+    bindings.write_to_file(out_file).unwrap();
 
     // Access to extern statics has to be marked unsafe after 1.13.0
     if rustc_version::version().unwrap() >= RustcVersion::parse("1.13.0").unwrap() {

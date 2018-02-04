@@ -2,10 +2,10 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::datatype::{UserDatatype, View, MutView};
+use mpi::datatype::{MutView, UserDatatype, View};
 use mpi::Count;
 
-fn main () {
+fn main() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let root_rank = 0;
@@ -18,13 +18,20 @@ fn main () {
         let mut a = vec![0u64; count];
         root_process.gather_into_root(&i, &mut a[..]);
         println!("Root gathered sequence: {:?}.", a);
-        assert!(a.iter().enumerate().all(|(a, &b)| b == 2u64.pow(a as u32 + 1)));
+        assert!(
+            a.iter()
+                .enumerate()
+                .all(|(a, &b)| b == 2u64.pow(a as u32 + 1))
+        );
     } else {
         root_process.gather_into(&i);
     }
 
     let factor = world.rank() as u64 + 1;
-    let a = (1_u64..).take(count).map(|x| x * factor).collect::<Vec<_>>();
+    let a = (1_u64..)
+        .take(count)
+        .map(|x| x * factor)
+        .collect::<Vec<_>>();
 
     if world.rank() == root_rank {
         let mut t = vec![0u64; count * count];
@@ -33,7 +40,11 @@ fn main () {
         for r in t.chunks(count) {
             println!("{:?}", r);
         }
-        assert!((0_u64..).zip(t.iter()).all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
+        assert!(
+            (0_u64..)
+                .zip(t.iter())
+                .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
+        );
     } else {
         root_process.gather_into(&a[..]);
     }
@@ -45,7 +56,8 @@ fn main () {
         let mut t = vec![0u64; count * count];
 
         {
-            let mut rv = unsafe { MutView::with_count_and_datatype(&mut t[..], count as Count, &d) };
+            let mut rv =
+                unsafe { MutView::with_count_and_datatype(&mut t[..], count as Count, &d) };
             root_process.gather_into_root(&sv, &mut rv);
         }
 
@@ -53,7 +65,11 @@ fn main () {
         for r in t.chunks(count) {
             println!("{:?}", r);
         }
-        assert!((0_u64..).zip(t.iter()).all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
+        assert!(
+            (0_u64..)
+                .zip(t.iter())
+                .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
+        );
     } else {
         root_process.gather_into(&sv);
     }

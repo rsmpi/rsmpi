@@ -13,7 +13,9 @@ pub unsafe trait AsRaw {
     fn as_raw(&self) -> Self::Raw;
 }
 
-unsafe impl<'a, T> AsRaw for &'a T where T: 'a + AsRaw
+unsafe impl<'a, T> AsRaw for &'a T
+where
+    T: 'a + AsRaw,
 {
     type Raw = <T as AsRaw>::Raw;
     fn as_raw(&self) -> Self::Raw {

@@ -22,7 +22,11 @@ fn main() {
     let x = vec![std::f32::consts::PI; 1024];
     let mut y = vec![0.0; 1024];
     mpi::request::scope(|scope| {
-        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(scope, &mut y[..]));
+        let _rreq = WaitGuard::from(
+            world
+                .any_process()
+                .immediate_receive_into(scope, &mut y[..]),
+        );
         world.this_process().buffered_send(&x[..]);
     });
     assert_eq!(x, y);

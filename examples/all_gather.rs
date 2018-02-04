@@ -2,10 +2,10 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::datatype::{UserDatatype, View, MutView};
+use mpi::datatype::{MutView, UserDatatype, View};
 use mpi::Count;
 
-fn main () {
+fn main() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let root_rank = 0;
@@ -16,11 +16,20 @@ fn main () {
 
     world.all_gather_into(&i, &mut a[..]);
 
-    if world.rank() == root_rank { println!("Root gathered sequence: {:?}.", a); }
-    assert!(a.iter().enumerate().all(|(a, &b)| b == 2u64.pow(a as u32 + 1)));
+    if world.rank() == root_rank {
+        println!("Root gathered sequence: {:?}.", a);
+    }
+    assert!(
+        a.iter()
+            .enumerate()
+            .all(|(a, &b)| b == 2u64.pow(a as u32 + 1))
+    );
 
     let factor = world.rank() as u64 + 1;
-    let a = (1_u64..).take(count).map(|x| x * factor).collect::<Vec<_>>();
+    let a = (1_u64..)
+        .take(count)
+        .map(|x| x * factor)
+        .collect::<Vec<_>>();
     let mut t = vec![0u64; count * count];
 
     world.all_gather_into(&a[..], &mut t[..]);
@@ -31,7 +40,11 @@ fn main () {
             println!("{:?}", r);
         }
     }
-    assert!((0_u64..).zip(t.iter()).all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
+    assert!(
+        (0_u64..)
+            .zip(t.iter())
+            .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
+    );
 
     let d = UserDatatype::contiguous(count as Count, &u64::equivalent_datatype());
     t = vec![0u64; count * count];
@@ -49,5 +62,9 @@ fn main () {
             println!("{:?}", r);
         }
     }
-    assert!((0_u64..).zip(t.iter()).all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
+    assert!(
+        (0_u64..)
+            .zip(t.iter())
+            .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
+    );
 }

@@ -1,5 +1,4 @@
 #![deny(missing_docs)]
-
 #![warn(missing_copy_implementations)]
 #![warn(trivial_casts)]
 #![warn(trivial_numeric_casts)]
@@ -7,23 +6,22 @@
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 #![deny(warnings)]
-
-#![cfg_attr(feature="cargo-clippy", warn(cast_possible_truncation))]
-#![cfg_attr(feature="cargo-clippy", warn(cast_possible_wrap))]
-#![cfg_attr(feature="cargo-clippy", warn(cast_precision_loss))]
-#![cfg_attr(feature="cargo-clippy", warn(cast_sign_loss))]
-#![cfg_attr(feature="cargo-clippy", warn(enum_glob_use))]
-#![cfg_attr(feature="cargo-clippy", warn(mut_mut))]
-#![cfg_attr(feature="cargo-clippy", warn(mutex_integer))]
-#![cfg_attr(feature="cargo-clippy", warn(non_ascii_literal))]
-#![cfg_attr(feature="cargo-clippy", warn(nonminimal_bool))]
-#![cfg_attr(feature="cargo-clippy", warn(option_unwrap_used))]
-#![cfg_attr(feature="cargo-clippy", warn(result_unwrap_used))]
-#![cfg_attr(feature="cargo-clippy", warn(single_match_else))]
-#![cfg_attr(feature="cargo-clippy", warn(string_add))]
-#![cfg_attr(feature="cargo-clippy", warn(string_add_assign))]
-#![cfg_attr(feature="cargo-clippy", warn(unicode_not_nfc))]
-#![cfg_attr(feature="cargo-clippy", warn(wrong_pub_self_convention))]
+#![cfg_attr(feature = "cargo-clippy", warn(cast_possible_truncation))]
+#![cfg_attr(feature = "cargo-clippy", warn(cast_possible_wrap))]
+#![cfg_attr(feature = "cargo-clippy", warn(cast_precision_loss))]
+#![cfg_attr(feature = "cargo-clippy", warn(cast_sign_loss))]
+#![cfg_attr(feature = "cargo-clippy", warn(enum_glob_use))]
+#![cfg_attr(feature = "cargo-clippy", warn(mut_mut))]
+#![cfg_attr(feature = "cargo-clippy", warn(mutex_integer))]
+#![cfg_attr(feature = "cargo-clippy", warn(non_ascii_literal))]
+#![cfg_attr(feature = "cargo-clippy", warn(nonminimal_bool))]
+#![cfg_attr(feature = "cargo-clippy", warn(option_unwrap_used))]
+#![cfg_attr(feature = "cargo-clippy", warn(result_unwrap_used))]
+#![cfg_attr(feature = "cargo-clippy", warn(single_match_else))]
+#![cfg_attr(feature = "cargo-clippy", warn(string_add))]
+#![cfg_attr(feature = "cargo-clippy", warn(string_add_assign))]
+#![cfg_attr(feature = "cargo-clippy", warn(unicode_not_nfc))]
+#![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 
 //! Message Passing Interface bindings for Rust
 //!
@@ -153,7 +151,7 @@ pub mod traits {
 }
 
 #[doc(inline)]
-pub use environment::{initialize, initialize_with_threading, Threading, time, time_resolution};
+pub use environment::{initialize, initialize_with_threading, time, time_resolution, Threading};
 
 use ffi::MPI_Aint;
 

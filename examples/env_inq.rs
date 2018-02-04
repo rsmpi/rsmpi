@@ -8,5 +8,8 @@ fn main() {
     let _universe = mpi::initialize().unwrap();
     println!("{}", mpi::environment::processor_name().unwrap());
 
-    assert!(version >= 3, "Rust MPI bindings require MPI standard 3.0 and up.");
+    assert!(
+        version >= 3,
+        "Rust MPI bindings require MPI standard 3.0 and up."
+    );
 }

@@ -11,7 +11,7 @@
 //! - **3.9**: Persistent requests, `MPI_Send_init()`, `MPI_Bsend_init()`, `MPI_Ssend_init()`,
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 
-use std::{mem, fmt};
+use std::{fmt, mem};
 use std::os::raw::c_int;
 
 use conv::ConvUtil;
@@ -19,19 +19,19 @@ use conv::ConvUtil;
 use super::{Count, Tag};
 
 use ffi;
-use ffi::{MPI_Status, MPI_Message, MPI_Request};
+use ffi::{MPI_Message, MPI_Request, MPI_Status};
 
 use datatype::traits::*;
 use raw::traits::*;
 use request::{Request, Scope, StaticScope};
-use topology::{Rank, Process, AnyProcess, CommunicatorRelation};
+use topology::{AnyProcess, CommunicatorRelation, Process, Rank};
 use topology::traits::*;
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
 
 /// Point to point communication traits
 pub mod traits {
-    pub use super::{Source, Destination, MatchedReceiveVec};
+    pub use super::{Destination, MatchedReceiveVec, Source};
 }
 
 /// Something that can be used as the source in a point to point receive operation
@@ -64,10 +64,12 @@ pub unsafe trait Source: AsCommunicator {
     fn probe_with_tag(&self, tag: Tag) -> Status {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Probe(self.source_rank(),
-                           tag,
-                           self.as_communicator().as_raw(),
-                           &mut status);
+            ffi::MPI_Probe(
+                self.source_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut status,
+            );
         };
         Status(status)
     }
@@ -103,11 +105,13 @@ pub unsafe trait Source: AsCommunicator {
         let mut message: MPI_Message = unsafe { mem::uninitialized() };
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Mprobe(self.source_rank(),
-                            tag,
-                            self.as_communicator().as_raw(),
-                            &mut message,
-                            &mut status);
+            ffi::MPI_Mprobe(
+                self.source_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut message,
+                &mut status,
+            );
         }
         (Message(message), Status(status))
     }
@@ -136,7 +140,8 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive_with_tag<Msg>(&self, tag: Tag) -> (Msg, Status)
-        where Msg: Equivalence
+    where
+        Msg: Equivalence,
     {
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.receive_into_with_tag(&mut res, tag);
@@ -165,7 +170,8 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive<Msg>(&self) -> (Msg, Status)
-        where Msg: Equivalence
+    where
+        Msg: Equivalence,
     {
         self.receive_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
@@ -178,17 +184,20 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive_into_with_tag<Buf: ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status
-        where Buf: BufferMut
+    where
+        Buf: BufferMut,
     {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Recv(buf.pointer_mut(),
-                          buf.count(),
-                          buf.as_datatype().as_raw(),
-                          self.source_rank(),
-                          tag,
-                          self.as_communicator().as_raw(),
-                          &mut status);
+            ffi::MPI_Recv(
+                buf.pointer_mut(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.source_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut status,
+            );
         }
         Status(status)
     }
@@ -201,7 +210,8 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive_into<Buf: ?Sized>(&self, buf: &mut Buf) -> Status
-        where Buf: BufferMut
+    where
+        Buf: BufferMut,
     {
         self.receive_into_with_tag(buf, unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
@@ -215,7 +225,8 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive_vec_with_tag<Msg>(&self, tag: Tag) -> (Vec<Msg>, Status)
-        where Msg: Equivalence
+    where
+        Msg: Equivalence,
     {
         self.matched_probe_with_tag(tag).matched_receive_vec()
     }
@@ -232,7 +243,8 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.2.4
     fn receive_vec<Msg>(&self) -> (Vec<Msg>, Status)
-        where Msg: Equivalence
+    where
+        Msg: Equivalence,
     {
         self.receive_vec_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
@@ -244,23 +256,27 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_receive_into_with_tag<'a, Sc, Buf: ?Sized>(&self,
-                                                            scope: Sc,
-                                                            buf: &'a mut Buf,
-                                                            tag: Tag)
-                                                            -> Request<'a, Sc>
-        where Buf: 'a + BufferMut,
-              Sc: Scope<'a>
+    fn immediate_receive_into_with_tag<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a mut Buf,
+        tag: Tag,
+    ) -> Request<'a, Sc>
+    where
+        Buf: 'a + BufferMut,
+        Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Irecv(buf.pointer_mut(),
-                           buf.count(),
-                           buf.as_datatype().as_raw(),
-                           self.source_rank(),
-                           tag,
-                           self.as_communicator().as_raw(),
-                           &mut request);
+            ffi::MPI_Irecv(
+                buf.pointer_mut(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.source_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut request,
+            );
             Request::from_raw(request, scope)
         }
     }
@@ -275,12 +291,14 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_receive_into<'a, Sc, Buf: ?Sized>(&self,
-                                                   scope: Sc,
-                                                   buf: &'a mut Buf)
-                                                   -> Request<'a, Sc>
-        where Buf: 'a + BufferMut,
-              Sc: Scope<'a>
+    fn immediate_receive_into<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a mut Buf,
+    ) -> Request<'a, Sc>
+    where
+        Buf: 'a + BufferMut,
+        Sc: Scope<'a>,
     {
         self.immediate_receive_into_with_tag(scope, buf, unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
@@ -291,22 +309,25 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.7.2
     fn immediate_receive_with_tag<Msg>(&self, tag: Tag) -> ReceiveFuture<Msg>
-        where Msg: Equivalence
+    where
+        Msg: Equivalence,
     {
         let mut val: Box<Msg> = Box::new(unsafe { mem::uninitialized() });
         let mut req: MPI_Request = unsafe { mem::uninitialized() };
 
         unsafe {
-            ffi::MPI_Irecv((&mut *(val)).pointer_mut(),
-                           val.count(),
-                           Msg::equivalent_datatype().as_raw(),
-                           self.source_rank(),
-                           tag,
-                           self.as_communicator().as_raw(),
-                           &mut req);
+            ffi::MPI_Irecv(
+                (&mut *(val)).pointer_mut(),
+                val.count(),
+                Msg::equivalent_datatype().as_raw(),
+                self.source_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut req,
+            );
             ReceiveFuture {
                 val: val,
-                req: Request::from_raw(req, StaticScope)
+                req: Request::from_raw(req, StaticScope),
             }
         }
     }
@@ -320,7 +341,8 @@ pub unsafe trait Source: AsCommunicator {
     ///
     /// 3.7.2
     fn immediate_receive<Msg>(&self) -> ReceiveFuture<Msg>
-        where Msg: Equivalence
+    where
+        Msg: Equivalence,
     {
         self.immediate_receive_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
@@ -338,11 +360,13 @@ pub unsafe trait Source: AsCommunicator {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         let mut flag: c_int = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iprobe(self.source_rank(),
-                            tag,
-                            self.as_communicator().as_raw(),
-                            &mut flag,
-                            &mut status);
+            ffi::MPI_Iprobe(
+                self.source_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut flag,
+                &mut status,
+            );
         };
         if flag != 0 {
             Some(Status(status))
@@ -379,12 +403,14 @@ pub unsafe trait Source: AsCommunicator {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         let mut flag: c_int = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Improbe(self.source_rank(),
-                             tag,
-                             self.as_communicator().as_raw(),
-                             &mut flag,
-                             &mut message,
-                             &mut status);
+            ffi::MPI_Improbe(
+                self.source_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut flag,
+                &mut message,
+                &mut status,
+            );
         }
         if flag != 0 {
             Some((Message(message), Status(status)))
@@ -408,14 +434,18 @@ pub unsafe trait Source: AsCommunicator {
     }
 }
 
-unsafe impl<'a, C> Source for AnyProcess<'a, C> where C: 'a + Communicator
+unsafe impl<'a, C> Source for AnyProcess<'a, C>
+where
+    C: 'a + Communicator,
 {
     fn source_rank(&self) -> Rank {
         unsafe_extern_static!(ffi::RSMPI_ANY_SOURCE)
     }
 }
 
-unsafe impl<'a, C> Source for Process<'a, C> where C: 'a + Communicator
+unsafe impl<'a, C> Source for Process<'a, C>
+where
+    C: 'a + Communicator,
 {
     fn source_rank(&self) -> Rank {
         self.rank()
@@ -442,15 +472,18 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.2.1
     fn send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
-        where Buf: Buffer
+    where
+        Buf: Buffer,
     {
         unsafe {
-            ffi::MPI_Send(buf.pointer(),
-                          buf.count(),
-                          buf.as_datatype().as_raw(),
-                          self.destination_rank(),
-                          tag,
-                          self.as_communicator().as_raw());
+            ffi::MPI_Send(
+                buf.pointer(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.destination_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+            );
         }
     }
 
@@ -476,7 +509,8 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.2.1
     fn send<Buf: ?Sized>(&self, buf: &Buf)
-        where Buf: Buffer
+    where
+        Buf: Buffer,
     {
         self.send_with_tag(buf, Tag::default())
     }
@@ -489,15 +523,18 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.4
     fn buffered_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
-        where Buf: Buffer
+    where
+        Buf: Buffer,
     {
         unsafe {
-            ffi::MPI_Bsend(buf.pointer(),
-                           buf.count(),
-                           buf.as_datatype().as_raw(),
-                           self.destination_rank(),
-                           tag,
-                           self.as_communicator().as_raw());
+            ffi::MPI_Bsend(
+                buf.pointer(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.destination_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+            );
         }
     }
 
@@ -509,7 +546,8 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.4
     fn buffered_send<Buf: ?Sized>(&self, buf: &Buf)
-        where Buf: Buffer
+    where
+        Buf: Buffer,
     {
         self.buffered_send_with_tag(buf, Tag::default())
     }
@@ -524,15 +562,18 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.4
     fn synchronous_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
-        where Buf: Buffer
+    where
+        Buf: Buffer,
     {
         unsafe {
-            ffi::MPI_Ssend(buf.pointer(),
-                           buf.count(),
-                           buf.as_datatype().as_raw(),
-                           self.destination_rank(),
-                           tag,
-                           self.as_communicator().as_raw());
+            ffi::MPI_Ssend(
+                buf.pointer(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.destination_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+            );
         }
     }
 
@@ -546,7 +587,8 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.4
     fn synchronous_send<Buf: ?Sized>(&self, buf: &Buf)
-        where Buf: Buffer
+    where
+        Buf: Buffer,
     {
         self.synchronous_send_with_tag(buf, Tag::default())
     }
@@ -561,15 +603,18 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.4
     fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
-        where Buf: Buffer
+    where
+        Buf: Buffer,
     {
         unsafe {
-            ffi::MPI_Rsend(buf.pointer(),
-                           buf.count(),
-                           buf.as_datatype().as_raw(),
-                           self.destination_rank(),
-                           tag,
-                           self.as_communicator().as_raw());
+            ffi::MPI_Rsend(
+                buf.pointer(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.destination_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+            );
         }
     }
 
@@ -583,7 +628,8 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.4
     fn ready_send<Buf: ?Sized>(&self, buf: &Buf)
-        where Buf: Buffer
+    where
+        Buf: Buffer,
     {
         self.ready_send_with_tag(buf, Tag::default())
     }
@@ -595,23 +641,27 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_send_with_tag<'a, Sc, Buf: ?Sized>(&self,
-                                                    scope: Sc,
-                                                    buf: &'a Buf,
-                                                    tag: Tag)
-                                                    -> Request<'a, Sc>
-        where Buf: 'a + Buffer,
-              Sc: Scope<'a>
+    fn immediate_send_with_tag<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+        tag: Tag,
+    ) -> Request<'a, Sc>
+    where
+        Buf: 'a + Buffer,
+        Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Isend(buf.pointer(),
-                           buf.count(),
-                           buf.as_datatype().as_raw(),
-                           self.destination_rank(),
-                           tag,
-                           self.as_communicator().as_raw(),
-                           &mut request);
+            ffi::MPI_Isend(
+                buf.pointer(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.destination_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut request,
+            );
             Request::from_raw(request, scope)
         }
     }
@@ -627,8 +677,9 @@ pub trait Destination: AsCommunicator {
     ///
     /// 3.7.2
     fn immediate_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Sc>
-        where Buf: 'a + Buffer,
-              Sc: Scope<'a>
+    where
+        Buf: 'a + Buffer,
+        Sc: Scope<'a>,
     {
         self.immediate_send_with_tag(scope, buf, Tag::default())
     }
@@ -640,23 +691,27 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_buffered_send_with_tag<'a, Sc, Buf: ?Sized>(&self,
-                                                             scope: Sc,
-                                                             buf: &'a Buf,
-                                                             tag: Tag)
-                                                             -> Request<'a, Sc>
-        where Buf: 'a + Buffer,
-              Sc: Scope<'a>
+    fn immediate_buffered_send_with_tag<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+        tag: Tag,
+    ) -> Request<'a, Sc>
+    where
+        Buf: 'a + Buffer,
+        Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ibsend(buf.pointer(),
-                            buf.count(),
-                            buf.as_datatype().as_raw(),
-                            self.destination_rank(),
-                            tag,
-                            self.as_communicator().as_raw(),
-                            &mut request);
+            ffi::MPI_Ibsend(
+                buf.pointer(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.destination_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut request,
+            );
             Request::from_raw(request, scope)
         }
     }
@@ -668,10 +723,14 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_buffered_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf)
-                                                    -> Request<'a, Sc>
-        where Buf: 'a + Buffer,
-              Sc: Scope<'a>
+    fn immediate_buffered_send<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+    ) -> Request<'a, Sc>
+    where
+        Buf: 'a + Buffer,
+        Sc: Scope<'a>,
     {
         self.immediate_buffered_send_with_tag(scope, buf, Tag::default())
     }
@@ -683,23 +742,27 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_synchronous_send_with_tag<'a, Sc, Buf: ?Sized>(&self,
-                                                                scope: Sc,
-                                                                buf: &'a Buf,
-                                                                tag: Tag)
-                                                                -> Request<'a, Sc>
-        where Buf: 'a + Buffer,
-              Sc: Scope<'a>
+    fn immediate_synchronous_send_with_tag<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+        tag: Tag,
+    ) -> Request<'a, Sc>
+    where
+        Buf: 'a + Buffer,
+        Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Issend(buf.pointer(),
-                            buf.count(),
-                            buf.as_datatype().as_raw(),
-                            self.destination_rank(),
-                            tag,
-                            self.as_communicator().as_raw(),
-                            &mut request);
+            ffi::MPI_Issend(
+                buf.pointer(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.destination_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut request,
+            );
             Request::from_raw(request, scope)
         }
     }
@@ -711,12 +774,14 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_synchronous_send<'a, Sc, Buf: ?Sized>(&self,
-                                                       scope: Sc,
-                                                       buf: &'a Buf)
-                                                       -> Request<'a, Sc>
-        where Buf: 'a + Buffer,
-              Sc: Scope<'a>
+    fn immediate_synchronous_send<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+    ) -> Request<'a, Sc>
+    where
+        Buf: 'a + Buffer,
+        Sc: Scope<'a>,
     {
         self.immediate_synchronous_send_with_tag(scope, buf, Tag::default())
     }
@@ -728,23 +793,27 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_ready_send_with_tag<'a, Sc, Buf: ?Sized>(&self,
-                                                          scope: Sc,
-                                                          buf: &'a Buf,
-                                                          tag: Tag)
-                                                          -> Request<'a, Sc>
-        where Buf: 'a + Buffer,
-              Sc: Scope<'a>
+    fn immediate_ready_send_with_tag<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+        tag: Tag,
+    ) -> Request<'a, Sc>
+    where
+        Buf: 'a + Buffer,
+        Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Irsend(buf.pointer(),
-                            buf.count(),
-                            buf.as_datatype().as_raw(),
-                            self.destination_rank(),
-                            tag,
-                            self.as_communicator().as_raw(),
-                            &mut request);
+            ffi::MPI_Irsend(
+                buf.pointer(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.destination_rank(),
+                tag,
+                self.as_communicator().as_raw(),
+                &mut request,
+            );
             Request::from_raw(request, scope)
         }
     }
@@ -760,16 +829,18 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_ready_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf)
-                                                 -> Request<'a, Sc>
-        where Buf: 'a + Buffer,
-              Sc: Scope<'a>
+    fn immediate_ready_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Sc>
+    where
+        Buf: 'a + Buffer,
+        Sc: Scope<'a>,
     {
         self.immediate_ready_send_with_tag(scope, buf, Tag::default())
     }
 }
 
-impl<'a, C> Destination for Process<'a, C> where C: 'a + Communicator
+impl<'a, C> Destination for Process<'a, C>
+where
+    C: 'a + Communicator,
 {
     fn destination_rank(&self) -> Rank {
         self.rank()
@@ -810,10 +881,12 @@ impl Status {
 
 impl fmt::Debug for Status {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f,
-               "Status {{ source_rank: {}, tag: {} }}",
-               self.source_rank(),
-               self.tag())
+        write!(
+            f,
+            "Status {{ source_rank: {}, tag: {} }}",
+            self.source_rank(),
+            self.tag()
+        )
     }
 }
 
@@ -839,7 +912,8 @@ impl Message {
     ///
     /// 3.8.3
     pub fn matched_receive<Msg>(self) -> (Msg, Status)
-        where Msg: Equivalence
+    where
+        Msg: Equivalence,
     {
         let mut res: Msg = unsafe { mem::uninitialized() };
         let status = self.matched_receive_into(&mut res);
@@ -857,15 +931,18 @@ impl Message {
     ///
     /// 3.8.3
     pub fn matched_receive_into<Buf: ?Sized>(mut self, buf: &mut Buf) -> Status
-        where Buf: BufferMut
+    where
+        Buf: BufferMut,
     {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Mrecv(buf.pointer_mut(),
-                           buf.count(),
-                           buf.as_datatype().as_raw(),
-                           self.as_raw_mut(),
-                           &mut status);
+            ffi::MPI_Mrecv(
+                buf.pointer_mut(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.as_raw_mut(),
+                &mut status,
+            );
             assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
         }
         Status(status)
@@ -878,20 +955,24 @@ impl Message {
     /// # Standard section(s)
     ///
     /// 3.8.3
-    pub fn immediate_matched_receive_into<'a, Sc, Buf: ?Sized + 'a>(mut self,
-                                                                    scope: Sc,
-                                                                    buf: &'a mut Buf)
-                                                                    -> Request<'a, Sc>
-        where Buf: BufferMut,
-              Sc: Scope<'a>
+    pub fn immediate_matched_receive_into<'a, Sc, Buf: ?Sized + 'a>(
+        mut self,
+        scope: Sc,
+        buf: &'a mut Buf,
+    ) -> Request<'a, Sc>
+    where
+        Buf: BufferMut,
+        Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Imrecv(buf.pointer_mut(),
-                            buf.count(),
-                            buf.as_datatype().as_raw(),
-                            self.as_raw_mut(),
-                            &mut request);
+            ffi::MPI_Imrecv(
+                buf.pointer_mut(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                self.as_raw_mut(),
+                &mut request,
+            );
             assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
             Request::from_raw(request, scope)
         }
@@ -913,8 +994,11 @@ unsafe impl AsRawMut for Message {
 
 impl Drop for Message {
     fn drop(&mut self) {
-        assert_eq!(self.as_raw(), unsafe_extern_static!(ffi::RSMPI_MESSAGE_NULL),
-                "matched message dropped without receiving.");
+        assert_eq!(
+            self.as_raw(),
+            unsafe_extern_static!(ffi::RSMPI_MESSAGE_NULL),
+            "matched message dropped without receiving."
+        );
     }
 }
 
@@ -925,17 +1009,21 @@ impl Drop for Message {
 /// 3.8.3
 pub trait MatchedReceiveVec {
     /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`.
-    fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status) where Msg: Equivalence;
+    fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status)
+    where
+        Msg: Equivalence;
 }
 
 impl MatchedReceiveVec for (Message, Status) {
     fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status)
-        where Msg: Equivalence
+    where
+        Msg: Equivalence,
     {
         let (message, status) = self;
-        let count = status.count(Msg::equivalent_datatype())
-                          .value_as()
-                          .expect("Message element count cannot be expressed as a usize.");
+        let count = status
+            .count(Msg::equivalent_datatype())
+            .value_as()
+            .expect("Message element count cannot be expressed as a usize.");
         let mut res = Vec::with_capacity(count);
         unsafe {
             res.set_len(count);
@@ -951,24 +1039,22 @@ impl MatchedReceiveVec for (Message, Status) {
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_with_tags<M, D, R, S>(msg: &M,
-                                          destination: &D,
-                                          sendtag: Tag,
-                                          source: &S,
-                                          receivetag: Tag)
-                                          -> (R, Status)
-    where M: Equivalence,
-          D: Destination,
-          R: Equivalence,
-          S: Source
+pub fn send_receive_with_tags<M, D, R, S>(
+    msg: &M,
+    destination: &D,
+    sendtag: Tag,
+    source: &S,
+    receivetag: Tag,
+) -> (R, Status)
+where
+    M: Equivalence,
+    D: Destination,
+    R: Equivalence,
+    S: Source,
 {
     let mut res: R = unsafe { mem::uninitialized() };
-    let status = send_receive_into_with_tags(msg,
-                                             destination,
-                                             sendtag,
-                                             &mut res,
-                                             source,
-                                             receivetag);
+    let status =
+        send_receive_into_with_tags(msg, destination, sendtag, &mut res, source, receivetag);
     (res, status)
 }
 
@@ -982,12 +1068,19 @@ pub fn send_receive_with_tags<M, D, R, S>(msg: &M,
 ///
 /// 3.10
 pub fn send_receive<R, M, D, S>(msg: &M, destination: &D, source: &S) -> (R, Status)
-    where M: Equivalence,
-          D: Destination,
-          R: Equivalence,
-          S: Source
+where
+    M: Equivalence,
+    D: Destination,
+    R: Equivalence,
+    S: Source,
 {
-    send_receive_with_tags(msg, destination, Tag::default(), source, unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
+    send_receive_with_tags(
+        msg,
+        destination,
+        Tag::default(),
+        source,
+        unsafe_extern_static!(ffi::RSMPI_ANY_TAG),
+    )
 }
 
 /// Sends the contents of `msg` to `destination` tagging it `sendtag` and
@@ -997,34 +1090,42 @@ pub fn send_receive<R, M, D, S>(msg: &M, destination: &D, source: &S) -> (R, Sta
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_into_with_tags<M: ?Sized, D, B: ?Sized, S>(msg: &M,
-                                                               destination: &D,
-                                                               sendtag: Tag,
-                                                               buf: &mut B,
-                                                               source: &S,
-                                                               receivetag: Tag)
-                                                               -> Status
-    where M: Buffer,
-          D: Destination,
-          B: BufferMut,
-          S: Source
+pub fn send_receive_into_with_tags<M: ?Sized, D, B: ?Sized, S>(
+    msg: &M,
+    destination: &D,
+    sendtag: Tag,
+    buf: &mut B,
+    source: &S,
+    receivetag: Tag,
+) -> Status
+where
+    M: Buffer,
+    D: Destination,
+    B: BufferMut,
+    S: Source,
 {
-    assert_eq!(source.as_communicator().compare(destination.as_communicator()),
-               CommunicatorRelation::Identical);
+    assert_eq!(
+        source
+            .as_communicator()
+            .compare(destination.as_communicator()),
+        CommunicatorRelation::Identical
+    );
     let mut status: MPI_Status = unsafe { mem::uninitialized() };
     unsafe {
-        ffi::MPI_Sendrecv(msg.pointer(),
-                          msg.count(),
-                          msg.as_datatype().as_raw(),
-                          destination.destination_rank(),
-                          sendtag,
-                          buf.pointer_mut(),
-                          buf.count(),
-                          buf.as_datatype().as_raw(),
-                          source.source_rank(),
-                          receivetag,
-                          source.as_communicator().as_raw(),
-                          &mut status);
+        ffi::MPI_Sendrecv(
+            msg.pointer(),
+            msg.count(),
+            msg.as_datatype().as_raw(),
+            destination.destination_rank(),
+            sendtag,
+            buf.pointer_mut(),
+            buf.count(),
+            buf.as_datatype().as_raw(),
+            source.source_rank(),
+            receivetag,
+            source.as_communicator().as_raw(),
+            &mut status,
+        );
     }
     Status(status)
 }
@@ -1036,22 +1137,26 @@ pub fn send_receive_into_with_tags<M: ?Sized, D, B: ?Sized, S>(msg: &M,
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(msg: &M,
-                                                     destination: &D,
-                                                     buf: &mut B,
-                                                     source: &S)
-                                                     -> Status
-    where M: Buffer,
-          D: Destination,
-          B: BufferMut,
-          S: Source
+pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(
+    msg: &M,
+    destination: &D,
+    buf: &mut B,
+    source: &S,
+) -> Status
+where
+    M: Buffer,
+    D: Destination,
+    B: BufferMut,
+    S: Source,
 {
-    send_receive_into_with_tags(msg,
-                                destination,
-                                Tag::default(),
-                                buf,
-                                source,
-                                unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
+    send_receive_into_with_tags(
+        msg,
+        destination,
+        Tag::default(),
+        buf,
+        source,
+        unsafe_extern_static!(ffi::RSMPI_ANY_TAG),
+    )
 }
 
 /// Sends the contents of `buf` to `destination` tagging it `sendtag` and
@@ -1061,29 +1166,37 @@ pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(msg: &M,
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_replace_into_with_tags<B: ?Sized, D, S>(buf: &mut B,
-                                                            destination: &D,
-                                                            sendtag: Tag,
-                                                            source: &S,
-                                                            receivetag: Tag)
-                                                            -> Status
-    where B: BufferMut,
-          D: Destination,
-          S: Source
+pub fn send_receive_replace_into_with_tags<B: ?Sized, D, S>(
+    buf: &mut B,
+    destination: &D,
+    sendtag: Tag,
+    source: &S,
+    receivetag: Tag,
+) -> Status
+where
+    B: BufferMut,
+    D: Destination,
+    S: Source,
 {
-    assert_eq!(source.as_communicator().compare(destination.as_communicator()),
-               CommunicatorRelation::Identical);
+    assert_eq!(
+        source
+            .as_communicator()
+            .compare(destination.as_communicator()),
+        CommunicatorRelation::Identical
+    );
     let mut status: MPI_Status = unsafe { mem::uninitialized() };
     unsafe {
-        ffi::MPI_Sendrecv_replace(buf.pointer_mut(),
-                                  buf.count(),
-                                  buf.as_datatype().as_raw(),
-                                  destination.destination_rank(),
-                                  sendtag,
-                                  source.source_rank(),
-                                  receivetag,
-                                  source.as_communicator().as_raw(),
-                                  &mut status);
+        ffi::MPI_Sendrecv_replace(
+            buf.pointer_mut(),
+            buf.count(),
+            buf.as_datatype().as_raw(),
+            destination.destination_rank(),
+            sendtag,
+            source.source_rank(),
+            receivetag,
+            source.as_communicator().as_raw(),
+            &mut status,
+        );
     }
     Status(status)
 }
@@ -1095,19 +1208,23 @@ pub fn send_receive_replace_into_with_tags<B: ?Sized, D, S>(buf: &mut B,
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_replace_into<B: ?Sized, D, S>(buf: &mut B,
-                                                  destination: &D,
-                                                  source: &S)
-                                                  -> Status
-    where B: BufferMut,
-          D: Destination,
-          S: Source
+pub fn send_receive_replace_into<B: ?Sized, D, S>(
+    buf: &mut B,
+    destination: &D,
+    source: &S,
+) -> Status
+where
+    B: BufferMut,
+    D: Destination,
+    S: Source,
 {
-    send_receive_replace_into_with_tags(buf,
-                                        destination,
-                                        Tag::default(),
-                                        source,
-                                        unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
+    send_receive_replace_into_with_tags(
+        buf,
+        destination,
+        Tag::default(),
+        source,
+        unsafe_extern_static!(ffi::RSMPI_ANY_TAG),
+    )
 }
 
 /// Will contain a value of type `T` received via a non-blocking receive operation.
@@ -1117,7 +1234,10 @@ pub struct ReceiveFuture<T> {
     req: Request<'static>,
 }
 
-impl<T> ReceiveFuture<T> where T: Equivalence {
+impl<T> ReceiveFuture<T>
+where
+    T: Equivalence,
+{
     /// Wait for the receive operation to finish and return the received data.
     pub fn get(self) -> (T, Status) {
         let status = self.req.wait();
@@ -1138,7 +1258,7 @@ impl<T> ReceiveFuture<T> where T: Equivalence {
                     panic!("Received an empty message into a ReceiveFuture.");
                 }
                 Ok((*self.val, status))
-            },
+            }
             Err(request) => {
                 self.req = request;
                 Err(self)

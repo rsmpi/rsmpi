@@ -15,10 +15,14 @@ fn main() {
 
     if rank == root_rank {
         let mut sum: Rank = 0;
-        world.process_at_rank(root_rank).reduce_into_root(&rank, &mut sum, SystemOperation::sum());
+        world
+            .process_at_rank(root_rank)
+            .reduce_into_root(&rank, &mut sum, SystemOperation::sum());
         assert_eq!(sum, size * (size - 1) / 2);
     } else {
-        world.process_at_rank(root_rank).reduce_into(&rank, SystemOperation::sum());
+        world
+            .process_at_rank(root_rank)
+            .reduce_into(&rank, SystemOperation::sum());
     }
 
     let mut max: Rank = -1;
@@ -48,12 +52,16 @@ fn main() {
     assert_eq!(g, rank.pow(size as u32));
 
     let mut h = 0;
-    world.all_reduce_into(&(rank + 1), &mut h, &UserOperation::commutative(|x, y| {
-        let x: &[Rank] = x.downcast().unwrap();
-        let y: &mut [Rank] = y.downcast().unwrap();
-        for (&x_i, y_i) in x.iter().zip(y) {
-            *y_i += x_i;
-        }
-    }));
+    world.all_reduce_into(
+        &(rank + 1),
+        &mut h,
+        &UserOperation::commutative(|x, y| {
+            let x: &[Rank] = x.downcast().unwrap();
+            let y: &mut [Rank] = y.downcast().unwrap();
+            for (&x_i, y_i) in x.iter().zip(y) {
+                *y_i += x_i;
+            }
+        }),
+    );
     assert_eq!(h, size * (size + 1) / 2);
 }

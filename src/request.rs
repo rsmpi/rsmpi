@@ -124,7 +124,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
                 None => ffi::RSMPI_STATUS_IGNORE,
             };
             ffi::MPI_Wait(&mut request, status);
-            assert!(is_null(request));  // persistent requests are not supported
+            assert!(is_null(request)); // persistent requests are not supported
         }
     }
 
@@ -175,7 +175,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
             let mut request = self.as_raw();
             ffi::MPI_Test(&mut request, &mut flag, &mut status);
             if flag != 0 {
-                assert!(is_null(request));  // persistent requests are not supported
+                assert!(is_null(request)); // persistent requests are not supported
                 self.into_raw();
                 Ok(Status::from_raw(status))
             } else {
@@ -208,7 +208,9 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
 
     /// Reduce the scope of a request.
     pub fn shrink_scope_to<'b, S2>(self, scope: S2) -> Request<'b, S2>
-        where 'a: 'b, S2: Scope<'b>
+    where
+        'a: 'b,
+        S2: Scope<'b>,
     {
         unsafe {
             let (request, _) = self.into_raw();
@@ -364,8 +366,12 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
     }
 
     unsafe fn unregister(&self) {
-        self.num_requests.set(self.num_requests.get().checked_sub(1)
-                              .expect("unregister has been called more times than register"))
+        self.num_requests.set(
+            self.num_requests
+                .get()
+                .checked_sub(1)
+                .expect("unregister has been called more times than register"),
+        )
     }
 }
 
@@ -391,7 +397,9 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
 ///
 /// See `examples/immediate.rs`
 pub fn scope<'a, F, R>(f: F) -> R
-    where F: FnOnce(&LocalScope<'a>) -> R {
+where
+    F: FnOnce(&LocalScope<'a>) -> R,
+{
     f(&LocalScope {
         num_requests: Default::default(),
         phantom: Default::default(),
