@@ -263,6 +263,11 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         self.outstanding
     }
 
+    /// Returns the number of request slots in the Collection.
+    pub fn len(&self) -> usize {
+        self.requests.len()
+    }
+
     /// Returns the underlying array of MPI_Request objects and their attached
     /// scope.
     pub unsafe fn into_raw(mut self) -> (Vec<MPI_Request>, S) {
@@ -274,25 +279,31 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         (requests, scope)
     }
 
-    /// Pops all trailing NULL requests. This makes it faster to append new
-    /// requests while minimizing memory usage.
-    /// 
-    /// This doesn't remove NULL requests that are before any other non-NULL
-    /// requests.
-    /// 
-    /// Called internally after any manipulation of the internal request array
-    /// by an MPI routine.
-    fn shrink(&mut self) {
-        while !self.requests.is_empty() {
-            if self.requests.last().unwrap().is_null() {
-                self.requests.pop();
-            }
-        }
+    /// `shrink` removes all deallocated requests from the collection. It does
+    /// not shrink the size of the underlying MPI_Request array, allowing the
+    /// RequestCollection to be efficiently re-used for another set of requests
+    /// without needing additional allocations.
+    pub fn shrink(&mut self) {
+        self.requests.retain(|&req| !req.is_null())
     }
 
-    // pub fn wait_any(&mut self) -> Option<(usize, Status)> {
-
-    // }
+    /// `wait_any` blocks until any request in the collection completes.
+    /// 
+    /// If there are any non-null requests in the collection, then it returns
+    /// `Some((idx, status))`, where `idx` is the index of the completed
+    /// request in the colleciton, and `status` is the status of the completed
+    /// request. Returns `None` if all requests are null.
+    /// 
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
+    pub fn wait_any(&mut self) -> Option<(usize, Status)> {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        raw::wait_any(&mut self.requests, Some(&mut status)).map(|idx| {
+            self.outstanding -= 1;
+            (idx as usize, Status::from_raw(status))
+        })
+    }
 
     /// Wait for all requests in the collection to complete.
     /// 
@@ -312,7 +323,6 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
 
         raw::wait_all_with(&mut self.requests[..], Some(raw_statuses));
         self.outstanding = 0;
-        self.shrink();
     }
     
     /// Wait for all requests in the collection to complete.
@@ -346,7 +356,6 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     pub fn wait_all_without_status(&mut self) {
         raw::wait_all_with(&mut self.requests[..], None);
         self.outstanding = 0;
-        self.shrink()
     }
 }
 
