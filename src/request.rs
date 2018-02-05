@@ -112,7 +112,7 @@ pub trait AsyncRequest<'a, S: Scope<'a>>: AsRaw<Raw = MPI_Request> + Sized {
             Some(status) => {
                 unsafe { self.into_raw() };
                 Ok(Status::from_raw(status))
-            },
+            }
             None => Err(self),
         }
     }
@@ -141,7 +141,9 @@ pub trait AsyncRequest<'a, S: Scope<'a>>: AsRaw<Raw = MPI_Request> + Sized {
 
     /// Reduce the scope of a request.
     fn shrink_scope_to<'b, S2>(self, scope: S2) -> Request<'b, S2>
-        where 'a: 'b, S2: Scope<'b>
+    where
+        'a: 'b,
+        S2: Scope<'b>,
     {
         unsafe {
             let (request, _) = self.into_raw();
@@ -288,12 +290,12 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     }
 
     /// `wait_any` blocks until any request in the collection completes.
-    /// 
+    ///
     /// If there are any non-null requests in the collection, then it returns
     /// `Some((idx, status))`, where `idx` is the index of the completed
     /// request in the colleciton, and `status` is the status of the completed
     /// request. Returns `None` if all requests are null.
-    /// 
+    ///
     /// # Standard section(s)
     ///
     /// 3.7.5
@@ -306,29 +308,26 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     }
 
     /// Wait for all requests in the collection to complete.
-    /// 
+    ///
     /// `outstanding()` shall be equal to 0 on completion.
-    /// 
+    ///
     /// # Standard section(s)
     ///
     /// 3.7.5
     pub fn wait_all_into(&mut self, statuses: &mut [Status]) {
         // This code assumes that the representation of point_to_point::Status
         // is the same as ffi::MPI_Status.
-        let raw_statuses = unsafe {
-            slice::from_raw_parts_mut(
-                statuses.as_mut_ptr() as *mut _,
-                statuses.len())
-        };
+        let raw_statuses =
+            unsafe { slice::from_raw_parts_mut(statuses.as_mut_ptr() as *mut _, statuses.len()) };
 
         raw::wait_all_with(&mut self.requests[..], Some(raw_statuses));
         self.outstanding = 0;
     }
-    
+
     /// Wait for all requests in the collection to complete.
-    /// 
+    ///
     /// `outstanding()` shall be equal to 0 on completion.
-    /// 
+    ///
     /// If you do not need the status of the completed requests,
     /// `wait_all_without_status` is slightly more efficient because it does
     /// not allocate memory.
@@ -336,7 +335,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// # Examples
     ///
     /// See `examples/immediate_wait_all.rs`
-    /// 
+    ///
     /// # Standard section(s)
     ///
     /// 3.7.5
@@ -347,9 +346,9 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     }
 
     /// Wait for all requests in the collection to complete.
-    /// 
+    ///
     /// `outstanding()` shall be equal to 0 on completion.
-    /// 
+    ///
     /// # Standard section(s)
     ///
     /// 3.7.5
@@ -506,8 +505,12 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
     }
 
     unsafe fn unregister(&self) {
-        self.num_requests.set(self.num_requests.get().checked_sub(1)
-                              .expect("unregister has been called more times than register"))
+        self.num_requests.set(
+            self.num_requests
+                .get()
+                .checked_sub(1)
+                .expect("unregister has been called more times than register"),
+        )
     }
 }
 
@@ -533,7 +536,9 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
 ///
 /// See `examples/immediate.rs`
 pub fn scope<'a, F, R>(f: F) -> R
-    where F: FnOnce(&LocalScope<'a>) -> R {
+where
+    F: FnOnce(&LocalScope<'a>) -> R,
+{
     f(&LocalScope {
         num_requests: Default::default(),
         phantom: Default::default(),

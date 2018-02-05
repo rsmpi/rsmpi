@@ -10,7 +10,7 @@
 use std::{mem, ptr};
 use std::cmp::Ordering;
 use std::string::FromUtf8Error;
-use std::os::raw::{c_char, c_int, c_double, c_void};
+use std::os::raw::{c_char, c_double, c_int, c_void};
 
 use conv::ConvUtil;
 
@@ -19,7 +19,7 @@ use topology::SystemCommunicator;
 
 /// Global context
 pub struct Universe {
-    buffer: Option<Vec<u8>>
+    buffer: Option<Vec<u8>>,
 }
 
 impl Universe {
@@ -47,7 +47,10 @@ impl Universe {
             unsafe {
                 ffi::MPI_Buffer_attach(
                     mem::transmute(buffer.as_mut_ptr()),
-                    buffer.len().value_as().expect("Buffer length exceeds the range of a C int.")
+                    buffer
+                        .len()
+                        .value_as()
+                        .expect("Buffer length exceeds the range of a C int."),
                 );
             }
             self.buffer = Some(buffer);
@@ -66,7 +69,10 @@ impl Universe {
             }
             assert_eq!(
                 size,
-                buffer.len().value_as().expect("Buffer length exceeds the range of a C int.")
+                buffer
+                    .len()
+                    .value_as()
+                    .expect("Buffer length exceeds the range of a C int.")
             );
         }
     }
@@ -101,7 +107,7 @@ pub enum Threading {
     Serialized,
     /// Processes may be multi-threaded with no restrictions on the use of MPI functions from the
     /// threads.
-    Multiple
+    Multiple,
 }
 
 impl Threading {
@@ -191,10 +197,12 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
     } else {
         let mut provided: c_int = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Init_thread(ptr::null_mut(),
-                                 ptr::null_mut(),
-                                 threading.as_raw(),
-                                 &mut provided);
+            ffi::MPI_Init_thread(
+                ptr::null_mut(),
+                ptr::null_mut(),
+                threading.as_raw(),
+                &mut provided,
+            );
         }
         Some((Universe { buffer: None }, provided.into()))
     }
@@ -234,19 +242,23 @@ pub fn version() -> (c_int, c_int) {
 ///
 /// Can be called without initializing MPI.
 pub fn library_version() -> Result<String, FromUtf8Error> {
-    let bufsize = unsafe_extern_static!(ffi::RSMPI_MAX_LIBRARY_VERSION_STRING).value_as().expect(
-        &format!("MPI_MAX_LIBRARY_SIZE ({}) cannot be expressed as a usize.",
-            unsafe_extern_static!(ffi::RSMPI_MAX_LIBRARY_VERSION_STRING))
-        );
+    let bufsize = unsafe_extern_static!(ffi::RSMPI_MAX_LIBRARY_VERSION_STRING)
+        .value_as()
+        .expect(&format!(
+            "MPI_MAX_LIBRARY_SIZE ({}) cannot be expressed as a usize.",
+            unsafe_extern_static!(ffi::RSMPI_MAX_LIBRARY_VERSION_STRING)
+        ));
     let mut buf = vec![0u8; bufsize];
     let mut len: c_int = 0;
 
     unsafe {
         ffi::MPI_Get_library_version(buf.as_mut_ptr() as *mut c_char, &mut len);
     }
-    buf.truncate(len.value_as().expect(&format!("Length of library version string ({}) cannot \
-                                                 be expressed as a usize.",
-                                                len)));
+    buf.truncate(len.value_as().expect(&format!(
+        "Length of library version string ({}) cannot \
+         be expressed as a usize.",
+        len
+    )));
     String::from_utf8(buf)
 }
 
@@ -254,21 +266,25 @@ pub fn library_version() -> Result<String, FromUtf8Error> {
 ///
 /// Can return an `Err` if the processor name is not a UTF-8 string.
 pub fn processor_name() -> Result<String, FromUtf8Error> {
-    let bufsize = unsafe_extern_static!(ffi::RSMPI_MAX_PROCESSOR_NAME).value_as()
-                                               .expect(&format!("MPI_MAX_LIBRARY_SIZE ({}) \
-                                                                 cannot be expressed as a \
-                                                                 usize.",
-                                                                unsafe_extern_static!(ffi::RSMPI_MAX_PROCESSOR_NAME)));
+    let bufsize = unsafe_extern_static!(ffi::RSMPI_MAX_PROCESSOR_NAME)
+        .value_as()
+        .expect(&format!(
+            "MPI_MAX_LIBRARY_SIZE ({}) \
+             cannot be expressed as a \
+             usize.",
+            unsafe_extern_static!(ffi::RSMPI_MAX_PROCESSOR_NAME)
+        ));
     let mut buf = vec![0u8; bufsize];
     let mut len: c_int = 0;
 
     unsafe {
         ffi::MPI_Get_processor_name(buf.as_mut_ptr() as *mut c_char, &mut len);
     }
-    buf.truncate(len.value_as()
-                    .expect(&format!("Length of processor name string ({}) cannot be \
-                                      expressed as a usize.",
-                                     len)));
+    buf.truncate(len.value_as().expect(&format!(
+        "Length of processor name string ({}) cannot be \
+         expressed as a usize.",
+        len
+    )));
     String::from_utf8(buf)
 }
 

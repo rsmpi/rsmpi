@@ -12,5 +12,8 @@ fn main() {
     let t_end = mpi::time();
 
     println!("barrier took: {} s", t_end - t_start);
-    println!("the clock has a resoltion of {} seconds", mpi::time_resolution());
+    println!(
+        "the clock has a resoltion of {} seconds",
+        mpi::time_resolution()
+    );
 }

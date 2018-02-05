@@ -1,3 +1,0 @@
-struct_trailing_comma = "Never"
-struct_lit_trailing_comma = "Never"
-enum_trailing_comma = false

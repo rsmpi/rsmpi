@@ -15,11 +15,14 @@ fn main() {
     let msg: Vec<_> = (0..rank).collect();
 
     let counts: Vec<Count> = (0..size).collect();
-    let displs: Vec<Count> = counts.iter().scan(0, |acc, &x| {
-        let tmp = *acc;
-        *acc += x;
-        Some(tmp)
-    }).collect();
+    let displs: Vec<Count> = counts
+        .iter()
+        .scan(0, |acc, &x| {
+            let tmp = *acc;
+            *acc += x;
+            Some(tmp)
+        })
+        .collect();
 
     let mut buf = vec![0; (size * (size - 1) / 2) as usize];
     {
@@ -30,6 +33,10 @@ fn main() {
         });
     }
 
-    assert!(buf.iter().zip((0..size).flat_map(|r| (0..r))).all(|(&i, j)| i == j));
+    assert!(
+        buf.iter()
+            .zip((0..size).flat_map(|r| (0..r)))
+            .all(|(&i, j)| i == j)
+    );
     println!("Process {} got message {:?}", rank, buf);
 }

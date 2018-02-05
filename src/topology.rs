@@ -32,7 +32,7 @@ use datatype::traits::*;
 
 /// Topology traits
 pub mod traits {
-    pub use super::{Communicator, AsCommunicator, Group};
+    pub use super::{AsCommunicator, Communicator, Group};
 }
 
 /// Something that has a communicator associated with it
@@ -215,7 +215,8 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Examples
     /// See `examples/broadcast.rs` `examples/gather.rs` `examples/send_receive.rs`
     fn process_at_rank(&self, r: Rank) -> Process<Self>
-        where Self: Sized
+    where
+        Self: Sized,
     {
         assert!(0 <= r && r < self.size());
         Process::by_rank_unchecked(self, r)
@@ -224,14 +225,16 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// Returns an `AnyProcess` identifier that can be used, e.g. as a `Source` in point to point
     /// communication.
     fn any_process(&self) -> AnyProcess<Self>
-        where Self: Sized
+    where
+        Self: Sized,
     {
         AnyProcess(self)
     }
 
     /// A `Process` for the calling process
     fn this_process(&self) -> Process<Self>
-        where Self: Sized
+    where
+        Self: Sized,
     {
         let rank = self.rank();
         Process::by_rank_unchecked(self, rank)
@@ -245,7 +248,8 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.1
     fn compare<C: ?Sized>(&self, other: &C) -> CommunicatorRelation
-        where C: Communicator
+    where
+        C: Communicator,
     {
         let mut res: c_int = unsafe { mem::uninitialized() };
         unsafe {
@@ -323,7 +327,8 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.2
     fn split_by_subgroup_collective<G: ?Sized>(&self, group: &G) -> Option<UserCommunicator>
-        where G: Group
+    where
+        G: Group,
     {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe {
@@ -344,7 +349,8 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.2
     fn split_by_subgroup<G: ?Sized>(&self, group: &G) -> Option<UserCommunicator>
-        where G: Group
+    where
+        G: Group,
     {
         self.split_by_subgroup_with_tag(group, Tag::default())
     }
@@ -358,7 +364,8 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.2
     fn split_by_subgroup_with_tag<G: ?Sized>(&self, group: &G, tag: Tag) -> Option<UserCommunicator>
-        where G: Group
+    where
+        G: Group,
     {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe {
@@ -407,7 +414,7 @@ pub enum CommunicatorRelation {
     /// Group constituents match but rank order differs
     Similar,
     /// Otherwise
-    Unequal
+    Unequal,
 }
 
 impl From<c_int> for CommunicatorRelation {
@@ -430,13 +437,16 @@ impl From<c_int> for CommunicatorRelation {
 /// Identifies a process by its `Rank` within a certain communicator.
 #[derive(Copy, Clone)]
 pub struct Process<'a, C>
-    where C: 'a + Communicator
+where
+    C: 'a + Communicator,
 {
     comm: &'a C,
-    rank: Rank
+    rank: Rank,
 }
 
-impl<'a, C> Process<'a, C> where C: 'a + Communicator
+impl<'a, C> Process<'a, C>
+where
+    C: 'a + Communicator,
 {
     #[allow(dead_code)]
     fn by_rank(c: &'a C, r: Rank) -> Option<Self> {
@@ -457,7 +467,9 @@ impl<'a, C> Process<'a, C> where C: 'a + Communicator
     }
 }
 
-impl<'a, C> AsCommunicator for Process<'a, C> where C: 'a + Communicator
+impl<'a, C> AsCommunicator for Process<'a, C>
+where
+    C: 'a + Communicator,
 {
     type Out = C;
     fn as_communicator(&self) -> &Self::Out {
@@ -467,9 +479,13 @@ impl<'a, C> AsCommunicator for Process<'a, C> where C: 'a + Communicator
 
 /// Identifies an arbitrary process that is a member of a certain communicator, e.g. for use as a
 /// `Source` in point to point communication.
-pub struct AnyProcess<'a, C>(&'a C) where C: 'a + Communicator;
+pub struct AnyProcess<'a, C>(&'a C)
+where
+    C: 'a + Communicator;
 
-impl<'a, C> AsCommunicator for AnyProcess<'a, C> where C: 'a + Communicator
+impl<'a, C> AsCommunicator for AnyProcess<'a, C>
+where
+    C: 'a + Communicator,
 {
     type Out = C;
     fn as_communicator(&self) -> &Self::Out {
@@ -537,7 +553,8 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// 6.3.2
     fn union<G>(&self, other: &G) -> UserGroup
-        where G: Group
+    where
+        G: Group,
     {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe {
@@ -555,7 +572,8 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// 6.3.2
     fn intersection<G>(&self, other: &G) -> UserGroup
-        where G: Group
+    where
+        G: Group,
     {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe {
@@ -573,7 +591,8 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// 6.3.2
     fn difference<G>(&self, other: &G) -> UserGroup
-        where G: Group
+    where
+        G: Group,
     {
         let mut newgroup: MPI_Group = unsafe { mem::uninitialized() };
         unsafe {
@@ -652,7 +671,8 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// 6.3.1
     fn translate_rank<G>(&self, rank: Rank, other: &G) -> Option<Rank>
-        where G: Group
+    where
+        G: Group,
     {
         let mut res: Rank = unsafe { mem::uninitialized() };
         unsafe {
@@ -673,9 +693,13 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// 6.3.1
     fn translate_ranks<G>(&self, ranks: &[Rank], other: &G) -> Vec<Option<Rank>>
-        where G: Group
+    where
+        G: Group,
     {
-        ranks.iter().map(|&r| self.translate_rank(r, other)).collect()
+        ranks
+            .iter()
+            .map(|&r| self.translate_rank(r, other))
+            .collect()
     }
 
     /// Compare two groups.
@@ -684,7 +708,8 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// 6.3.1
     fn compare<G>(&self, other: &G) -> GroupRelation
-        where G: Group
+    where
+        G: Group,
     {
         let mut relation: c_int = unsafe { mem::uninitialized() };
         unsafe {
@@ -706,7 +731,7 @@ pub enum GroupRelation {
     /// Identical group members in different order
     Similar,
     /// Otherwise
-    Unequal
+    Unequal,
 }
 
 impl From<c_int> for GroupRelation {

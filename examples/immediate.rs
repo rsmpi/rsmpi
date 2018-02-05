@@ -18,8 +18,12 @@ fn main() {
         rreq.wait();
         loop {
             match sreq.test() {
-                Ok(_) => { break; }
-                Err(req) => { sreq = req; }
+                Ok(_) => {
+                    break;
+                }
+                Err(req) => {
+                    sreq = req;
+                }
             }
         }
     });
@@ -37,7 +41,10 @@ fn main() {
 
     y = 0.0;
     mpi::request::scope(|scope| {
-        let _sreq: WaitGuard<_> = world.this_process().immediate_synchronous_send(scope, &x).into();
+        let _sreq: WaitGuard<_> = world
+            .this_process()
+            .immediate_synchronous_send(scope, &x)
+            .into();
         let preq = world.any_process().immediate_matched_probe();
         assert!(preq.is_some());
         let (msg, _) = preq.unwrap();
@@ -61,7 +68,9 @@ fn main() {
                 assert_eq!(x, msg);
                 break;
             }
-            Err(f) => { future = f; }
+            Err(f) => {
+                future = f;
+            }
         }
     }
 

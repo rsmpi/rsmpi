@@ -2,10 +2,10 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::datatype::{UserDatatype, View, MutView};
+use mpi::datatype::{MutView, UserDatatype, View};
 use mpi::Count;
 
-fn main () {
+fn main() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let root_rank = 0;
@@ -17,10 +17,16 @@ fn main () {
     if world.rank() == root_rank {
         let mut a = vec![0u64; count];
         mpi::request::scope(|scope| {
-            root_process.immediate_gather_into_root(scope, &i, &mut a[..]).wait();
+            root_process
+                .immediate_gather_into_root(scope, &i, &mut a[..])
+                .wait();
         });
         println!("Root gathered sequence: {:?}.", a);
-        assert!(a.iter().enumerate().all(|(a, &b)| b == 2u64.pow(a as u32 + 1)));
+        assert!(
+            a.iter()
+                .enumerate()
+                .all(|(a, &b)| b == 2u64.pow(a as u32 + 1))
+        );
     } else {
         mpi::request::scope(|scope| {
             root_process.immediate_gather_into(scope, &i).wait();
@@ -28,18 +34,27 @@ fn main () {
     }
 
     let factor = world.rank() as u64 + 1;
-    let a = (1_u64..).take(count).map(|x| x * factor).collect::<Vec<_>>();
+    let a = (1_u64..)
+        .take(count)
+        .map(|x| x * factor)
+        .collect::<Vec<_>>();
 
     if world.rank() == root_rank {
         let mut t = vec![0u64; count * count];
         mpi::request::scope(|scope| {
-            root_process.immediate_gather_into_root(scope, &a[..], &mut t[..]).wait();
+            root_process
+                .immediate_gather_into_root(scope, &a[..], &mut t[..])
+                .wait();
         });
         println!("Root gathered table:");
         for r in t.chunks(count) {
             println!("{:?}", r);
         }
-        assert!((0_u64..).zip(t.iter()).all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
+        assert!(
+            (0_u64..)
+                .zip(t.iter())
+                .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
+        );
     } else {
         mpi::request::scope(|scope| {
             root_process.immediate_gather_into(scope, &a[..]).wait();
@@ -53,9 +68,12 @@ fn main () {
         let mut t = vec![0u64; count * count];
 
         {
-            let mut rv = unsafe { MutView::with_count_and_datatype(&mut t[..], count as Count, &d) };
+            let mut rv =
+                unsafe { MutView::with_count_and_datatype(&mut t[..], count as Count, &d) };
             mpi::request::scope(|scope| {
-                root_process.immediate_gather_into_root(scope, &sv, &mut rv).wait();
+                root_process
+                    .immediate_gather_into_root(scope, &sv, &mut rv)
+                    .wait();
             });
         }
 
@@ -63,7 +81,11 @@ fn main () {
         for r in t.chunks(count) {
             println!("{:?}", r);
         }
-        assert!((0_u64..).zip(t.iter()).all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
+        assert!(
+            (0_u64..)
+                .zip(t.iter())
+                .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
+        );
     } else {
         mpi::request::scope(|scope| {
             root_process.immediate_gather_into(scope, &sv).wait();

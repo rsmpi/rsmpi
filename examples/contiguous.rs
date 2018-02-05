@@ -2,7 +2,7 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::datatype::{UserDatatype, View, MutView};
+use mpi::datatype::{MutView, UserDatatype, View};
 use mpi::point_to_point as p2p;
 use mpi::topology::Rank;
 
@@ -30,7 +30,10 @@ fn main() {
         status = p2p::send_receive_into(&v1, &next_process, &mut v2, &previous_process);
     }
 
-    println!("Rank {} received message: {:?}, status: {:?}.", rank, b2, status);
+    println!(
+        "Rank {} received message: {:?}, status: {:?}.",
+        rank, b2, status
+    );
     world.barrier();
 
     let b3 = (1..).map(|x| previous_rank * x).take(3).collect::<Vec<_>>();

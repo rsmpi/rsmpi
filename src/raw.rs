@@ -19,7 +19,9 @@ pub unsafe trait AsRaw {
     fn as_raw(&self) -> Self::Raw;
 }
 
-unsafe impl<'a, T> AsRaw for &'a T where T: 'a + AsRaw
+unsafe impl<'a, T> AsRaw for &'a T
+where
+    T: 'a + AsRaw,
 {
     type Raw = <T as AsRaw>::Raw;
     fn as_raw(&self) -> Self::Raw {
@@ -53,14 +55,16 @@ impl Nullable for MPI_Request {
 fn check_length<T>(arr: &[T]) {
     assert!(
         arr.len() <= std::i32::MAX as usize,
-        "MPI can only index arrays up to size i32::MAX");
+        "MPI can only index arrays up to size i32::MAX"
+    );
 }
 
 fn check_statuses(requests: &[MPI_Request], statuses: &Option<&mut [MPI_Status]>) {
     if let &Some(ref statuses) = statuses {
         assert!(
             statuses.len() >= requests.len(),
-            "The statuses array must be at least as large as the requests array.");
+            "The statuses array must be at least as large as the requests array."
+        );
     }
 }
 
@@ -99,12 +103,12 @@ pub fn test(request: &mut MPI_Request) -> Option<MPI_Status> {
 /// Wait for the request to finish.
 /// If provided, the status is written to the referent of the given reference.
 /// The referent `MPI_Status` object is never read.
-/// 
+///
 /// Prefer `Request::wait` or `Request::wait_without_status`.
 pub fn wait_with(request: &mut MPI_Request, status: Option<&mut MPI_Status>) {
     unsafe {
         MPI_Wait(request, to_status_ptr_mut(status));
-        debug_assert!(request.is_null());  // persistent requests are not supported
+        debug_assert!(request.is_null()); // persistent requests are not supported
     }
 }
 
@@ -113,7 +117,7 @@ pub fn wait_with(request: &mut MPI_Request, status: Option<&mut MPI_Status>) {
 /// `Some(idx)`, where `idx` is the index of the request that was completed
 /// in the slice. If there are no non-null requests in the `requests`
 /// slice, it returns None.
-/// 
+///
 /// Prefer `RequestCollection::wait_any`.
 pub fn wait_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -> Option<i32> {
     check_length(requests);
@@ -121,7 +125,12 @@ pub fn wait_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -
     unsafe {
         let mut idx = mem::uninitialized();
 
-        MPI_Waitany(requests.len() as i32, requests.as_mut_ptr(), &mut idx, to_status_ptr_mut(status));
+        MPI_Waitany(
+            requests.len() as i32,
+            requests.as_mut_ptr(),
+            &mut idx,
+            to_status_ptr_mut(status),
+        );
 
         if idx == RSMPI_UNDEFINED {
             None
@@ -132,7 +141,7 @@ pub fn wait_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -
 }
 
 /// Thin wrapper for MPI_Waitall. Uses the native handle types directly.
-/// 
+///
 /// Prefer `RequestCollection::wait_all_with_status`.
 pub fn wait_all_with(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]>) {
     check_length(requests);

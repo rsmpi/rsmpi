@@ -20,18 +20,25 @@ fn main() {
     if rank == root_rank {
         let msg: Vec<_> = (0..size).flat_map(|i| (0..i)).collect();
         let counts: Vec<Count> = (0..size).collect();
-        let displs: Vec<Count> = counts.iter().scan(0, |acc, &x| {
-            let tmp = *acc;
-            *acc += x;
-            Some(tmp)
-        }).collect();
+        let displs: Vec<Count> = counts
+            .iter()
+            .scan(0, |acc, &x| {
+                let tmp = *acc;
+                *acc += x;
+                Some(tmp)
+            })
+            .collect();
         let partition = Partition::new(&msg[..], counts, &displs[..]);
         mpi::request::scope(|scope| {
-            root_process.immediate_scatter_varcount_into_root(scope, &partition, &mut buf[..]).wait();
+            root_process
+                .immediate_scatter_varcount_into_root(scope, &partition, &mut buf[..])
+                .wait();
         });
     } else {
         mpi::request::scope(|scope| {
-            root_process.immediate_scatter_varcount_into(scope, &mut buf[..]).wait();
+            root_process
+                .immediate_scatter_varcount_into(scope, &mut buf[..])
+                .wait();
         });
     }
 

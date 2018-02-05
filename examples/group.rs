@@ -3,7 +3,7 @@
 extern crate mpi;
 
 use mpi::traits::*;
-use mpi::topology::{SystemGroup, GroupRelation, Rank};
+use mpi::topology::{GroupRelation, Rank, SystemGroup};
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -27,7 +27,10 @@ fn main() {
 
     let empty = g.difference(&h);
     // g difference h == g difference g = empty Group
-    assert_eq!(GroupRelation::Identical, SystemGroup::empty().compare(&empty));
+    assert_eq!(
+        GroupRelation::Identical,
+        SystemGroup::empty().compare(&empty)
+    );
     assert_eq!(0, empty.size());
 
     // g intersection empty == empty Group
@@ -64,11 +67,15 @@ fn main() {
     assert_eq!(GroupRelation::Identical, empty.compare(&fs));
 
     // rank is either in f or in s
-    assert!((f.rank().is_some() && s.rank().is_none())
-            ^ (f.rank().is_none() && s.rank().is_some()));
+    assert!(
+        (f.rank().is_some() && s.rank().is_none()) ^ (f.rank().is_none() && s.rank().is_some())
+    );
 
     // inverting rank mappings
     let rev: Vec<Rank> = (0..g.size()).rev().collect();
     let r = g.include(&rev[..]);
-    assert_eq!(Some(rev[g.rank().unwrap() as usize]), r.translate_rank(g.rank().unwrap(), &g));
+    assert_eq!(
+        Some(rev[g.rank().unwrap() as usize]),
+        r.translate_rank(g.rank().unwrap(), &g)
+    );
 }

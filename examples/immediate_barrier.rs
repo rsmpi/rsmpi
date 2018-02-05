@@ -9,15 +9,20 @@ fn main() {
     let size = world.size();
     let receiver_rank = 0;
 
-    if world.rank() == receiver_rank { // receiver process
+    if world.rank() == receiver_rank {
+        // receiver process
         let n = (size - 1) as usize;
         let mut buf = vec![0u64; 3 * n];
         // receive first 2 * n messages
-        for x in buf[0..2 * n].iter_mut() { world.any_process().receive_into(x); }
+        for x in buf[0..2 * n].iter_mut() {
+            world.any_process().receive_into(x);
+        }
         // signal the waiting senders that 2 * n messages have been received
         let breq = world.immediate_barrier();
         // receive remaining n messages
-        for x in buf[2 * n..3 * n].iter_mut() { world.any_process().receive_into(x); }
+        for x in buf[2 * n..3 * n].iter_mut() {
+            world.any_process().receive_into(x);
+        }
         println!("{:?}", buf);
         // messages "1" and "2" may be interleaved, but all have to be contained within the first
         // 2 * n slots of the buffer
@@ -27,7 +32,8 @@ fn main() {
         assert!(buf[2 * n..3 * n].iter().all(|&x| x == 3));
         // clean up the barrier request
         breq.wait();
-    } else { // sender processes
+    } else {
+        // sender processes
         // send message "1"
         world.process_at_rank(0).send(&1u64);
         // join barrier, but do not block

@@ -8,5 +8,4 @@ fn main() {
     // let universe = mpi::initialize().unwrap();
     // let world = universe.world();
 
-
 }
