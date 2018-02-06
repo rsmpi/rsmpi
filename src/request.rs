@@ -342,12 +342,12 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// # Standard section(s)
     ///
     /// 3.7.5
-    pub fn wait_any(&mut self) -> Option<(usize, Status)> {
+    pub fn wait_any(&mut self) -> Option<(i32, Status)> {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         let result = raw::wait_any(&mut self.requests, Some(&mut status)).map(|idx| {
             self.ensure_null(idx);
             self.outstanding -= 1;
-            (idx as usize, Status::from_raw(status))
+            (idx, Status::from_raw(status))
         });
         self.check_outstanding();
         result
@@ -366,11 +366,11 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// # Standard section(s)
     ///
     /// 3.7.5
-    pub fn wait_any_without_status(&mut self) -> Option<usize> {
+    pub fn wait_any_without_status(&mut self) -> Option<i32> {
         let result = raw::wait_any(&mut self.requests, None).map(|idx| {
             self.ensure_null(idx);
             self.outstanding -= 1;
-            (idx as usize)
+            idx
         });
         self.check_outstanding();
         result
