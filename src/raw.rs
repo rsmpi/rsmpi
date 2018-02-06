@@ -105,7 +105,7 @@ pub fn test(request: &mut MPI_Request) -> Option<MPI_Status> {
 /// The referent `MPI_Status` object is never read.
 ///
 /// Prefer `Request::wait` or `Request::wait_without_status`.
-pub fn wait_with(request: &mut MPI_Request, status: Option<&mut MPI_Status>) {
+pub fn with(request: &mut MPI_Request, status: Option<&mut MPI_Status>) {
     unsafe {
         MPI_Wait(request, to_status_ptr_mut(status));
         debug_assert!(request.is_null()); // persistent requests are not supported
@@ -143,7 +143,7 @@ pub fn wait_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -
 /// Thin wrapper for MPI_Waitall. Uses the native handle types directly.
 ///
 /// Prefer `RequestCollection::wait_all_with_status`.
-pub fn wait_all_with(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]>) {
+pub fn wait_all(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]>) {
     check_length(requests);
     check_statuses(requests, &statuses);
 
