@@ -155,6 +155,55 @@ pub fn wait_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -
     }
 }
 
+/// Result type for `raw::test_any`.
+#[derive(Clone, Copy)]
+pub enum TestAny {
+    /// Indicates that there are no active requests in the `requests` slice.
+    NoneActive,
+    /// Indicates that, while there are active requests in the `requests` slice, none of them were
+    /// completed.
+    NoneComplete,
+    /// Indicates which request in the `requests` slice was completed.
+    Completed(i32),
+}
+
+/// `test_any` is a safe, low-level interface to MPI_Testany.
+/// 
+/// `test_any` will check if any active requests in the `requests` slice are completed. If so, it
+/// will deallocate the request and mark it as null in the `requests` slice. In all cases it will
+/// return immediately, even if no request was completed.
+/// 
+/// If a request is completed and `Some(status)` is provided, `status` will contain the status of
+/// the request that was completed.
+/// 
+/// See the documentation on `TestAny` for detailed information on the possible return values.
+pub fn test_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -> TestAny {
+    check_length(requests);
+
+    unsafe {
+        let mut idx = mem::uninitialized();
+        let mut flag = mem::uninitialized();
+
+        MPI_Testany(
+            requests.len() as i32,
+            requests.as_mut_ptr(),
+            &mut idx,
+            &mut flag,
+            to_status_ptr_mut(status)
+        );
+
+        if flag != 0 {
+            if idx == RSMPI_UNDEFINED {
+                TestAny::NoneActive
+            } else {
+                TestAny::Completed(idx)
+            }
+        } else {
+            TestAny::NoneComplete
+        }
+    }
+}
+
 /// `wait_all` is a safe, low-level interface to MPI_Waitall.
 /// 
 /// `wait_all` will block until all requests in the `requests` slice are completed. When `wait_all`
