@@ -85,6 +85,10 @@ fn to_statuses_ptr_mut(statuses: Option<&mut [MPI_Status]>) -> (usize, *mut MPI_
 /// Test to see if the request has been completed. If it has been, request
 /// is set to RSMPI_REQUEST_NULL, and Some(status) is returned. If not, request
 /// is not modified, and None is returned.
+///
+/// # Standard section(s)
+///
+/// 3.7.5
 pub fn test(request: &mut MPI_Request) -> Option<MPI_Status> {
     unsafe {
         let mut status: MPI_Status = mem::uninitialized();
@@ -106,6 +110,10 @@ pub fn test(request: &mut MPI_Request) -> Option<MPI_Status> {
 /// The referent `MPI_Status` object is never read.
 ///
 /// Prefer `Request::wait` or `Request::wait_without_status`.
+///
+/// # Standard section(s)
+///
+/// 3.7.5
 pub fn with(request: &mut MPI_Request, status: Option<&mut MPI_Status>) {
     unsafe {
         MPI_Wait(request, to_status_ptr_mut(status));
@@ -122,6 +130,10 @@ pub fn with(request: &mut MPI_Request, status: Option<&mut MPI_Status>) {
 /// slice, it returns None.
 ///
 /// Prefer `RequestCollection::wait_any`.
+///
+/// # Standard section(s)
+///
+/// 3.7.5
 pub fn wait_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -> Option<i32> {
     check_length(requests);
 
