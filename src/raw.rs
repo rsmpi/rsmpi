@@ -41,8 +41,8 @@ pub trait Nullable: Eq + Copy {
     fn null() -> Self;
 
     /// Returns true if this value is null. Returns false if it is not null.
-    fn is_null(&self) -> bool {
-        *self == Self::null()
+    fn is_handle_null(self) -> bool {
+        self == Self::null()
     }
 }
 
@@ -92,7 +92,8 @@ pub fn test(request: &mut MPI_Request) -> Option<MPI_Status> {
         MPI_Test(request, &mut flag, &mut status);
         if flag != 0 {
             // persistent requests are not supported
-            assert!(request.is_null());
+            assert!(request.is_handle_null());
+            
             Some(status)
         } else {
             None
@@ -108,7 +109,9 @@ pub fn test(request: &mut MPI_Request) -> Option<MPI_Status> {
 pub fn with(request: &mut MPI_Request, status: Option<&mut MPI_Status>) {
     unsafe {
         MPI_Wait(request, to_status_ptr_mut(status));
-        debug_assert!(request.is_null()); // persistent requests are not supported
+
+        // persistent requests are not supported
+        assert!(request.is_handle_null());
     }
 }
 
@@ -140,9 +143,17 @@ pub fn wait_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -
     }
 }
 
-/// Thin wrapper for MPI_Waitall. Uses the native handle types directly.
+/// `wait_all` is a safe, low-level interface to MPI_Waitall.
+/// 
+/// `wait_all` will block until all requests in the `requests` slice are completed. When `wait_all`
+/// returns, all requests in the `requests` slice will be MPI_REQUEST_NULL. If `Some(statuses)` is provided, the slices[i]
+/// will contain the status for `requests[i]`.
 ///
-/// Prefer `RequestCollection::wait_all_with_status`.
+/// Prefer `RequestCollection::wait_all_into` in typical code.
+///
+/// # Standard section(s)
+///
+/// 3.7.5
 pub fn wait_all(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]>) {
     check_length(requests);
     check_statuses(requests, &statuses);
@@ -152,6 +163,4 @@ pub fn wait_all(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]
     unsafe {
         MPI_Waitall(requests.len() as i32, requests.as_mut_ptr(), statuses_ptr);
     }
-
-    debug_assert!(requests.iter().all(|r| r.is_null()));
 }
