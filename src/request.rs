@@ -222,6 +222,30 @@ impl<'a, S: Scope<'a>> AsyncRequest<'a, S> for Request<'a, S> {
     }
 }
 
+/// Result type for `RequestCollection::test_any`.
+#[derive(Clone, Copy)]
+pub enum TestAny {
+    /// Indicates that there are no active requests in the `requests` slice.
+    NoneActive,
+    /// Indicates that, while there are active requests in the `requests` slice, none of them were
+    /// completed.
+    NoneComplete,
+    /// Indicates which request in the `requests` slice was completed.
+    Completed(i32, Status),
+}
+
+/// Result type for `RequestCollection::test_any_without_status`.
+#[derive(Clone, Copy)]
+pub enum TestAnyWithoutStatus {
+    /// Indicates that there are no active requests in the `requests` slice.
+    NoneActive,
+    /// Indicates that, while there are active requests in the `requests` slice, none of them were
+    /// completed.
+    NoneComplete,
+    /// Indicates which request in the `requests` slice was completed.
+    Completed(i32),
+}
+
 /// A collection of request objects for a non-blocking operation registered with a `Scope` of
 /// lifetime `'a`.
 ///
@@ -284,7 +308,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// Called after a `wait_any` operation to validate that all requests are now null in DEBUG
     /// builds. This is to smoke out if the user is sneaking persistent requests into the
     /// collection.
-    fn ensure_null(&self, idx: i32) {
+    fn check_null(&self, idx: i32) {
         debug_assert!(
             self.requests[idx as usize].is_handle_null(),
             "Persistent requests are not allowed in RequestCollection."
@@ -294,7 +318,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// Called after a `wait_all` operations to validate that all requests are now null in DEBUG
     /// builds. This is to smoke out if the user is sneaking persistent requests into the
     /// collection.
-    fn ensure_all_null(&self) {
+    fn check_all_null(&self) {
         debug_assert!(
             self.requests.iter().all(|r| r.is_handle_null()),
             "Persistent requests are not allowed in RequestCollection."
@@ -345,7 +369,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     pub fn wait_any(&mut self) -> Option<(i32, Status)> {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         let result = raw::wait_any(&mut self.requests, Some(&mut status)).map(|idx| {
-            self.ensure_null(idx);
+            self.check_null(idx);
             self.outstanding -= 1;
             (idx, Status::from_raw(status))
         });
@@ -368,10 +392,72 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// 3.7.5
     pub fn wait_any_without_status(&mut self) -> Option<i32> {
         let result = raw::wait_any(&mut self.requests, None).map(|idx| {
-            self.ensure_null(idx);
+            self.check_null(idx);
             self.outstanding -= 1;
             idx
         });
+        self.check_outstanding();
+        result
+    }
+
+    /// `test_any` checks if any requests in the collection are completed. It does not block.
+    /// 
+    /// If there are no active requests in the collection, it returns `TestAny::NoneActive`.
+    /// `outstanding()` is 0.
+    /// 
+    /// If none of the active requests in the collection are completed, it returns
+    /// `TestAny::NoneComplete`. `outstanding()` is unchanged.
+    /// 
+    /// Otherwise, `test_any` picks one request of the completed requests, deallocates it, and
+    /// returns `Completed(idx, status)`, where `idx` is the index of the completed request and
+    /// `status` is the status of the completed request. `outstanding()` will be reduced by 1.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
+    pub fn test_any(&mut self) -> TestAny {
+        let mut status: MPI_Status = unsafe { mem::uninitialized() };
+        let result =
+            match raw::test_any(&mut self.requests, Some(&mut status)) {
+                raw::TestAny::NoneActive => TestAny::NoneActive,
+                raw::TestAny::NoneComplete => TestAny::NoneComplete,
+                raw::TestAny::Completed(idx) => {
+                    self.check_null(idx);
+                    self.outstanding -= 1;
+                    TestAny::Completed(idx, Status::from_raw(status))
+                }
+            };
+        self.check_outstanding();
+        result
+    }
+
+    /// `test_any_without_status` checks if any requests in the collection are completed. It does
+    /// not block.
+    /// 
+    /// If there are no active requests in the collection, it returns `TestAny::NoneActive`.
+    /// `outstanding()` is 0.
+    /// 
+    /// If none of the active requests in the collection are completed, it returns
+    /// `TestAny::NoneComplete`. `outstanding()` is unchanged.
+    /// 
+    /// Otherwise, `test_any` picks one request of the completed requests, deallocates it, and
+    /// returns `Completed(idx)`, where `idx` is the index of the completed request. `outstanding()`
+    /// will be reduced by 1.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
+    pub fn test_any_without_status(&mut self) -> TestAnyWithoutStatus {
+        let result =
+            match raw::test_any(&mut self.requests, None) {
+                raw::TestAny::NoneActive => TestAnyWithoutStatus::NoneActive,
+                raw::TestAny::NoneComplete => TestAnyWithoutStatus::NoneComplete,
+                raw::TestAny::Completed(idx) => {
+                    self.check_null(idx);
+                    self.outstanding -= 1;
+                    TestAnyWithoutStatus::Completed(idx)
+                }
+            };
         self.check_outstanding();
         result
     }
@@ -395,7 +481,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
 
         raw::wait_all(&mut self.requests, Some(raw_statuses));
 
-        self.ensure_all_null();
+        self.check_all_null();
         self.set_outstanding(0);
     }
 
@@ -431,7 +517,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     pub fn wait_all_without_status(&mut self) {
         raw::wait_all(&mut self.requests[..], None);
 
-        self.ensure_all_null();
+        self.check_all_null();
         self.set_outstanding(0);
     }
 }
