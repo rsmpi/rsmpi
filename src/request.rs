@@ -520,6 +520,79 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         self.check_all_null();
         self.set_outstanding(0);
     }
+
+    /// `test_all_into` checks if all requests are completed.
+    /// 
+    /// Returns `true` if all the requests are complete. The completed requests are deallocated.
+    /// `statuses` will contain the status for each completed request, where `statuses[i]` is the
+    /// status for `requests[i]`. `outstanding()` will be 0.
+    /// 
+    /// Returns `false` if not all active requests are complete. The value of `statuses` is
+    /// undefined. `requests` will be unchanged. `outstanding()` will be unchanged.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
+    pub fn test_all_into(&mut self, statuses: &mut [Status]) -> bool {
+        // This code assumes that the representation of point_to_point::Status is the same as
+        // ffi::MPI_Status.
+        let raw_statuses =
+            unsafe { slice::from_raw_parts_mut(statuses.as_mut_ptr() as *mut _, statuses.len()) };
+
+        if raw::test_all(&mut self.requests, Some(raw_statuses)) {
+            self.check_all_null();
+            self.set_outstanding(0);
+
+            true
+        } else {
+            false
+        }
+    }
+
+    /// `test_all` checks if all requests are completed.
+    /// 
+    /// Returns `Some(statuses)` if all the requests are complete. The completed requests are
+    /// deallocated. `statuses` will contain the status for each completed request, where
+    /// `statuses[i]` is the status for `requests[i]`. `outstanding()` will be 0.
+    /// 
+    /// Returns `None` if not all active requests are complete. The value of `statuses` is
+    /// undefined. `requests` will be unchanged. `outstanding()` will be unchanged.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
+    pub fn test_all(&mut self) -> Option<Vec<Status>> {
+        // This code assumes that the representation of point_to_point::Status is the same as
+        // ffi::MPI_Status.
+        let mut statuses = vec![unsafe { mem::uninitialized() }; self.requests.len()];
+        if self.test_all_into(&mut statuses) {
+            Some(statuses)
+        } else {
+            None
+        }
+    }
+
+    /// `test_all_without_status` checks if all requests are completed.
+    /// 
+    /// Returns `true` if all the requests are complete. The completed requests are deallocated.
+    /// `outstanding()` will be 0.
+    /// 
+    /// Returns `false` if not all active requests are complete. `requests` will be unchanged.
+    /// `outstanding()` will be unchanged.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
+    pub fn test_all_without_status(&mut self) -> bool {
+        if raw::test_all(&mut self.requests, None) {
+            self.check_all_null();
+            self.set_outstanding(0);
+
+            true
+        } else {
+            false
+        }
+    }
 }
 
 /// Guard object that waits for the completion of an operation when it is dropped
