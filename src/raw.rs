@@ -68,6 +68,13 @@ fn check_statuses(requests: &[MPI_Request], statuses: &Option<&mut [MPI_Status]>
     }
 }
 
+fn check_indices(requests: &[MPI_Request], indices: &[i32]) {
+    assert!(
+        indices.len() >= requests.len(),
+        "The indices array must be at least as large as the requests array."
+    );
+}
+
 fn to_status_ptr_mut(status: Option<&mut MPI_Status>) -> *mut MPI_Status {
     match status {
         Some(status) => status,
@@ -257,4 +264,50 @@ pub fn test_all(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]
     }
 
     flag != 0
+}
+
+/// `wait_some` is a safe, low-level interface to MPI_Waitsome.
+/// 
+/// `wait_some` blocks until at least 1 request is completed if any requests are active.
+/// 
+/// `Some(count)` is returned if there are oustanding active requests. `count`, which will be 1 or
+/// greater, indicates the number of requests that are completed. `indices[0..count]` will contain
+/// the indices of the completed requests, and `statuses[0..count]` will contain the completion
+/// status of those requests. i.e. `statuses[i]` will contain the completion status of
+/// `requests[indices[i]]`. `outstanding()` will be reduced by `count`.
+/// 
+/// `None` is returned if there are no active requests.
+///
+/// Prefer `RequestCollection::wait_some` in typical code.
+///
+/// # Standard section(s)
+///
+/// 3.7.5
+pub fn wait_some(
+    requests: &mut [MPI_Request],
+    indices: &mut [i32],
+    statuses: Option<&mut [MPI_Status]>,
+) -> Option<i32> {
+    check_length(requests);
+    check_indices(requests, indices);
+    check_statuses(requests, &statuses);
+
+    let (_, statuses_ptr) = to_statuses_ptr_mut(statuses);
+
+    let mut outcount = unsafe { mem::uninitialized() };
+    unsafe {
+        MPI_Waitsome(
+            requests.len() as i32,
+            requests.as_mut_ptr(),
+            &mut outcount,
+            indices.as_mut_ptr(),
+            statuses_ptr,
+        );
+    }
+
+    if outcount == unsafe_extern_static!(RSMPI_UNDEFINED) {
+        None
+    } else {
+        Some(outcount)
+    }
 }
