@@ -1597,25 +1597,25 @@ impl<'a> UserOperation<'a> {
     where
         F: Fn(DynBuffer, DynBufferMut) + Sync + 'a,
     {
-        struct Anchor<F> {
-            function: F,
-            wrapper: Option<
+        struct ClosureAnchor<F> {
+            rust_closure: F,
+            ffi_closure: Option<
                 Closure4<'static, *mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype, ()>,
             >,
         }
         // must box it to prevent moves
-        let mut anchor = Box::new(Anchor {
-            function: move |invec, inoutvec, len, datatype| unsafe {
-                wrapper(&function, invec, inoutvec, len, datatype)
+        let mut anchor = Box::new(ClosureAnchor {
+            rust_closure: move |invec, inoutvec, len, datatype| unsafe {
+                user_operation_landing_pad(&function, invec, inoutvec, len, datatype)
             },
-            wrapper: None,
+            ffi_closure: None,
         });
         let mut op;
-        anchor.wrapper = Some(unsafe {
-            let wrapper = Closure4::new(&anchor.function);
+        anchor.ffi_closure = Some(unsafe {
+            let ffi_closure = Closure4::new(&anchor.rust_closure);
             op = mem::uninitialized();
-            ffi::MPI_Op_create(Some(*wrapper.code_ptr()), commute as _, &mut op);
-            mem::transmute(wrapper) // erase the lifetime
+            ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, &mut op);
+            mem::transmute(ffi_closure) // erase the lifetime
         });
         UserOperation { op, anchor }
     }
@@ -1629,7 +1629,7 @@ impl<'a> UserOperation<'a> {
     }
 }
 
-unsafe fn wrapper<F>(
+unsafe fn user_operation_landing_pad<F>(
     function: &F,
     mut invec: *mut c_void,
     mut inoutvec: *mut c_void,
