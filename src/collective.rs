@@ -9,14 +9,19 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::{fmt, mem, ptr};
+use std::{mem, ptr};
+#[cfg(feature = "user-operations")]
+use std::fmt;
+#[cfg(feature = "user-operations")]
 use std::os::raw::{c_int, c_void};
 
+#[cfg(feature = "user-operations")]
 use libffi::high::Closure4;
 
 use ffi;
 use ffi::{MPI_Op, MPI_Request};
 
+#[cfg(feature = "user-operations")]
 use datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use datatype::traits::*;
 use raw::traits::*;
@@ -1527,17 +1532,20 @@ impl<T> Erased for T {}
 /// # Examples
 ///
 /// See `examples/reduce.rs` and `examples/immediate_reduce.rs`
+#[cfg(feature = "user-operations")]
 pub struct UserOperation<'a> {
     op: MPI_Op,
     anchor: Box<Erased + 'a>, // keeps the internal data alive
 }
 
+#[cfg(feature = "user-operations")]
 impl<'a> fmt::Debug for UserOperation<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("UserOperation").field(&self.op).finish()
     }
 }
 
+#[cfg(feature = "user-operations")]
 impl<'a> Drop for UserOperation<'a> {
     fn drop(&mut self) {
         unsafe {
@@ -1546,6 +1554,7 @@ impl<'a> Drop for UserOperation<'a> {
     }
 }
 
+#[cfg(feature = "user-operations")]
 unsafe impl<'a> AsRaw for UserOperation<'a> {
     type Raw = MPI_Op;
     fn as_raw(&self) -> Self::Raw {
@@ -1553,8 +1562,10 @@ unsafe impl<'a> AsRaw for UserOperation<'a> {
     }
 }
 
+#[cfg(feature = "user-operations")]
 impl<'a, 'b> Operation for &'b UserOperation<'a> {}
 
+#[cfg(feature = "user-operations")]
 impl<'a> UserOperation<'a> {
     /// Define an operation using a closure.  The operation must be associative.
     ///
@@ -1629,6 +1640,7 @@ impl<'a> UserOperation<'a> {
     }
 }
 
+#[cfg(feature = "user-operations")]
 unsafe fn user_operation_landing_pad<F>(
     function: &F,
     mut invec: *mut c_void,
