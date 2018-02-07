@@ -311,3 +311,47 @@ pub fn wait_some(
         Some(outcount)
     }
 }
+
+/// `test_some` is a safe, low-level interface to MPI_Waitsome.
+/// 
+/// `Some(count)` is returned if there are oustanding active requests. `count`, which will be 0 or
+/// greater, indicates the number of requests that are completed. `indices[0..count]` will contain
+/// the indices of the completed requests, and `statuses[0..count]` will contain the completion
+/// status of those requests. i.e. `statuses[i]` will contain the completion status of
+/// `requests[indices[i]]`. `outstanding()` will be reduced by `count`.
+/// 
+/// `None` is returned if there are no active requests.
+///
+/// Prefer `RequestCollection::test_some` in typical code.
+///
+/// # Standard section(s)
+///
+/// 3.7.5
+pub fn test_some(
+    requests: &mut [MPI_Request],
+    indices: &mut [i32],
+    statuses: Option<&mut [MPI_Status]>,
+) -> Option<i32> {
+    check_length(requests);
+    check_indices(requests, indices);
+    check_statuses(requests, &statuses);
+
+    let (_, statuses_ptr) = to_statuses_ptr_mut(statuses);
+
+    let mut outcount = unsafe { mem::uninitialized() };
+    unsafe {
+        MPI_Testsome(
+            requests.len() as i32,
+            requests.as_mut_ptr(),
+            &mut outcount,
+            indices.as_mut_ptr(),
+            statuses_ptr,
+        );
+    }
+
+    if outcount == unsafe_extern_static!(RSMPI_UNDEFINED) {
+        None
+    } else {
+        Some(outcount)
+    }
+}
