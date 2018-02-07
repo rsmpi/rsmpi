@@ -210,7 +210,7 @@ pub fn test_any(requests: &mut [MPI_Request], status: Option<&mut MPI_Status>) -
 /// returns, all requests in the `requests` slice will be MPI_REQUEST_NULL. If `Some(statuses)` is provided, the slices[i]
 /// will contain the status for `requests[i]`.
 ///
-/// Prefer `RequestCollection::wait_all_into` in typical code.
+/// Prefer `RequestCollection::wait_all` in typical code.
 ///
 /// # Standard section(s)
 ///
@@ -224,4 +224,32 @@ pub fn wait_all(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]
     unsafe {
         MPI_Waitall(requests.len() as i32, requests.as_mut_ptr(), statuses_ptr);
     }
+}
+
+/// `test_all` is a safe, low-level interface to MPI_Testall.
+/// 
+/// If all active `requests` are complete, it returns `true` immediately. `statuses` will contain
+/// the status of each completed request, where `statuses[i]` is the completion `status` for
+/// `requests[i]`. All `requests` are deallocated.
+/// 
+/// If not all `requests` are complete, `false` is returned. `requests` is unmodified and that value
+/// of `statuses` is undefined.
+///
+/// Prefer `RequestCollection::test_all` in typical code.
+///
+/// # Standard section(s)
+///
+/// 3.7.5
+pub fn test_all(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]>) -> bool {
+    check_length(requests);
+    check_statuses(requests, &statuses);
+
+    let (_, statuses_ptr) = to_statuses_ptr_mut(statuses);
+
+    let mut flag = unsafe { mem::uninitialized() };
+    unsafe {
+        MPI_Testall(requests.len() as i32, requests.as_mut_ptr(), &mut flag, statuses_ptr);
+    }
+
+    flag != 0
 }
