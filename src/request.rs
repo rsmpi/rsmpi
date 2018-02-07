@@ -360,7 +360,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// where `idx` is the index of the completed request in the collection and `status` is the
     /// status of the completed request. The request at `idx` will be set to None. `outstanding()`
     /// will be reduced by 1.
-    /// 
+    ///
     /// Returns `None` if there are no active requests. `outstanding()` is 0.
     ///
     /// # Standard section(s)
@@ -384,7 +384,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// `idx` is the index of the completed request in the collection and `status` is the status of
     /// the completed request. The request at `idx` will be set to None. `outstanding()` will be
     /// reduced by 1.
-    /// 
+    ///
     /// Returns `None` if there are no active requests. `outstanding()` is 0.
     ///
     /// # Standard section(s)
@@ -401,13 +401,13 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     }
 
     /// `test_any` checks if any requests in the collection are completed. It does not block.
-    /// 
+    ///
     /// If there are no active requests in the collection, it returns `TestAny::NoneActive`.
     /// `outstanding()` is 0.
-    /// 
+    ///
     /// If none of the active requests in the collection are completed, it returns
     /// `TestAny::NoneComplete`. `outstanding()` is unchanged.
-    /// 
+    ///
     /// Otherwise, `test_any` picks one request of the completed requests, deallocates it, and
     /// returns `Completed(idx, status)`, where `idx` is the index of the completed request and
     /// `status` is the status of the completed request. `outstanding()` will be reduced by 1.
@@ -417,29 +417,28 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// 3.7.5
     pub fn test_any(&mut self) -> TestAny {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        let result =
-            match raw::test_any(&mut self.requests, Some(&mut status)) {
-                raw::TestAny::NoneActive => TestAny::NoneActive,
-                raw::TestAny::NoneComplete => TestAny::NoneComplete,
-                raw::TestAny::Completed(idx) => {
-                    self.check_null(idx);
-                    self.outstanding -= 1;
-                    TestAny::Completed(idx, Status::from_raw(status))
-                }
-            };
+        let result = match raw::test_any(&mut self.requests, Some(&mut status)) {
+            raw::TestAny::NoneActive => TestAny::NoneActive,
+            raw::TestAny::NoneComplete => TestAny::NoneComplete,
+            raw::TestAny::Completed(idx) => {
+                self.check_null(idx);
+                self.outstanding -= 1;
+                TestAny::Completed(idx, Status::from_raw(status))
+            }
+        };
         self.check_outstanding();
         result
     }
 
     /// `test_any_without_status` checks if any requests in the collection are completed. It does
     /// not block.
-    /// 
+    ///
     /// If there are no active requests in the collection, it returns `TestAny::NoneActive`.
     /// `outstanding()` is 0.
-    /// 
+    ///
     /// If none of the active requests in the collection are completed, it returns
     /// `TestAny::NoneComplete`. `outstanding()` is unchanged.
-    /// 
+    ///
     /// Otherwise, `test_any` picks one request of the completed requests, deallocates it, and
     /// returns `Completed(idx)`, where `idx` is the index of the completed request. `outstanding()`
     /// will be reduced by 1.
@@ -448,16 +447,15 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     ///
     /// 3.7.5
     pub fn test_any_without_status(&mut self) -> TestAnyWithoutStatus {
-        let result =
-            match raw::test_any(&mut self.requests, None) {
-                raw::TestAny::NoneActive => TestAnyWithoutStatus::NoneActive,
-                raw::TestAny::NoneComplete => TestAnyWithoutStatus::NoneComplete,
-                raw::TestAny::Completed(idx) => {
-                    self.check_null(idx);
-                    self.outstanding -= 1;
-                    TestAnyWithoutStatus::Completed(idx)
-                }
-            };
+        let result = match raw::test_any(&mut self.requests, None) {
+            raw::TestAny::NoneActive => TestAnyWithoutStatus::NoneActive,
+            raw::TestAny::NoneComplete => TestAnyWithoutStatus::NoneComplete,
+            raw::TestAny::Completed(idx) => {
+                self.check_null(idx);
+                self.outstanding -= 1;
+                TestAnyWithoutStatus::Completed(idx)
+            }
+        };
         self.check_outstanding();
         result
     }
@@ -467,7 +465,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// `statuses` will be updated with the status for each request that is completed by
     /// `wait_all_into` where each status will match the index of the completed request. The status
     /// for deallocated entries will be set to empty.
-    /// 
+    ///
     /// Panics if `statuses.len()` is not >= `self.len()`.
     ///
     /// # Standard section(s)
@@ -490,7 +488,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// A vector of statuses is returned with the status for each request that is completed by
     /// `wait_all` where each status will match the index of the completed request. The status for
     /// deallocated entries will be set to empty.
-    /// 
+    ///
     /// If you do not need the status of the completed requests, `wait_all_without_status` is
     /// slightly more efficient because it does not allocate memory.
     ///
@@ -522,11 +520,11 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     }
 
     /// `test_all_into` checks if all requests are completed.
-    /// 
+    ///
     /// Returns `true` if all the requests are complete. The completed requests are deallocated.
     /// `statuses` will contain the status for each completed request, where `statuses[i]` is the
     /// status for `requests[i]`. `outstanding()` will be 0.
-    /// 
+    ///
     /// Returns `false` if not all active requests are complete. The value of `statuses` is
     /// undefined. `requests` will be unchanged. `outstanding()` will be unchanged.
     ///
@@ -550,11 +548,11 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     }
 
     /// `test_all` checks if all requests are completed.
-    /// 
+    ///
     /// Returns `Some(statuses)` if all the requests are complete. The completed requests are
     /// deallocated. `statuses` will contain the status for each completed request, where
     /// `statuses[i]` is the status for `requests[i]`. `outstanding()` will be 0.
-    /// 
+    ///
     /// Returns `None` if not all active requests are complete. The value of `statuses` is
     /// undefined. `requests` will be unchanged. `outstanding()` will be unchanged.
     ///
@@ -573,10 +571,10 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     }
 
     /// `test_all_without_status` checks if all requests are completed.
-    /// 
+    ///
     /// Returns `true` if all the requests are complete. The completed requests are deallocated.
     /// `outstanding()` will be 0.
-    /// 
+    ///
     /// Returns `false` if not all active requests are complete. `requests` will be unchanged.
     /// `outstanding()` will be unchanged.
     ///
