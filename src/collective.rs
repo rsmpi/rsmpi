@@ -9,14 +9,19 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::{fmt, mem, ptr};
+use std::{mem, ptr};
+#[cfg(feature = "user-operations")]
+use std::fmt;
+#[cfg(feature = "user-operations")]
 use std::os::raw::{c_int, c_void};
 
+#[cfg(feature = "user-operations")]
 use libffi::high::Closure4;
 
 use ffi;
 use ffi::{MPI_Op, MPI_Request};
 
+#[cfg(feature = "user-operations")]
 use datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use datatype::traits::*;
 use raw::traits::*;
@@ -1527,17 +1532,20 @@ impl<T> Erased for T {}
 /// # Examples
 ///
 /// See `examples/reduce.rs` and `examples/immediate_reduce.rs`
+#[cfg(feature = "user-operations")]
 pub struct UserOperation<'a> {
     op: MPI_Op,
     anchor: Box<Erased + 'a>, // keeps the internal data alive
 }
 
+#[cfg(feature = "user-operations")]
 impl<'a> fmt::Debug for UserOperation<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("UserOperation").field(&self.op).finish()
     }
 }
 
+#[cfg(feature = "user-operations")]
 impl<'a> Drop for UserOperation<'a> {
     fn drop(&mut self) {
         unsafe {
@@ -1546,6 +1554,7 @@ impl<'a> Drop for UserOperation<'a> {
     }
 }
 
+#[cfg(feature = "user-operations")]
 unsafe impl<'a> AsRaw for UserOperation<'a> {
     type Raw = MPI_Op;
     fn as_raw(&self) -> Self::Raw {
@@ -1553,8 +1562,10 @@ unsafe impl<'a> AsRaw for UserOperation<'a> {
     }
 }
 
+#[cfg(feature = "user-operations")]
 impl<'a, 'b> Operation for &'b UserOperation<'a> {}
 
+#[cfg(feature = "user-operations")]
 impl<'a> UserOperation<'a> {
     /// Define an operation using a closure.  The operation must be associative.
     ///
@@ -1597,25 +1608,25 @@ impl<'a> UserOperation<'a> {
     where
         F: Fn(DynBuffer, DynBufferMut) + Sync + 'a,
     {
-        struct Anchor<F> {
-            function: F,
-            wrapper: Option<
+        struct ClosureAnchor<F> {
+            rust_closure: F,
+            ffi_closure: Option<
                 Closure4<'static, *mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype, ()>,
             >,
         }
         // must box it to prevent moves
-        let mut anchor = Box::new(Anchor {
-            function: move |invec, inoutvec, len, datatype| unsafe {
-                wrapper(&function, invec, inoutvec, len, datatype)
+        let mut anchor = Box::new(ClosureAnchor {
+            rust_closure: move |invec, inoutvec, len, datatype| unsafe {
+                user_operation_landing_pad(&function, invec, inoutvec, len, datatype)
             },
-            wrapper: None,
+            ffi_closure: None,
         });
         let mut op;
-        anchor.wrapper = Some(unsafe {
-            let wrapper = Closure4::new(&anchor.function);
+        anchor.ffi_closure = Some(unsafe {
+            let ffi_closure = Closure4::new(&anchor.rust_closure);
             op = mem::uninitialized();
-            ffi::MPI_Op_create(Some(*wrapper.code_ptr()), commute as _, &mut op);
-            mem::transmute(wrapper) // erase the lifetime
+            ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, &mut op);
+            mem::transmute(ffi_closure) // erase the lifetime
         });
         UserOperation { op, anchor }
     }
@@ -1629,7 +1640,8 @@ impl<'a> UserOperation<'a> {
     }
 }
 
-unsafe fn wrapper<F>(
+#[cfg(feature = "user-operations")]
+unsafe fn user_operation_landing_pad<F>(
     function: &F,
     mut invec: *mut c_void,
     mut inoutvec: *mut c_void,

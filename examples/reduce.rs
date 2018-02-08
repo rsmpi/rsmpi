@@ -4,7 +4,31 @@ extern crate mpi;
 
 use mpi::traits::*;
 use mpi::topology::Rank;
-use mpi::collective::{self, SystemOperation, UserOperation};
+use mpi::collective::{self, SystemOperation};
+#[cfg(feature = "user-operations")]
+use mpi::collective::UserOperation;
+
+#[cfg(feature = "user-operations")]
+fn test_user_operations<C: Communicator>(comm: C) {
+    let rank = comm.rank();
+    let size = comm.size();
+    let mut h = 0;
+    comm.all_reduce_into(
+        &(rank + 1),
+        &mut h,
+        &UserOperation::commutative(|x, y| {
+            let x: &[Rank] = x.downcast().unwrap();
+            let y: &mut [Rank] = y.downcast().unwrap();
+            for (&x_i, y_i) in x.iter().zip(y) {
+                *y_i += x_i;
+            }
+        }),
+    );
+    assert_eq!(h, size * (size + 1) / 2);
+}
+
+#[cfg(not(feature = "user-operations"))]
+fn test_user_operations<C: Communicator>(_: C) {}
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -51,17 +75,5 @@ fn main() {
     world.reduce_scatter_block_into(&f[..], &mut g, SystemOperation::product());
     assert_eq!(g, rank.pow(size as u32));
 
-    let mut h = 0;
-    world.all_reduce_into(
-        &(rank + 1),
-        &mut h,
-        &UserOperation::commutative(|x, y| {
-            let x: &[Rank] = x.downcast().unwrap();
-            let y: &mut [Rank] = y.downcast().unwrap();
-            for (&x_i, y_i) in x.iter().zip(y) {
-                *y_i += x_i;
-            }
-        }),
-    );
-    assert_eq!(h, size * (size + 1) / 2);
+    test_user_operations(universe.world());
 }

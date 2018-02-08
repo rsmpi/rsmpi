@@ -11,9 +11,14 @@ keywords = [ "message-passing", "parallel" ]
 license = "MIT OR Apache-2.0"
 build = "build.rs"
 
+[features]
+default = ["user-operations"]
+
+user-operations = ["libffi"]
+
 [dependencies]
 conv = "0.3"
-libffi = "0.6.0"
+libffi = { version = "0.6.0", optional = true }
 
 [build-dependencies]
 gcc = "0.3"
