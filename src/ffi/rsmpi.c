@@ -1,5 +1,7 @@
 #include "rsmpi.h"
 
+const MPI_Datatype RSMPI_C_BOOL = MPI_C_BOOL;
+
 const MPI_Datatype RSMPI_FLOAT = MPI_FLOAT;
 const MPI_Datatype RSMPI_DOUBLE = MPI_DOUBLE;
 
