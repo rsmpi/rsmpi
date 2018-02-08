@@ -267,15 +267,15 @@ pub fn test_all(requests: &mut [MPI_Request], statuses: Option<&mut [MPI_Status]
 }
 
 /// `wait_some` is a safe, low-level interface to MPI_Waitsome.
-/// 
+///
 /// `wait_some` blocks until at least 1 request is completed if any requests are active.
-/// 
+///
 /// `Some(count)` is returned if there are oustanding active requests. `count`, which will be 1 or
 /// greater, indicates the number of requests that are completed. `indices[0..count]` will contain
 /// the indices of the completed requests, and `statuses[0..count]` will contain the completion
 /// status of those requests. i.e. `statuses[i]` will contain the completion status of
 /// `requests[indices[i]]`. `outstanding()` will be reduced by `count`.
-/// 
+///
 /// `None` is returned if there are no active requests.
 ///
 /// Prefer `RequestCollection::wait_some` in typical code.
@@ -313,13 +313,13 @@ pub fn wait_some(
 }
 
 /// `test_some` is a safe, low-level interface to MPI_Waitsome.
-/// 
+///
 /// `Some(count)` is returned if there are oustanding active requests. `count`, which will be 0 or
 /// greater, indicates the number of requests that are completed. `indices[0..count]` will contain
 /// the indices of the completed requests, and `statuses[0..count]` will contain the completion
 /// status of those requests. i.e. `statuses[i]` will contain the completion status of
 /// `requests[indices[i]]`. `outstanding()` will be reduced by `count`.
-/// 
+///
 /// `None` is returned if there are no active requests.
 ///
 /// Prefer `RequestCollection::test_some` in typical code.

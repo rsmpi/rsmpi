@@ -283,7 +283,7 @@ pub struct RequestCollection<'a, S: Scope<'a> = StaticScope> {
 
 impl<'a, S: Scope<'a>> Drop for RequestCollection<'a, S> {
     fn drop(&mut self) {
-        if self.outstanding() == 0 {
+        if self.outstanding() != 0 {
             panic!("RequestCollection was dropped with outstanding requests not completed.");
         }
     }
@@ -305,12 +305,24 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         self.check_outstanding();
     }
 
-    /// Called after a `wait_any` operation to validate that all requests are now null in DEBUG
+    /// Called after a `wait_any` operation to validate that the request at idx is now null in DEBUG
     /// builds. This is to smoke out if the user is sneaking persistent requests into the
     /// collection.
     fn check_null(&self, idx: i32) {
         debug_assert!(
             self.requests[idx as usize].is_handle_null(),
+            "Persistent requests are not allowed in RequestCollection."
+        );
+    }
+
+    /// Called after a `wait_some` operation to validate that the requests at indices are now null
+    /// in DEBUG builds. This is to smoke out if the user is sneaking persistent requests into the
+    /// collection.
+    fn check_some_null(&self, indices: &[i32]) {
+        debug_assert!(
+            indices
+                .iter()
+                .all(|&idx| self.requests[idx as usize].is_handle_null()),
             "Persistent requests are not allowed in RequestCollection."
         );
     }
@@ -540,9 +552,9 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         if raw::test_all(&mut self.requests, Some(raw_statuses)) {
             self.check_all_null();
             self.set_outstanding(0);
-
             true
         } else {
+            self.check_outstanding();
             false
         }
     }
@@ -588,7 +600,193 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
 
             true
         } else {
+            self.check_outstanding();
+
             false
+        }
+    }
+
+    /// `wait_some_into` blocks until a request is completed.
+    ///
+    /// Returns `Some(count)` if there any active requests in the collection. `count` will be the
+    /// number of requests that were completed. The indices of the completed requests will be
+    /// written to `indices[0..count]`, and the status of each of those completed requests will be
+    /// written to `statuses[0..count]`.
+    ///
+    /// Returns `None` if all requests in the collection have already been deallocated.
+    pub fn wait_some_into(&mut self, indices: &mut [i32], statuses: &mut [Status]) -> Option<i32> {
+        // This code assumes that the representation of point_to_point::Status is the same as
+        // ffi::MPI_Status.
+        let raw_statuses =
+            unsafe { slice::from_raw_parts_mut(statuses.as_mut_ptr() as *mut _, statuses.len()) };
+
+        match raw::wait_some(&mut self.requests, indices, Some(raw_statuses)) {
+            Some(count) => {
+                self.check_some_null(indices);
+
+                let outstanding = self.outstanding();
+                self.set_outstanding(outstanding - count as usize);
+
+                Some(count)
+            }
+            None => None,
+        }
+    }
+
+    /// `wait_some_into_without_status` blocks until a request is completed.
+    ///
+    /// Returns `Some(count)` if there any active requests in the collection. `count` will be the
+    /// number of requests that were completed. The indices of the completed requests will be
+    /// written to `indices[0..count]`.
+    ///
+    /// Returns `None` if all requests in the collection have already been deallocated.
+    pub fn wait_some_into_without_status(&mut self, indices: &mut [i32]) -> Option<i32> {
+        // This code assumes that the representation of point_to_point::Status is the same as
+        // ffi::MPI_Status.
+        match raw::wait_some(&mut self.requests, indices, None) {
+            Some(count) => {
+                self.check_some_null(indices);
+
+                let outstanding = self.outstanding();
+                self.set_outstanding(outstanding - count as usize);
+
+                Some(count)
+            }
+            None => None,
+        }
+    }
+
+    /// `wait_some` blocks until a request is completed.
+    ///
+    /// Returns `Some((indices, statuses))` if there any active requests in the collection.
+    /// `indices` and `statuses` will contain equal number of elements, where `indices` contains
+    /// the indices of each completed request. `statuses` contains the completion status for each
+    /// request.
+    ///
+    /// Returns `None` if all requests in the collection have already been deallocated.
+    pub fn wait_some(&mut self) -> Option<(Vec<i32>, Vec<Status>)> {
+        let mut indices = vec![unsafe { mem::uninitialized() }; self.requests.len()];
+        let mut statuses = vec![unsafe { mem::uninitialized() }; self.requests.len()];
+
+        match self.wait_some_into(&mut indices, &mut statuses) {
+            Some(count) => {
+                indices.resize(count as usize, unsafe { mem::uninitialized() });
+                statuses.resize(count as usize, unsafe { mem::uninitialized() });
+
+                Some((indices, statuses))
+            }
+            None => None,
+        }
+    }
+
+    /// `wait_some_without_status` blocks until a request is completed.
+    ///
+    /// Returns `Some(indices)` if there any active requests in the collection.
+    /// `indices` contains the indices of each completed request.
+    ///
+    /// Returns `None` if all requests in the collection have already been deallocated.
+    pub fn wait_some_without_status(&mut self) -> Option<Vec<i32>> {
+        let mut indices = vec![unsafe { mem::uninitialized() }; self.requests.len()];
+
+        match self.wait_some_into_without_status(&mut indices) {
+            Some(count) => {
+                indices.resize(count as usize, unsafe { mem::uninitialized() });
+
+                Some(indices)
+            }
+            None => None,
+        }
+    }
+
+    /// `test_some_into` deallocates all active, completed requests.
+    ///
+    /// Returns `Some(count)` if there any active requests in the collection. `count` will be the
+    /// number of requests that were completed. The indices of the completed requests will be
+    /// written to `indices[0..count]`, and the status of each of those completed requests will be
+    /// written to `statuses[0..count]`.
+    ///
+    /// Returns `None` if all requests in the collection have already been deallocated.
+    pub fn test_some_into(&mut self, indices: &mut [i32], statuses: &mut [Status]) -> Option<i32> {
+        // This code assumes that the representation of point_to_point::Status is the same as
+        // ffi::MPI_Status.
+        let raw_statuses =
+            unsafe { slice::from_raw_parts_mut(statuses.as_mut_ptr() as *mut _, statuses.len()) };
+
+        match raw::test_some(&mut self.requests, indices, Some(raw_statuses)) {
+            Some(count) => {
+                self.check_some_null(indices);
+
+                let outstanding = self.outstanding();
+                self.set_outstanding(outstanding - count as usize);
+
+                Some(count)
+            }
+            None => None,
+        }
+    }
+
+    /// `test_some_into_without_status` deallocates all active, completed requests.
+    ///
+    /// Returns `Some(count)` if there any active requests in the collection. `count` will be the
+    /// number of requests that were completed. The indices of the completed requests will be
+    /// written to `indices[0..count]`.
+    ///
+    /// Returns `None` if all requests in the collection have already been deallocated.
+    pub fn test_some_into_without_status(&mut self, indices: &mut [i32]) -> Option<i32> {
+        // This code assumes that the representation of point_to_point::Status is the same as
+        // ffi::MPI_Status.
+        match raw::test_some(&mut self.requests, indices, None) {
+            Some(count) => {
+                self.check_some_null(indices);
+
+                let outstanding = self.outstanding();
+                self.set_outstanding(outstanding - count as usize);
+
+                Some(count)
+            }
+            None => None,
+        }
+    }
+
+    /// `test_some` deallocates all active, completed requests.
+    ///
+    /// Returns `Some((indices, statuses))` if there any active requests in the collection.
+    /// `indices` and `statuses` will contain equal number of elements, where `indices` contains
+    /// the indices of each completed request. `statuses` contains the completion status for each
+    /// request.
+    ///
+    /// Returns `None` if all requests in the collection have already been deallocated.
+    pub fn test_some(&mut self) -> Option<(Vec<i32>, Vec<Status>)> {
+        let mut indices = vec![unsafe { mem::uninitialized() }; self.requests.len()];
+        let mut statuses = vec![unsafe { mem::uninitialized() }; self.requests.len()];
+
+        match self.test_some_into(&mut indices, &mut statuses) {
+            Some(count) => {
+                indices.resize(count as usize, unsafe { mem::uninitialized() });
+                statuses.resize(count as usize, unsafe { mem::uninitialized() });
+
+                Some((indices, statuses))
+            }
+            None => None,
+        }
+    }
+
+    /// `test_some_without_status` deallocates all active, completed requests.
+    ///
+    /// Returns `Some(indices)` if there any active requests in the collection.
+    /// `indices` contains the indices of each completed request.
+    ///
+    /// Returns `None` if all requests in the collection have already been deallocated.
+    pub fn test_some_without_status(&mut self) -> Option<Vec<i32>> {
+        let mut indices = vec![unsafe { mem::uninitialized() }; self.requests.len()];
+
+        match self.test_some_into_without_status(&mut indices) {
+            Some(count) => {
+                indices.resize(count as usize, unsafe { mem::uninitialized() });
+
+                Some(indices)
+            }
+            None => None,
         }
     }
 }
