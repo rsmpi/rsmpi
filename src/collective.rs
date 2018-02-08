@@ -1663,6 +1663,86 @@ unsafe fn user_operation_landing_pad<F>(
     );
 }
 
+/// An unsafe user-defined operation.
+///
+/// Unsafe user-defined operations are created from pointers to functions that have the unsafe
+/// signatures of user functions defined in the MPI C bindings, `UnsafeUserFunction`.
+///
+/// The recommended way to create user-defined operations is through the safer `UserOperation`
+/// type. This type can be used as a work-around in situations where the `libffi` dependency is not
+/// available.
+pub struct UnsafeUserOperation {
+    op: MPI_Op,
+}
+
+impl fmt::Debug for UnsafeUserOperation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("UnsafeUserOperation")
+            .field(&self.op)
+            .finish()
+    }
+}
+
+impl Drop for UnsafeUserOperation {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::MPI_Op_free(&mut self.op);
+        }
+    }
+}
+
+unsafe impl AsRaw for UnsafeUserOperation {
+    type Raw = MPI_Op;
+    fn as_raw(&self) -> Self::Raw {
+        self.op
+    }
+}
+
+impl<'a> Operation for &'a UnsafeUserOperation {}
+
+/// A raw pointer to a function that can be used to define an `UnsafeUserOperation`.
+pub type UnsafeUserFunction =
+    unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
+
+impl UnsafeUserOperation {
+    /// Define an unsafe operation using a function pointer. The operation must be associative.
+    ///
+    /// This is a more readable shorthand for the `new` method.  Refer to [`new`](#method.new) for
+    /// more information.
+    pub unsafe fn associative(function: UnsafeUserFunction) -> Self {
+        Self::new(false, function)
+    }
+
+    /// Define an unsafe operation using a function pointer.  The operation must be both associative
+    /// and commutative.
+    ///
+    /// This is a more readable shorthand for the `new` method.  Refer to [`new`](#method.new) for
+    /// more information.
+    pub unsafe fn commutative(function: UnsafeUserFunction) -> Self {
+        Self::new(true, function)
+    }
+
+    /// Creates an associative and possibly commutative unsafe operation using a function pointer.
+    ///
+    /// The function receives raw `*mut c_void` as `invec` and `inoutvec` and the number of elemnts
+    /// of those two vectors as a `*mut c_int` `len`. It shall set `inoutvec`
+    /// to the value of `f(invec, inoutvec)`, where `f` is a binary associative operation.
+    ///
+    /// If the operation is also commutative, setting `commute` to `true` may yield performance
+    /// benefits.
+    ///
+    /// **Note:** The user function is not allowed to panic.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 5.9.5
+    pub unsafe fn new(commute: bool, function: UnsafeUserFunction) -> Self {
+        let mut op = mem::uninitialized();
+        ffi::MPI_Op_create(Some(function), commute as _, &mut op);
+        UnsafeUserOperation { op }
+    }
+}
+
 /// Perform a local reduction.
 ///
 /// # Examples

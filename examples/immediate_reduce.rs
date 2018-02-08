@@ -1,11 +1,14 @@
 #![deny(warnings)]
 extern crate mpi;
 
+use std::os::raw::{c_int, c_void};
+
 use mpi::traits::*;
 use mpi::topology::Rank;
-use mpi::collective::SystemOperation;
+use mpi::collective::{SystemOperation, UnsafeUserOperation};
 #[cfg(feature = "user-operations")]
 use mpi::collective::UserOperation;
+use mpi::ffi::MPI_Datatype;
 
 #[cfg(feature = "user-operations")]
 fn test_user_operations<C: Communicator>(comm: C) {
@@ -28,6 +31,21 @@ fn test_user_operations<C: Communicator>(comm: C) {
 
 #[cfg(not(feature = "user-operations"))]
 fn test_user_operations<C: Communicator>(_: C) {}
+
+unsafe extern "C" fn unsafe_add(
+    invec: *mut c_void,
+    inoutvec: *mut c_void,
+    len: *mut c_int,
+    _datatype: *mut MPI_Datatype,
+) {
+    use std::slice;
+
+    let x: &[Rank] = slice::from_raw_parts(invec as *const Rank, *len as usize);
+    let y: &mut [Rank] = slice::from_raw_parts_mut(inoutvec as *mut Rank, *len as usize);
+    for (&x_i, y_i) in x.iter().zip(y) {
+        *y_i += x_i;
+    }
+}
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -74,4 +92,13 @@ fn main() {
     assert_eq!(b, rank.pow(size as u32));
 
     test_user_operations(universe.world());
+
+    let mut d = 0;
+    let op = unsafe { UnsafeUserOperation::commutative(unsafe_add) };
+    mpi::request::scope(|scope| {
+        world
+            .immediate_all_reduce_into(scope, &rank, &mut d, &op)
+            .wait();
+    });
+    assert_eq!(d, size * (size - 1) / 2);
 }
