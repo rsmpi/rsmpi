@@ -2,11 +2,14 @@
 #![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names))]
 extern crate mpi;
 
+use std::os::raw::{c_int, c_void};
+
 use mpi::traits::*;
 use mpi::topology::Rank;
-use mpi::collective::{self, SystemOperation};
+use mpi::collective::{self, SystemOperation, UnsafeUserOperation};
 #[cfg(feature = "user-operations")]
 use mpi::collective::UserOperation;
+use mpi::ffi::MPI_Datatype;
 
 #[cfg(feature = "user-operations")]
 fn test_user_operations<C: Communicator>(comm: C) {
@@ -29,6 +32,21 @@ fn test_user_operations<C: Communicator>(comm: C) {
 
 #[cfg(not(feature = "user-operations"))]
 fn test_user_operations<C: Communicator>(_: C) {}
+
+unsafe extern "C" fn unsafe_add(
+    invec: *mut c_void,
+    inoutvec: *mut c_void,
+    len: *mut c_int,
+    _datatype: *mut MPI_Datatype,
+) {
+    use std::slice;
+
+    let x: &[Rank] = slice::from_raw_parts(invec as *const Rank, *len as usize);
+    let y: &mut [Rank] = slice::from_raw_parts_mut(inoutvec as *mut Rank, *len as usize);
+    for (&x_i, y_i) in x.iter().zip(y) {
+        *y_i += x_i;
+    }
+}
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -76,4 +94,9 @@ fn main() {
     assert_eq!(g, rank.pow(size as u32));
 
     test_user_operations(universe.world());
+
+    let mut i = 0;
+    let op = unsafe { UnsafeUserOperation::commutative(unsafe_add) };
+    world.all_reduce_into(&(rank + 1), &mut i, &op);
+    assert_eq!(i, size * (size + 1) / 2);
 }

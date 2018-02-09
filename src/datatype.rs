@@ -119,6 +119,8 @@ macro_rules! equivalent_system_datatype {
     )
 }
 
+equivalent_system_datatype!(bool, ffi::RSMPI_C_BOOL);
+
 equivalent_system_datatype!(f32, ffi::RSMPI_FLOAT);
 equivalent_system_datatype!(f64, ffi::RSMPI_DOUBLE);
 
