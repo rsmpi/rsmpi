@@ -599,8 +599,8 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     ///
     /// 3.7.5
     pub fn wait_all_into(&mut self, statuses: &mut [Status]) {
-        // This code assumes that the representation of point_to_point::Status
-        // is the same as ffi::MPI_Status.
+        // This code assumes that the representation of point_to_point::Status is the same as
+        // ffi::MPI_Status.
         let raw_statuses =
             unsafe { slice::from_raw_parts_mut(statuses.as_mut_ptr() as *mut _, statuses.len()) };
 
@@ -610,7 +610,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         self.clear_outstanding();
     }
 
-    /// `wait_all_into` blocks until all requests in the collection are deallocated. Upon return,
+    /// `wait_all` blocks until all requests in the collection are deallocated. Upon return,
     /// all requests in the collection will be deallocated. `outstanding()` will be equal to 0.
     /// A vector of statuses is returned with the status for each request that is completed by
     /// `wait_all` where each status will match the index of the completed request. The status for
@@ -687,8 +687,6 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     ///
     /// 3.7.5
     pub fn test_all(&mut self) -> Option<Vec<Status>> {
-        // This code assumes that the representation of point_to_point::Status is the same as
-        // ffi::MPI_Status.
         let mut statuses = vec![unsafe { mem::uninitialized() }; self.requests.len()];
         if self.test_all_into(&mut statuses) {
             Some(statuses)
@@ -729,6 +727,10 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// written to `statuses[0..count]`.
     ///
     /// Returns `None` if all requests in the collection have already been deallocated.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
     pub fn wait_some_into(&mut self, indices: &mut [i32], statuses: &mut [Status]) -> Option<i32> {
         // This code assumes that the representation of point_to_point::Status is the same as
         // ffi::MPI_Status.
@@ -753,9 +755,11 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// written to `indices[0..count]`.
     ///
     /// Returns `None` if all requests in the collection have already been deallocated.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
     pub fn wait_some_into_without_status(&mut self, indices: &mut [i32]) -> Option<i32> {
-        // This code assumes that the representation of point_to_point::Status is the same as
-        // ffi::MPI_Status.
         match raw::wait_some(&mut self.requests, indices, None) {
             Some(count) => {
                 self.check_some_null(&indices[..count as usize]);
@@ -775,6 +779,10 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// request.
     ///
     /// Returns `None` if all requests in the collection have already been deallocated.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
     pub fn wait_some(&mut self) -> Option<(Vec<i32>, Vec<Status>)> {
         let mut indices = vec![unsafe { mem::uninitialized() }; self.requests.len()];
         let mut statuses = vec![unsafe { mem::uninitialized() }; self.requests.len()];
@@ -796,6 +804,10 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// `indices` contains the indices of each completed request.
     ///
     /// Returns `None` if all requests in the collection have already been deallocated.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
     pub fn wait_some_without_status(&mut self) -> Option<Vec<i32>> {
         let mut indices = vec![unsafe { mem::uninitialized() }; self.requests.len()];
 
@@ -817,6 +829,10 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// written to `statuses[0..count]`.
     ///
     /// Returns `None` if all requests in the collection have already been deallocated.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
     pub fn test_some_into(&mut self, indices: &mut [i32], statuses: &mut [Status]) -> Option<i32> {
         // This code assumes that the representation of point_to_point::Status is the same as
         // ffi::MPI_Status.
@@ -841,9 +857,11 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// written to `indices[0..count]`.
     ///
     /// Returns `None` if all requests in the collection have already been deallocated.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
     pub fn test_some_into_without_status(&mut self, indices: &mut [i32]) -> Option<i32> {
-        // This code assumes that the representation of point_to_point::Status is the same as
-        // ffi::MPI_Status.
         match raw::test_some(&mut self.requests, indices, None) {
             Some(count) => {
                 self.check_some_null(&indices[..count as usize]);
@@ -863,6 +881,10 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// request.
     ///
     /// Returns `None` if all requests in the collection have already been deallocated.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
     pub fn test_some(&mut self) -> Option<(Vec<i32>, Vec<Status>)> {
         let mut indices = vec![unsafe { mem::uninitialized() }; self.requests.len()];
         let mut statuses = vec![unsafe { mem::uninitialized() }; self.requests.len()];
@@ -884,6 +906,10 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// `indices` contains the indices of each completed request.
     ///
     /// Returns `None` if all requests in the collection have already been deallocated.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 3.7.5
     pub fn test_some_without_status(&mut self) -> Option<Vec<i32>> {
         let mut indices = vec![unsafe { mem::uninitialized() }; self.requests.len()];
 
