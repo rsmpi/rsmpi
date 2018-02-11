@@ -41,7 +41,7 @@ use raw;
 
 /// Request traits
 pub mod traits {
-    pub use super::AsyncRequest;
+    pub use super::{AsyncRequest, CollectRequests};
 }
 
 /// A request object for a non-blocking operation registered with a `Scope` of lifetime `'a`
@@ -222,6 +222,23 @@ impl<'a, S: Scope<'a>> AsyncRequest<'a, S> for Request<'a, S> {
     }
 }
 
+/// Collects an iterator of `Request` objects into a `RequestCollection` object
+pub trait CollectRequests<'a, S: Scope<'a>>: IntoIterator<Item = Request<'a, S>> {
+    /// Consumes and converts an iterator of `Requst` objects into a `RequestCollection` object.
+    fn collect_requests<'b, S2: Scope<'b>>(self, scope: S2) -> RequestCollection<'b, S2>
+    where
+        'a: 'b;
+}
+
+impl<'a, S: Scope<'a>, T: IntoIterator<Item = Request<'a, S>>> CollectRequests<'a, S> for T {
+    fn collect_requests<'b, S2: Scope<'b>>(self, scope: S2) -> RequestCollection<'b, S2>
+    where
+        'a: 'b,
+    {
+        RequestCollection::from_request_iter(self, scope)
+    }
+}
+
 /// Result type for `RequestCollection::test_any`.
 #[derive(Clone, Copy)]
 pub enum TestAny {
@@ -283,26 +300,122 @@ pub struct RequestCollection<'a, S: Scope<'a> = StaticScope> {
 
 impl<'a, S: Scope<'a>> Drop for RequestCollection<'a, S> {
     fn drop(&mut self) {
-        if self.outstanding() != 0 {
+        if self.outstanding != 0 {
             panic!("RequestCollection was dropped with outstanding requests not completed.");
         }
     }
 }
 
 impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
+    /// Constructs a `RequestCollection` from a Vec of `MPI_Request` handles and a scope object.
+    /// `requests` are allowed to be null, but they must not be persistent requests.
+    pub fn from_raw(requests: Vec<MPI_Request>, scope: S) -> Self {
+        let outstanding = requests
+            .iter()
+            .filter(|&request| !request.is_handle_null())
+            .count();
+
+        scope.register_many(outstanding);
+        Self {
+            outstanding: outstanding,
+            requests: requests,
+            scope: scope,
+            phantom: Default::default(),
+        }
+    }
+
+    /// Constructs a new, empty `RequestCollection` object.
+    pub fn new(scope: S) -> Self {
+        Self::with_capacity(scope, 0)
+    }
+
+    /// Constructs a new, empty `RequestCollection` with reserved space for `capacity` requests.
+    pub fn with_capacity(scope: S, capacity: usize) -> Self {
+        RequestCollection {
+            outstanding: 0,
+            requests: Vec::with_capacity(capacity),
+            scope: scope,
+            phantom: Default::default(),
+        }
+    }
+
+    /// Converts an iterator of request objects to a `RequestCollection`. The scope of each request
+    /// must be larger than or equal of the new `RequestCollection`.
+    fn from_request_iter<'b: 'a, T, S2: Scope<'b>>(iter: T, scope: S) -> Self
+    where
+        T: IntoIterator<Item = Request<'b, S2>>,
+    {
+        let iter = iter.into_iter();
+
+        let (lbound, ubound) = iter.size_hint();
+        let capacity = if let Some(ubound) = ubound {
+            ubound
+        } else {
+            lbound
+        };
+
+        let mut collection = RequestCollection::with_capacity(scope, capacity);
+
+        for request in iter {
+            collection.push(request);
+        }
+
+        collection
+    }
+
+    /// Pushes a new request into the collection. The request is removed from its previous scope and
+    /// attached to the new scope. Therefore, the request's scope must be greater than or equal to
+    /// the collection's scope.
+    pub fn push<'b: 'a, S2: Scope<'b>>(&mut self, request: Request<'b, S2>) {
+        unsafe {
+            let (request, _) = request.into_raw();
+            assert!(
+                !request.is_handle_null(),
+                "Cannot add NULL requests to a RequestCollection."
+            );
+            self.requests.push(request);
+
+            self.increase_outstanding(1);
+        }
+    }
+
+    /// Reduce the scope of a request.
+    pub fn shrink_scope_to<'b, S2>(self, scope: S2) -> RequestCollection<'b, S2>
+    where
+        'a: 'b,
+        S2: Scope<'b>,
+    {
+        unsafe {
+            let (requests, _) = self.into_raw();
+            RequestCollection::from_raw(requests, scope)
+        }
+    }
+
     // Validates the number of outstanding requests.
     fn check_outstanding(&self) {
         debug_assert!(
-            self.outstanding() == self.requests.iter().filter(|&r| !r.is_handle_null()).count(),
+            self.outstanding == self.requests.iter().filter(|&r| !r.is_handle_null()).count(),
             "Internal rsmpi error: the number of outstanding requests in the RequestCollection has \
             fallen out of sync with the tracking count.");
     }
 
-    /// Called to modify the number of outstanding elements. Validates the count on debug builds.
-    fn set_outstanding(&mut self, outstanding: usize) {
-        self.outstanding = outstanding;
+    fn increase_outstanding(&mut self, new_outstanding: usize) {
+        self.scope.register_many(new_outstanding);
 
+        self.outstanding += new_outstanding;
         self.check_outstanding();
+    }
+
+    fn decrease_outstanding(&mut self, completed: usize) {
+        unsafe { self.scope.unregister_many(completed) };
+
+        self.outstanding -= completed;
+        self.check_outstanding();
+    }
+
+    fn clear_outstanding(&mut self) {
+        let outstanding = self.outstanding;
+        self.decrease_outstanding(outstanding);
     }
 
     /// Called after a `wait_any` operation to validate that the request at idx is now null in DEBUG
@@ -380,13 +493,14 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     /// 3.7.5
     pub fn wait_any(&mut self) -> Option<(i32, Status)> {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        let result = raw::wait_any(&mut self.requests, Some(&mut status)).map(|idx| {
+        if let Some(idx) = raw::wait_any(&mut self.requests, Some(&mut status)) {
             self.check_null(idx);
-            self.outstanding -= 1;
-            (idx, Status::from_raw(status))
-        });
-        self.check_outstanding();
-        result
+            self.decrease_outstanding(1);
+            Some((idx, Status::from_raw(status)))
+        } else {
+            self.check_outstanding();
+            None
+        }
     }
 
     /// `wait_any_without_status` blocks until any active request in the collection completes. It
@@ -403,13 +517,14 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     ///
     /// 3.7.5
     pub fn wait_any_without_status(&mut self) -> Option<i32> {
-        let result = raw::wait_any(&mut self.requests, None).map(|idx| {
+        if let Some(idx) = raw::wait_any(&mut self.requests, None) {
             self.check_null(idx);
-            self.outstanding -= 1;
-            idx
-        });
-        self.check_outstanding();
-        result
+            self.decrease_outstanding(1);
+            Some(idx)
+        } else {
+            self.check_outstanding();
+            None
+        }
     }
 
     /// `test_any` checks if any requests in the collection are completed. It does not block.
@@ -434,7 +549,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
             raw::TestAny::NoneComplete => TestAny::NoneComplete,
             raw::TestAny::Completed(idx) => {
                 self.check_null(idx);
-                self.outstanding -= 1;
+                self.decrease_outstanding(1);
                 TestAny::Completed(idx, Status::from_raw(status))
             }
         };
@@ -464,7 +579,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
             raw::TestAny::NoneComplete => TestAnyWithoutStatus::NoneComplete,
             raw::TestAny::Completed(idx) => {
                 self.check_null(idx);
-                self.outstanding -= 1;
+                self.decrease_outstanding(1);
                 TestAnyWithoutStatus::Completed(idx)
             }
         };
@@ -492,7 +607,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         raw::wait_all(&mut self.requests, Some(raw_statuses));
 
         self.check_all_null();
-        self.set_outstanding(0);
+        self.clear_outstanding();
     }
 
     /// `wait_all_into` blocks until all requests in the collection are deallocated. Upon return,
@@ -528,7 +643,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         raw::wait_all(&mut self.requests[..], None);
 
         self.check_all_null();
-        self.set_outstanding(0);
+        self.clear_outstanding();
     }
 
     /// `test_all_into` checks if all requests are completed.
@@ -551,7 +666,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
 
         if raw::test_all(&mut self.requests, Some(raw_statuses)) {
             self.check_all_null();
-            self.set_outstanding(0);
+            self.clear_outstanding();
             true
         } else {
             self.check_outstanding();
@@ -596,7 +711,7 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
     pub fn test_all_without_status(&mut self) -> bool {
         if raw::test_all(&mut self.requests, None) {
             self.check_all_null();
-            self.set_outstanding(0);
+            self.clear_outstanding();
 
             true
         } else {
@@ -622,10 +737,8 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
 
         match raw::wait_some(&mut self.requests, indices, Some(raw_statuses)) {
             Some(count) => {
-                self.check_some_null(indices);
-
-                let outstanding = self.outstanding();
-                self.set_outstanding(outstanding - count as usize);
+                self.check_some_null(&indices[..count as usize]);
+                self.decrease_outstanding(count as usize);
 
                 Some(count)
             }
@@ -645,10 +758,8 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         // ffi::MPI_Status.
         match raw::wait_some(&mut self.requests, indices, None) {
             Some(count) => {
-                self.check_some_null(indices);
-
-                let outstanding = self.outstanding();
-                self.set_outstanding(outstanding - count as usize);
+                self.check_some_null(&indices[..count as usize]);
+                self.decrease_outstanding(count as usize);
 
                 Some(count)
             }
@@ -714,10 +825,8 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
 
         match raw::test_some(&mut self.requests, indices, Some(raw_statuses)) {
             Some(count) => {
-                self.check_some_null(indices);
-
-                let outstanding = self.outstanding();
-                self.set_outstanding(outstanding - count as usize);
+                self.check_some_null(&indices[..count as usize]);
+                self.decrease_outstanding(count as usize);
 
                 Some(count)
             }
@@ -737,10 +846,8 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
         // ffi::MPI_Status.
         match raw::test_some(&mut self.requests, indices, None) {
             Some(count) => {
-                self.check_some_null(indices);
-
-                let outstanding = self.outstanding();
-                self.set_outstanding(outstanding - count as usize);
+                self.check_some_null(&indices[..count as usize]);
+                self.decrease_outstanding(count as usize);
 
                 Some(count)
             }
@@ -879,10 +986,20 @@ impl<'a, S: Scope<'a>> From<Request<'a, S>> for CancelGuard<'a, S> {
 /// This trait is an implementation detail.  You shouldn’t have to use or implement this trait.
 pub unsafe trait Scope<'a> {
     /// Registers a request with the scope.
-    fn register(&self);
+    fn register(&self) {
+        self.register_many(1)
+    }
+
+    /// Registers multiple requests with the scope.
+    fn register_many(&self, count: usize);
 
     /// Unregisters a request from the scope.
-    unsafe fn unregister(&self);
+    unsafe fn unregister(&self) {
+        self.unregister_many(1)
+    }
+
+    /// Unregisters multiple requests from the scope.
+    unsafe fn unregister_many(&self, count: usize);
 }
 
 /// The scope that lasts as long as the entire execution of the program
@@ -899,9 +1016,8 @@ pub unsafe trait Scope<'a> {
 pub struct StaticScope;
 
 unsafe impl Scope<'static> for StaticScope {
-    fn register(&self) {}
-
-    unsafe fn unregister(&self) {}
+    fn register_many(&self, _count: usize) {}
+    unsafe fn unregister_many(&self, _count: usize) {}
 }
 
 /// A temporary scope that lasts no more than the lifetime `'a`
@@ -933,15 +1049,15 @@ impl<'a> Drop for LocalScope<'a> {
 }
 
 unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
-    fn register(&self) {
-        self.num_requests.set(self.num_requests.get() + 1)
+    fn register_many(&self, count: usize) {
+        self.num_requests.set(self.num_requests.get() + count)
     }
 
-    unsafe fn unregister(&self) {
+    unsafe fn unregister_many(&self, count: usize) {
         self.num_requests.set(
             self.num_requests
                 .get()
-                .checked_sub(1)
+                .checked_sub(count)
                 .expect("unregister has been called more times than register"),
         )
     }
