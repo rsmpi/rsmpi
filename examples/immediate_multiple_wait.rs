@@ -3,8 +3,6 @@ extern crate mpi;
 
 use mpi::traits::*;
 
-// use std::slice;
-
 fn main() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
