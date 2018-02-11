@@ -22,16 +22,16 @@ fn main() {
     // The ranks will be received into this Vec<usize>
     let mut ranks = vec![0usize; num_targets];
 
-    mpi::request::scope(|scope_send| {
+    mpi::request::scope(|scope| {
         // Creates, initiates, and collects send requests into a RequestCollection.
         let mut send_requests = (0..num_targets)
             .map(|r| r * 2 + lbound)
             .map(|target| {
                 world
                     .process_at_rank(target as i32)
-                    .immediate_send(scope_send, &rank)
+                    .immediate_send(scope, &rank)
             })
-            .collect_requests(scope_send);
+            .collect_requests(scope);
 
         // Creates, initiates, and collects receive requests into a RequestCollection.
         let mut recv_requests = (0..num_targets)
@@ -40,9 +40,9 @@ fn main() {
             .map(|(target, rank)| {
                 world
                     .process_at_rank(target as i32)
-                    .immediate_receive_into(scope_send, rank)
+                    .immediate_receive_into(scope, rank)
             })
-            .collect_requests(scope_send);
+            .collect_requests(scope);
 
         // Calls wait_some on the RequestCollection until it is empty.
         let mut received_from = vec![false; num_targets];
