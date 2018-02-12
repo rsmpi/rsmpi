@@ -51,6 +51,7 @@ install:
   - export MPI_PREFIX="${HOME}/opt/${MPI_LIBRARY}-${MPI_LIBRARY_VERSION}"
   - export PATH="${HOME}/.local/bin:${MPI_PREFIX}/bin${PATH:+":${PATH}"}"
   - export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"
+  - cargo install --force cargo-mpirun
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
       cargo install --force clippy;
     fi

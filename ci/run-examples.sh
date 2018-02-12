@@ -6,30 +6,23 @@ set -e
 export OMPI_MCA_rmaps_base_oversubscribe=1
 
 EXAMPLES_DIR="examples"
-BINARIES_DIR="target/debug/examples"
 
-if [ ! -d "${BINARIES_DIR}" ]
-then
-  echo "Examples not found in ${BINARIES_DIR}"
-  exit 1
-fi
+examples=$(ls ${EXAMPLES_DIR} | sed "s/\\.rs\$//")
+num_examples=$(printf "%d" "$(echo "${examples}" | wc -w)")
 
-binaries=$(ls ${EXAMPLES_DIR} | sed "s/\\.rs\$//")
-num_binaries=$(printf "%d" "$(echo "${binaries}" | wc -w)")
-
-printf "running %d examples\n" ${num_binaries}
+printf "running %d examples\n" ${num_examples}
 
 num_ok=0
 num_failed=0
 result="ok"
 
-for binary in ${binaries}
+for example in ${examples}
 do
-  printf "example ${binary} on 2...8 processes"
-  output_file=${binary}_output
+  printf "example ${example} on 2...8 processes"
+  output_file="/tmp/${example}_output"
   for num_proc in $(seq 2 8)
   do
-    if (mpiexec -n ${num_proc} "${BINARIES_DIR}/${binary}" > "${output_file}" 2>&1)
+    if (cargo mpirun --verbose -n ${num_proc} --example "${example}" > "${output_file}" 2>&1)
     then
       printf "."
       rm -f "${output_file}"
