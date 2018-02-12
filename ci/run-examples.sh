@@ -25,20 +25,25 @@ result="ok"
 
 for binary in ${binaries}
 do
-  num_proc=$((($(printf "%d" 0x$(openssl rand -hex 1)) % 7) + 2))
-  printf "example ${binary} on ${num_proc} processes ... "
+  printf "example ${binary} on 2...8 processes"
   output_file=${binary}_output
-  if (mpiexec -n ${num_proc} "${BINARIES_DIR}/${binary}" > "${output_file}")
-  then
-    printf "ok\n"
-    num_ok=$((${num_ok} + 1))
-  else
-    printf "output:\n"
-    cat "${output_file}"
-    num_failed=$((${num_failed} + 1))
-    result="failed"
-  fi
-  rm -f "${output_file}"
+  for num_proc in $(seq 2 8)
+  do
+    if (mpiexec -n ${num_proc} "${BINARIES_DIR}/${binary}" > "${output_file}" 2>&1)
+    then
+      printf "."
+      rm -f "${output_file}"
+    else
+      printf " failed on %d processes.\noutput:\n" ${num_proc}
+      cat "${output_file}"
+      rm -f "${output_file}"
+      num_failed=$((${num_failed} + 1))
+      result="failed"
+      continue 2
+    fi
+  done
+  printf " ok.\n"
+  num_ok=$((${num_ok} + 1))
 done
 
 printf "\nexample result: ${result}. ${num_ok} passed; ${num_failed} failed\n\n"
