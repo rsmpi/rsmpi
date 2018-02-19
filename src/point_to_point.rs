@@ -7,7 +7,7 @@
 //! # Unfinished features
 //!
 //! - **3.2.6**: `MPI_STATUS_IGNORE`
-//! - **3.6**: Buffer usage, `MPI_Buffer_attach()`, `MPI_Buffer_detach()`
+//! - **3.6**: BufferOld usage, `MPI_Buffer_attach()`, `MPI_Buffer_detach()`
 //! - **3.9**: Persistent requests, `MPI_Send_init()`, `MPI_Bsend_init()`, `MPI_Ssend_init()`,
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 
@@ -176,16 +176,16 @@ pub unsafe trait Source: AsCommunicator {
         self.receive_with_tag(unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
 
-    /// Receive a message into a `Buffer`.
+    /// Receive a message into a `BufferOld`.
     ///
-    /// Receive a message from `Source` `&self` tagged `tag` into `Buffer` `buf`.
+    /// Receive a message from `Source` `&self` tagged `tag` into `BufferOld` `buf`.
     ///
     /// # Standard section(s)
     ///
     /// 3.2.4
-    fn receive_into_with_tag<Buf: ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status
+    fn receive_into_with_tag<Buf>(&self, mut buf: Buf, tag: Tag) -> Status
     where
-        Buf: BufferMut,
+        Buf: WriteBuffer,
     {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
@@ -202,16 +202,16 @@ pub unsafe trait Source: AsCommunicator {
         Status(status)
     }
 
-    /// Receive a message into a `Buffer`.
+    /// Receive a message into a `BufferOld`.
     ///
-    /// Receive a message from `Source` `&self` into `Buffer` `buf`.
+    /// Receive a message from `Source` `&self` into `BufferOld` `buf`.
     ///
     /// # Standard section(s)
     ///
     /// 3.2.4
-    fn receive_into<Buf: ?Sized>(&self, buf: &mut Buf) -> Status
+    fn receive_into<Buf>(&self, buf: Buf) -> Status
     where
-        Buf: BufferMut,
+        Buf: WriteBuffer,
     {
         self.receive_into_with_tag(buf, unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
     }
@@ -256,14 +256,14 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_receive_into_with_tag<'a, Sc, Buf: ?Sized>(
+    fn immediate_receive_into_with_tag<'a, Sc, Buf>(
         &self,
         scope: Sc,
-        buf: &'a mut Buf,
+        mut buf: Buf,
         tag: Tag,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Sc, Buf>
     where
-        Buf: 'a + BufferMut,
+        Buf: 'a + WriteBuffer,
         Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -277,7 +277,7 @@ pub unsafe trait Source: AsCommunicator {
                 self.as_communicator().as_raw(),
                 &mut request,
             );
-            Request::from_raw(request, scope)
+            Request::from_raw_data(request, scope, buf)
         }
     }
 
@@ -291,13 +291,13 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_receive_into<'a, Sc, Buf: ?Sized>(
+    fn immediate_receive_into<'a, Sc, Buf>(
         &self,
         scope: Sc,
-        buf: &'a mut Buf,
-    ) -> Request<'a, Sc>
+        buf: Buf,
+    ) -> Request<'a, Sc, Buf>
     where
-        Buf: 'a + BufferMut,
+        Buf: 'a + WriteBuffer,
         Sc: Scope<'a>,
     {
         self.immediate_receive_into_with_tag(scope, buf, unsafe_extern_static!(ffi::RSMPI_ANY_TAG))
@@ -466,14 +466,14 @@ pub trait Destination: AsCommunicator {
 
     /// Blocking standard mode send operation
     ///
-    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    /// Send the contents of a `BufferOld` to the `Destination` `&self` and tag it.
     ///
     /// # Standard section(s)
     ///
     /// 3.2.1
     fn send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
     where
-        Buf: Buffer,
+        Buf: BufferOld,
     {
         unsafe {
             ffi::MPI_Send(
@@ -489,7 +489,7 @@ pub trait Destination: AsCommunicator {
 
     /// Blocking standard mode send operation
     ///
-    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    /// Send the contents of a `BufferOld` to the `Destination` `&self`.
     ///
     /// # Examples
     ///
@@ -510,21 +510,21 @@ pub trait Destination: AsCommunicator {
     /// 3.2.1
     fn send<Buf: ?Sized>(&self, buf: &Buf)
     where
-        Buf: Buffer,
+        Buf: BufferOld,
     {
         self.send_with_tag(buf, Tag::default())
     }
 
     /// Blocking buffered mode send operation
     ///
-    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    /// Send the contents of a `BufferOld` to the `Destination` `&self` and tag it.
     ///
     /// # Standard section(s)
     ///
     /// 3.4
     fn buffered_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
     where
-        Buf: Buffer,
+        Buf: BufferOld,
     {
         unsafe {
             ffi::MPI_Bsend(
@@ -540,21 +540,21 @@ pub trait Destination: AsCommunicator {
 
     /// Blocking buffered mode send operation
     ///
-    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    /// Send the contents of a `BufferOld` to the `Destination` `&self`.
     ///
     /// # Standard section(s)
     ///
     /// 3.4
     fn buffered_send<Buf: ?Sized>(&self, buf: &Buf)
     where
-        Buf: Buffer,
+        Buf: BufferOld,
     {
         self.buffered_send_with_tag(buf, Tag::default())
     }
 
     /// Blocking synchronous mode send operation
     ///
-    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    /// Send the contents of a `BufferOld` to the `Destination` `&self` and tag it.
     ///
     /// Completes only once the matching receive operation has started.
     ///
@@ -563,7 +563,7 @@ pub trait Destination: AsCommunicator {
     /// 3.4
     fn synchronous_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
     where
-        Buf: Buffer,
+        Buf: BufferOld,
     {
         unsafe {
             ffi::MPI_Ssend(
@@ -579,7 +579,7 @@ pub trait Destination: AsCommunicator {
 
     /// Blocking synchronous mode send operation
     ///
-    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    /// Send the contents of a `BufferOld` to the `Destination` `&self`.
     ///
     /// Completes only once the matching receive operation has started.
     ///
@@ -588,14 +588,14 @@ pub trait Destination: AsCommunicator {
     /// 3.4
     fn synchronous_send<Buf: ?Sized>(&self, buf: &Buf)
     where
-        Buf: Buffer,
+        Buf: BufferOld,
     {
         self.synchronous_send_with_tag(buf, Tag::default())
     }
 
     /// Blocking ready mode send operation
     ///
-    /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
+    /// Send the contents of a `BufferOld` to the `Destination` `&self` and tag it.
     ///
     /// Fails if the matching receive operation has not been posted.
     ///
@@ -604,7 +604,7 @@ pub trait Destination: AsCommunicator {
     /// 3.4
     fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
     where
-        Buf: Buffer,
+        Buf: BufferOld,
     {
         unsafe {
             ffi::MPI_Rsend(
@@ -620,7 +620,7 @@ pub trait Destination: AsCommunicator {
 
     /// Blocking ready mode send operation
     ///
-    /// Send the contents of a `Buffer` to the `Destination` `&self`.
+    /// Send the contents of a `BufferOld` to the `Destination` `&self`.
     ///
     /// Fails if the matching receive operation has not been posted.
     ///
@@ -629,7 +629,7 @@ pub trait Destination: AsCommunicator {
     /// 3.4
     fn ready_send<Buf: ?Sized>(&self, buf: &Buf)
     where
-        Buf: Buffer,
+        Buf: BufferOld,
     {
         self.ready_send_with_tag(buf, Tag::default())
     }
@@ -648,7 +648,7 @@ pub trait Destination: AsCommunicator {
         tag: Tag,
     ) -> Request<'a, Sc>
     where
-        Buf: 'a + Buffer,
+        Buf: 'a + BufferOld,
         Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -678,7 +678,7 @@ pub trait Destination: AsCommunicator {
     /// 3.7.2
     fn immediate_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Sc>
     where
-        Buf: 'a + Buffer,
+        Buf: 'a + BufferOld,
         Sc: Scope<'a>,
     {
         self.immediate_send_with_tag(scope, buf, Tag::default())
@@ -698,7 +698,7 @@ pub trait Destination: AsCommunicator {
         tag: Tag,
     ) -> Request<'a, Sc>
     where
-        Buf: 'a + Buffer,
+        Buf: 'a + BufferOld,
         Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -729,7 +729,7 @@ pub trait Destination: AsCommunicator {
         buf: &'a Buf,
     ) -> Request<'a, Sc>
     where
-        Buf: 'a + Buffer,
+        Buf: 'a + BufferOld,
         Sc: Scope<'a>,
     {
         self.immediate_buffered_send_with_tag(scope, buf, Tag::default())
@@ -749,7 +749,7 @@ pub trait Destination: AsCommunicator {
         tag: Tag,
     ) -> Request<'a, Sc>
     where
-        Buf: 'a + Buffer,
+        Buf: 'a + BufferOld,
         Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -780,7 +780,7 @@ pub trait Destination: AsCommunicator {
         buf: &'a Buf,
     ) -> Request<'a, Sc>
     where
-        Buf: 'a + Buffer,
+        Buf: 'a + BufferOld,
         Sc: Scope<'a>,
     {
         self.immediate_synchronous_send_with_tag(scope, buf, Tag::default())
@@ -800,7 +800,7 @@ pub trait Destination: AsCommunicator {
         tag: Tag,
     ) -> Request<'a, Sc>
     where
-        Buf: 'a + Buffer,
+        Buf: 'a + BufferOld,
         Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -831,7 +831,7 @@ pub trait Destination: AsCommunicator {
     /// 3.7.2
     fn immediate_ready_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Sc>
     where
-        Buf: 'a + Buffer,
+        Buf: 'a + BufferOld,
         Sc: Scope<'a>,
     {
         self.immediate_ready_send_with_tag(scope, buf, Tag::default())
@@ -923,16 +923,16 @@ impl Message {
         (res, status)
     }
 
-    /// Receive a previously probed message into a `Buffer`.
+    /// Receive a previously probed message into a `BufferOld`.
     ///
     /// Receive the message `&self` with contents matching `buf`.
     ///
     /// # Standard section(s)
     ///
     /// 3.8.3
-    pub fn matched_receive_into<Buf: ?Sized>(mut self, buf: &mut Buf) -> Status
+    pub fn matched_receive_into<Buf>(mut self, mut buf: Buf) -> Status
     where
-        Buf: BufferMut,
+        Buf: WriteBuffer,
     {
         let mut status: MPI_Status = unsafe { mem::uninitialized() };
         unsafe {
@@ -948,20 +948,20 @@ impl Message {
         Status(status)
     }
 
-    /// Asynchronously receive a previously probed message into a `Buffer`.
+    /// Asynchronously receive a previously probed message into a `BufferOld`.
     ///
     /// Asynchronously receive the message `&self` with contents matching `buf`.
     ///
     /// # Standard section(s)
     ///
     /// 3.8.3
-    pub fn immediate_matched_receive_into<'a, Sc, Buf: ?Sized + 'a>(
+    pub fn immediate_matched_receive_into<'a, Sc, Buf>(
         mut self,
         scope: Sc,
-        buf: &'a mut Buf,
+        mut buf: Buf,
     ) -> Request<'a, Sc>
     where
-        Buf: BufferMut,
+        Buf: 'a + WriteBuffer,
         Sc: Scope<'a>,
     {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
@@ -1090,18 +1090,18 @@ where
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_into_with_tags<M: ?Sized, D, B: ?Sized, S>(
+pub fn send_receive_into_with_tags<M: ?Sized, D, Buf, S>(
     msg: &M,
     destination: &D,
     sendtag: Tag,
-    buf: &mut B,
+    mut buf: Buf,
     source: &S,
     receivetag: Tag,
 ) -> Status
 where
-    M: Buffer,
+    M: BufferOld,
     D: Destination,
-    B: BufferMut,
+    Buf: WriteBuffer,
     S: Source,
 {
     assert_eq!(
@@ -1137,16 +1137,16 @@ where
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(
+pub fn send_receive_into<M: ?Sized, D, Buf, S>(
     msg: &M,
     destination: &D,
-    buf: &mut B,
+    buf: Buf,
     source: &S,
 ) -> Status
 where
-    M: Buffer,
+    M: BufferOld,
     D: Destination,
-    B: BufferMut,
+    Buf: WriteBuffer,
     S: Source,
 {
     send_receive_into_with_tags(
@@ -1166,15 +1166,15 @@ where
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_replace_into_with_tags<B: ?Sized, D, S>(
-    buf: &mut B,
+pub fn send_receive_replace_into_with_tags<Buf, D, S>(
+    mut buf: Buf,
     destination: &D,
     sendtag: Tag,
     source: &S,
     receivetag: Tag,
 ) -> Status
 where
-    B: BufferMut,
+    Buf: WriteBuffer,
     D: Destination,
     S: Source,
 {
@@ -1208,13 +1208,13 @@ where
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive_replace_into<B: ?Sized, D, S>(
-    buf: &mut B,
+pub fn send_receive_replace_into<Buf, D, S>(
+    buf: Buf,
     destination: &D,
     source: &S,
 ) -> Status
 where
-    B: BufferMut,
+    Buf: WriteBuffer,
     D: Destination,
     S: Source,
 {

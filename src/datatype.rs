@@ -14,9 +14,9 @@
 //! an object in memory like all elements below the diagonal of a dense matrix stored in row-major
 //! order.
 //!
-//! A `Buffer` describes a specific piece of data in memory that MPI should operate on. In addition
+//! A `BufferOld` describes a specific piece of data in memory that MPI should operate on. In addition
 //! to specifying the datatype of the data. It knows the address in memory where the data begins
-//! and how many instances of the datatype are contained in the data. The `Buffer` trait is
+//! and how many instances of the datatype are contained in the data. The `BufferOld` trait is
 //! implemented for slices that contain types implementing `Equivalence`.
 //!
 //! In order to use arbitrary datatypes to describe the contents of a slice, the `View` type is
@@ -45,6 +45,8 @@ use std::{mem, slice};
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 use std::os::raw::c_void;
+use std::rc::Rc;
+use std::sync::Arc;
 
 use conv::ConvUtil;
 
@@ -57,8 +59,9 @@ use raw::traits::*;
 
 /// Datatype traits
 pub mod traits {
-    pub use super::{AsDatatype, Buffer, BufferMut, Collection, Datatype, Equivalence, Partitioned,
-                    PartitionedBuffer, PartitionedBufferMut, Pointer, PointerMut};
+    pub use super::{AsDatatype, Buffer, BufferOld, BufferMutOld, Collection, Datatype, Equivalence,
+                    Partitioned, PartitionedBuffer, PartitionedBufferMut, Pointer, PointerMut,
+                    ReadBuffer, WriteBuffer};
 }
 
 /// A reference to an MPI data type.
@@ -486,15 +489,214 @@ where
     }
 }
 
+/// Implements a buffer with a known length.
+pub trait Buffer {
+    /// The type of each element in the `Buffer`.
+    type Item: Equivalence;
+
+    /// The type of the exclusive owner of the `Buffer`. If the implementation is borrowing the
+    /// buffer from another source, then `Owner` should be `()`. Otherwise, is a Rust owner of heap
+    /// allocated memory like `Vec<Item>`.
+    type Owner;
+
+    /// Take ownership of the buffer.
+    fn take_ownership(self) -> Self::Owner;
+
+    /// The number of elements in the `Buffer`.
+    fn len(&self) -> usize;
+
+    /// The number of elements in the `Buffer`, expressed as the ABI datatype for counts in MPI.
+    /// Panics if `len()` cannot be expressed as a `Count`. e.g. if `len()` is greater than
+    /// `i32::MAX`.
+    fn count(&self) -> Count {
+        self.len().value_as().expect("Length of buffer cannout be expressed as an MPI Count.")
+    }
+
+    /// Get the MPI data type
+    fn as_datatype(&self) -> <Self::Item as Equivalence>::Out {
+        Self::Item::equivalent_datatype()
+    }
+}
+
+/// Implements buffers that can be read from.
+pub trait ReadBuffer: Buffer {
+    /// Return a pointer to the beginning of the buffer.
+    fn as_ptr(&self) -> *const Self::Item;
+
+    /// Returns a *const c_void to the beginning of the buffer.
+    fn pointer(&self) -> *const c_void { self.as_ptr() as *const _ }
+}
+
+/// Implements buffers that can be written to.
+pub trait WriteBuffer: Buffer {
+    /// Return a pointer to the beginning of the buffer.
+    fn as_mut_ptr(&mut self) -> *mut Self::Item;
+
+    /// Returns a *mut c_void to the beginning of the buffer.
+    fn pointer_mut(&mut self) -> *mut c_void { self.as_mut_ptr() as *mut _ }
+}
+
+// impls for &'a T
+impl<'a, T: Equivalence> Buffer for &'a T {
+    type Item = T;
+    type Owner = ();
+    fn take_ownership(self) -> Self::Owner {}
+    fn len(&self) -> usize { 1 }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for &'a T {
+    fn as_ptr(&self) -> *const Self::Item { &**self }
+}
+
+// impls for &'a mut T
+impl<'a, T: Equivalence> Buffer for &'a mut T {
+    type Item = T;
+    type Owner = ();
+    fn take_ownership(self) -> Self::Owner {}
+    fn len(&self) -> usize { 1 }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for &'a mut T {
+    fn as_ptr(&self) -> *const Self::Item { &**self }
+}
+
+impl<'a, T: Equivalence> WriteBuffer for &'a mut T {
+    fn as_mut_ptr(&mut self) -> *mut Self::Item { &mut **self }
+}
+
+// impls for &'a [T]
+impl<'a, T: Equivalence> Buffer for &'a [T] {
+    type Item = T;
+    type Owner = ();
+    fn take_ownership(self) -> Self::Owner {}
+    fn len(&self) -> usize { (**self).len() }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for &'a [T] {
+    fn as_ptr(&self) -> *const Self::Item { (&**self).as_ptr() }
+}
+
+// impls for &'a mut [T]
+impl<'a, T: Equivalence> Buffer for &'a mut [T] {
+    type Item = T;
+    type Owner = ();
+    fn take_ownership(self) -> Self::Owner {}
+    fn len(&self) -> usize { (**self).len() }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for &'a mut [T] {
+    fn as_ptr(&self) -> *const Self::Item { (&**self).as_ptr() }
+}
+
+impl<'a, T: Equivalence> WriteBuffer for &'a mut [T] {
+    fn as_mut_ptr(&mut self) -> *mut Self::Item { (&mut **self).as_mut_ptr() }
+}
+
+// impls for Box<T>
+impl<'a, T: Equivalence> Buffer for Box<T> {
+    type Item = T;
+    type Owner = Self;
+    fn take_ownership(self) -> Self::Owner { self }
+    fn len(&self) -> usize { 1 }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for Box<T> {
+    fn as_ptr(&self) -> *const Self::Item { &**self }
+}
+
+impl<'a, T: Equivalence> WriteBuffer for Box<T> {
+    fn as_mut_ptr(&mut self) -> *mut Self::Item { &mut **self }
+}
+
+// impls for Box<[T]>
+impl<'a, T: Equivalence> Buffer for Box<[T]> {
+    type Item = T;
+    type Owner = Self;
+    fn take_ownership(self) -> Self::Owner { self }
+    fn len(&self) -> usize { (**self).len() }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for Box<[T]> {
+    fn as_ptr(&self) -> *const Self::Item { (**self).as_ptr() }
+}
+
+impl<'a, T: Equivalence> WriteBuffer for Box<[T]> {
+    fn as_mut_ptr(&mut self) -> *mut Self::Item { (**self).as_mut_ptr() }
+}
+
+// impls for Vec<T>
+impl<'a, T: Equivalence> Buffer for Vec<T> {
+    type Item = T;
+    type Owner = Self;
+    fn take_ownership(self) -> Self::Owner { self }
+    fn len(&self) -> usize { self.len() }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for Vec<T> {
+    fn as_ptr(&self) -> *const Self::Item { (**self).as_ptr() }
+}
+
+impl<'a, T: Equivalence> WriteBuffer for Vec<T> {
+    fn as_mut_ptr(&mut self) -> *mut Self::Item { (**self).as_mut_ptr() }
+}
+
+// impls for Rc<T>
+impl<'a, T: Equivalence> Buffer for Rc<T> {
+    type Item = T;
+    type Owner = Self;
+    fn take_ownership(self) -> Self::Owner { self }
+    fn len(&self) -> usize { 1 }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for Rc<T> {
+    fn as_ptr(&self) -> *const Self::Item { &**self }
+}
+
+// impls for Rc<Vec<T>>
+impl<'a, T: Equivalence> Buffer for Rc<Vec<T>> {
+    type Item = T;
+    type Owner = Self;
+    fn take_ownership(self) -> Self::Owner { self }
+    fn len(&self) -> usize { (**self).len() }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for Rc<Vec<T>> {
+    fn as_ptr(&self) -> *const Self::Item { (**self).as_ptr() }
+}
+
+// impls for Arc<T>
+impl<'a, T: Equivalence> Buffer for Arc<T> {
+    type Item = T;
+    type Owner = Self;
+    fn take_ownership(self) -> Self::Owner { self }
+    fn len(&self) -> usize { 1 }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for Arc<T> {
+    fn as_ptr(&self) -> *const Self::Item { &**self }
+}
+
+// impls for Arc<Vec<T>>
+impl<'a, T: Equivalence> Buffer for Arc<Vec<T>> {
+    type Item = T;
+    type Owner = Self;
+    fn take_ownership(self) -> Self::Owner { self }
+    fn len(&self) -> usize { (**self).len() }
+}
+
+impl<'a, T: Equivalence> ReadBuffer for Arc<Vec<T>> {
+    fn as_ptr(&self) -> *const Self::Item { (**self).as_ptr() }
+}
+
 /// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
 /// `as_datatype()`.
-pub unsafe trait Buffer: Pointer + Collection + AsDatatype {}
-unsafe impl<T> Buffer for T
+pub unsafe trait BufferOld: Pointer + Collection + AsDatatype {}
+unsafe impl<T> BufferOld for T
 where
     T: Equivalence,
 {
 }
-unsafe impl<T> Buffer for [T]
+unsafe impl<T> BufferOld for [T]
 where
     T: Equivalence,
 {
@@ -502,13 +704,13 @@ where
 
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
 /// copies of `as_datatype()`.
-pub unsafe trait BufferMut: PointerMut + Collection + AsDatatype {}
-unsafe impl<T> BufferMut for T
+pub unsafe trait BufferMutOld: PointerMut + Collection + AsDatatype {}
+unsafe impl<T> BufferMutOld for T
 where
     T: Equivalence,
 {
 }
-unsafe impl<T> BufferMut for [T]
+unsafe impl<T> BufferMutOld for [T]
 where
     T: Equivalence,
 {
@@ -518,7 +720,7 @@ where
 ///
 /// The buffer has a definite length and MPI datatype, but it is not yet known which Rust type it
 /// corresponds to.  This is the MPI analogue of `&Any`.  It is semantically equivalent to the trait
-/// object reference `&Buffer`.
+/// object reference `&BufferOld`.
 #[derive(Copy, Clone, Debug)]
 pub struct DynBuffer<'a> {
     ptr: *const c_void,
@@ -549,7 +751,7 @@ unsafe impl<'a> AsDatatype for DynBuffer<'a> {
     }
 }
 
-unsafe impl<'a> Buffer for DynBuffer<'a> {}
+unsafe impl<'a> BufferOld for DynBuffer<'a> {}
 
 impl<'a> DynBuffer<'a> {
     /// Creates a buffer from a slice with whose type has an MPI equivalent.
@@ -607,7 +809,7 @@ impl<'a> DynBuffer<'a> {
 ///
 /// The buffer has a definite length and MPI datatype, but it is not yet known which Rust type it
 /// corresponds to.  This is the MPI analogue of `&mut Any`.  It is semantically equivalent to the
-/// mutable trait object reference `&mut BufferMut`.
+/// mutable trait object reference `&mut BufferMutOld`.
 #[derive(Debug)]
 pub struct DynBufferMut<'a> {
     ptr: *mut c_void,
@@ -637,9 +839,9 @@ unsafe impl<'a> PointerMut for DynBufferMut<'a> {
     }
 }
 
-unsafe impl<'a> Buffer for DynBufferMut<'a> {}
+unsafe impl<'a> BufferOld for DynBufferMut<'a> {}
 
-unsafe impl<'a> BufferMut for DynBufferMut<'a> {}
+unsafe impl<'a> BufferMutOld for DynBufferMut<'a> {}
 
 unsafe impl<'a> AsDatatype for DynBufferMut<'a> {
     type Out = DatatypeRef<'a>;
@@ -725,6 +927,8 @@ impl<'a> DynBufferMut<'a> {
     }
 }
 
+
+
 /// A buffer with a user specified count and datatype
 ///
 /// # Safety
@@ -795,7 +999,7 @@ where
     }
 }
 
-unsafe impl<'d, 'b, D, B: ?Sized> Buffer for View<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> BufferOld for View<'d, 'b, D, B>
 where
     D: 'd + Datatype,
     B: 'b + Pointer,
@@ -872,14 +1076,14 @@ where
     }
 }
 
-unsafe impl<'d, 'b, D, B: ?Sized> BufferMut for MutView<'d, 'b, D, B>
+unsafe impl<'d, 'b, D, B: ?Sized> BufferMutOld for MutView<'d, 'b, D, B>
 where
     D: 'd + Datatype,
     B: 'b + PointerMut,
 {
 }
 
-/// Describes how a `Buffer` is partitioned by specifying the count of elements and displacement
+/// Describes how a `BufferOld` is partitioned by specifying the count of elements and displacement
 /// from the start of the buffer for each partition.
 pub trait Partitioned {
     /// The count of elements in each partition.
@@ -903,7 +1107,7 @@ pub trait PartitionedBuffer: Partitioned + Pointer + AsDatatype {}
 /// A mutable buffer that is `Partitioned`
 pub trait PartitionedBufferMut: Partitioned + PointerMut + AsDatatype {}
 
-/// Adds a partitioning to an existing `Buffer` so that it becomes `Partitioned`
+/// Adds a partitioning to an existing `BufferOld` so that it becomes `Partitioned`
 pub struct Partition<'b, B: 'b + ?Sized, C, D> {
     buf: &'b B,
     counts: C,
@@ -912,7 +1116,7 @@ pub struct Partition<'b, B: 'b + ?Sized, C, D> {
 
 impl<'b, B: ?Sized, C, D> Partition<'b, B, C, D>
 where
-    B: 'b + Buffer,
+    B: 'b + BufferOld,
     C: Borrow<[Count]>,
     D: Borrow<[Count]>,
 {
@@ -976,7 +1180,7 @@ where
 {
 }
 
-/// Adds a partitioning to an existing `BufferMut` so that it becomes `Partitioned`
+/// Adds a partitioning to an existing `BufferMutOld` so that it becomes `Partitioned`
 pub struct PartitionMut<'b, B: 'b + ?Sized, C, D> {
     buf: &'b mut B,
     counts: C,
@@ -985,7 +1189,7 @@ pub struct PartitionMut<'b, B: 'b + ?Sized, C, D> {
 
 impl<'b, B: ?Sized, C, D> PartitionMut<'b, B, C, D>
 where
-    B: 'b + BufferMut,
+    B: 'b + BufferMutOld,
     C: Borrow<[Count]>,
     D: Borrow<[Count]>,
 {

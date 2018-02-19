@@ -171,9 +171,10 @@ pub trait AsyncRequest<'a, S: Scope<'a>>: AsRaw<Raw = MPI_Request> + Sized {
 /// 3.7.1
 #[must_use]
 #[derive(Debug)]
-pub struct Request<'a, S: Scope<'a> = StaticScope> {
+pub struct Request<'a, S: Scope<'a> = StaticScope, D = ()> {
     request: MPI_Request,
     scope: S,
+    data: D,
     phantom: PhantomData<Cell<&'a ()>>,
 }
 
@@ -184,7 +185,7 @@ unsafe impl<'a, S: Scope<'a>> AsRaw for Request<'a, S> {
     }
 }
 
-impl<'a, S: Scope<'a>> Drop for Request<'a, S> {
+impl<'a, S: Scope<'a>, D> Drop for Request<'a, S, D> {
     fn drop(&mut self) {
         panic!("request was dropped without being completed");
     }
@@ -206,16 +207,54 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
         Self {
             request: request,
             scope: scope,
+            data: (),
             phantom: Default::default(),
         }
     }
 }
 
+impl<'a, S: Scope<'a>, D> Request<'a, S, D> {
+    /// Construct a request object from the raw MPI type and its associated data buffer.
+    ///
+    /// # Requirements
+    ///
+    /// - The request is a valid, active request.  It must not be `MPI_REQUEST_NULL`.
+    /// - The request must not be persistent.
+    /// - All buffers associated with the request must outlive `'a`.
+    /// - The request must not be registered with the given scope.
+    /// - If `data` is a reference, the referenced must live at least as long as the MPI Request.
+    ///
+    pub unsafe fn from_raw_data(request: MPI_Request, scope: S, data: D) -> Self {
+        debug_assert!(!request.is_handle_null());
+        scope.register();
+        Self {
+            request: request,
+            scope: scope,
+            data: data,
+            phantom: Default::default(),
+        }
+    }
+    
+    /// Unregister the request object from its scope and deconstruct it into its raw parts.
+    ///
+    /// This is unsafe because the request may outlive its associated buffers.
+    pub unsafe fn into_raw_data(mut self) -> (MPI_Request, S, D) {
+        let request = mem::replace(&mut self.request, mem::uninitialized());
+        let scope = mem::replace(&mut self.scope, mem::uninitialized());
+        let data = mem::replace(&mut self.data, mem::uninitialized());
+        drop(mem::replace(&mut self.phantom, mem::uninitialized()));
+        mem::forget(self);
+        scope.unregister();
+        (request, scope, data)
+    }
+}
+
 impl<'a, S: Scope<'a>> AsyncRequest<'a, S> for Request<'a, S> {
     unsafe fn into_raw(mut self) -> (MPI_Request, S) {
-        let request = mem::replace(&mut self.as_raw(), mem::uninitialized());
+        let request = mem::replace(&mut self.request, mem::uninitialized());
         let scope = mem::replace(&mut self.scope, mem::uninitialized());
-        let _ = mem::replace(&mut self.phantom, mem::uninitialized());
+        drop(mem::replace(&mut self.data, mem::uninitialized()));
+        drop(mem::replace(&mut self.phantom, mem::uninitialized()));
         mem::forget(self);
         scope.unregister();
         (request, scope)
