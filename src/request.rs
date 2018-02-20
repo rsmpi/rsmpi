@@ -178,7 +178,7 @@ pub struct Request<'a, S: Scope<'a> = StaticScope, D = ()> {
     phantom: PhantomData<Cell<&'a ()>>,
 }
 
-unsafe impl<'a, S: Scope<'a>> AsRaw for Request<'a, S> {
+unsafe impl<'a, S: Scope<'a>, D> AsRaw for Request<'a, S, D> {
     type Raw = MPI_Request;
     fn as_raw(&self) -> Self::Raw {
         self.request
@@ -249,7 +249,7 @@ impl<'a, S: Scope<'a>, D> Request<'a, S, D> {
     }
 }
 
-impl<'a, S: Scope<'a>> AsyncRequest<'a, S> for Request<'a, S> {
+impl<'a, S: Scope<'a>, D> AsyncRequest<'a, S> for Request<'a, S, D> {
     unsafe fn into_raw(mut self) -> (MPI_Request, S) {
         let request = mem::replace(&mut self.request, mem::uninitialized());
         let scope = mem::replace(&mut self.scope, mem::uninitialized());
@@ -971,34 +971,34 @@ impl<'a, S: Scope<'a>> RequestCollection<'a, S> {
 ///
 /// See `examples/immediate.rs`
 #[derive(Debug)]
-pub struct WaitGuard<'a, S: Scope<'a> = StaticScope>(Option<Request<'a, S>>);
+pub struct WaitGuard<'a, S: Scope<'a> = StaticScope, D = ()>(Option<Request<'a, S, D>>);
 
-impl<'a, S: Scope<'a>> Drop for WaitGuard<'a, S> {
+impl<'a, S: Scope<'a>, D> Drop for WaitGuard<'a, S, D> {
     fn drop(&mut self) {
         self.0.take().expect("invalid WaitGuard").wait();
     }
 }
 
-unsafe impl<'a, S: Scope<'a>> AsRaw for WaitGuard<'a, S> {
+unsafe impl<'a, S: Scope<'a>, D> AsRaw for WaitGuard<'a, S, D> {
     type Raw = MPI_Request;
     fn as_raw(&self) -> Self::Raw {
         self.0.as_ref().expect("invalid WaitGuard").as_raw()
     }
 }
 
-impl<'a, S: Scope<'a>> From<WaitGuard<'a, S>> for Request<'a, S> {
-    fn from(mut guard: WaitGuard<'a, S>) -> Self {
+impl<'a, S: Scope<'a>, D> From<WaitGuard<'a, S, D>> for Request<'a, S, D> {
+    fn from(mut guard: WaitGuard<'a, S, D>) -> Self {
         guard.0.take().expect("invalid WaitGuard")
     }
 }
 
-impl<'a, S: Scope<'a>> From<Request<'a, S>> for WaitGuard<'a, S> {
-    fn from(req: Request<'a, S>) -> Self {
+impl<'a, S: Scope<'a>, D> From<Request<'a, S, D>> for WaitGuard<'a, S, D> {
+    fn from(req: Request<'a, S, D>) -> Self {
         WaitGuard(Some(req))
     }
 }
 
-impl<'a, S: Scope<'a>> WaitGuard<'a, S> {
+impl<'a, S: Scope<'a>, D> WaitGuard<'a, S, D> {
     fn cancel(&self) {
         if let Some(ref req) = self.0 {
             req.cancel();
@@ -1015,16 +1015,16 @@ impl<'a, S: Scope<'a>> WaitGuard<'a, S> {
 ///
 /// See `examples/immediate.rs`
 #[derive(Debug)]
-pub struct CancelGuard<'a, S: Scope<'a> = StaticScope>(WaitGuard<'a, S>);
+pub struct CancelGuard<'a, S: Scope<'a> = StaticScope, D = ()>(WaitGuard<'a, S, D>);
 
-impl<'a, S: Scope<'a>> Drop for CancelGuard<'a, S> {
+impl<'a, S: Scope<'a>, D> Drop for CancelGuard<'a, S, D> {
     fn drop(&mut self) {
         self.0.cancel();
     }
 }
 
-impl<'a, S: Scope<'a>> From<CancelGuard<'a, S>> for WaitGuard<'a, S> {
-    fn from(mut guard: CancelGuard<'a, S>) -> Self {
+impl<'a, S: Scope<'a>, D> From<CancelGuard<'a, S, D>> for WaitGuard<'a, S, D> {
+    fn from(mut guard: CancelGuard<'a, S, D>) -> Self {
         unsafe {
             let inner = mem::replace(&mut guard.0, mem::uninitialized());
             mem::forget(guard);
@@ -1033,14 +1033,14 @@ impl<'a, S: Scope<'a>> From<CancelGuard<'a, S>> for WaitGuard<'a, S> {
     }
 }
 
-impl<'a, S: Scope<'a>> From<WaitGuard<'a, S>> for CancelGuard<'a, S> {
-    fn from(guard: WaitGuard<'a, S>) -> Self {
+impl<'a, S: Scope<'a>, D> From<WaitGuard<'a, S, D>> for CancelGuard<'a, S, D> {
+    fn from(guard: WaitGuard<'a, S, D>) -> Self {
         CancelGuard(guard)
     }
 }
 
-impl<'a, S: Scope<'a>> From<Request<'a, S>> for CancelGuard<'a, S> {
-    fn from(req: Request<'a, S>) -> Self {
+impl<'a, S: Scope<'a>, D> From<Request<'a, S, D>> for CancelGuard<'a, S, D> {
+    fn from(req: Request<'a, S, D>) -> Self {
         CancelGuard(WaitGuard::from(req))
     }
 }

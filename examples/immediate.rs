@@ -41,7 +41,7 @@ fn main() {
 
     y = 0.0;
     mpi::request::scope(|scope| {
-        let _sreq: WaitGuard<_> = world
+        let _sreq: WaitGuard<_, _> = world
             .this_process()
             .immediate_synchronous_send(scope, &x)
             .into();
