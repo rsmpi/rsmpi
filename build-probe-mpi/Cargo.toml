@@ -1,7 +1,10 @@
 [package]
 name = "build-probe-mpi"
 version = "0.1.0"
-authors = ["Benedikt Steinbusch <ben@rockshrub.de>"]
+authors = [
+    "Benedikt Steinbusch <ben@rockshrub.de>",
+    "Andrew Gaspar <andrew.gaspar@outlook.com>"
+]
 description = "Probes the system for an installation of an MPI library"
 homepage = "https://github.com/bsteinb/rsmpi"
 repository = "https://github.com/bsteinb/rsmpi"
