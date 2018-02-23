@@ -124,7 +124,7 @@ use std::os::raw::c_int;
 extern crate conv;
 #[cfg(feature = "user-operations")]
 extern crate libffi;
-extern crate mpi_ffi;
+extern crate mpi_sys;
 
 /// The raw C language MPI API
 ///
@@ -134,7 +134,7 @@ extern crate mpi_ffi;
 #[allow(missing_docs, dead_code, non_snake_case, non_camel_case_types)]
 #[macro_use]
 pub mod ffi {
-    pub use mpi_ffi::*;
+    pub use mpi_sys::*;
 
     #[cfg(extern_statics_are_unsafe)]
     macro_rules! unsafe_extern_static {
