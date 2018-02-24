@@ -70,7 +70,7 @@ before_deploy:
   - cargo package -v --no-verify --manifest-path build-probe-mpi/Cargo.toml
   - cargo package -v --no-verify --manifest-path mpi-sys/Cargo.toml
   # Build docs
-  - cargo doc -v --no-deps
+  - cargo doc -v
   - echo "<meta http-equiv=refresh content=0;url=mpi/index.html>" >> target/doc/index.html
 
 deploy:
