@@ -10,7 +10,6 @@ homepage = "https://github.com/bsteinb/rsmpi"
 repository = "https://github.com/bsteinb/rsmpi"
 documentation = "http://bsteinb.github.io/rsmpi/"
 keywords = [ "message-passing", "parallel" ]
-build = "build.rs"
 categories = [ "external-ffi-bindings" ]
 license = "MIT/Apache-2.0"
 
