@@ -12,6 +12,7 @@ documentation = "http://bsteinb.github.io/rsmpi/"
 readme = "README.md"
 keywords = [ "message-passing", "parallel" ]
 build = "build.rs"
+categories = [ "concurrency" ]
 license = "MIT/Apache-2.0"
 
 [features]
