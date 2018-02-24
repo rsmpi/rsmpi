@@ -18,8 +18,6 @@ addons:
 
 env:
   global:
-    - RELEASE_LIBRARY=mpich
-    - RELEASE_LIBRARY_VERSION=3.2
     - LIBCLANG_PATH=/usr/lib/llvm-3.9/lib
     # GH_TOKEN=...
     - secure: "b/XSfdfqZZCP+hG65bqi+wPPh0z5lMRCL7X4Y0vNPt01WGqu851RHF6XGvkBa8MQWWYylDAAZTFWHDHG0uAb94Dpvo2+XpU4PtRrTUd52lN3U66bRyR1H5wRlhCBYpqnke7S3zP2XKvHfTUFNPyF6NliCVKPsntTPsb7szYevZzYzIBIjsPq5IbUqezsV6aVvjJ6wcIjMdzhsDafefNGxEkSis6XhSPXif02enyglKCN6qhPcd+RdaCP4NyUhxxyNO7w6tGooCo1V534/EPH08u0tU78htV/TNzlvobjAvxrC4lnCY7MJW1lFkJL9tzTo1LC2xaFMzLwzsYr3b+PCBg94Iz4OcA7le630SiZC0iI2lLL7xsaSp+qSFK1YTp0nPH0LXE67XesAjFHnRh/EroJK9UK58L+enBWUzsm6Q4ey2k+AaOw9IkHvDXtgjAJknmG+na3dRVbmEetxVkxm9yucAzUxw12h4ZHwYv2LPWDtu+CL7TbUItqgHIkw0AGGX5eII3uThOib+aKuG8g86G16XHQ2aXEZmkA9BdXqlLG4P5qSDN1SiO+s8W6Q2WVgVHlk4tlpSEOXXx0AbeBndQzRAFHKEyBeVq3NKYLncikHjndR1/jvzTMSVIli2ptbUJbXTZMTT5B05QWIR9Xh95gxKunc1kfNJ6YSEhVDf0="
@@ -29,19 +27,19 @@ env:
 
 matrix:
   include:
-    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1
+    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=true
       rust: stable
-    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4
+    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.0
+    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.0 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=2.1.2
+    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=2.1.2 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=2.0.4
+    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=2.0.4 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1
+    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
       rust: beta
-    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1
+    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
       rust: nightly
   allow_failures:
     - rust: nightly
@@ -81,22 +79,52 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
-  # Deploy crate to GitHub releases
+      condition: "${RELEASE_CONFIG} = true && ${TRAVIS_TAG} = mpi-?.?.?"
+  # Deploy the mpi crate to GitHub releases
   - provider: releases
     api_key: $GH_TOKEN
-    file: target/package/mpi-${TRAVIS_TAG}.crate
+    file: "target/package/${TRAVIS_TAG}.crate"
     skip_cleanup: true
     on:
       tags: true
-      condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
-  # Deploy the crate to crates.io
+      condition: "${RELEASE_CONFIG} = true && ${TRAVIS_TAG} = mpi-?.?.?"
+  # Deploy the build-probe-mpi crate to GitHub releases
+  - provider: releases
+    api_key: $GH_TOKEN
+    file: "target/package/${TRAVIS_TAG}.crate"
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: "${RELEASE_CONFIG} = true && ${TRAVIS_TAG} = build-probe-mpi-?.?.?"
+  # Deploy the mpi-sys crate to GitHub releases
+  - provider: releases
+    api_key: $GH_TOKEN
+    file: "target/package/${TRAVIS_TAG}.crate"
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: "${RELEASE_CONFIG} = true && ${TRAVIS_TAG} = mpi-sys-?.?.?"
+  # Deploy the mpi crate to crates.io
   - provider: script
-    script: ci/deploy-crate.sh
+    script: "ci/deploy-crate.sh mpi"
     skip_cleanup: true
     on:
       tags: true
-      condition: "${MPI_LIBRARY} = ${RELEASE_LIBRARY} && ${MPI_LIBRARY_VERSION} = ${RELEASE_LIBRARY_VERSION} && ${TRAVIS_RUST_VERSION} = stable"
+      condition: "${RELEASE_CONFIG} = true && ${TRAVIS_TAG} = mpi-?.?.?"
+  # Deploy the build-probe-mpi crate to crates.io
+  - provider: script
+    script: "ci/deploy-crate.sh build-probe-mpi"
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: "${RELEASE_CONFIG} = true && ${TRAVIS_TAG} = build-probe-mpi-?.?.?"
+  # Deploy the mpi-sys crate to crates.io
+  - provider: script
+    script: "ci/deploy-crate.sh mpi-sys"
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: "${RELEASE_CONFIG} = true && ${TRAVIS_TAG} = mpi-sys-?.?.?"
 
 cache:
   cargo: true
