@@ -2,6 +2,10 @@
 #define RSMPI_INCLUDED
 #include "mpi.h"
 
+// OpenMPI uses the preprocessor to define MPI_Fint - explicitly typedef it
+// here.
+typedef MPI_Fint RSMPI_Fint;
+
 extern const MPI_Datatype RSMPI_C_BOOL;
 
 extern const MPI_Datatype RSMPI_FLOAT;
@@ -68,4 +72,23 @@ extern const MPI_Op RSMPI_BXOR;
 
 double RSMPI_Wtime();
 double RSMPI_Wtick();
+
+// MPICH uses macros for c2f - explicitly define them.
+#define RSMPI_c2f_decl_base(type, ctype, argname) \
+  MPI_Fint RS ## type ## _c2f(ctype     argname); \
+  ctype     RS ## type ## _f2c(MPI_Fint argname)
+
+#define RSMPI_c2f_decl(type, argname) RSMPI_c2f_decl_base(type, type, argname)
+
+RSMPI_c2f_decl(MPI_Comm, comm);
+RSMPI_c2f_decl(MPI_Errhandler, errhandler);
+RSMPI_c2f_decl(MPI_File, file);
+RSMPI_c2f_decl(MPI_Group, group);
+RSMPI_c2f_decl(MPI_Info, info);
+RSMPI_c2f_decl(MPI_Message, message);
+RSMPI_c2f_decl(MPI_Op, op);
+RSMPI_c2f_decl(MPI_Request, request);
+RSMPI_c2f_decl_base(MPI_Type, MPI_Datatype, datatype);
+RSMPI_c2f_decl(MPI_Win, win);
+
 #endif
