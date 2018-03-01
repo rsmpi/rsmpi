@@ -12,9 +12,7 @@ fn main() {
     // Use `mpicc` wrapper rather than the system C compiler.
     env::set_var("CC", "mpicc");
     // Build the `rsmpi` C shim library.
-    gcc::Build::new()
-        .file("src/rsmpi.c")
-        .compile("librsmpi.a");
+    gcc::Build::new().file("src/rsmpi.c").compile("librsmpi.a");
 
     // Try to find an MPI library
     let lib = match build_probe_mpi::probe() {

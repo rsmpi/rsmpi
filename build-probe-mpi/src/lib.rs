@@ -40,7 +40,7 @@ pub struct Library {
     pub include_paths: Vec<PathBuf>,
     /// The version of the MPI library
     pub version: String,
-    _priv: ()
+    _priv: (),
 }
 
 impl From<pkg_config::Library> for Library {
@@ -50,7 +50,7 @@ impl From<pkg_config::Library> for Library {
             lib_paths: lib.link_paths,
             include_paths: lib.include_paths,
             version: lib.version,
-            _priv: ()
+            _priv: (),
         }
     }
 }
@@ -59,32 +59,40 @@ fn probe_via_mpicc(mpicc: &str) -> std::io::Result<Library> {
     // Capture the output of `mpicc -show`. This usually gives the actual compiler command line
     // invoked by the `mpicc` compiler wrapper.
     Command::new(mpicc).arg("-show").output().map(|cmd| {
-        let output = String::from_utf8(cmd.stdout)
-            .expect("mpicc output is not valid UTF-8");
+        let output = String::from_utf8(cmd.stdout).expect("mpicc output is not valid UTF-8");
         // Collect the libraries that an MPI C program should be linked to...
         let libs = collect_args_with_prefix(output.as_ref(), "-l");
         // ... and the library search directories...
         let libdirs = collect_args_with_prefix(output.as_ref(), "-L")
-            .into_iter().map(PathBuf::from).collect();
+            .into_iter()
+            .map(PathBuf::from)
+            .collect();
         // ... and the header search directories.
         let headerdirs = collect_args_with_prefix(output.as_ref(), "-I")
-            .into_iter().map(PathBuf::from).collect();
+            .into_iter()
+            .map(PathBuf::from)
+            .collect();
 
         Library {
             libs,
             lib_paths: libdirs,
             include_paths: headerdirs,
             version: String::from("unknown"),
-            _priv: ()
+            _priv: (),
         }
     })
 }
 
 /// splits a command line by space and collects all arguments that start with `prefix`
 fn collect_args_with_prefix(cmd: &str, prefix: &str) -> Vec<String> {
-    cmd
-        .split_whitespace()
-        .filter_map(|arg| if arg.starts_with(prefix) { Some(arg[2..].to_owned()) } else { None })
+    cmd.split_whitespace()
+        .filter_map(|arg| {
+            if arg.starts_with(prefix) {
+                Some(arg[2..].to_owned())
+            } else {
+                None
+            }
+        })
         .collect()
 }
 
