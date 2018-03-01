@@ -71,3 +71,25 @@ double RSMPI_Wtime() {
 double RSMPI_Wtick() {
   return MPI_Wtick();
 }
+
+#define RSMPI_c2f_def_base(type, ctype, argname) \
+  MPI_Fint RS ## type ## _c2f(ctype     argname) { \
+    return type ## _c2f(argname); \
+  } \
+  \
+  ctype     RS ## type ## _f2c(MPI_Fint argname) { \
+    return type ## _f2c(argname); \
+  }
+
+#define RSMPI_c2f_def(type, argname) RSMPI_c2f_def_base(type, type, argname)
+
+RSMPI_c2f_def(MPI_Comm, comm);
+RSMPI_c2f_def(MPI_Errhandler, errhandler);
+RSMPI_c2f_def(MPI_File, file);
+RSMPI_c2f_def(MPI_Group, group);
+RSMPI_c2f_def(MPI_Info, info);
+RSMPI_c2f_def(MPI_Message, message);
+RSMPI_c2f_def(MPI_Op, op);
+RSMPI_c2f_def(MPI_Request, request);
+RSMPI_c2f_def_base(MPI_Type, MPI_Datatype, datatype);
+RSMPI_c2f_def(MPI_Win, win);

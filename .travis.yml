@@ -55,7 +55,7 @@ install:
     fi
 
 script:
-  - cargo build -v && cargo test -v && sh ci/run-examples.sh
+  - cargo build -v && cargo test --all -v && sh ci/run-examples.sh
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
       cargo clippy -v;
     fi
