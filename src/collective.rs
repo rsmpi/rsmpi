@@ -9,10 +9,7 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::{mem, ptr};
-#[cfg(feature = "user-operations")]
-use std::fmt;
-#[cfg(feature = "user-operations")]
+use std::{fmt, mem, ptr};
 use std::os::raw::{c_int, c_void};
 
 #[cfg(feature = "user-operations")]
