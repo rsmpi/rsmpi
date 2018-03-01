@@ -757,9 +757,9 @@ where
         datatype: &'d D,
     ) -> View<'d, 'b, D, B> {
         View {
-            datatype: datatype,
-            count: count,
-            buffer: buffer,
+            datatype,
+            count,
+            buffer,
         }
     }
 }
@@ -834,9 +834,9 @@ where
         datatype: &'d D,
     ) -> MutView<'d, 'b, D, B> {
         MutView {
-            datatype: datatype,
-            count: count,
-            buffer: buffer,
+            datatype,
+            count,
+            buffer,
         }
     }
 }
@@ -928,9 +928,9 @@ where
         );
 
         Partition {
-            buf: buf,
-            counts: counts,
-            displs: displs,
+            buf,
+            counts,
+            displs,
         }
     }
 }
@@ -1001,9 +1001,9 @@ where
         );
 
         PartitionMut {
-            buf: buf,
-            counts: counts,
-            displs: displs,
+            buf,
+            counts,
+            displs,
         }
     }
 }

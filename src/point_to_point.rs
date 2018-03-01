@@ -326,7 +326,7 @@ pub unsafe trait Source: AsCommunicator {
                 &mut req,
             );
             ReceiveFuture {
-                val: val,
+                val,
                 req: Request::from_raw(req, StaticScope),
             }
         }

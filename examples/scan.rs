@@ -6,7 +6,7 @@ use mpi::topology::Rank;
 use mpi::collective::SystemOperation;
 
 fn fac(n: Rank) -> Rank {
-    (1..n + 1).fold(1, |x, y| x * y)
+    (1..n + 1).product()
 }
 
 fn main() {

@@ -95,8 +95,8 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
         debug_assert!(!is_null(request));
         scope.register();
         Self {
-            request: request,
-            scope: scope,
+            request,
+            scope,
             phantom: Default::default(),
         }
     }
