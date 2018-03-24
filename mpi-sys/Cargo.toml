@@ -1,6 +1,6 @@
 [package]
 name = "mpi-sys"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
     "Benedikt Steinbusch <ben@rockshrub.de>",
     "Andrew Gaspar <andrew.gaspar@outlook.com>"
