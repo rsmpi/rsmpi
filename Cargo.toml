@@ -1,6 +1,6 @@
 [package]
 name = "mpi"
-version = "0.5.2"
+version = "0.5.3"
 authors = [
     "Benedikt Steinbusch <ben@rockshrub.de>",
     "Andrew Gaspar <andrew.gaspar@outlook.com>"
