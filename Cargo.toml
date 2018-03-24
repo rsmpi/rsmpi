@@ -23,7 +23,7 @@ user-operations = ["libffi"]
 
 [dependencies]
 conv = "0.3"
-libffi = { version = "0.6", optional = true }
+libffi = { version = "0.6.3", optional = true }
 mpi-sys = { path = "mpi-sys", version = "0.1" }
 
 [build-dependencies]
