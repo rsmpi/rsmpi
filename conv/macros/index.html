@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `macros` mod in crate `conv`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, macros">
+
+    <title>conv::macros - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Module macros</p><div class="sidebar-elems"><p class='location'><a href='../index.html'>conv</a></p><script>window.sidebarCurrent = {name: 'macros', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>conv</a>::<wbr><a class="mod" href=''>macros</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/conv/macros.rs.html#1-148' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>This module provides convenience macros to help with implementing the conversion traits.</p>
+
+<h1 id='tryfrom' class='section-header'><a href='#tryfrom'><code>TryFrom!</code></a></h1>
+<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><pre class="rust rust-example-rendered ignore">
+<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">TryFrom</span> {
+    ((<span class="macro-nonterminal">$</span><span class="macro-nonterminal">target</span>:<span class="ident">ty</span>) <span class="macro-nonterminal">$</span><span class="kw">enum</span>:<span class="macro-nonterminal">item</span>) <span class="op">=&gt;</span> { ... };
+}</pre>
+
+<p>This macro attempts to derive an implementation of the <a href="../trait.TryFrom.html"><code>TryFrom</code></a> trait.  Specifically, it supports <code>enum</code>s consisting entirely of unitary variants, with or without explicit values.  The source type can be any integer type which the variants of the enumeration can be explicitly cast to (<em>i.e.</em> using <code>as</code>).</p>
+
+<p>If a conversion fails (due to there being no matching variant for the specified integer value <code>src</code>), then the conversion returns <code>Err(Unrepresentable(src))</code> (see <a href="../errors/struct.Unrepresentable.html"><code>Unrepresentable</code></a>).</p>
+
+<p>It is compatible with the <a href="https://crates.io/crates/custom_derive"><code>custom_derive!</code></a> macro.</p>
+
+<h2 id='example' class='section-header'><a href='#example'>Example</a></h2>
+<p>Using <code>custom_derive!</code>:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">conv</span>;
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">custom_derive</span>;
+
+<span class="macro">custom_derive</span><span class="macro">!</span> {
+    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">TryFrom</span>(<span class="ident">i32</span>))]</span>
+    <span class="kw">enum</span> <span class="ident">Colours</span> {
+        <span class="ident">Red</span> <span class="op">=</span> <span class="number">0</span>,
+        <span class="ident">Green</span> <span class="op">=</span> <span class="number">5</span>,
+        <span class="ident">Blue</span>
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="kw">use</span> <span class="ident">conv</span>::{<span class="ident">TryFrom</span>, <span class="ident">Unrepresentable</span>};
+
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Colours</span>::<span class="ident">try_from</span>(<span class="number">0</span>), <span class="prelude-val">Ok</span>(<span class="ident">Colours</span>::<span class="ident">Red</span>));
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Colours</span>::<span class="ident">try_from</span>(<span class="number">1</span>), <span class="prelude-val">Err</span>(<span class="ident">Unrepresentable</span>(<span class="number">1</span>)));
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Colours</span>::<span class="ident">try_from</span>(<span class="number">5</span>), <span class="prelude-val">Ok</span>(<span class="ident">Colours</span>::<span class="ident">Green</span>));
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Colours</span>::<span class="ident">try_from</span>(<span class="number">6</span>), <span class="prelude-val">Ok</span>(<span class="ident">Colours</span>::<span class="ident">Blue</span>));
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Colours</span>::<span class="ident">try_from</span>(<span class="number">7</span>), <span class="prelude-val">Err</span>(<span class="ident">Unrepresentable</span>(<span class="number">7</span>)));
+}</pre>
+
+<p>The above is equivalent to the following:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">conv</span>;
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">enum</span> <span class="ident">Colours</span> {
+    <span class="ident">Red</span> <span class="op">=</span> <span class="number">0</span>,
+    <span class="ident">Green</span> <span class="op">=</span> <span class="number">5</span>,
+    <span class="ident">Blue</span>
+}
+
+<span class="macro">TryFrom</span><span class="macro">!</span> { (<span class="ident">i32</span>) <span class="kw">enum</span> <span class="ident">Colours</span> {
+    <span class="ident">Red</span> <span class="op">=</span> <span class="number">0</span>,
+    <span class="ident">Green</span> <span class="op">=</span> <span class="number">5</span>,
+    <span class="ident">Blue</span>
+} }</pre>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "conv";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

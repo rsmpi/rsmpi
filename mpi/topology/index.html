@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `topology` mod in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, topology">
+
+    <title>mpi::topology - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Module topology</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'><a href='../index.html'>mpi</a></p><script>window.sidebarCurrent = {name: 'topology', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>mpi</a>::<wbr><a class="mod" href=''>topology</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/topology.rs.html#1-750' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Organizing processes as groups and communicators</p>
+
+<p>Processes are organized in communicators. All parallel processes initially partaking in
+the computation are organized in a context called the &#39;world communicator&#39; which is available
+as a property of the <code>Universe</code>. From the world communicator, other communicators can be
+created. Processes can be addressed via their <code>Rank</code> within a specific communicator. This
+information is encapsulated in a <code>Process</code>.</p>
+
+<h1 id='unfinished-features' class='section-header'><a href='#unfinished-features'>Unfinished features</a></h1>
+<ul>
+<li><strong>6.3</strong>: Group management
+
+<ul>
+<li><strong>6.3.2</strong>: Constructors, <code>MPI_Group_range_incl()</code>, <code>MPI_Group_range_excl()</code></li>
+</ul></li>
+<li><strong>6.4</strong>: Communicator management
+
+<ul>
+<li><strong>6.4.2</strong>: Constructors, <code>MPI_Comm_dup_with_info()</code>, <code>MPI_Comm_idup()</code>,
+<code>MPI_Comm_split_type()</code></li>
+<li><strong>6.4.4</strong>: Info, <code>MPI_Comm_set_info()</code>, <code>MPI_Comm_get_info()</code></li>
+</ul></li>
+<li><strong>6.6</strong>: Inter-communication</li>
+<li><strong>6.7</strong>: Caching</li>
+<li><strong>6.8</strong>: Naming objects</li>
+<li><strong>7</strong>: Process topologies</li>
+<li><strong>Parts of sections</strong>: 8, 10, 12</li>
+</ul>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="traits/index.html"
+                                  title='mod mpi::topology::traits'>traits</a></td>
+                           <td class='docblock-short'>
+                                <p>Topology traits</p>
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.AnyProcess.html"
+                                  title='struct mpi::topology::AnyProcess'>AnyProcess</a></td>
+                           <td class='docblock-short'>
+                                <p>Identifies an arbitrary process that is a member of a certain communicator, e.g. for use as a
+<code>Source</code> in point to point communication.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Color.html"
+                                  title='struct mpi::topology::Color'>Color</a></td>
+                           <td class='docblock-short'>
+                                <p>A color used in a communicator split</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Process.html"
+                                  title='struct mpi::topology::Process'>Process</a></td>
+                           <td class='docblock-short'>
+                                <p>Identifies a process by its <code>Rank</code> within a certain communicator.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.SystemCommunicator.html"
+                                  title='struct mpi::topology::SystemCommunicator'>SystemCommunicator</a></td>
+                           <td class='docblock-short'>
+                                <p>A built-in communicator, e.g. <code>MPI_COMM_WORLD</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.SystemGroup.html"
+                                  title='struct mpi::topology::SystemGroup'>SystemGroup</a></td>
+                           <td class='docblock-short'>
+                                <p>A built-in group, e.g. <code>MPI_GROUP_EMPTY</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.UserCommunicator.html"
+                                  title='struct mpi::topology::UserCommunicator'>UserCommunicator</a></td>
+                           <td class='docblock-short'>
+                                <p>A user-defined communicator</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.UserGroup.html"
+                                  title='struct mpi::topology::UserGroup'>UserGroup</a></td>
+                           <td class='docblock-short'>
+                                <p>A user-defined group of processes</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.CommunicatorRelation.html"
+                                  title='enum mpi::topology::CommunicatorRelation'>CommunicatorRelation</a></td>
+                           <td class='docblock-short'>
+                                <p>The relation between two communicators.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.GroupRelation.html"
+                                  title='enum mpi::topology::GroupRelation'>GroupRelation</a></td>
+                           <td class='docblock-short'>
+                                <p>The relation between two groups.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.AsCommunicator.html"
+                                  title='trait mpi::topology::AsCommunicator'>AsCommunicator</a></td>
+                           <td class='docblock-short'>
+                                <p>Something that has a communicator associated with it</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.Communicator.html"
+                                  title='trait mpi::topology::Communicator'>Communicator</a></td>
+                           <td class='docblock-short'>
+                                <p>Communicators are contexts for communication</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.Group.html"
+                                  title='trait mpi::topology::Group'>Group</a></td>
+                           <td class='docblock-short'>
+                                <p>Groups are collections of parallel processes</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Key.html"
+                                  title='type mpi::topology::Key'>Key</a></td>
+                           <td class='docblock-short'>
+                                <p>A key used when determining the rank order of processes after a communicator split.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Rank.html"
+                                  title='type mpi::topology::Rank'>Rank</a></td>
+                           <td class='docblock-short'>
+                                <p>Identifies a certain process within a communicator.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

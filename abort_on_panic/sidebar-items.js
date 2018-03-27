@@ -1,0 +1,1 @@
+initSidebarItems({"macro":[["abort_on_panic","Run a block of code, aborting the entire process if it tries to panic."]],"struct":[["PanicGuard","Once this object is created, it can only be destroyed in an orderly fashion.  Attempting to clean it up from a panic handler will abort the process."]]});

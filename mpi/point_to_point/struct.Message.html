@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Message` struct in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Message">
+
+    <title>mpi::point_to_point::Message - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Struct Message</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.is_no_proc">is_no_proc</a><a href="#method.matched_receive">matched_receive</a><a href="#method.matched_receive_into">matched_receive_into</a><a href="#method.immediate_matched_receive_into">immediate_matched_receive_into</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-AsRaw">AsRaw</a><a href="#impl-AsRawMut">AsRawMut</a><a href="#impl-Drop">Drop</a></div></div><p class='location'><a href='../index.html'>mpi</a>::<wbr><a href='index.html'>point_to_point</a></p><script>window.sidebarCurrent = {name: 'Message', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>mpi</a>::<wbr><a href='index.html'>point_to_point</a>::<wbr><a class="struct" href=''>Message</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/point_to_point.rs.html#899' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'><div class="docblock attributes">#[must_use]
+</div>pub struct Message(_);</pre><div class='docblock'><p>Describes a pending incoming message, probed by a <code>matched_probe()</code>.</p>
+
+<h1 id='standard-sections' class='section-header'><a href='#standard-sections'>Standard section(s)</a></h1>
+<p>3.8.2</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#901-980' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.is_no_proc' class="method"><span id='is_no_proc.v' class='invisible'><code>pub fn <a href='#method.is_no_proc' class='fnname'>is_no_proc</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#903-905' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>True if the <code>Source</code> for the probe was the null process.</p>
+</div><h4 id='method.matched_receive' class="method"><span id='matched_receive.v' class='invisible'><code>pub fn <a href='#method.matched_receive' class='fnname'>matched_receive</a>&lt;Msg&gt;(self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a>Msg, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#914-924' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Receive a previously probed message containing a single instance of type <code>Msg</code>.</p>
+
+<p>Receives the message <code>&amp;self</code> which contains a single instance of type <code>Msg</code>.</p>
+
+<h1 id='standard-sections-1' class='section-header'><a href='#standard-sections-1'>Standard section(s)</a></h1>
+<p>3.8.3</p>
+</div><h4 id='method.matched_receive_into' class="method"><span id='matched_receive_into.v' class='invisible'><code>pub fn <a href='#method.matched_receive_into' class='fnname'>matched_receive_into</a>&lt;Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(self, buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>Buf) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Buf: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#933-949' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Receive a previously probed message into a <code>Buffer</code>.</p>
+
+<p>Receive the message <code>&amp;self</code> with contents matching <code>buf</code>.</p>
+
+<h1 id='standard-sections-2' class='section-header'><a href='#standard-sections-2'>Standard section(s)</a></h1>
+<p>3.8.3</p>
+</div><h4 id='method.immediate_matched_receive_into' class="method"><span id='immediate_matched_receive_into.v' class='invisible'><code>pub fn <a href='#method.immediate_matched_receive_into' class='fnname'>immediate_matched_receive_into</a>&lt;'a, Sc, Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + 'a&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>Buf<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Buf: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#958-979' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Asynchronously receive a previously probed message into a <code>Buffer</code>.</p>
+
+<p>Asynchronously receive the message <code>&amp;self</code> with contents matching <code>buf</code>.</p>
+
+<h1 id='standard-sections-3' class='section-header'><a href='#standard-sections-3'>Standard section(s)</a></h1>
+<p>3.8.3</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-AsRaw' class='impl'><span class='in-band'><code>impl <a class="trait" href="../../mpi/raw/trait.AsRaw.html" title="trait mpi::raw::AsRaw">AsRaw</a> for <a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a></code><a href='#impl-AsRaw' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#982-987' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Raw' class="type"><span id='Raw.t' class='invisible'><code>type <a href='../../mpi/raw/trait.AsRaw.html#associatedtype.Raw' class="type">Raw</a> = <a class="type" href="../../mpi_sys/type.MPI_Message.html" title="type mpi_sys::MPI_Message">MPI_Message</a></code></span></h4>
+<div class='docblock'><p>The raw MPI C API type</p>
+</div><h4 id='method.as_raw' class="method"><span id='as_raw.v' class='invisible'><code>fn <a href='../../mpi/raw/trait.AsRaw.html#tymethod.as_raw' class='fnname'>as_raw</a>(&amp;self) -&gt; Self::<a class="type" href="../../mpi/raw/trait.AsRaw.html#associatedtype.Raw" title="type mpi::raw::AsRaw::Raw">Raw</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#984-986' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>The raw value</p>
+</div></div><h3 id='impl-AsRawMut' class='impl'><span class='in-band'><code>impl <a class="trait" href="../../mpi/raw/trait.AsRawMut.html" title="trait mpi::raw::AsRawMut">AsRawMut</a> for <a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a></code><a href='#impl-AsRawMut' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#989-993' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.as_raw_mut' class="method"><span id='as_raw_mut.v' class='invisible'><code>fn <a href='../../mpi/raw/trait.AsRawMut.html#tymethod.as_raw_mut' class='fnname'>as_raw_mut</a>(&amp;mut self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a>Self::<a class="type" href="../../mpi/raw/trait.AsRaw.html#associatedtype.Raw" title="type mpi::raw::AsRaw::Raw">Raw</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#990-992' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>A mutable pointer to the raw value</p>
+</div></div><h3 id='impl-Drop' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a></code><a href='#impl-Drop' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#995-1003' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/point_to_point.rs.html#996-1002' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Executes the destructor for this type. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

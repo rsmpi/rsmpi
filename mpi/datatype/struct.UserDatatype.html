@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `UserDatatype` struct in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, UserDatatype">
+
+    <title>mpi::datatype::UserDatatype - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Struct UserDatatype</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.contiguous">contiguous</a><a href="#method.vector">vector</a><a href="#method.heterogeneous_vector">heterogeneous_vector</a><a href="#method.indexed">indexed</a><a href="#method.heterogeneous_indexed">heterogeneous_indexed</a><a href="#method.indexed_block">indexed_block</a><a href="#method.heterogeneous_indexed_block">heterogeneous_indexed_block</a><a href="#method.structured">structured</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-Drop">Drop</a><a href="#impl-AsRaw">AsRaw</a><a href="#impl-Datatype">Datatype</a></div></div><p class='location'><a href='../index.html'>mpi</a>::<wbr><a href='index.html'>datatype</a></p><script>window.sidebarCurrent = {name: 'UserDatatype', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>mpi</a>::<wbr><a href='index.html'>datatype</a>::<wbr><a class="struct" href=''>UserDatatype</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/datatype.rs.html#152' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct UserDatatype(_);</pre><div class='docblock'><p>A user defined MPI datatype</p>
+
+<h1 id='standard-sections' class='section-header'><a href='#standard-sections'>Standard section(s)</a></h1>
+<p>4</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#154-357' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.contiguous' class="method"><span id='contiguous.v' class='invisible'><code>pub fn <a href='#method.contiguous' class='fnname'>contiguous</a>&lt;D&gt;(count: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, oldtype: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>D) -&gt; <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;D: <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#163-173' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a new datatype by concatenating <code>count</code> repetitions of <code>oldtype</code></p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>See <code>examples/contiguous.rs</code></p>
+
+<h1 id='standard-sections-1' class='section-header'><a href='#standard-sections-1'>Standard section(s)</a></h1>
+<p>4.1.2</p>
+</div><h4 id='method.vector' class="method"><span id='vector.v' class='invisible'><code>pub fn <a href='#method.vector' class='fnname'>vector</a>&lt;D&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;count: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;blocklength: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;stride: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;oldtype: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>D<br>) -&gt; <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;D: <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#184-194' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Construct a new datatype out of <code>count</code> blocks of <code>blocklength</code> elements of <code>oldtype</code>
+concatenated with the start of consecutive blocks placed <code>stride</code> elements apart.</p>
+
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<p>See <code>examples/vector.rs</code></p>
+
+<h1 id='standard-sections-2' class='section-header'><a href='#standard-sections-2'>Standard section(s)</a></h1>
+<p>4.1.2</p>
+</div><h4 id='method.heterogeneous_vector' class="method"><span id='heterogeneous_vector.v' class='invisible'><code>pub fn <a href='#method.heterogeneous_vector' class='fnname'>heterogeneous_vector</a>&lt;D&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;count: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;blocklength: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;stride: <a class="type" href="../../mpi/type.Address.html" title="type mpi::Address">Address</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;oldtype: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>D<br>) -&gt; <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;D: <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#201-216' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Like <code>vector()</code> but <code>stride</code> is given in bytes rather than elements of <code>oldtype</code>.</p>
+
+<h1 id='standard-sections-3' class='section-header'><a href='#standard-sections-3'>Standard section(s)</a></h1>
+<p>4.1.2</p>
+</div><h4 id='method.indexed' class="method"><span id='indexed.v' class='invisible'><code>pub fn <a href='#method.indexed' class='fnname'>indexed</a>&lt;D&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;blocklengths: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;displacements: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;oldtype: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>D<br>) -&gt; <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;D: <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#225-242' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a new type out of multiple blocks of individual length and displacement.
+Block <code>i</code> will be <code>blocklengths[i]</code> items of datytpe <code>oldtype</code> long and displaced by
+<code>dispplacements[i]</code> items of the <code>oldtype</code>.</p>
+
+<h1 id='standard-sections-4' class='section-header'><a href='#standard-sections-4'>Standard section(s)</a></h1>
+<p>4.1.2</p>
+</div><h4 id='method.heterogeneous_indexed' class="method"><span id='heterogeneous_indexed.v' class='invisible'><code>pub fn <a href='#method.heterogeneous_indexed' class='fnname'>heterogeneous_indexed</a>&lt;D&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;blocklengths: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;displacements: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/type.Address.html" title="type mpi::Address">Address</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;oldtype: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>D<br>) -&gt; <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;D: <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#251-272' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a new type out of multiple blocks of individual length and displacement.
+Block <code>i</code> will be <code>blocklengths[i]</code> items of datytpe <code>oldtype</code> long and displaced by
+<code>dispplacements[i]</code> bytes.</p>
+
+<h1 id='standard-sections-5' class='section-header'><a href='#standard-sections-5'>Standard section(s)</a></h1>
+<p>4.1.2</p>
+</div><h4 id='method.indexed_block' class="method"><span id='indexed_block.v' class='invisible'><code>pub fn <a href='#method.indexed_block' class='fnname'>indexed_block</a>&lt;D&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;blocklength: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;displacements: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;oldtype: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>D<br>) -&gt; <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;D: <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#279-299' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Construct a new type out of blocks of the same length and individual displacements.</p>
+
+<h1 id='standard-sections-6' class='section-header'><a href='#standard-sections-6'>Standard section(s)</a></h1>
+<p>4.1.2</p>
+</div><h4 id='method.heterogeneous_indexed_block' class="method"><span id='heterogeneous_indexed_block.v' class='invisible'><code>pub fn <a href='#method.heterogeneous_indexed_block' class='fnname'>heterogeneous_indexed_block</a>&lt;D&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;blocklength: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;displacements: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/type.Address.html" title="type mpi::Address">Address</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;oldtype: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>D<br>) -&gt; <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;D: <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#307-327' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Construct a new type out of blocks of the same length and individual displacements.
+Displacements are in bytes.</p>
+
+<h1 id='standard-sections-7' class='section-header'><a href='#standard-sections-7'>Standard section(s)</a></h1>
+<p>4.1.2</p>
+</div><h4 id='method.structured' class="method"><span id='structured.v' class='invisible'><code>pub fn <a href='#method.structured' class='fnname'>structured</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;count: <a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;blocklengths: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/type.Count.html" title="type mpi::Count">Count</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;displacements: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/type.Address.html" title="type mpi::Address">Address</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;types: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a>&amp;<a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>&lt;Raw = <a class="type" href="../../mpi_sys/type.MPI_Datatype.html" title="type mpi_sys::MPI_Datatype">MPI_Datatype</a>&gt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a><br>) -&gt; <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#337-356' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a new datatype out of blocks of different length, displacement and datatypes</p>
+
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<p>See <code>examples/structured.rs</code></p>
+
+<h1 id='standard-sections-8' class='section-header'><a href='#standard-sections-8'>Standard section(s)</a></h1>
+<p>4.1.2</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Drop' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a></code><a href='#impl-Drop' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#359-366' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#360-365' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Executes the destructor for this type. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div><h3 id='impl-AsRaw' class='impl'><span class='in-band'><code>impl <a class="trait" href="../../mpi/raw/trait.AsRaw.html" title="trait mpi::raw::AsRaw">AsRaw</a> for <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a></code><a href='#impl-AsRaw' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#368-373' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Raw' class="type"><span id='Raw.t' class='invisible'><code>type <a href='../../mpi/raw/trait.AsRaw.html#associatedtype.Raw' class="type">Raw</a> = <a class="type" href="../../mpi_sys/type.MPI_Datatype.html" title="type mpi_sys::MPI_Datatype">MPI_Datatype</a></code></span></h4>
+<div class='docblock'><p>The raw MPI C API type</p>
+</div><h4 id='method.as_raw' class="method"><span id='as_raw.v' class='invisible'><code>fn <a href='../../mpi/raw/trait.AsRaw.html#tymethod.as_raw' class='fnname'>as_raw</a>(&amp;self) -&gt; Self::<a class="type" href="../../mpi/raw/trait.AsRaw.html#associatedtype.Raw" title="type mpi::raw::AsRaw::Raw">Raw</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#370-372' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>The raw value</p>
+</div></div><h3 id='impl-Datatype' class='impl'><span class='in-band'><code>impl <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a> for <a class="struct" href="../../mpi/datatype/struct.UserDatatype.html" title="struct mpi::datatype::UserDatatype">UserDatatype</a></code><a href='#impl-Datatype' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#375' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

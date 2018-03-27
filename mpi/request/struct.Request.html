@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Request` struct in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Request">
+
+    <title>mpi::request::Request - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Struct Request</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.from_raw">from_raw</a><a href="#method.into_raw">into_raw</a><a href="#method.wait">wait</a><a href="#method.wait_without_status">wait_without_status</a><a href="#method.test">test</a><a href="#method.cancel">cancel</a><a href="#method.shrink_scope_to">shrink_scope_to</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-Debug">Debug</a><a href="#impl-AsRaw">AsRaw</a><a href="#impl-Drop">Drop</a><a href="#impl-From%3CWaitGuard%3C%27a%2C%20S%3E%3E">From&lt;WaitGuard&lt;&#39;a, S&gt;&gt;</a><a href="#impl-From%3CRequest%3C%27a%2C%20S%3E%3E">From&lt;Request&lt;&#39;a, S&gt;&gt;</a></div></div><p class='location'><a href='../index.html'>mpi</a>::<wbr><a href='index.html'>request</a></p><script>window.sidebarCurrent = {name: 'Request', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>mpi</a>::<wbr><a href='index.html'>request</a>::<wbr><a class="struct" href=''>Request</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/request.rs.html#65-69' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'><div class="docblock attributes">#[must_use]
+</div>pub struct Request&lt;'a, S:&nbsp;<a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;&gt; { /* fields omitted */ }</pre><div class='docblock'><p>A request object for a non-blocking operation registered with a <code>Scope</code> of lifetime <code>&#39;a</code></p>
+
+<p>The <code>Scope</code> is needed to ensure that all buffers associated request will outlive the request
+itself, even if the destructor of the request fails to run.</p>
+
+<h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
+<p>Panics if the request object is dropped.  To prevent this, call <code>wait</code>, <code>wait_without_status</code>,
+or <code>test</code>.  Alternatively, wrap the request inside a <code>WaitGuard</code> or <code>CancelGuard</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>See <code>examples/immediate.rs</code></p>
+
+<h1 id='standard-sections' class='section-header'><a href='#standard-sections'>Standard section(s)</a></h1>
+<p>3.7.1</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl&lt;'a, S:&nbsp;<a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;</code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#84-220' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from_raw' class="method"><span id='from_raw.v' class='invisible'><code>pub unsafe fn <a href='#method.from_raw' class='fnname'>from_raw</a>(request: <a class="type" href="../../mpi_sys/type.MPI_Request.html" title="type mpi_sys::MPI_Request">MPI_Request</a>, scope: S) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#94-102' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Construct a request object from the raw MPI type.</p>
+
+<h1 id='requirements' class='section-header'><a href='#requirements'>Requirements</a></h1>
+<ul>
+<li>The request is a valid, active request.  It must not be <code>MPI_REQUEST_NULL</code>.</li>
+<li>The request must not be persistent.</li>
+<li>All buffers associated with the request must outlive <code>&#39;a</code>.</li>
+<li>The request must not be registered with the given scope.</li>
+</ul>
+</div><h4 id='method.into_raw' class="method"><span id='into_raw.v' class='invisible'><code>pub unsafe fn <a href='#method.into_raw' class='fnname'>into_raw</a>(self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="type" href="../../mpi_sys/type.MPI_Request.html" title="type mpi_sys::MPI_Request">MPI_Request</a>, S<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#107-114' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Unregister the request object from its scope and deconstruct it into its raw parts.</p>
+
+<p>This is unsafe because the request may outlive its associated buffers.</p>
+</div><h4 id='method.wait' class="method"><span id='wait.v' class='invisible'><code>pub fn <a href='#method.wait' class='fnname'>wait</a>(self) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#142-146' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Wait for an operation to finish.</p>
+
+<p>Will block execution of the calling thread until the associated operation has finished.</p>
+
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<p>See <code>examples/immediate.rs</code></p>
+
+<h1 id='standard-sections-1' class='section-header'><a href='#standard-sections-1'>Standard section(s)</a></h1>
+<p>3.7.3</p>
+</div><h4 id='method.wait_without_status' class="method"><span id='wait_without_status.v' class='invisible'><code>pub fn <a href='#method.wait_without_status' class='fnname'>wait_without_status</a>(self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#155-157' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Wait for an operation to finish, but don’t bother retrieving the <code>Status</code> information.</p>
+
+<p>Will block execution of the calling thread until the associated operation has finished.</p>
+
+<h1 id='standard-sections-2' class='section-header'><a href='#standard-sections-2'>Standard section(s)</a></h1>
+<p>3.7.3</p>
+</div><h4 id='method.test' class="method"><span id='test.v' class='invisible'><code>pub fn <a href='#method.test' class='fnname'>test</a>(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a>, Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#171-185' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Test whether an operation has finished.</p>
+
+<p>If the operation has finished, <code>Status</code> is returned.  Otherwise returns the unfinished
+<code>Request</code>.</p>
+
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<p>See <code>examples/immediate.rs</code></p>
+
+<h1 id='standard-sections-3' class='section-header'><a href='#standard-sections-3'>Standard section(s)</a></h1>
+<p>3.7.3</p>
+</div><h4 id='method.cancel' class="method"><span id='cancel.v' class='invisible'><code>pub fn <a href='#method.cancel' class='fnname'>cancel</a>(&amp;self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#202-207' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Initiate cancellation of the request.</p>
+
+<p>The MPI implementation is not guaranteed to fulfill this operation.  It may not even be
+valid for certain types of requests.  In the future, the MPI forum may <a href="https://github.com/mpi-forum/mpi-issues/issues/26">deprecate
+cancellation of sends</a> entirely.</p>
+
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<p>See <code>examples/immediate.rs</code></p>
+
+<h1 id='standard-sections-4' class='section-header'><a href='#standard-sections-4'>Standard section(s)</a></h1>
+<p>3.8.4</p>
+</div><h4 id='method.shrink_scope_to' class="method"><span id='shrink_scope_to.v' class='invisible'><code>pub fn <a href='#method.shrink_scope_to' class='fnname'>shrink_scope_to</a>&lt;'b, S2&gt;(self, scope: S2) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'b, S2&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;'a: 'b,<br>&nbsp;&nbsp;&nbsp;&nbsp;S2: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'b&gt;,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#210-219' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Reduce the scope of a request.</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Debug' class='impl'><span class='in-band'><code>impl&lt;'a, S:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> + <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;</code><a href='#impl-Debug' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#64' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#64' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt">Read more</a></p>
+</div></div><h3 id='impl-AsRaw' class='impl'><span class='in-band'><code>impl&lt;'a, S:&nbsp;<a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;&gt; <a class="trait" href="../../mpi/raw/trait.AsRaw.html" title="trait mpi::raw::AsRaw">AsRaw</a> for <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;</code><a href='#impl-AsRaw' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#71-76' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Raw' class="type"><span id='Raw.t' class='invisible'><code>type <a href='../../mpi/raw/trait.AsRaw.html#associatedtype.Raw' class="type">Raw</a> = <a class="type" href="../../mpi_sys/type.MPI_Request.html" title="type mpi_sys::MPI_Request">MPI_Request</a></code></span></h4>
+<div class='docblock'><p>The raw MPI C API type</p>
+</div><h4 id='method.as_raw' class="method"><span id='as_raw.v' class='invisible'><code>fn <a href='../../mpi/raw/trait.AsRaw.html#tymethod.as_raw' class='fnname'>as_raw</a>(&amp;self) -&gt; Self::<a class="type" href="../../mpi/raw/trait.AsRaw.html#associatedtype.Raw" title="type mpi::raw::AsRaw::Raw">Raw</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#73-75' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>The raw value</p>
+</div></div><h3 id='impl-Drop' class='impl'><span class='in-band'><code>impl&lt;'a, S:&nbsp;<a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;</code><a href='#impl-Drop' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#78-82' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#79-81' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Executes the destructor for this type. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div><h3 id='impl-From%3CWaitGuard%3C%27a%2C%20S%3E%3E' class='impl'><span class='in-band'><code>impl&lt;'a, S:&nbsp;<a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;<a class="struct" href="../../mpi/request/struct.WaitGuard.html" title="struct mpi::request::WaitGuard">WaitGuard</a>&lt;'a, S&gt;&gt; for <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;</code><a href='#impl-From%3CWaitGuard%3C%27a%2C%20S%3E%3E' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#245-249' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from' class="method"><span id='from.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(guard: <a class="struct" href="../../mpi/request/struct.WaitGuard.html" title="struct mpi::request::WaitGuard">WaitGuard</a>&lt;'a, S&gt;) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#246-248' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs the conversion.</p>
+</div></div><h3 id='impl-From%3CRequest%3C%27a%2C%20S%3E%3E' class='impl'><span class='in-band'><code>impl&lt;'a, S:&nbsp;<a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;<a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;&gt; for <a class="struct" href="../../mpi/request/struct.WaitGuard.html" title="struct mpi::request::WaitGuard">WaitGuard</a>&lt;'a, S&gt;</code><a href='#impl-From%3CRequest%3C%27a%2C%20S%3E%3E' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#251-255' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from-1' class="method"><span id='from.v-1' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(req: <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#252-254' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs the conversion.</p>
+</div></div><h3 id='impl-From%3CRequest%3C%27a%2C%20S%3E%3E-1' class='impl'><span class='in-band'><code>impl&lt;'a, S:&nbsp;<a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;<a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;&gt; for <a class="struct" href="../../mpi/request/struct.CancelGuard.html" title="struct mpi::request::CancelGuard">CancelGuard</a>&lt;'a, S&gt;</code><a href='#impl-From%3CRequest%3C%27a%2C%20S%3E%3E-1' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#298-302' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from-2' class="method"><span id='from.v-2' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(req: <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, S&gt;) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/request.rs.html#299-301' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs the conversion.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

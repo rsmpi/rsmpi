@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ConvUtil` trait in crate `conv`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ConvUtil">
+
+    <title>conv::ConvUtil - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc trait">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Trait ConvUtil</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#provided-methods">Provided Methods</a><div class="sidebar-links"><a href="#method.approx_as">approx_as</a><a href="#method.approx_as_by">approx_as_by</a><a href="#method.into_as">into_as</a><a href="#method.try_as">try_as</a><a href="#method.value_as">value_as</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='index.html'>conv</a></p><script>window.sidebarCurrent = {name: 'ConvUtil', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>conv</a>::<wbr><a class="trait" href=''>ConvUtil</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/conv/lib.rs.html#460-493' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait ConvUtil {
+    fn <a href='#method.approx_as' class='fnname'>approx_as</a>&lt;Dst&gt;(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.ApproxInto.html#associatedtype.Err" title="type conv::ApproxInto::Err">Err</a>&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="../conv/trait.ApproxInto.html" title="trait conv::ApproxInto">ApproxInto</a>&lt;Dst&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.approx_as_by' class='fnname'>approx_as_by</a>&lt;Dst, Scheme&gt;(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.ApproxInto.html#associatedtype.Err" title="type conv::ApproxInto::Err">Err</a>&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="../conv/trait.ApproxInto.html" title="trait conv::ApproxInto">ApproxInto</a>&lt;Dst, Scheme&gt;,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scheme: <a class="trait" href="../conv/trait.ApproxScheme.html" title="trait conv::ApproxScheme">ApproxScheme</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.into_as' class='fnname'>into_as</a>&lt;Dst&gt;(self) -&gt; Dst<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;Dst&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.try_as' class='fnname'>try_as</a>&lt;Dst&gt;(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.TryInto.html#associatedtype.Err" title="type conv::TryInto::Err">Err</a>&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="../conv/trait.TryInto.html" title="trait conv::TryInto">TryInto</a>&lt;Dst&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.value_as' class='fnname'>value_as</a>&lt;Dst&gt;(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.ValueInto.html#associatedtype.Err" title="type conv::ValueInto::Err">Err</a>&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="../conv/trait.ValueInto.html" title="trait conv::ValueInto">ValueInto</a>&lt;Dst&gt;</span>,
+    { ... }
+}</pre><div class='docblock'><p>This extension trait exists to simplify using various conversions.</p>
+
+<p>If there is more than one implementation for a given type/trait pair, a simple call to <code>*_into</code> may not be uniquely resolvable.  Due to the position of the type parameter (on the trait itself), it is cumbersome to specify the destination type.  A similar problem exists for approximation schemes.</p>
+
+<p>See also the <a href="./trait.ConvAsUtil.html"><code>ConvAsUtil</code></a> trait.</p>
+
+<blockquote>
+<p><strong>Note</strong>: There appears to be a bug in <code>rustdoc</code>&#39;s output.  This trait is implemented <em>for all</em> types, though the methods are only available for types where the appropriate conversions are defined.</p>
+</blockquote>
+</div>
+            <h2 id='provided-methods' class='small-section-header'>
+              Provided Methods<a href='#provided-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='method.approx_as' class='method'><span id='approx_as.v' class='invisible'><code>fn <a href='#method.approx_as' class='fnname'>approx_as</a>&lt;Dst&gt;(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.ApproxInto.html#associatedtype.Err" title="type conv::ApproxInto::Err">Err</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="../conv/trait.ApproxInto.html" title="trait conv::ApproxInto">ApproxInto</a>&lt;Dst&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Approximate the subject to a given type with the default scheme.</p>
+</div><h3 id='method.approx_as_by' class='method'><span id='approx_as_by.v' class='invisible'><code>fn <a href='#method.approx_as_by' class='fnname'>approx_as_by</a>&lt;Dst, Scheme&gt;(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.ApproxInto.html#associatedtype.Err" title="type conv::ApproxInto::Err">Err</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="../conv/trait.ApproxInto.html" title="trait conv::ApproxInto">ApproxInto</a>&lt;Dst, Scheme&gt;,<br>&nbsp;&nbsp;&nbsp;&nbsp;Scheme: <a class="trait" href="../conv/trait.ApproxScheme.html" title="trait conv::ApproxScheme">ApproxScheme</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Approximate the subject to a given type with a specific scheme.</p>
+</div><h3 id='method.into_as' class='method'><span id='into_as.v' class='invisible'><code>fn <a href='#method.into_as' class='fnname'>into_as</a>&lt;Dst&gt;(self) -&gt; Dst <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;Dst&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Convert the subject to a given type.</p>
+</div><h3 id='method.try_as' class='method'><span id='try_as.v' class='invisible'><code>fn <a href='#method.try_as' class='fnname'>try_as</a>&lt;Dst&gt;(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.TryInto.html#associatedtype.Err" title="type conv::TryInto::Err">Err</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="../conv/trait.TryInto.html" title="trait conv::TryInto">TryInto</a>&lt;Dst&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Attempt to convert the subject to a given type.</p>
+</div><h3 id='method.value_as' class='method'><span id='value_as.v' class='invisible'><code>fn <a href='#method.value_as' class='fnname'>value_as</a>&lt;Dst&gt;(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.ValueInto.html#associatedtype.Err" title="type conv::ValueInto::Err">Err</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="../conv/trait.ValueInto.html" title="trait conv::ValueInto">ValueInto</a>&lt;Dst&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Attempt a value conversion of the subject to a given type.</p>
+</div></div>
+        <h2 id='implementors' class='small-section-header'>
+          Implementors<a href='#implementors' class='anchor'></a>
+        </h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl&lt;T&gt; ConvUtil for T</code></li>
+</ul><script type="text/javascript" async
+                         src="../implementors/conv/trait.ConvUtil.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "conv";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

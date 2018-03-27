@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Builder` struct in crate `libffi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Builder">
+
+    <title>libffi::middle::Builder - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Struct Builder</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.new">new</a><a href="#method.arg">arg</a><a href="#method.args">args</a><a href="#method.res">res</a><a href="#method.abi">abi</a><a href="#method.into_cif">into_cif</a><a href="#method.into_closure">into_closure</a><a href="#method.into_closure_mut">into_closure_mut</a><a href="#method.into_closure_once">into_closure_once</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-Clone">Clone</a><a href="#impl-Debug">Debug</a><a href="#impl-Default">Default</a></div></div><p class='location'><a href='../index.html'>libffi</a>::<wbr><a href='index.html'>middle</a></p><script>window.sidebarCurrent = {name: 'Builder', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>libffi</a>::<wbr><a href='index.html'>middle</a>::<wbr><a class="struct" href=''>Builder</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/libffi/middle/builder.rs.html#60-64' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Builder { /* fields omitted */ }</pre><div class='docblock'><p>Provides a builder-style API for constructing CIFs and closures.</p>
+
+<p>To use a builder, first construct it using <a href="#method.new"><code>Builder::new</code></a>.
+The default calling convention is <code>ffi_abi_FFI_DEFAULT_ABI</code>, and the default
+function type is <code>extern &quot;C&quot; fn()</code> (or in C, <code>void(*)()</code>). Add
+argument types to the function type with the <a href="#method.arg"><code>arg</code></a>
+and <a href="#method.args"><code>args</code></a> methods. Set the result type with
+<a href="#method.res"><code>res</code></a>. Change the calling convention, if necessary,
+with <a href="#method.abi"><code>abi</code></a>.</p>
+
+<p>Once the builder is configured, construct a <code>Cif</code> with
+<a href="#method.into_cif"><code>into_cif</code></a> or a closure with
+<a href="#method.into_closure"><code>into_closure</code></a>,
+<a href="#method.into_closure_mut"><code>into_closure_mut</code></a>, or
+<a href="#method.into_closure_once"><code>into_closure_once</code></a>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">os</span>::<span class="ident">raw</span>::<span class="ident">c_void</span>;
+
+<span class="kw">use</span> <span class="ident">libffi</span>::<span class="ident">middle</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">libffi</span>::<span class="ident">low</span>;
+
+<span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">lambda_callback</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">u64</span>, <span class="ident">u64</span>) <span class="op">-&gt;</span> <span class="ident">u64</span><span class="op">&gt;</span>(
+    <span class="ident">_cif</span>: <span class="kw-2">&amp;</span><span class="ident">low</span>::<span class="ident">ffi_cif</span>,
+    <span class="ident">result</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">u64</span>,
+    <span class="ident">args</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_void</span>,
+    <span class="ident">userdata</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
+{
+    <span class="kw">let</span> <span class="ident">args</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="kw-2">&amp;</span><span class="ident">u64</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">transmute</span>(<span class="ident">args</span>);
+    <span class="kw">let</span> <span class="ident">arg1</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">args</span>.<span class="ident">offset</span>(<span class="number">0</span>);
+    <span class="kw">let</span> <span class="ident">arg2</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">args</span>.<span class="ident">offset</span>(<span class="number">1</span>);
+
+    <span class="kw-2">*</span><span class="ident">result</span> <span class="op">=</span> <span class="ident">userdata</span>(<span class="ident">arg1</span>, <span class="ident">arg2</span>);
+}
+
+<span class="kw">let</span> <span class="ident">lambda</span> <span class="op">=</span> <span class="op">|</span><span class="ident">x</span>: <span class="ident">u64</span>, <span class="ident">y</span>: <span class="ident">u64</span><span class="op">|</span> <span class="ident">x</span> <span class="op">+</span> <span class="ident">y</span>;
+
+<span class="kw">let</span> <span class="ident">closure</span> <span class="op">=</span> <span class="ident">Builder</span>::<span class="ident">new</span>()
+    .<span class="ident">arg</span>(<span class="ident">Type</span>::<span class="ident">u64</span>())
+    .<span class="ident">arg</span>(<span class="ident">Type</span>::<span class="ident">u64</span>())
+    .<span class="ident">res</span>(<span class="ident">Type</span>::<span class="ident">u64</span>())
+    .<span class="ident">into_closure</span>(<span class="ident">lambda_callback</span>, <span class="kw-2">&amp;</span><span class="ident">lambda</span>);
+
+<span class="kw">unsafe</span> {
+    <span class="kw">let</span> <span class="ident">fun</span>: <span class="kw-2">&amp;</span><span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">u64</span>, <span class="ident">u64</span>) <span class="op">-&gt;</span> <span class="ident">u64</span>
+        <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">transmute</span>(<span class="ident">closure</span>.<span class="ident">code_ptr</span>());
+
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">11</span>, <span class="ident">fun</span>(<span class="number">5</span>, <span class="number">6</span>));
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">12</span>, <span class="ident">fun</span>(<span class="number">5</span>, <span class="number">7</span>));
+}</pre>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../../libffi/middle/struct.Builder.html" title="struct libffi::middle::Builder">Builder</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#72-174' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>pub fn <a href='#method.new' class='fnname'>new</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#74-80' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a <code>Builder</code>.</p>
+</div><h4 id='method.arg' class="method"><span id='arg.v' class='invisible'><code>pub fn <a href='#method.arg' class='fnname'>arg</a>(self, type_: <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#83-86' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds a type to the argument type list.</p>
+</div><h4 id='method.args' class="method"><span id='args.v' class='invisible'><code>pub fn <a href='#method.args' class='fnname'>args</a>&lt;I&gt;(self, types: I) -&gt; Self <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;I: <a class="trait" href="https://doc.rust-lang.org/nightly/core/iter/traits/trait.IntoIterator.html" title="trait core::iter::traits::IntoIterator">IntoIterator</a>&lt;Item = <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a>&gt;,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#89-94' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Adds several types to the argument type list.</p>
+</div><h4 id='method.res' class="method"><span id='res.v' class='invisible'><code>pub fn <a href='#method.res' class='fnname'>res</a>(self, type_: <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#97-100' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets the result type.</p>
+</div><h4 id='method.abi' class="method"><span id='abi.v' class='invisible'><code>pub fn <a href='#method.abi' class='fnname'>abi</a>(self, abi: <a class="type" href="../../libffi/low/type.ffi_abi.html" title="type libffi::low::ffi_abi">FfiAbi</a>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#103-106' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets the calling convention.</p>
+</div><h4 id='method.into_cif' class="method"><span id='into_cif.v' class='invisible'><code>pub fn <a href='#method.into_cif' class='fnname'>into_cif</a>(self) -&gt; <a class="struct" href="../../libffi/middle/struct.Cif.html" title="struct libffi::middle::Cif">Cif</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#109-113' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Builds a CIF.</p>
+</div><h4 id='method.into_closure' class="method"><span id='into_closure.v' class='invisible'><code>pub fn <a href='#method.into_closure' class='fnname'>into_closure</a>&lt;U, R&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;callback: <a class="type" href="../../libffi/low/type.Callback.html" title="type libffi::low::Callback">Callback</a>&lt;U, R&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;userdata: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>U<br>) -&gt; <a class="struct" href="../../libffi/middle/struct.Closure.html" title="struct libffi::middle::Closure">Closure</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#126-133' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Builds an immutable closure.</p>
+
+<h1 id='arguments' class='section-header'><a href='#arguments'>Arguments</a></h1>
+<ul>
+<li><code>callback</code> — the function to call when the closure is invoked</li>
+<li><code>userdata</code> — the pointer to pass to <code>callback</code> along with the
+arguments when the closure is called</li>
+</ul>
+
+<h1 id='result' class='section-header'><a href='#result'>Result</a></h1>
+<p>The new closure.</p>
+</div><h4 id='method.into_closure_mut' class="method"><span id='into_closure_mut.v' class='invisible'><code>pub fn <a href='#method.into_closure_mut' class='fnname'>into_closure_mut</a>&lt;U, R&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;callback: <a class="type" href="../../libffi/low/type.CallbackMut.html" title="type libffi::low::CallbackMut">CallbackMut</a>&lt;U, R&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;userdata: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>U<br>) -&gt; <a class="struct" href="../../libffi/middle/struct.Closure.html" title="struct libffi::middle::Closure">Closure</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#146-153' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Builds a mutable closure.</p>
+
+<h1 id='arguments-1' class='section-header'><a href='#arguments-1'>Arguments</a></h1>
+<ul>
+<li><code>callback</code> — the function to call when the closure is invoked</li>
+<li><code>userdata</code> — the pointer to pass to <code>callback</code> along with the
+arguments when the closure is called</li>
+</ul>
+
+<h1 id='result-1' class='section-header'><a href='#result-1'>Result</a></h1>
+<p>The new closure.</p>
+</div><h4 id='method.into_closure_once' class="method"><span id='into_closure_once.v' class='invisible'><code>pub fn <a href='#method.into_closure_once' class='fnname'>into_closure_once</a>&lt;U:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html" title="trait core::any::Any">Any</a>, R&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;callback: <a class="type" href="../../libffi/middle/type.CallbackOnce.html" title="type libffi::middle::CallbackOnce">CallbackOnce</a>&lt;U, R&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;userdata: U<br>) -&gt; <a class="struct" href="../../libffi/middle/struct.ClosureOnce.html" title="struct libffi::middle::ClosureOnce">ClosureOnce</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#166-173' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Builds a one-shot closure.</p>
+
+<h1 id='arguments-2' class='section-header'><a href='#arguments-2'>Arguments</a></h1>
+<ul>
+<li><code>callback</code> — the function to call when the closure is invoked</li>
+<li><code>userdata</code> — the object to pass to <code>callback</code> along with the
+arguments when the closure is called</li>
+</ul>
+
+<h1 id='result-2' class='section-header'><a href='#result-2'>Result</a></h1>
+<p>The new closure.</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Clone' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone">Clone</a> for <a class="struct" href="../../libffi/middle/struct.Builder.html" title="struct libffi::middle::Builder">Builder</a></code><a href='#impl-Clone' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#59' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class="method"><span id='clone.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class="struct" href="../../libffi/middle/struct.Builder.html" title="struct libffi::middle::Builder">Builder</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#59' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class="method"><span id='clone_from.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Self)</code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/clone.rs.html#112-114' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 id='impl-Debug' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="../../libffi/middle/struct.Builder.html" title="struct libffi::middle::Builder">Builder</a></code><a href='#impl-Debug' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#59' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#59' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt">Read more</a></p>
+</div></div><h3 id='impl-Default' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/default/trait.Default.html" title="trait core::default::Default">Default</a> for <a class="struct" href="../../libffi/middle/struct.Builder.html" title="struct libffi::middle::Builder">Builder</a></code><a href='#impl-Default' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#66-70' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.default' class="method"><span id='default.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html#tymethod.default' class='fnname'>default</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/builder.rs.html#67-69' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the &quot;default value&quot; for a type. <a href="https://doc.rust-lang.org/nightly/core/default/trait.Default.html#tymethod.default">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "libffi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

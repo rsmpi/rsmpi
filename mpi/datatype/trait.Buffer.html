@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Buffer` trait in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Buffer">
+
+    <title>mpi::datatype::Buffer - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc trait">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Trait Buffer</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#foreign-impls">Implementations on Foreign Types</a><div class="sidebar-links"><a href="#impl-Buffer">[T]</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='../index.html'>mpi</a>::<wbr><a href='index.html'>datatype</a></p><script>window.sidebarCurrent = {name: 'Buffer', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>mpi</a>::<wbr><a href='index.html'>datatype</a>::<wbr><a class="trait" href=''>Buffer</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/datatype.rs.html#491' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub unsafe trait Buffer: <a class="trait" href="../../mpi/datatype/trait.Pointer.html" title="trait mpi::datatype::Pointer">Pointer</a> + <a class="trait" href="../../mpi/datatype/trait.Collection.html" title="trait mpi::datatype::Collection">Collection</a> + <a class="trait" href="../../mpi/datatype/trait.AsDatatype.html" title="trait mpi::datatype::AsDatatype">AsDatatype</a> { }</pre><div class='docblock'><p>A buffer is a region in memory that starts at <code>pointer()</code> and contains <code>count()</code> copies of
+<code>as_datatype()</code>.</p>
+</div>
+                <h2 id='foreign-impls' class='small-section-header'>
+                  Implementations on Foreign Types<a href='#foreign-impls' class='anchor'></a>
+                </h2>
+            <h3 id='impl-Buffer' class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a> for <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">[</a>T<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code><a href='#impl-Buffer' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/mpi/datatype.rs.html#497-501' title='goto source code'>[src]</a></span></h3>
+<span class='docblock autohide'><div class='impl-items'></div></span>
+        <h2 id='implementors' class='small-section-header'>
+          Implementors<a href='#implementors' class='anchor'></a>
+        </h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl&lt;T&gt; Buffer for T <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code></li>
+<li><div class='out-of-band'><a class='srclink' href='../../src/mpi/datatype.rs.html#552' title='goto source code'>[src]</a></div><code>impl&lt;'a&gt; Buffer for <a class="struct" href="../../mpi/datatype/struct.DynBuffer.html" title="struct mpi::datatype::DynBuffer">DynBuffer</a>&lt;'a&gt;</code></li>
+<li><div class='out-of-band'><a class='srclink' href='../../src/mpi/datatype.rs.html#640' title='goto source code'>[src]</a></div><code>impl&lt;'a&gt; Buffer for <a class="struct" href="../../mpi/datatype/struct.DynBufferMut.html" title="struct mpi::datatype::DynBufferMut">DynBufferMut</a>&lt;'a&gt;</code></li>
+<li><div class='out-of-band'><a class='srclink' href='../../src/mpi/datatype.rs.html#798-803' title='goto source code'>[src]</a></div><code>impl&lt;'d, 'b, D, B:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt; Buffer for <a class="struct" href="../../mpi/datatype/struct.View.html" title="struct mpi::datatype::View">View</a>&lt;'d, 'b, D, B&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;D: 'd + <a class="trait" href="../../mpi/datatype/trait.Datatype.html" title="trait mpi::datatype::Datatype">Datatype</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;B: 'b + <a class="trait" href="../../mpi/datatype/trait.Pointer.html" title="trait mpi::datatype::Pointer">Pointer</a>,&nbsp;</span></code></li>
+</ul><script type="text/javascript" async
+                         src="../../implementors/mpi/datatype/trait.Buffer.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

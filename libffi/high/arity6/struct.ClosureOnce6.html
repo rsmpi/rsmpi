@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ClosureOnce6` struct in crate `libffi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ClosureOnce6">
+
+    <title>libffi::high::arity6::ClosureOnce6 - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Struct ClosureOnce6</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.new">new</a><a href="#method.new_with_cif">new_with_cif</a><a href="#method.code_ptr">code_ptr</a><a href="#method.from_parts">from_parts</a></div></div><p class='location'><a href='../../index.html'>libffi</a>::<wbr><a href='../index.html'>high</a>::<wbr><a href='index.html'>arity6</a></p><script>window.sidebarCurrent = {name: 'ClosureOnce6', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>libffi</a>::<wbr><a href='../index.html'>high</a>::<wbr><a href='index.html'>arity6</a>::<wbr><a class="struct" href=''>ClosureOnce6</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../../src/libffi/high/mod.rs.html#315-318' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ClosureOnce6&lt;A, B, C, D, E, F, R&gt; { /* fields omitted */ }</pre><div class='docblock'><p>A one-shot, typed closure with the given argument and
+result types.</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl&lt;A:&nbsp;<a class="trait" href="../../../libffi/high/types/trait.CType.html" title="trait libffi::high::types::CType">CType</a>, B:&nbsp;<a class="trait" href="../../../libffi/high/types/trait.CType.html" title="trait libffi::high::types::CType">CType</a>, C:&nbsp;<a class="trait" href="../../../libffi/high/types/trait.CType.html" title="trait libffi::high::types::CType">CType</a>, D:&nbsp;<a class="trait" href="../../../libffi/high/types/trait.CType.html" title="trait libffi::high::types::CType">CType</a>, E:&nbsp;<a class="trait" href="../../../libffi/high/types/trait.CType.html" title="trait libffi::high::types::CType">CType</a>, F:&nbsp;<a class="trait" href="../../../libffi/high/types/trait.CType.html" title="trait libffi::high::types::CType">CType</a>, R:&nbsp;<a class="trait" href="../../../libffi/high/types/trait.CType.html" title="trait libffi::high::types::CType">CType</a>&gt; <a class="struct" href="../../../libffi/high/arity6/struct.ClosureOnce6.html" title="struct libffi::high::arity6::ClosureOnce6">ClosureOnce6</a>&lt;A, B, C, D, E, F, R&gt;</code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../../src/libffi/high/mod.rs.html#320-328' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>pub fn <a href='#method.new' class='fnname'>new</a>&lt;Callback&gt;(callback: Callback) -&gt; Self <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Callback: <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/function/trait.FnOnce.html" title="trait core::ops::function::FnOnce">FnOnce</a>(A, B, C, D, E, F) -&gt; R + <a class="trait" href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html" title="trait core::any::Any">Any</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../../src/libffi/high/mod.rs.html#323-327' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a typed closure callable from C from a
+Rust closure.</p>
+</div></div><h3 id='impl-1' class='impl'><span class='in-band'><code>impl&lt;A:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a>, B:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a>, C:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a>, D:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a>, E:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a>, F:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a>, R&gt; <a class="struct" href="../../../libffi/high/arity6/struct.ClosureOnce6.html" title="struct libffi::high::arity6::ClosureOnce6">ClosureOnce6</a>&lt;A, B, C, D, E, F, R&gt;</code><a href='#impl-1' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../../src/libffi/high/mod.rs.html#330-365' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new_with_cif' class="method"><span id='new_with_cif.v' class='invisible'><code>pub fn <a href='#method.new_with_cif' class='fnname'>new_with_cif</a>&lt;Callback&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;cif: <a class="struct" href="../../../libffi/high/arity6/struct.Cif6.html" title="struct libffi::high::arity6::Cif6">Cif6</a>&lt;A, B, C, D, E, F, R&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;callback: Callback<br>) -&gt; Self <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Callback: <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/function/trait.FnOnce.html" title="trait core::ops::function::FnOnce">FnOnce</a>(A, B, C, D, E, F) -&gt; R + <a class="trait" href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html" title="trait core::any::Any">Any</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../../src/libffi/high/mod.rs.html#334-341' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a one-shot closure callable from C from a CIF
+describing the calling convention for the resulting
+function and the Rust closure to call.</p>
+</div></div><h3 id='impl-2' class='impl'><span class='in-band'><code>impl&lt;A, B, C, D, E, F, R&gt; <a class="struct" href="../../../libffi/high/arity6/struct.ClosureOnce6.html" title="struct libffi::high::arity6::ClosureOnce6">ClosureOnce6</a>&lt;A, B, C, D, E, F, R&gt;</code><a href='#impl-2' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../../src/libffi/high/mod.rs.html#367-397' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.code_ptr' class="method"><span id='code_ptr.v' class='invisible'><code>pub fn <a href='#method.code_ptr' class='fnname'>code_ptr</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self<br>) -&gt; &amp;extern &quot;C&quot; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.fn.html">fn</a>(_: A, _: B, _: C, _: D, _: E, _: F) -&gt; R</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../../src/libffi/high/mod.rs.html#370-374' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Gets the C code pointer that is used to invoke the
+closure.</p>
+</div><h4 id='method.from_parts' class="method"><span id='from_parts.v' class='invisible'><code>pub fn <a href='#method.from_parts' class='fnname'>from_parts</a>&lt;U:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html" title="trait core::any::Any">Any</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;cif: <a class="struct" href="../../../libffi/high/arity6/struct.Cif6.html" title="struct libffi::high::arity6::Cif6">Cif6</a>&lt;A, B, C, D, E, F, R&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;callback: <a class="type" href="../../../libffi/high/arity6/type.CallbackOnce6.html" title="type libffi::high::arity6::CallbackOnce6">CallbackOnce6</a>&lt;U, A, B, C, D, E, F, R&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;userdata: U<br>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../../src/libffi/high/mod.rs.html#380-396' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a one-shot closure callable from C from a CIF
+describing the calling convention for the resulting
+function, a callback for the function to call, and
+userdata to pass to the callback.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "libffi";
+    </script>
+    <script src="../../../main.js"></script>
+    <script defer src="../../../search-index.js"></script>
+</body>
+</html>

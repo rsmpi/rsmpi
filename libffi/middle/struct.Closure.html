@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Closure` struct in crate `libffi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Closure">
+
+    <title>libffi::middle::Closure - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Struct Closure</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.new">new</a><a href="#method.new_mut">new_mut</a><a href="#method.code_ptr">code_ptr</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-Debug">Debug</a><a href="#impl-Drop">Drop</a></div></div><p class='location'><a href='../index.html'>libffi</a>::<wbr><a href='index.html'>middle</a></p><script>window.sidebarCurrent = {name: 'Closure', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>libffi</a>::<wbr><a href='index.html'>middle</a>::<wbr><a class="struct" href=''>Closure</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/libffi/middle/mod.rs.html#235-240' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Closure&lt;'a&gt; { /* fields omitted */ }</pre><div class='docblock'><p>Represents a closure callable from C.</p>
+
+<p>A libffi closure captures a <code>void*</code> (“userdata”) and passes it to a
+callback when the code pointer (obtained via
+<a href="#method.code_ptr"><code>code_ptr</code></a>) is invoked. Lifetype parameter <code>&#39;a</code>
+ensures that the closure does not outlive the userdata.</p>
+
+<p>Construct with <a href="#method.new"><code>Closure::new</code></a> and
+<a href="#method.new_mut"><code>Closure::new_mut</code></a>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>In this example we turn a Rust lambda into a C function. We first
+define function <code>lambda_callback</code>, which will be called by libffi
+when the closure is called. The callback function takes four
+arguments: a CIF describing its arguments, a pointer for where to
+store its result, a pointer to an array of pointers to its
+arguments, and a userdata pointer. In this ase, the Rust closure
+value <code>lambda</code> is passed as userdata to <code>lambda_callback</code>, which
+then invokes it.</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">os</span>::<span class="ident">raw</span>::<span class="ident">c_void</span>;
+
+<span class="kw">use</span> <span class="ident">libffi</span>::<span class="ident">middle</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">libffi</span>::<span class="ident">low</span>;
+
+<span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">lambda_callback</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">u64</span>, <span class="ident">u64</span>) <span class="op">-&gt;</span> <span class="ident">u64</span><span class="op">&gt;</span>(
+    <span class="ident">_cif</span>: <span class="kw-2">&amp;</span><span class="ident">low</span>::<span class="ident">ffi_cif</span>,
+    <span class="ident">result</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">u64</span>,
+    <span class="ident">args</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_void</span>,
+    <span class="ident">userdata</span>: <span class="kw-2">&amp;</span><span class="ident">F</span>)
+{
+    <span class="kw">let</span> <span class="ident">args</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="kw-2">&amp;</span><span class="ident">u64</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">transmute</span>(<span class="ident">args</span>);
+    <span class="kw">let</span> <span class="ident">arg1</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">args</span>.<span class="ident">offset</span>(<span class="number">0</span>);
+    <span class="kw">let</span> <span class="ident">arg2</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">args</span>.<span class="ident">offset</span>(<span class="number">1</span>);
+
+    <span class="kw-2">*</span><span class="ident">result</span> <span class="op">=</span> <span class="ident">userdata</span>(<span class="ident">arg1</span>, <span class="ident">arg2</span>);
+}
+
+<span class="kw">let</span> <span class="ident">cif</span> <span class="op">=</span> <span class="ident">Cif</span>::<span class="ident">new</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="ident">Type</span>::<span class="ident">u64</span>(), <span class="ident">Type</span>::<span class="ident">u64</span>()].<span class="ident">into_iter</span>(),
+                   <span class="ident">Type</span>::<span class="ident">u64</span>());
+<span class="kw">let</span> <span class="ident">lambda</span> <span class="op">=</span> <span class="op">|</span><span class="ident">x</span>: <span class="ident">u64</span>, <span class="ident">y</span>: <span class="ident">u64</span><span class="op">|</span> <span class="ident">x</span> <span class="op">+</span> <span class="ident">y</span>;
+<span class="kw">let</span> <span class="ident">closure</span> <span class="op">=</span> <span class="ident">Closure</span>::<span class="ident">new</span>(<span class="ident">cif</span>, <span class="ident">lambda_callback</span>, <span class="kw-2">&amp;</span><span class="ident">lambda</span>);
+
+<span class="kw">unsafe</span> {
+    <span class="kw">let</span> <span class="ident">fun</span>: <span class="kw-2">&amp;</span><span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="ident">u64</span>, <span class="ident">u64</span>) <span class="op">-&gt;</span> <span class="ident">u64</span>
+        <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">transmute</span>(<span class="ident">closure</span>.<span class="ident">code_ptr</span>());
+
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">11</span>, <span class="ident">fun</span>(<span class="number">5</span>, <span class="number">6</span>));
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">12</span>, <span class="ident">fun</span>(<span class="number">5</span>, <span class="number">7</span>));
+}</pre>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class="struct" href="../../libffi/middle/struct.Closure.html" title="struct libffi::middle::Closure">Closure</a>&lt;'a&gt;</code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/mod.rs.html#250-333' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>pub fn <a href='#method.new' class='fnname'>new</a>&lt;U, R&gt;(cif: <a class="struct" href="../../libffi/middle/struct.Cif.html" title="struct libffi::middle::Cif">Cif</a>, callback: <a class="type" href="../../libffi/low/type.Callback.html" title="type libffi::low::Callback">Callback</a>&lt;U, R&gt;, userdata: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>U) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/mod.rs.html#264-285' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Creates a new closure with immutable userdata.</p>
+
+<h1 id='arguments' class='section-header'><a href='#arguments'>Arguments</a></h1>
+<ul>
+<li><code>cif</code> — describes the calling convention and argument and
+result types</li>
+<li><code>callback</code> — the function to call when the closure is invoked</li>
+<li><code>userdata</code> — the pointer to pass to <code>callback</code> along with the
+arguments when the closure is called</li>
+</ul>
+
+<h1 id='result' class='section-header'><a href='#result'>Result</a></h1>
+<p>The new closure.</p>
+</div><h4 id='method.new_mut' class="method"><span id='new_mut.v' class='invisible'><code>pub fn <a href='#method.new_mut' class='fnname'>new_mut</a>&lt;U, R&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;cif: <a class="struct" href="../../libffi/middle/struct.Cif.html" title="struct libffi::middle::Cif">Cif</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;callback: <a class="type" href="../../libffi/low/type.CallbackMut.html" title="type libffi::low::CallbackMut">CallbackMut</a>&lt;U, R&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;userdata: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>U<br>) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/mod.rs.html#300-321' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Creates a new closure with mutable userdata.</p>
+
+<h1 id='arguments-1' class='section-header'><a href='#arguments-1'>Arguments</a></h1>
+<ul>
+<li><code>cif</code> — describes the calling convention and argument and
+result types</li>
+<li><code>callback</code> — the function to call when the closure is invoked</li>
+<li><code>userdata</code> — the pointer to pass to <code>callback</code> along with the
+arguments when the closure is called</li>
+</ul>
+
+<h1 id='result-1' class='section-header'><a href='#result-1'>Result</a></h1>
+<p>The new closure.</p>
+</div><h4 id='method.code_ptr' class="method"><span id='code_ptr.v' class='invisible'><code>pub fn <a href='#method.code_ptr' class='fnname'>code_ptr</a>(&amp;self) -&gt; &amp;unsafe extern &quot;C&quot; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.fn.html">fn</a>()</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/mod.rs.html#330-332' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Obtains the callable code pointer for a closure.</p>
+
+<h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
+<p>The result needs to be transmuted to the correct type before
+it can be called. If the type is wrong then undefined behavior
+will result.</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Debug' class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="../../libffi/middle/struct.Closure.html" title="struct libffi::middle::Closure">Closure</a>&lt;'a&gt;</code><a href='#impl-Debug' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/mod.rs.html#234' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/mod.rs.html#234' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt">Read more</a></p>
+</div></div><h3 id='impl-Drop' class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../../libffi/middle/struct.Closure.html" title="struct libffi::middle::Closure">Closure</a>&lt;'a&gt;</code><a href='#impl-Drop' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/mod.rs.html#242-248' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/mod.rs.html#243-247' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Executes the destructor for this type. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "libffi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

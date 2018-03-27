@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `conv` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, conv">
+
+    <title>conv - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Crate conv</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#reexports">Reexports</a></li><li><a href="#modules">Modules</a></li><li><a href="#macros">Macros</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'conv', ty: 'mod', relpath: '../'};</script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>conv</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/conv/lib.rs.html#1-525' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>This crate provides a number of conversion traits with more specific semantics than those provided by <code>as</code> or <code>From</code>/<code>Into</code>.</p>
+
+<p>The goal with the traits provided here is to be more specific about what generic code can rely on, as well as provide reasonably self-describing alternatives to the standard <code>From</code>/<code>Into</code> traits.  For example, the although <code>T: From&lt;U&gt;</code> might be satisfied, it imposes no restrictions on the <em>kind</em> of conversion being implemented.  As such, the traits in this crate try to be very specific about what conversions are allowed.  This makes them less generally applicable, but more useful where they <em>do</em> apply.</p>
+
+<p>In addition, <code>From</code>/<code>Into</code> requires all conversions to succeed or panic.  All conversion traits in this crate define an associated error type, allowing code to react to failed conversions as appropriate.</p>
+
+<style type="text/css">
+.link-block { font-family: "Fira Sans"; }
+.link-block > p { display: inline-block; }
+.link-block > p > strong { font-weight: 500; margin-right: 1em; }
+.link-block > ul { display: inline-block; padding: 0; list-style: none; }
+.link-block > ul > li {
+  font-size: 0.8em;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  padding: 0.3em;
+  display: inline-block;
+}
+</style>
+
+<p><span></span><div class="link-block"></p>
+
+<p><strong>Links</strong></p>
+
+<ul>
+<li><a href="https://crates.io/crates/scan-rules/">Latest Release</a></li>
+<li><a href="https://danielkeep.github.io/rust-scan-rules/doc/scan_rules/index.html">Latest Docs</a></li>
+<li><a href="https://github.com/DanielKeep/rust-scan-rules">Repository</a></li>
+</ul>
+
+<p><span></span></div></p>
+
+<h2 id='compatibility' class='section-header'><a href='#compatibility'>Compatibility</a></h2>
+<p><code>conv</code> is compatible with Rust 1.2 and higher.</p>
+
+<h2 id='change-log' class='section-header'><a href='#change-log'>Change Log</a></h2>
+<h3 id='v032' class='section-header'><a href='#v032'>v0.3.2</a></h3>
+<ul>
+<li>Added integer ↔ <code>char</code> conversions.</li>
+<li>Added missing <code>isize</code>/<code>usize</code> → <code>f32</code>/<code>f64</code> conversions.</li>
+<li>Fixed the error type of <code>i64</code> → <code>usize</code> for 64-bit targets.</li>
+</ul>
+
+<h3 id='v031' class='section-header'><a href='#v031'>v0.3.1</a></h3>
+<ul>
+<li>Change to <code>unwrap_ok</code> for better codegen (thanks bluss).</li>
+<li>Fix for Rust breaking change (code in question was dodgy anyway; thanks m4rw3r).</li>
+</ul>
+
+<h3 id='v030' class='section-header'><a href='#v030'>v0.3.0</a></h3>
+<ul>
+<li>Added an <code>Error</code> constraint to all <code>Err</code> associated types.  This will break any user-defined conversions where the <code>Err</code> type does not implement <code>Error</code>.</li>
+<li>Renamed the <code>Overflow</code> and <code>Underflow</code> errors to <code>PosOverflow</code> and <code>NegOverflow</code> respectively.  In the context of floating point conversions, &quot;underflow&quot; usually means the value was too close to zero to correctly represent.</li>
+</ul>
+
+<h3 id='v021' class='section-header'><a href='#v021'>v0.2.1</a></h3>
+<ul>
+<li>Added <code>ConvUtil::into_as&lt;Dst&gt;</code> as a shortcut for <code>Into::&lt;Dst&gt;::into</code>.</li>
+<li>Added <code>#[inline]</code> attributes.</li>
+<li>Added <code>Saturate::saturate</code>, which can saturate <code>Result</code>s arising from over/underflow.</li>
+</ul>
+
+<h3 id='v020' class='section-header'><a href='#v020'>v0.2.0</a></h3>
+<ul>
+<li>Changed all error types to include the original input as payload.  This breaks pretty much <em>everything</em>.  Sorry about that.  On the bright side, there&#39;s now no downside to using the conversion traits for non-<code>Copy</code> types.</li>
+<li>Added the normal rounding modes for float → int approximations: <code>RoundToNearest</code>, <code>RoundToNegInf</code>, <code>RoundToPosInf</code>, and <code>RoundToZero</code>.</li>
+<li><code>ApproxWith</code> is now subsumed by a pair of extension traits (<code>ConvUtil</code> and <code>ConvAsUtil</code>), that also have shortcuts for <code>TryInto</code> and <code>ValueInto</code> so that you can specify the destination type on the method.</li>
+</ul>
+
+<h1 id='overview' class='section-header'><a href='#overview'>Overview</a></h1>
+<p>The following traits are used to define various conversion semantics:</p>
+
+<ul>
+<li><a href="./trait.ApproxFrom.html"><code>ApproxFrom</code></a>/<a href="./trait.ApproxInto.html"><code>ApproxInto</code></a> - approximate conversions, with selectable approximation scheme (see <a href="./trait.ApproxScheme.html"><code>ApproxScheme</code></a>).</li>
+<li><a href="./trait.TryFrom.html"><code>TryFrom</code></a>/<a href="./trait.TryInto.html"><code>TryInto</code></a> - general, potentially failing value conversions.</li>
+<li><a href="./trait.ValueFrom.html"><code>ValueFrom</code></a>/<a href="./trait.ValueInto.html"><code>ValueInto</code></a> - exact, value-preserving conversions.</li>
+</ul>
+
+<p>When <em>defining</em> a conversion, try to implement the <code>*From</code> trait variant where possible.  When <em>using</em> a conversion, try to depend on the <code>*Into</code> trait variant where possible.  This is because the <code>*Into</code> traits automatically use <code>*From</code> implementations, but not the reverse.  Implementing <code>*From</code> and using <code>*Into</code> ensures conversions work in as many contexts as possible.</p>
+
+<p>These extension methods are provided to help with some common cases:</p>
+
+<ul>
+<li><a href="./trait.ConvUtil.html#method.approx_as"><code>ConvUtil::approx_as&lt;Dst&gt;</code></a> - approximates to <code>Dst</code> with the <code>DefaultApprox</code> scheme.</li>
+<li><a href="./trait.ConvUtil.html#method.approx_as_by"><code>ConvUtil::approx_as_by&lt;Dst, S&gt;</code></a> - approximates to <code>Dst</code> with the scheme <code>S</code>.</li>
+<li><a href="./trait.ConvUtil.html#method.into_as"><code>ConvUtil::into_as&lt;Dst&gt;</code></a> - converts to <code>Dst</code> using <code>Into::into</code>.</li>
+<li><a href="./trait.ConvUtil.html#method.try_as"><code>ConvUtil::try_as&lt;Dst&gt;</code></a> - converts to <code>Dst</code> using <code>TryInto::try_into</code>.</li>
+<li><a href="./trait.ConvUtil.html#method.value_as"><code>ConvUtil::value_as&lt;Dst&gt;</code></a> - converts to <code>Dst</code> using <code>ValueInto::value_into</code>.</li>
+<li><a href="./trait.ConvAsUtil.html#method.approx"><code>ConvAsUtil::approx</code></a> - approximates to an inferred destination type with the <code>DefaultApprox</code> scheme.</li>
+<li><a href="./trait.ConvAsUtil.html#method.approx_by"><code>ConvAsUtil::approx_by&lt;S&gt;</code></a> - approximates to an inferred destination type with the scheme <code>S</code>.</li>
+<li><a href="./errors/trait.Saturate.html#tymethod.saturate"><code>Saturate::saturate</code></a> - saturates on overflow.</li>
+<li><a href="./errors/trait.UnwrapOk.html#tymethod.unwrap_ok"><code>UnwrapOk::unwrap_ok</code></a> - unwraps results from conversions that cannot fail.</li>
+<li><a href="./errors/trait.UnwrapOrInf.html#tymethod.unwrap_or_inf"><code>UnwrapOrInf::unwrap_or_inf</code></a> - saturates to ±∞ on failure.</li>
+<li><a href="./errors/trait.UnwrapOrInvalid.html#tymethod.unwrap_or_invalid"><code>UnwrapOrInvalid::unwrap_or_invalid</code></a> - substitutes the target type&#39;s &quot;invalid&quot; sentinel value on failure.</li>
+<li><a href="./errors/trait.UnwrapOrSaturate.html#tymethod.unwrap_or_saturate"><code>UnwrapOrSaturate::unwrap_or_saturate</code></a> - saturates to the maximum or minimum value of the target type on failure.</li>
+</ul>
+
+<p>A macro is provided to assist in implementing conversions:</p>
+
+<ul>
+<li><a href="./macros/index.html#tryfrom!"><code>TryFrom!</code></a> - derives an implementation of <a href="./trait.TryFrom.html"><code>TryFrom</code></a>.</li>
+</ul>
+
+<p>If you are implementing your own types, you may also be interested in the traits contained in the <a href="./misc/index.html"><code>misc</code></a> module.</p>
+
+<h2 id='provided-implementations' class='section-header'><a href='#provided-implementations'>Provided Implementations</a></h2>
+<p>The crate provides several blanket implementations:</p>
+
+<ul>
+<li><code>*From&lt;A&gt; for A</code> (all types can be converted from and into themselves).</li>
+<li><code>*Into&lt;Dst&gt; for Src where Dst: *From&lt;Src&gt;</code> (<code>*From</code> implementations imply a matching <code>*Into</code> implementation).</li>
+</ul>
+
+<p>Conversions for the builtin numeric (integer and floating point) types are provided.  In general, <code>ValueFrom</code> conversions exist for all pairs except for float → integer (since such a conversion is generally unlikely to <em>exactly</em> succeed) and <code>f64 → f32</code> (for the same reason).  <code>ApproxFrom</code> conversions with the <code>DefaultApprox</code> scheme exist between all pairs.  <code>ApproxFrom</code> with the <code>Wrapping</code> scheme exist between integers.</p>
+
+<h2 id='errors' class='section-header'><a href='#errors'>Errors</a></h2>
+<p>A number of error types are defined in the <a href="./errors/index.html"><code>errors</code></a> module.  Generally, conversions use whichever error type most <em>narrowly</em> defines the kinds of failures that can occur.  For example:</p>
+
+<ul>
+<li><code>ValueFrom&lt;u8&gt; for u16</code> cannot possibly fail, and as such it uses <code>NoError</code>.</li>
+<li><code>ValueFrom&lt;i8&gt; for u16</code> can <em>only</em> fail with a negative overflow, thus it uses the <code>NegOverflow</code> type.</li>
+<li><code>ValueFrom&lt;i32&gt; for u16</code> can overflow in either direction, hence it uses <code>RangeError</code>.</li>
+<li>Finally, <code>ApproxFrom&lt;f32&gt; for u16</code> can overflow (positive or negative), or attempt to convert NaN; <code>FloatError</code> covers those three cases.</li>
+</ul>
+
+<p>Because there are <em>numerous</em> error types, the <code>GeneralError</code> enum is provided.  <code>From&lt;E, T&gt; for GeneralError&lt;T&gt;</code> exists for each error type <code>E&lt;T&gt;</code> defined by this crate (even for <code>NoError</code>!), allowing errors to be translated automatically by <code>try!</code>.  In fact, all errors can be &quot;expanded&quot; to <em>all</em> more general forms (<em>e.g.</em> <code>NoError</code> → <code>NegOverflow</code>, <code>PosOverflow</code> → <code>RangeError</code> → <code>FloatError</code>).</p>
+
+<p>Aside from <code>NoError</code>, the various error types wrap the input value that you attempted to convert.  This is so that non-<code>Copy</code> types do not need to be pre-emptively cloned prior to conversion, just in case the conversion fails.  A downside is that this means there are many, <em>many</em> incompatible error types.</p>
+
+<p>To help alleviate this, there is also <code>GeneralErrorKind</code>, which is simply <code>GeneralError&lt;T&gt;</code> without the payload, and all errors can be converted into it directly.</p>
+
+<p>The reason for not just using <code>GeneralErrorKind</code> in the first place is to statically reduce the number of potential error cases you need to deal with.  It also allows the <code>Unwrap*</code> extension traits to be defined <em>without</em> the possibility for runtime failure (<em>e.g.</em> you cannot use <code>unwrap_or_saturate</code> with a <code>FloatError</code>, because what do you do if the error is <code>NotANumber</code>; saturate to max or to min?  Or panic?).</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="comment">// This *cannot* fail, so we can use `unwrap_ok` to discard the `Result`.</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="number">0u8</span>).<span class="ident">unwrap_ok</span>(), <span class="number">0u8</span>);
+
+<span class="comment">// This *can* fail.  Specifically, it can overflow toward negative infinity.</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="number">0i8</span>),     <span class="prelude-val">Ok</span>(<span class="number">0u8</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="op">-</span><span class="number">1i8</span>),    <span class="prelude-val">Err</span>(<span class="ident">NegOverflow</span>(<span class="op">-</span><span class="number">1</span>)));
+
+<span class="comment">// This can overflow in *either* direction; hence the change to `RangeError`.</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="op">-</span><span class="number">1i16</span>),   <span class="prelude-val">Err</span>(<span class="ident">RangeError</span>::<span class="ident">NegOverflow</span>(<span class="op">-</span><span class="number">1</span>)));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="number">0i16</span>),    <span class="prelude-val">Ok</span>(<span class="number">0u8</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="number">256i16</span>),  <span class="prelude-val">Err</span>(<span class="ident">RangeError</span>::<span class="ident">PosOverflow</span>(<span class="number">256</span>)));
+
+<span class="comment">// We can use the extension traits to simplify this a little.</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="op">-</span><span class="number">1i16</span>).<span class="ident">unwrap_or_saturate</span>(),  <span class="number">0u8</span>);
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="number">0i16</span>).<span class="ident">unwrap_or_saturate</span>(),   <span class="number">0u8</span>);
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">u8</span>::<span class="ident">value_from</span>(<span class="number">256i16</span>).<span class="ident">unwrap_or_saturate</span>(), <span class="number">255u8</span>);
+
+<span class="comment">// Obviously, all integers can be &quot;approximated&quot; using the default scheme (it</span>
+<span class="comment">// doesn&#39;t *do* anything), but they can *also* be approximated with the</span>
+<span class="comment">// `Wrapping` scheme.</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>(
+    <span class="op">&lt;</span><span class="ident">u8</span> <span class="kw">as</span> <span class="ident">ApproxFrom</span><span class="op">&lt;</span>_, <span class="ident">DefaultApprox</span><span class="op">&gt;&gt;</span>::<span class="ident">approx_from</span>(<span class="number">400u16</span>),
+    <span class="prelude-val">Err</span>(<span class="ident">PosOverflow</span>(<span class="number">400</span>)));
+<span class="macro">assert_eq</span><span class="macro">!</span>(
+    <span class="op">&lt;</span><span class="ident">u8</span> <span class="kw">as</span> <span class="ident">ApproxFrom</span><span class="op">&lt;</span>_, <span class="ident">Wrapping</span><span class="op">&gt;&gt;</span>::<span class="ident">approx_from</span>(<span class="number">400u16</span>),
+    <span class="prelude-val">Ok</span>(<span class="number">144u8</span>));
+
+<span class="comment">// This is rather inconvenient; as such, there are a number of convenience</span>
+<span class="comment">// extension methods available via `ConvUtil` and `ConvAsUtil`.</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">400u16</span>.<span class="ident">approx</span>(),                       <span class="prelude-val">Err</span>::<span class="op">&lt;</span><span class="ident">u8</span>, _<span class="op">&gt;</span>(<span class="ident">PosOverflow</span>(<span class="number">400</span>)));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">400u16</span>.<span class="ident">approx_by</span>::<span class="op">&lt;</span><span class="ident">Wrapping</span><span class="op">&gt;</span>(),        <span class="prelude-val">Ok</span>::<span class="op">&lt;</span><span class="ident">u8</span>, _<span class="op">&gt;</span>(<span class="number">144u8</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">400u16</span>.<span class="ident">approx_as</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>(),              <span class="prelude-val">Err</span>(<span class="ident">PosOverflow</span>(<span class="number">400</span>)));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">400u16</span>.<span class="ident">approx_as_by</span>::<span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">Wrapping</span><span class="op">&gt;</span>(), <span class="prelude-val">Ok</span>(<span class="number">144</span>));
+
+<span class="comment">// Integer -&gt; float conversions *can* fail due to limited precision.</span>
+<span class="comment">// Once the continuous range of exactly representable integers is exceeded, the</span>
+<span class="comment">// provided implementations fail with overflow errors.</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">value_from</span>(<span class="number">16_777_216i32</span>), <span class="prelude-val">Ok</span>(<span class="number">16_777_216.0f32</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">value_from</span>(<span class="number">16_777_217i32</span>), <span class="prelude-val">Err</span>(<span class="ident">RangeError</span>::<span class="ident">PosOverflow</span>(<span class="number">16_777_217</span>)));
+
+<span class="comment">// Float -&gt; integer conversions have to be done using approximations.  Although</span>
+<span class="comment">// exact conversions are *possible*, &quot;advertising&quot; this with an implementation</span>
+<span class="comment">// is misleading.</span>
+<span class="comment">//</span>
+<span class="comment">// Note that `DefaultApprox` for float -&gt; integer uses whatever rounding</span>
+<span class="comment">// mode is currently active (*i.e.* whatever `as` would do).</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">41.0f32</span>.<span class="ident">approx</span>(), <span class="prelude-val">Ok</span>(<span class="number">41u8</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">41.3f32</span>.<span class="ident">approx</span>(), <span class="prelude-val">Ok</span>(<span class="number">41u8</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">41.5f32</span>.<span class="ident">approx</span>(), <span class="prelude-val">Ok</span>(<span class="number">41u8</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">41.8f32</span>.<span class="ident">approx</span>(), <span class="prelude-val">Ok</span>(<span class="number">41u8</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">42.0f32</span>.<span class="ident">approx</span>(), <span class="prelude-val">Ok</span>(<span class="number">42u8</span>));
+
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">255.0f32</span>.<span class="ident">approx</span>(), <span class="prelude-val">Ok</span>(<span class="number">255u8</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">256.0f32</span>.<span class="ident">approx</span>(), <span class="prelude-val">Err</span>::<span class="op">&lt;</span><span class="ident">u8</span>, _<span class="op">&gt;</span>(<span class="ident">FloatError</span>::<span class="ident">PosOverflow</span>(<span class="number">256.0</span>)));
+
+<span class="comment">// Sometimes, it can be useful to saturate the conversion from float to</span>
+<span class="comment">// integer directly, then account for NaN as input separately.  The `Saturate`</span>
+<span class="comment">// extension trait exists for this reason.</span>
+<span class="macro">assert_eq</span><span class="macro">!</span>((<span class="op">-</span><span class="number">23.0f32</span>).<span class="ident">approx_as</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>().<span class="ident">saturate</span>(), <span class="prelude-val">Ok</span>(<span class="number">0</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">302.0f32</span>.<span class="ident">approx_as</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>().<span class="ident">saturate</span>(), <span class="prelude-val">Ok</span>(<span class="number">255u8</span>));
+<span class="macro">assert</span><span class="macro">!</span>(<span class="ident">std</span>::<span class="ident">f32</span>::<span class="ident">NAN</span>.<span class="ident">approx_as</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>().<span class="ident">saturate</span>().<span class="ident">is_err</span>());
+
+<span class="comment">// If you really don&#39;t care about the specific kind of error, you can just rely</span>
+<span class="comment">// on automatic conversion to `GeneralErrorKind`.</span>
+<span class="kw">fn</span> <span class="ident">too_many_errors</span>() <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">GeneralErrorKind</span><span class="op">&gt;</span> {
+    <span class="macro">assert_eq</span><span class="macro">!</span>({<span class="kw">let</span> <span class="ident">r</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="number">0u8</span>.<span class="ident">value_into</span>()); <span class="ident">r</span>},  <span class="number">0u8</span>);
+    <span class="macro">assert_eq</span><span class="macro">!</span>({<span class="kw">let</span> <span class="ident">r</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="number">0i8</span>.<span class="ident">value_into</span>()); <span class="ident">r</span>},  <span class="number">0u8</span>);
+    <span class="macro">assert_eq</span><span class="macro">!</span>({<span class="kw">let</span> <span class="ident">r</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="number">0i16</span>.<span class="ident">value_into</span>()); <span class="ident">r</span>}, <span class="number">0u8</span>);
+    <span class="macro">assert_eq</span><span class="macro">!</span>({<span class="kw">let</span> <span class="ident">r</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="number">0.0f32</span>.<span class="ident">approx</span>()); <span class="ident">r</span>},   <span class="number">0u8</span>);
+    <span class="prelude-val">Ok</span>(())
+}</pre>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use errors::<a class="enum" href="../conv/errors/enum.NoError.html" title="enum conv::errors::NoError">NoError</a>;</code></td></tr><tr><td><code>pub use errors::<a class="enum" href="../conv/errors/enum.GeneralError.html" title="enum conv::errors::GeneralError">GeneralError</a>;</code></td></tr><tr><td><code>pub use errors::<a class="enum" href="../conv/errors/enum.GeneralErrorKind.html" title="enum conv::errors::GeneralErrorKind">GeneralErrorKind</a>;</code></td></tr><tr><td><code>pub use errors::<a class="struct" href="../conv/errors/struct.Unrepresentable.html" title="struct conv::errors::Unrepresentable">Unrepresentable</a>;</code></td></tr><tr><td><code>pub use errors::<a class="struct" href="../conv/errors/struct.NegOverflow.html" title="struct conv::errors::NegOverflow">NegOverflow</a>;</code></td></tr><tr><td><code>pub use errors::<a class="struct" href="../conv/errors/struct.PosOverflow.html" title="struct conv::errors::PosOverflow">PosOverflow</a>;</code></td></tr><tr><td><code>pub use errors::<a class="enum" href="../conv/errors/enum.FloatError.html" title="enum conv::errors::FloatError">FloatError</a>;</code></td></tr><tr><td><code>pub use errors::<a class="enum" href="../conv/errors/enum.RangeError.html" title="enum conv::errors::RangeError">RangeError</a>;</code></td></tr><tr><td><code>pub use errors::<a class="enum" href="../conv/errors/enum.RangeErrorKind.html" title="enum conv::errors::RangeErrorKind">RangeErrorKind</a>;</code></td></tr><tr><td><code>pub use errors::<a class="trait" href="../conv/errors/trait.Saturate.html" title="trait conv::errors::Saturate">Saturate</a>;</code></td></tr><tr><td><code>pub use errors::<a class="trait" href="../conv/errors/trait.UnwrapOk.html" title="trait conv::errors::UnwrapOk">UnwrapOk</a>;</code></td></tr><tr><td><code>pub use errors::<a class="trait" href="../conv/errors/trait.UnwrapOrInf.html" title="trait conv::errors::UnwrapOrInf">UnwrapOrInf</a>;</code></td></tr><tr><td><code>pub use errors::<a class="trait" href="../conv/errors/trait.UnwrapOrInvalid.html" title="trait conv::errors::UnwrapOrInvalid">UnwrapOrInvalid</a>;</code></td></tr><tr><td><code>pub use errors::<a class="trait" href="../conv/errors/trait.UnwrapOrSaturate.html" title="trait conv::errors::UnwrapOrSaturate">UnwrapOrSaturate</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="errors/index.html"
+                                  title='mod conv::errors'>errors</a></td>
+                           <td class='docblock-short'>
+                                <p>This module defines the various error types that can be produced by a failed conversion.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="macros/index.html"
+                                  title='mod conv::macros'>macros</a></td>
+                           <td class='docblock-short'>
+                                <p>This module provides convenience macros to help with implementing the conversion traits.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="misc/index.html"
+                                  title='mod conv::misc'>misc</a></td>
+                           <td class='docblock-short'>
+                                <p>This module defines some additional traits not <em>directly</em> tied to conversions.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="prelude/index.html"
+                                  title='mod conv::prelude'>prelude</a></td>
+                           <td class='docblock-short'>
+                                <p>Publicly re-exports the most generally useful set of items.</p>
+                           </td>
+                       </tr></table><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="macro" href="macro.TryFrom.html"
+                                  title='macro conv::TryFrom'>TryFrom</a></td>
+                           <td class='docblock-short'>
+                                <p>See the documentation for the <a href="./macros/index.html#tryfrom!"><code>macros</code></a> module for details.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.DefaultApprox.html"
+                                  title='enum conv::DefaultApprox'>DefaultApprox</a></td>
+                           <td class='docblock-short'>
+                                <p>The &quot;default&quot; approximation scheme.  This scheme does whatever would generally be expected of a lossy conversion, assuming no additional context or instruction is given.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.RoundToNearest.html"
+                                  title='enum conv::RoundToNearest'>RoundToNearest</a></td>
+                           <td class='docblock-short'>
+                                <p>This scheme is used to convert a value by rounding it to the nearest representable value, with ties rounding away from zero.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.RoundToNegInf.html"
+                                  title='enum conv::RoundToNegInf'>RoundToNegInf</a></td>
+                           <td class='docblock-short'>
+                                <p>This scheme is used to convert a value by rounding it toward negative infinity to the nearest representable value.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.RoundToPosInf.html"
+                                  title='enum conv::RoundToPosInf'>RoundToPosInf</a></td>
+                           <td class='docblock-short'>
+                                <p>This scheme is used to convert a value by rounding it toward positive infinity to the nearest representable value.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.RoundToZero.html"
+                                  title='enum conv::RoundToZero'>RoundToZero</a></td>
+                           <td class='docblock-short'>
+                                <p>This scheme is used to convert a value by rounding it toward zero to the nearest representable value.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.Wrapping.html"
+                                  title='enum conv::Wrapping'>Wrapping</a></td>
+                           <td class='docblock-short'>
+                                <p>This scheme is used to convert a value by &quot;wrapping&quot; it into a narrower range.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ApproxFrom.html"
+                                  title='trait conv::ApproxFrom'>ApproxFrom</a></td>
+                           <td class='docblock-short'>
+                                <p>This trait is used to perform a conversion that is permitted to approximate the result, but <em>not</em> to wrap or saturate the result to fit into the destination type&#39;s representable range.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ApproxInto.html"
+                                  title='trait conv::ApproxInto'>ApproxInto</a></td>
+                           <td class='docblock-short'>
+                                <p>This is the dual of <code>ApproxFrom</code>; see that trait for information.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ApproxScheme.html"
+                                  title='trait conv::ApproxScheme'>ApproxScheme</a></td>
+                           <td class='docblock-short'>
+                                <p>This trait is used to mark approximation scheme types.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ConvAsUtil.html"
+                                  title='trait conv::ConvAsUtil'>ConvAsUtil</a></td>
+                           <td class='docblock-short'>
+                                <p>This extension trait exists to simplify using various conversions.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ConvUtil.html"
+                                  title='trait conv::ConvUtil'>ConvUtil</a></td>
+                           <td class='docblock-short'>
+                                <p>This extension trait exists to simplify using various conversions.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.TryFrom.html"
+                                  title='trait conv::TryFrom'>TryFrom</a></td>
+                           <td class='docblock-short'>
+                                <p>This trait is used to perform a conversion between different semantic types which might fail.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.TryInto.html"
+                                  title='trait conv::TryInto'>TryInto</a></td>
+                           <td class='docblock-short'>
+                                <p>This is the dual of <code>TryFrom</code>; see that trait for information.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ValueFrom.html"
+                                  title='trait conv::ValueFrom'>ValueFrom</a></td>
+                           <td class='docblock-short'>
+                                <p>This trait is used to perform an exact, value-preserving conversion.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="trait" href="trait.ValueInto.html"
+                                  title='trait conv::ValueInto'>ValueInto</a></td>
+                           <td class='docblock-short'>
+                                <p>This is the dual of <code>ValueFrom</code>; see that trait for information.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "conv";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

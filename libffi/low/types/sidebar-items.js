@@ -1,0 +1,1 @@
+initSidebarItems({"static":[["double",""],["float",""],["longdouble",""],["pointer",""],["sint16",""],["sint32",""],["sint64",""],["sint8",""],["uint16",""],["uint32",""],["uint64",""],["uint8",""],["void",""]]});

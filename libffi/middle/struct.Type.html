@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Type` struct in crate `libffi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Type">
+
+    <title>libffi::middle::Type - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Struct Type</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.void">void</a><a href="#method.u8">u8</a><a href="#method.i8">i8</a><a href="#method.u16">u16</a><a href="#method.i16">i16</a><a href="#method.u32">u32</a><a href="#method.i32">i32</a><a href="#method.u64">u64</a><a href="#method.i64">i64</a><a href="#method.usize">usize</a><a href="#method.isize">isize</a><a href="#method.c_schar">c_schar</a><a href="#method.c_uchar">c_uchar</a><a href="#method.c_short">c_short</a><a href="#method.c_ushort">c_ushort</a><a href="#method.c_int">c_int</a><a href="#method.c_uint">c_uint</a><a href="#method.c_long">c_long</a><a href="#method.c_ulong">c_ulong</a><a href="#method.c_longlong">c_longlong</a><a href="#method.c_ulonglong">c_ulonglong</a><a href="#method.f32">f32</a><a href="#method.f64">f64</a><a href="#method.pointer">pointer</a><a href="#method.longdouble">longdouble</a><a href="#method.structure">structure</a><a href="#method.as_raw_ptr">as_raw_ptr</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-Debug">Debug</a><a href="#impl-Drop">Drop</a><a href="#impl-Clone">Clone</a></div></div><p class='location'><a href='../index.html'>libffi</a>::<wbr><a href='index.html'>middle</a></p><script>window.sidebarCurrent = {name: 'Type', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>libffi</a>::<wbr><a href='index.html'>middle</a>::<wbr><a class="struct" href=''>Type</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/libffi/middle/types.rs.html#56' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Type(_);</pre><div class='docblock'><p>Represents a single C type.</p>
+
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<p>Suppose we have a C struct:</p>
+
+<pre><code class="language-c">struct my_struct {
+    uint16_t f1;
+    uint64_t f2;
+};
+</code></pre>
+
+<p>To pass the struct by value via libffi, we need to construct a
+<code>Type</code> object describing its layout:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">libffi</span>::<span class="ident">middle</span>::<span class="ident">Type</span>;
+
+<span class="kw">let</span> <span class="ident">my_struct</span> <span class="op">=</span> <span class="ident">Type</span>::<span class="ident">structure</span>(<span class="macro">vec</span><span class="macro">!</span>[
+    <span class="ident">Type</span>::<span class="ident">u64</span>(),
+    <span class="ident">Type</span>::<span class="ident">u16</span>(),
+]);</pre>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#225-423' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.void' class="method"><span id='void.v' class='invisible'><code>pub fn <a href='#method.void' class='fnname'>void</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#230-232' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the representation of the C <code>void</code> type.</p>
+
+<p>This is used only for the return type of a CIF, not for an
+argument or struct member.</p>
+</div><h4 id='method.u8' class="method"><span id='u8.v' class='invisible'><code>pub fn <a href='#method.u8' class='fnname'>u8</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#235-237' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the unsigned 8-bit numeric type.</p>
+</div><h4 id='method.i8' class="method"><span id='i8.v' class='invisible'><code>pub fn <a href='#method.i8' class='fnname'>i8</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#240-242' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the signed 8-bit numeric type.</p>
+</div><h4 id='method.u16' class="method"><span id='u16.v' class='invisible'><code>pub fn <a href='#method.u16' class='fnname'>u16</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#245-247' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the unsigned 16-bit numeric type.</p>
+</div><h4 id='method.i16' class="method"><span id='i16.v' class='invisible'><code>pub fn <a href='#method.i16' class='fnname'>i16</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#250-252' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the signed 16-bit numeric type.</p>
+</div><h4 id='method.u32' class="method"><span id='u32.v' class='invisible'><code>pub fn <a href='#method.u32' class='fnname'>u32</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#255-257' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the unsigned 32-bit numeric type.</p>
+</div><h4 id='method.i32' class="method"><span id='i32.v' class='invisible'><code>pub fn <a href='#method.i32' class='fnname'>i32</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#260-262' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the signed 32-bit numeric type.</p>
+</div><h4 id='method.u64' class="method"><span id='u64.v' class='invisible'><code>pub fn <a href='#method.u64' class='fnname'>u64</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#265-267' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the unsigned 64-bit numeric type.</p>
+</div><h4 id='method.i64' class="method"><span id='i64.v' class='invisible'><code>pub fn <a href='#method.i64' class='fnname'>i64</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#270-272' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the signed 64-bit numeric type.</p>
+</div><h4 id='method.usize' class="method"><span id='usize.v' class='invisible'><code>pub fn <a href='#method.usize' class='fnname'>usize</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#300-302' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C equivalent of Rust <code>usize</code> (<code>u64</code>).</p>
+</div><h4 id='method.isize' class="method"><span id='isize.v' class='invisible'><code>pub fn <a href='#method.isize' class='fnname'>isize</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#306-308' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C equivalent of Rust <code>isize</code> (<code>i64</code>).</p>
+</div><h4 id='method.c_schar' class="method"><span id='c_schar.v' class='invisible'><code>pub fn <a href='#method.c_schar' class='fnname'>c_schar</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#311-313' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>signed char</code> type.</p>
+</div><h4 id='method.c_uchar' class="method"><span id='c_uchar.v' class='invisible'><code>pub fn <a href='#method.c_uchar' class='fnname'>c_uchar</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#316-318' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>unsigned char</code> type.</p>
+</div><h4 id='method.c_short' class="method"><span id='c_short.v' class='invisible'><code>pub fn <a href='#method.c_short' class='fnname'>c_short</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#321-323' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>short</code> type.</p>
+</div><h4 id='method.c_ushort' class="method"><span id='c_ushort.v' class='invisible'><code>pub fn <a href='#method.c_ushort' class='fnname'>c_ushort</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#326-328' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>unsigned short</code> type.</p>
+</div><h4 id='method.c_int' class="method"><span id='c_int.v' class='invisible'><code>pub fn <a href='#method.c_int' class='fnname'>c_int</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#331-333' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>int</code> type.</p>
+</div><h4 id='method.c_uint' class="method"><span id='c_uint.v' class='invisible'><code>pub fn <a href='#method.c_uint' class='fnname'>c_uint</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#336-338' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>unsigned int</code> type.</p>
+</div><h4 id='method.c_long' class="method"><span id='c_long.v' class='invisible'><code>pub fn <a href='#method.c_long' class='fnname'>c_long</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#341-343' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>long</code> type.</p>
+</div><h4 id='method.c_ulong' class="method"><span id='c_ulong.v' class='invisible'><code>pub fn <a href='#method.c_ulong' class='fnname'>c_ulong</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#346-348' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>unsigned long</code> type.</p>
+</div><h4 id='method.c_longlong' class="method"><span id='c_longlong.v' class='invisible'><code>pub fn <a href='#method.c_longlong' class='fnname'>c_longlong</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#351-353' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>longlong</code> type.</p>
+</div><h4 id='method.c_ulonglong' class="method"><span id='c_ulonglong.v' class='invisible'><code>pub fn <a href='#method.c_ulonglong' class='fnname'>c_ulonglong</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#356-358' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>unsigned longlong</code> type.</p>
+</div><h4 id='method.f32' class="method"><span id='f32.v' class='invisible'><code>pub fn <a href='#method.f32' class='fnname'>f32</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#361-363' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>float</code> (32-bit floating point) type.</p>
+</div><h4 id='method.f64' class="method"><span id='f64.v' class='invisible'><code>pub fn <a href='#method.f64' class='fnname'>f64</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#366-368' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>double</code> (64-bit floating point) type.</p>
+</div><h4 id='method.pointer' class="method"><span id='pointer.v' class='invisible'><code>pub fn <a href='#method.pointer' class='fnname'>pointer</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#371-373' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>void*</code> type, for passing any kind of pointer.</p>
+</div><h4 id='method.longdouble' class="method"><span id='longdouble.v' class='invisible'><code>pub fn <a href='#method.longdouble' class='fnname'>longdouble</a>() -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#376-378' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns the C <code>long double</code> (extended-precision floating point) type.</p>
+</div><h4 id='method.structure' class="method"><span id='structure.v' class='invisible'><code>pub fn <a href='#method.structure' class='fnname'>structure</a>&lt;I&gt;(fields: I) -&gt; Self <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;I: <a class="trait" href="https://doc.rust-lang.org/nightly/core/iter/traits/trait.IntoIterator.html" title="trait core::iter::traits::IntoIterator">IntoIterator</a>&lt;Item = <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a>&gt;,<br>&nbsp;&nbsp;&nbsp;&nbsp;I::<a class="type" href="https://doc.rust-lang.org/nightly/core/iter/traits/trait.IntoIterator.html#associatedtype.IntoIter" title="type core::iter::traits::IntoIterator::IntoIter">IntoIter</a>: <a class="trait" href="https://doc.rust-lang.org/nightly/core/iter/traits/trait.ExactSizeIterator.html" title="trait core::iter::traits::ExactSizeIterator">ExactSizeIterator</a>&lt;Item = <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a>&gt;,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#405-412' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Constructs a structure type whose fields have the given types.</p>
+</div><h4 id='method.as_raw_ptr' class="method"><span id='as_raw_ptr.v' class='invisible'><code>pub fn <a href='#method.as_raw_ptr' class='fnname'>as_raw_ptr</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="struct" href="../../libffi/low/struct.ffi_type.html" title="struct libffi::low::ffi_type">ffi_type</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#420-422' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Gets a raw pointer to the underlying
+<a href="../raw/struct._ffi_type.html"><code>ffi_type</code></a>.</p>
+
+<p>This method may be useful for interacting with the
+<a href="../low/index.html"><code>low</code></a> and
+<a href="../raw/index.html"><code>raw</code></a> layers.</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Debug' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a></code><a href='#impl-Debug' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#64-68' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, formatter: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#65-67' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt">Read more</a></p>
+</div></div><h3 id='impl-Drop' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a></code><a href='#impl-Drop' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#175-179' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class="method"><span id='drop.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#176-178' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Executes the destructor for this type. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div><h3 id='impl-Clone' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone">Clone</a> for <a class="struct" href="../../libffi/middle/struct.Type.html" title="struct libffi::middle::Type">Type</a></code><a href='#impl-Clone' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#187-191' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class="method"><span id='clone.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; Self</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/libffi/middle/types.rs.html#188-190' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class="method"><span id='clone_from.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Self)</code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/clone.rs.html#112-114' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "libffi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

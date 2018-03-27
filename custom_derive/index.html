@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `custom_derive` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, custom_derive">
+
+    <title>custom_derive - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Crate custom_derive</p><div class="sidebar-elems"><p class='location'></p><script>window.sidebarCurrent = {name: 'custom_derive', ty: 'mod', relpath: '../'};</script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>custom_derive</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/custom_derive/lib.rs.html#10-462' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p><strong>Note</strong>: This crate has been superseded by <code>macro-attr</code>.</p>
+
+<p>This crate provides a macro that enables the use of custom <code>derive</code> attributes.</p>
+
+<p>To use it, make sure you link to the crate like so:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">custom_derive</span>;</pre>
+
+<blockquote>
+<p><strong>Note</strong>: the <code>custom_derive!</code> macro itself is not documented, as the automatic documentation for it would be uselessly huge and incomprehensible.</p>
+</blockquote>
+
+<style type="text/css">
+.link-block { font-family: "Fira Sans"; }
+.link-block > p { display: inline-block; }
+.link-block > p > strong { font-weight: 500; margin-right: 1em; }
+.link-block > ul { display: inline-block; padding: 0; list-style: none; }
+.link-block > ul > li {
+  font-size: 0.8em;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  padding: 0.3em;
+  display: inline-block;
+}
+</style>
+
+<p><span></span><div class="link-block"></p>
+
+<p><strong>Links</strong></p>
+
+<ul>
+<li><a href="https://crates.io/crates/custom_derive/">Latest Release</a></li>
+<li><a href="https://docs.rs/crate/custom_derive/">Latest Docs</a></li>
+<li><a href="https://github.com/DanielKeep/rust-custom-derive/tree/custom_derive-master/">Repository</a></li>
+</ul>
+
+<p><span></span></div></p>
+
+<h1 id='usage' class='section-header'><a href='#usage'>Usage</a></h1>
+<p>The macro should be used to wrap an entire <em>single</em> <code>enum</code> or <code>struct</code> declaration, including its attributes (both <code>derive</code> and others).  All derivation attributes which the macro does <em>not</em> recognise will be assumed to be custom, and treated accordingly.</p>
+
+<p><code>custom_derive!</code> assumes that custom derivations are implemented as macros (of the same name).  For example, here is a simple derivation macro:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">custom_derive</span>;
+
+<span class="kw">trait</span> <span class="ident">TypeName</span> {
+    <span class="kw">fn</span> <span class="ident">type_name</span>() <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
+}
+
+<span class="kw">trait</span> <span class="ident">ReprType</span> {
+    <span class="kw">type</span> <span class="ident">Repr</span>;
+}
+
+<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">TypeName</span> {
+    (() $(<span class="kw">pub</span>)<span class="op">*</span> <span class="kw">enum</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">tail</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=&gt;</span> { <span class="macro">TypeName</span><span class="macro">!</span> { @<span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> } };
+    (() $(<span class="kw">pub</span>)<span class="op">*</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">tail</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=&gt;</span> { <span class="macro">TypeName</span><span class="macro">!</span> { @<span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> } };
+
+    (@<span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>) <span class="op">=&gt;</span> {
+        <span class="kw">impl</span> <span class="ident">TypeName</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> {
+            <span class="kw">fn</span> <span class="ident">type_name</span>() <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> { <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>) }
+        }
+    };
+}
+
+<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">TryFrom</span> {
+    ((<span class="macro-nonterminal">$</span><span class="macro-nonterminal">repr</span>:<span class="ident">ty</span>) $(<span class="kw">pub</span>)<span class="op">*</span> <span class="kw">enum</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">tail</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=&gt;</span> {
+        <span class="kw">impl</span> <span class="ident">ReprType</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> {
+            <span class="kw">type</span> <span class="ident">Repr</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">repr</span>;
+        }
+    };
+}
+
+<span class="macro">custom_derive</span><span class="macro">!</span> {
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+    <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
+    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">TryFrom</span>(<span class="ident">u8</span>), <span class="ident">TypeName</span>)]</span>
+    <span class="kw">enum</span> <span class="ident">Foo</span> { <span class="ident">A</span>, <span class="ident">B</span> }
+}
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="kw">let</span> <span class="ident">foo</span> <span class="op">=</span> <span class="ident">Foo</span>::<span class="ident">B</span>;
+    <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">foo</span> <span class="kw">as</span> <span class="op">&lt;</span><span class="ident">Foo</span> <span class="kw">as</span> <span class="ident">ReprType</span><span class="op">&gt;</span>::<span class="ident">Repr</span>;
+    <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}: {:?} ({:?})&quot;</span>, <span class="ident">Foo</span>::<span class="ident">type_name</span>(), <span class="ident">foo</span>, <span class="ident">v</span>);
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">msg</span>, <span class="string">&quot;Foo: B (1)&quot;</span>);
+}</pre>
+
+<p>First, note that <code>custom_derive!</code> passes any arguments on the derivation attribute to the macro.  In the case of attributes <em>without</em> any arguments, <code>()</code> is passed instead.</p>
+
+<p>Secondly, the macro is passed the entire item, <em>sans</em> attributes.  It is the derivation macro&#39;s job to parse the item correctly.</p>
+
+<p>Third, each derivation macro is expected to result in zero or more items, not including the item itself.  As a result, it is <em>not</em> possible to mutate the item in any way, or attach additional attributes to it.</p>
+
+<p>Finally, <code>@impl</code> is merely a trick to pack multiple, different functions into a single macro.  The sequence has no special meaning; it is simply <em>distinct</em> from the usual invocation syntax.</p>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "custom_derive";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

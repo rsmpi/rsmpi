@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `high` mod in crate `libffi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, high">
+
+    <title>libffi::high - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Module high</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#reexports">Reexports</a></li><li><a href="#modules">Modules</a></li><li><a href="#constants">Constants</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'><a href='../index.html'>libffi</a></p><script>window.sidebarCurrent = {name: 'high', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>libffi</a>::<wbr><a class="mod" href=''>high</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/libffi/high/mod.rs.html#1-511' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>High layer providing automatic marshalling of Rust closures
+as C function pointers.</p>
+
+<p>The main facility here is given by the structs
+<code>Closure<em>N</em></code>,
+<code>Closure<span></span>Mut<em>N</em></code>,
+and <code>Closure<span></span>Once<em>N</em></code>,
+for natural numbers <em><code>N</code></em>
+from <code>0</code> to <code>12</code> (as of
+now). These represent C closures of <em><code>N</code></em> arguments, which can be
+used to turn Rust lambdas (or in generally, anything that implements
+<code>Fn</code> or <code>FnMut</code>) into ordinary C function pointers. For example, a
+Rust value of type <code>Fn(u32, u32) -&gt; u64</code> can be turned into a
+closure of type <code>Closure2&lt;u32, u32, u64&gt;</code> using
+<a href="struct.Closure2.html#method.new"><code>Closure2::new</code></a>. Then a C
+function pointer of type <code>extern &quot;C&quot; fn(u32, u32) -&gt; u64</code> can be
+borrowed from the closure and passed to C.</p>
+
+<p>The above usage case eliminates much of the boilerplate involved in
+creating a closure as compared to the <code>middle</code> and <code>low</code> layers, but
+at the price of flexibility. Some flexibility can be recovered by
+manually constructing and configuring a CIF (<em>e.g.,</em> a
+<a href="struct.Cif2.html"><code>Cif2</code></a>) and then creating the closure with
+<a href="struct.Closure2.html#method.new_with_cif"><code>Closure2::new_with_cif</code></a>.</p>
+
+<p>See the <a href="call/index.html"><code>call</code></a> submodule for a simple interface
+to dynamic calls to C functions.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Here we use <a href="struct.ClosureMut1.html"><code>ClosureMut1</code></a>, which is the type
+for creating mutable closures of one argument. We use it to turn a
+Rust lambda into a C function pointer.</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">libffi</span>::<span class="ident">high</span>::<span class="ident">ClosureMut1</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x</span> <span class="op">=</span> <span class="number">0u64</span>;
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="op">|</span><span class="ident">y</span>: <span class="ident">u32</span><span class="op">|</span> { <span class="ident">x</span> <span class="op">+=</span> <span class="ident">y</span> <span class="kw">as</span> <span class="ident">u64</span>; <span class="ident">x</span> };
+
+<span class="kw">let</span> <span class="ident">closure</span> <span class="op">=</span> <span class="ident">ClosureMut1</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">f</span>);
+<span class="kw">let</span> <span class="ident">counter</span> <span class="op">=</span> <span class="ident">closure</span>.<span class="ident">code_ptr</span>();
+
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">5</span>, <span class="ident">counter</span>(<span class="number">5</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">6</span>, <span class="ident">counter</span>(<span class="number">1</span>));
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">8</span>, <span class="ident">counter</span>(<span class="number">2</span>));</pre>
+
+<p>Note that in the above example, <code>counter</code> is an ordinary C function
+pointer of type <code>extern &quot;C&quot; fn(u64) -&gt; u64</code>.</p>
+
+<p>Here’s an example using <code>ClosureOnce3</code> to create a closure that owns
+a vector:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">libffi</span>::<span class="ident">high</span>::<span class="ident">ClosureOnce3</span>;
+
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="kw">move</span> <span class="op">|</span><span class="ident">x</span>: <span class="ident">usize</span>, <span class="ident">y</span>: <span class="ident">usize</span>, <span class="ident">z</span>: <span class="ident">usize</span><span class="op">|</span> {
+    <span class="ident">v</span>[<span class="ident">x</span>] <span class="op">+</span> <span class="ident">v</span>[<span class="ident">y</span>] <span class="op">+</span> <span class="ident">v</span>[<span class="ident">z</span>]
+};
+
+<span class="kw">let</span> <span class="ident">closure</span> <span class="op">=</span> <span class="ident">ClosureOnce3</span>::<span class="ident">new</span>(<span class="ident">f</span>);
+<span class="kw">let</span> <span class="ident">call</span> <span class="op">=</span> <span class="ident">closure</span>.<span class="ident">code_ptr</span>();
+
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="number">12</span>, <span class="ident">call</span>(<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>));</pre>
+
+<p>Invoking the closure a second time will panic.</p>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use self::types::<a class="struct" href="../../libffi/high/types/struct.Type.html" title="struct libffi::high::types::Type">Type</a>;</code></td></tr><tr><td><code>pub use self::types::<a class="trait" href="../../libffi/high/types/trait.CType.html" title="trait libffi::high::types::CType">CType</a>;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/call/index.html" title="mod libffi::high::call">call</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity0/index.html" title="mod libffi::high::arity0">arity0</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity1/index.html" title="mod libffi::high::arity1">arity1</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity2/index.html" title="mod libffi::high::arity2">arity2</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity3/index.html" title="mod libffi::high::arity3">arity3</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity4/index.html" title="mod libffi::high::arity4">arity4</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity5/index.html" title="mod libffi::high::arity5">arity5</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity6/index.html" title="mod libffi::high::arity6">arity6</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity7/index.html" title="mod libffi::high::arity7">arity7</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity8/index.html" title="mod libffi::high::arity8">arity8</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity9/index.html" title="mod libffi::high::arity9">arity9</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity10/index.html" title="mod libffi::high::arity10">arity10</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity11/index.html" title="mod libffi::high::arity11">arity11</a>::*;</code></td></tr><tr><td><code>pub use self::<a class="mod" href="../../libffi/high/arity12/index.html" title="mod libffi::high::arity12">arity12</a>::*;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity0/index.html"
+                                  title='mod libffi::high::arity0'>arity0</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity1/index.html"
+                                  title='mod libffi::high::arity1'>arity1</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity2/index.html"
+                                  title='mod libffi::high::arity2'>arity2</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity3/index.html"
+                                  title='mod libffi::high::arity3'>arity3</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity4/index.html"
+                                  title='mod libffi::high::arity4'>arity4</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity5/index.html"
+                                  title='mod libffi::high::arity5'>arity5</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity6/index.html"
+                                  title='mod libffi::high::arity6'>arity6</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity7/index.html"
+                                  title='mod libffi::high::arity7'>arity7</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity8/index.html"
+                                  title='mod libffi::high::arity8'>arity8</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity9/index.html"
+                                  title='mod libffi::high::arity9'>arity9</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity10/index.html"
+                                  title='mod libffi::high::arity10'>arity10</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity11/index.html"
+                                  title='mod libffi::high::arity11'>arity11</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="arity12/index.html"
+                                  title='mod libffi::high::arity12'>arity12</a></td>
+                           <td class='docblock-short'>
+                                <p>CIF and closure types organized by function arity.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="call/index.html"
+                                  title='mod libffi::high::call'>call</a></td>
+                           <td class='docblock-short'>
+                                <p>Simple dynamic calls.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="types/index.html"
+                                  title='mod libffi::high::types'>types</a></td>
+                           <td class='docblock-short'>
+                                <p>Representations of C types for the high layer.</p>
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="constant" href="constant.ffi_abi_FFI_DEFAULT_ABI.html"
+                                  title='constant libffi::high::ffi_abi_FFI_DEFAULT_ABI'>ffi_abi_FFI_DEFAULT_ABI</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.FfiAbi.html"
+                                  title='type libffi::high::FfiAbi'>FfiAbi</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "libffi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["arg","Constructs an `Arg` for passing to `call`."],["call","Performs a dynamic call to a C function."]],"struct":[["Arg","Encapsulates an argument with its type information."]]});

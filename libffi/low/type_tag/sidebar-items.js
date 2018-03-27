@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["STRUCT","Indicates a structure type."]]});

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Source` trait in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Source">
+
+    <title>mpi::point_to_point::Source - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc trait">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Trait Source</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.source_rank">source_rank</a></div><a class="sidebar-title" href="#provided-methods">Provided Methods</a><div class="sidebar-links"><a href="#method.probe_with_tag">probe_with_tag</a><a href="#method.probe">probe</a><a href="#method.matched_probe_with_tag">matched_probe_with_tag</a><a href="#method.matched_probe">matched_probe</a><a href="#method.receive_with_tag">receive_with_tag</a><a href="#method.receive">receive</a><a href="#method.receive_into_with_tag">receive_into_with_tag</a><a href="#method.receive_into">receive_into</a><a href="#method.receive_vec_with_tag">receive_vec_with_tag</a><a href="#method.receive_vec">receive_vec</a><a href="#method.immediate_receive_into_with_tag">immediate_receive_into_with_tag</a><a href="#method.immediate_receive_into">immediate_receive_into</a><a href="#method.immediate_receive_with_tag">immediate_receive_with_tag</a><a href="#method.immediate_receive">immediate_receive</a><a href="#method.immediate_probe_with_tag">immediate_probe_with_tag</a><a href="#method.immediate_probe">immediate_probe</a><a href="#method.immediate_matched_probe_with_tag">immediate_matched_probe_with_tag</a><a href="#method.immediate_matched_probe">immediate_matched_probe</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='../index.html'>mpi</a>::<wbr><a href='index.html'>point_to_point</a></p><script>window.sidebarCurrent = {name: 'Source', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>mpi</a>::<wbr><a href='index.html'>point_to_point</a>::<wbr><a class="trait" href=''>Source</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/point_to_point.rs.html#48-435' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub unsafe trait Source: <a class="trait" href="../../mpi/topology/trait.AsCommunicator.html" title="trait mpi::topology::AsCommunicator">AsCommunicator</a> {
+    fn <a href='#tymethod.source_rank' class='fnname'>source_rank</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>;
+
+    fn <a href='#method.probe_with_tag' class='fnname'>probe_with_tag</a>(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.probe' class='fnname'>probe</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.matched_probe_with_tag' class='fnname'>matched_probe_with_tag</a>(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a>, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.matched_probe' class='fnname'>matched_probe</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a>, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.receive_with_tag' class='fnname'>receive_with_tag</a>&lt;Msg&gt;(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a>Msg, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.receive' class='fnname'>receive</a>&lt;Msg&gt;(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a>Msg, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.receive_into_with_tag' class='fnname'>receive_into_with_tag</a>&lt;Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>Buf, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Buf: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.receive_into' class='fnname'>receive_into</a>&lt;Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>Buf) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Buf: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.receive_vec_with_tag' class='fnname'>receive_vec_with_tag</a>&lt;Msg&gt;(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;Msg&gt;, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.receive_vec' class='fnname'>receive_vec</a>&lt;Msg&gt;(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;Msg&gt;, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_receive_into_with_tag' class='fnname'>immediate_receive_into_with_tag</a>&lt;'a, Sc, Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>Buf, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Buf: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_receive_into' class='fnname'>immediate_receive_into</a>&lt;'a, Sc, Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>Buf<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Buf: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_receive_with_tag' class='fnname'>immediate_receive_with_tag</a>&lt;Msg&gt;(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.ReceiveFuture.html" title="struct mpi::point_to_point::ReceiveFuture">ReceiveFuture</a>&lt;Msg&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_receive' class='fnname'>immediate_receive</a>&lt;Msg&gt;(&amp;self) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.ReceiveFuture.html" title="struct mpi::point_to_point::ReceiveFuture">ReceiveFuture</a>&lt;Msg&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_probe_with_tag' class='fnname'>immediate_probe_with_tag</a>(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a>&gt; { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_probe' class='fnname'>immediate_probe</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a>&gt; { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_matched_probe_with_tag' class='fnname'>immediate_matched_probe_with_tag</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a>, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a>&gt; { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_matched_probe' class='fnname'>immediate_matched_probe</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a>, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a>&gt; { ... }
+}</pre><div class='docblock'><p>Something that can be used as the source in a point to point receive operation</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<ul>
+<li>A <code>Process</code> used as a source for a receive operation will receive data only from the
+identified process.</li>
+<li>A communicator can also be used as a source via the <code>AnyProcess</code> identifier.</li>
+</ul>
+
+<h1 id='standard-sections' class='section-header'><a href='#standard-sections'>Standard section(s)</a></h1>
+<p>3.2.3</p>
+</div>
+            <h2 id='required-methods' class='small-section-header'>
+              Required Methods<a href='#required-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='tymethod.source_rank' class='method'><span id='source_rank.v' class='invisible'><code>fn <a href='#tymethod.source_rank' class='fnname'>source_rank</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a></code></span></h3><div class='docblock'><p><code>Rank</code> that identifies the source</p>
+</div></div>
+            <h2 id='provided-methods' class='small-section-header'>
+              Provided Methods<a href='#provided-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='method.probe_with_tag' class='method'><span id='probe_with_tag.v' class='invisible'><code>fn <a href='#method.probe_with_tag' class='fnname'>probe_with_tag</a>(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a></code></span></h3><div class='docblock'><p>Probe a source for incoming messages.</p>
+
+<p>Probe <code>Source</code> <code>&amp;self</code> for incoming messages with a certain tag.</p>
+
+<p>An ordinary <code>probe()</code> returns a <code>Status</code> which allows inspection of the properties of the
+incoming message, but does not guarantee reception by a subsequent <code>receive()</code> (especially
+in a multi-threaded set-up). For a probe operation with stronger guarantees, see
+<code>matched_probe()</code>.</p>
+
+<h1 id='standard-sections-1' class='section-header'><a href='#standard-sections-1'>Standard section(s)</a></h1>
+<p>3.8.1</p>
+</div><h3 id='method.probe' class='method'><span id='probe.v' class='invisible'><code>fn <a href='#method.probe' class='fnname'>probe</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a></code></span></h3><div class='docblock'><p>Probe a source for incoming messages.</p>
+
+<p>Probe <code>Source</code> <code>&amp;self</code> for incoming messages with any tag.</p>
+
+<p>An ordinary <code>probe()</code> returns a <code>Status</code> which allows inspection of the properties of the
+incoming message, but does not guarantee reception by a subsequent <code>receive()</code> (especially
+in a multi-threaded set-up). For a probe operation with stronger guarantees, see
+<code>matched_probe()</code>.</p>
+
+<h1 id='standard-sections-2' class='section-header'><a href='#standard-sections-2'>Standard section(s)</a></h1>
+<p>3.8.1</p>
+</div><h3 id='method.matched_probe_with_tag' class='method'><span id='matched_probe_with_tag.v' class='invisible'><code>fn <a href='#method.matched_probe_with_tag' class='fnname'>matched_probe_with_tag</a>(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a>, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a></code></span></h3><div class='docblock'><p>Probe a source for incoming messages with guaranteed reception.</p>
+
+<p>Probe <code>Source</code> <code>&amp;self</code> for incoming messages with a certain tag.</p>
+
+<p>A <code>matched_probe()</code> returns both a <code>Status</code> that describes the properties of a pending
+incoming message and a <code>Message</code> which can and <em>must</em> subsequently be used in a
+<code>matched_receive()</code> to receive the probed message.</p>
+
+<h1 id='standard-sections-3' class='section-header'><a href='#standard-sections-3'>Standard section(s)</a></h1>
+<p>3.8.2</p>
+</div><h3 id='method.matched_probe' class='method'><span id='matched_probe.v' class='invisible'><code>fn <a href='#method.matched_probe' class='fnname'>matched_probe</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a>, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a></code></span></h3><div class='docblock'><p>Probe a source for incoming messages with guaranteed reception.</p>
+
+<p>Probe <code>Source</code> <code>&amp;self</code> for incoming messages with any tag.</p>
+
+<p>A <code>matched_probe()</code> returns both a <code>Status</code> that describes the properties of a pending
+incoming message and a <code>Message</code> which can and <em>must</em> subsequently be used in a
+<code>matched_receive()</code> to receive the probed message.</p>
+
+<h1 id='standard-sections-4' class='section-header'><a href='#standard-sections-4'>Standard section(s)</a></h1>
+<p>3.8.2</p>
+</div><h3 id='method.receive_with_tag' class='method'><span id='receive_with_tag.v' class='invisible'><code>fn <a href='#method.receive_with_tag' class='fnname'>receive_with_tag</a>&lt;Msg&gt;(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a>Msg, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Receive a message containing a single instance of type <code>Msg</code>.</p>
+
+<p>Receive a message from <code>Source</code> <code>&amp;self</code> tagged <code>tag</code> containing a single instance of type
+<code>Msg</code>.</p>
+
+<h1 id='standard-sections-5' class='section-header'><a href='#standard-sections-5'>Standard section(s)</a></h1>
+<p>3.2.4</p>
+</div><h3 id='method.receive' class='method'><span id='receive.v' class='invisible'><code>fn <a href='#method.receive' class='fnname'>receive</a>&lt;Msg&gt;(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a>Msg, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Receive a message containing a single instance of type <code>Msg</code>.</p>
+
+<p>Receive a message from <code>Source</code> <code>&amp;self</code> containing a single instance of type <code>Msg</code>.</p>
+
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">mpi</span>::<span class="ident">traits</span>::<span class="kw-2">*</span>;
+
+<span class="kw">let</span> <span class="ident">universe</span> <span class="op">=</span> <span class="ident">mpi</span>::<span class="ident">initialize</span>().<span class="ident">unwrap</span>();
+<span class="kw">let</span> <span class="ident">world</span> <span class="op">=</span> <span class="ident">universe</span>.<span class="ident">world</span>();
+
+<span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">world</span>.<span class="ident">any_process</span>().<span class="ident">receive</span>::<span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>();</pre>
+
+<h1 id='standard-sections-6' class='section-header'><a href='#standard-sections-6'>Standard section(s)</a></h1>
+<p>3.2.4</p>
+</div><h3 id='method.receive_into_with_tag' class='method'><span id='receive_into_with_tag.v' class='invisible'><code>fn <a href='#method.receive_into_with_tag' class='fnname'>receive_into_with_tag</a>&lt;Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>Buf, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Buf: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Receive a message into a <code>Buffer</code>.</p>
+
+<p>Receive a message from <code>Source</code> <code>&amp;self</code> tagged <code>tag</code> into <code>Buffer</code> <code>buf</code>.</p>
+
+<h1 id='standard-sections-7' class='section-header'><a href='#standard-sections-7'>Standard section(s)</a></h1>
+<p>3.2.4</p>
+</div><h3 id='method.receive_into' class='method'><span id='receive_into.v' class='invisible'><code>fn <a href='#method.receive_into' class='fnname'>receive_into</a>&lt;Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>Buf) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Buf: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Receive a message into a <code>Buffer</code>.</p>
+
+<p>Receive a message from <code>Source</code> <code>&amp;self</code> into <code>Buffer</code> <code>buf</code>.</p>
+
+<h1 id='standard-sections-8' class='section-header'><a href='#standard-sections-8'>Standard section(s)</a></h1>
+<p>3.2.4</p>
+</div><h3 id='method.receive_vec_with_tag' class='method'><span id='receive_vec_with_tag.v' class='invisible'><code>fn <a href='#method.receive_vec_with_tag' class='fnname'>receive_vec_with_tag</a>&lt;Msg&gt;(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;Msg&gt;, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Receive a message containing multiple instances of type <code>Msg</code> into a <code>Vec</code>.</p>
+
+<p>Receive a message from <code>Source</code> <code>&amp;self</code> tagged <code>tag</code> containing multiple instances of type
+<code>Msg</code> into a <code>Vec</code>.</p>
+
+<h1 id='standard-sections-9' class='section-header'><a href='#standard-sections-9'>Standard section(s)</a></h1>
+<p>3.2.4</p>
+</div><h3 id='method.receive_vec' class='method'><span id='receive_vec.v' class='invisible'><code>fn <a href='#method.receive_vec' class='fnname'>receive_vec</a>&lt;Msg&gt;(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;Msg&gt;, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Receive a message containing multiple instances of type <code>Msg</code> into a <code>Vec</code>.</p>
+
+<p>Receive a message from <code>Source</code> <code>&amp;self</code> containing multiple instances of type <code>Msg</code> into a
+<code>Vec</code>.</p>
+
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<p>See <code>examples/send_receive.rs</code></p>
+
+<h1 id='standard-sections-10' class='section-header'><a href='#standard-sections-10'>Standard section(s)</a></h1>
+<p>3.2.4</p>
+</div><h3 id='method.immediate_receive_into_with_tag' class='method'><span id='immediate_receive_into_with_tag.v' class='invisible'><code>fn <a href='#method.immediate_receive_into_with_tag' class='fnname'>immediate_receive_into_with_tag</a>&lt;'a, Sc, Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>Buf, <br>&nbsp;&nbsp;&nbsp;&nbsp;tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a><br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Buf: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate an immediate (non-blocking) receive operation.</p>
+
+<p>Initiate receiving a message matching <code>tag</code> into <code>buf</code>.</p>
+
+<h1 id='standard-sections-11' class='section-header'><a href='#standard-sections-11'>Standard section(s)</a></h1>
+<p>3.7.2</p>
+</div><h3 id='method.immediate_receive_into' class='method'><span id='immediate_receive_into.v' class='invisible'><code>fn <a href='#method.immediate_receive_into' class='fnname'>immediate_receive_into</a>&lt;'a, Sc, Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>Buf<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Buf: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate an immediate (non-blocking) receive operation.</p>
+
+<p>Initiate receiving a message into <code>buf</code>.</p>
+
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<p>See <code>examples/immediate.rs</code></p>
+
+<h1 id='standard-sections-12' class='section-header'><a href='#standard-sections-12'>Standard section(s)</a></h1>
+<p>3.7.2</p>
+</div><h3 id='method.immediate_receive_with_tag' class='method'><span id='immediate_receive_with_tag.v' class='invisible'><code>fn <a href='#method.immediate_receive_with_tag' class='fnname'>immediate_receive_with_tag</a>&lt;Msg&gt;(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.ReceiveFuture.html" title="struct mpi::point_to_point::ReceiveFuture">ReceiveFuture</a>&lt;Msg&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate a non-blocking receive operation for messages matching tag <code>tag</code>.</p>
+
+<h1 id='standard-sections-13' class='section-header'><a href='#standard-sections-13'>Standard section(s)</a></h1>
+<p>3.7.2</p>
+</div><h3 id='method.immediate_receive' class='method'><span id='immediate_receive.v' class='invisible'><code>fn <a href='#method.immediate_receive' class='fnname'>immediate_receive</a>&lt;Msg&gt;(&amp;self) -&gt; <a class="struct" href="../../mpi/point_to_point/struct.ReceiveFuture.html" title="struct mpi::point_to_point::ReceiveFuture">ReceiveFuture</a>&lt;Msg&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Msg: <a class="trait" href="../../mpi/datatype/trait.Equivalence.html" title="trait mpi::datatype::Equivalence">Equivalence</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate a non-blocking receive operation.</p>
+
+<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
+<p>See <code>examples/immediate.rs</code></p>
+
+<h1 id='standard-sections-14' class='section-header'><a href='#standard-sections-14'>Standard section(s)</a></h1>
+<p>3.7.2</p>
+</div><h3 id='method.immediate_probe_with_tag' class='method'><span id='immediate_probe_with_tag.v' class='invisible'><code>fn <a href='#method.immediate_probe_with_tag' class='fnname'>immediate_probe_with_tag</a>(&amp;self, tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a>&gt;</code></span></h3><div class='docblock'><p>Asynchronously probe a source for incoming messages.</p>
+
+<p>Asynchronously probe <code>Source</code> <code>&amp;self</code> for incoming messages with a certain tag.</p>
+
+<p>Like <code>Probe</code> but returns a <code>None</code> immediately if there is no incoming message to be probed.</p>
+
+<h1 id='standard-sections-15' class='section-header'><a href='#standard-sections-15'>Standard section(s)</a></h1>
+<p>3.8.1</p>
+</div><h3 id='method.immediate_probe' class='method'><span id='immediate_probe.v' class='invisible'><code>fn <a href='#method.immediate_probe' class='fnname'>immediate_probe</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a>&gt;</code></span></h3><div class='docblock'><p>Asynchronously probe a source for incoming messages.</p>
+
+<p>Asynchronously probe <code>Source</code> <code>&amp;self</code> for incoming messages with any tag.</p>
+
+<p>Like <code>Probe</code> but returns a <code>None</code> immediately if there is no incoming message to be probed.</p>
+
+<h1 id='standard-sections-16' class='section-header'><a href='#standard-sections-16'>Standard section(s)</a></h1>
+<p>3.8.1</p>
+</div><h3 id='method.immediate_matched_probe_with_tag' class='method'><span id='immediate_matched_probe_with_tag.v' class='invisible'><code>fn <a href='#method.immediate_matched_probe_with_tag' class='fnname'>immediate_matched_probe_with_tag</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a>, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a>&gt;</code></span></h3><div class='docblock'><p>Asynchronously probe a source for incoming messages with guaranteed reception.</p>
+
+<p>Asynchronously probe <code>Source</code> <code>&amp;self</code> for incoming messages with a certain tag.</p>
+
+<p>Like <code>MatchedProbe</code> but returns a <code>None</code> immediately if there is no incoming message to be
+probed.</p>
+
+<h1 id='standard-sections-17' class='section-header'><a href='#standard-sections-17'>Standard section(s)</a></h1>
+<p>3.8.2</p>
+</div><h3 id='method.immediate_matched_probe' class='method'><span id='immediate_matched_probe.v' class='invisible'><code>fn <a href='#method.immediate_matched_probe' class='fnname'>immediate_matched_probe</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="struct" href="../../mpi/point_to_point/struct.Message.html" title="struct mpi::point_to_point::Message">Message</a>, <a class="struct" href="../../mpi/point_to_point/struct.Status.html" title="struct mpi::point_to_point::Status">Status</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a>&gt;</code></span></h3><div class='docblock'><p>Asynchronously probe a source for incoming messages with guaranteed reception.</p>
+
+<p>Asynchronously probe <code>Source</code> <code>&amp;self</code> for incoming messages with any tag.</p>
+
+<p>Like <code>MatchedProbe</code> but returns a <code>None</code> immediately if there is no incoming message to be
+probed.</p>
+
+<h1 id='standard-sections-18' class='section-header'><a href='#standard-sections-18'>Standard section(s)</a></h1>
+<p>3.8.2</p>
+</div></div>
+        <h2 id='implementors' class='small-section-header'>
+          Implementors<a href='#implementors' class='anchor'></a>
+        </h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><div class='out-of-band'><a class='srclink' href='../../src/mpi/point_to_point.rs.html#437-444' title='goto source code'>[src]</a></div><code>impl&lt;'a, C&gt; Source for <a class="struct" href="../../mpi/topology/struct.AnyProcess.html" title="struct mpi::topology::AnyProcess">AnyProcess</a>&lt;'a, C&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;C: 'a + <a class="trait" href="../../mpi/topology/trait.Communicator.html" title="trait mpi::topology::Communicator">Communicator</a>,&nbsp;</span></code></li>
+<li><div class='out-of-band'><a class='srclink' href='../../src/mpi/point_to_point.rs.html#446-453' title='goto source code'>[src]</a></div><code>impl&lt;'a, C&gt; Source for <a class="struct" href="../../mpi/topology/struct.Process.html" title="struct mpi::topology::Process">Process</a>&lt;'a, C&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;C: 'a + <a class="trait" href="../../mpi/topology/trait.Communicator.html" title="trait mpi::topology::Communicator">Communicator</a>,&nbsp;</span></code></li>
+</ul><script type="text/javascript" async
+                         src="../../implementors/mpi/point_to_point/trait.Source.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

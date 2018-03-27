@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Communicator` trait in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Communicator">
+
+    <title>mpi::topology::Communicator - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc trait">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Trait Communicator</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#provided-methods">Provided Methods</a><div class="sidebar-links"><a href="#method.size">size</a><a href="#method.rank">rank</a><a href="#method.process_at_rank">process_at_rank</a><a href="#method.any_process">any_process</a><a href="#method.this_process">this_process</a><a href="#method.compare">compare</a><a href="#method.duplicate">duplicate</a><a href="#method.split_by_color">split_by_color</a><a href="#method.split_by_color_with_key">split_by_color_with_key</a><a href="#method.split_by_subgroup_collective">split_by_subgroup_collective</a><a href="#method.split_by_subgroup">split_by_subgroup</a><a href="#method.split_by_subgroup_with_tag">split_by_subgroup_with_tag</a><a href="#method.group">group</a><a href="#method.abort">abort</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='../index.html'>mpi</a>::<wbr><a href='index.html'>topology</a></p><script>window.sidebarCurrent = {name: 'Communicator', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>mpi</a>::<wbr><a href='index.html'>topology</a>::<wbr><a class="trait" href=''>Communicator</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/topology.rs.html#180-401' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Communicator: <a class="trait" href="../../mpi/raw/trait.AsRaw.html" title="trait mpi::raw::AsRaw">AsRaw</a>&lt;Raw = <a class="type" href="../../mpi_sys/type.MPI_Comm.html" title="type mpi_sys::MPI_Comm">MPI_Comm</a>&gt; {
+    fn <a href='#method.size' class='fnname'>size</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.rank' class='fnname'>rank</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.process_at_rank' class='fnname'>process_at_rank</a>(&amp;self, r: <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>) -&gt; <a class="struct" href="../../mpi/topology/struct.Process.html" title="struct mpi::topology::Process">Process</a>&lt;Self&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.any_process' class='fnname'>any_process</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/topology/struct.AnyProcess.html" title="struct mpi::topology::AnyProcess">AnyProcess</a>&lt;Self&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.this_process' class='fnname'>this_process</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/topology/struct.Process.html" title="struct mpi::topology::Process">Process</a>&lt;Self&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.compare' class='fnname'>compare</a>&lt;C:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>C) -&gt; <a class="enum" href="../../mpi/topology/enum.CommunicatorRelation.html" title="enum mpi::topology::CommunicatorRelation">CommunicatorRelation</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C: <a class="trait" href="../../mpi/topology/trait.Communicator.html" title="trait mpi::topology::Communicator">Communicator</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.duplicate' class='fnname'>duplicate</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.split_by_color' class='fnname'>split_by_color</a>(&amp;self, color: <a class="struct" href="../../mpi/topology/struct.Color.html" title="struct mpi::topology::Color">Color</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt; { ... }
+<div class='item-spacer'></div>    fn <a href='#method.split_by_color_with_key' class='fnname'>split_by_color_with_key</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color: <a class="struct" href="../../mpi/topology/struct.Color.html" title="struct mpi::topology::Color">Color</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key: <a class="type" href="../../mpi/topology/type.Key.html" title="type mpi::topology::Key">Key</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt; { ... }
+<div class='item-spacer'></div>    fn <a href='#method.split_by_subgroup_collective' class='fnname'>split_by_subgroup_collective</a>&lt;G:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;group: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.split_by_subgroup' class='fnname'>split_by_subgroup</a>&lt;G:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;group: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.split_by_subgroup_with_tag' class='fnname'>split_by_subgroup_with_tag</a>&lt;G:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;group: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.group' class='fnname'>group</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.abort' class='fnname'>abort</a>(&amp;self, errorcode: <a class="type" href="https://doc.rust-lang.org/nightly/std/os/raw/type.c_int.html" title="type std::os::raw::c_int">c_int</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.never.html">!</a> { ... }
+}</pre><div class='docblock'><p>Communicators are contexts for communication</p>
+</div>
+            <h2 id='provided-methods' class='small-section-header'>
+              Provided Methods<a href='#provided-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='method.size' class='method'><span id='size.v' class='invisible'><code>fn <a href='#method.size' class='fnname'>size</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a></code></span></h3><div class='docblock'><p>Number of processes in this communicator</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>See <code>examples/simple.rs</code></p>
+
+<h1 id='standard-sections' class='section-header'><a href='#standard-sections'>Standard section(s)</a></h1>
+<p>6.4.1</p>
+</div><h3 id='method.rank' class='method'><span id='rank.v' class='invisible'><code>fn <a href='#method.rank' class='fnname'>rank</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a></code></span></h3><div class='docblock'><p>The <code>Rank</code> that identifies the calling process within this communicator</p>
+
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<p>See <code>examples/simple.rs</code></p>
+
+<h1 id='standard-sections-1' class='section-header'><a href='#standard-sections-1'>Standard section(s)</a></h1>
+<p>6.4.1</p>
+</div><h3 id='method.process_at_rank' class='method'><span id='process_at_rank.v' class='invisible'><code>fn <a href='#method.process_at_rank' class='fnname'>process_at_rank</a>(&amp;self, r: <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>) -&gt; <a class="struct" href="../../mpi/topology/struct.Process.html" title="struct mpi::topology::Process">Process</a>&lt;Self&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Bundles a reference to this communicator with a specific <code>Rank</code> into a <code>Process</code>.</p>
+
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<p>See <code>examples/broadcast.rs</code> <code>examples/gather.rs</code> <code>examples/send_receive.rs</code></p>
+</div><h3 id='method.any_process' class='method'><span id='any_process.v' class='invisible'><code>fn <a href='#method.any_process' class='fnname'>any_process</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/topology/struct.AnyProcess.html" title="struct mpi::topology::AnyProcess">AnyProcess</a>&lt;Self&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Returns an <code>AnyProcess</code> identifier that can be used, e.g. as a <code>Source</code> in point to point
+communication.</p>
+</div><h3 id='method.this_process' class='method'><span id='this_process.v' class='invisible'><code>fn <a href='#method.this_process' class='fnname'>this_process</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/topology/struct.Process.html" title="struct mpi::topology::Process">Process</a>&lt;Self&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>A <code>Process</code> for the calling process</p>
+</div><h3 id='method.compare' class='method'><span id='compare.v' class='invisible'><code>fn <a href='#method.compare' class='fnname'>compare</a>&lt;C:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>C) -&gt; <a class="enum" href="../../mpi/topology/enum.CommunicatorRelation.html" title="enum mpi::topology::CommunicatorRelation">CommunicatorRelation</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;C: <a class="trait" href="../../mpi/topology/trait.Communicator.html" title="trait mpi::topology::Communicator">Communicator</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Compare two communicators.</p>
+
+<p>See enum <code>CommunicatorRelation</code>.</p>
+
+<h1 id='standard-sections-2' class='section-header'><a href='#standard-sections-2'>Standard section(s)</a></h1>
+<p>6.4.1</p>
+</div><h3 id='method.duplicate' class='method'><span id='duplicate.v' class='invisible'><code>fn <a href='#method.duplicate' class='fnname'>duplicate</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a></code></span></h3><div class='docblock'><p>Duplicate a communicator.</p>
+
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<p>See <code>examples/duplicate.rs</code></p>
+
+<h1 id='standard-sections-3' class='section-header'><a href='#standard-sections-3'>Standard section(s)</a></h1>
+<p>6.4.2</p>
+</div><h3 id='method.split_by_color' class='method'><span id='split_by_color.v' class='invisible'><code>fn <a href='#method.split_by_color' class='fnname'>split_by_color</a>(&amp;self, color: <a class="struct" href="../../mpi/topology/struct.Color.html" title="struct mpi::topology::Color">Color</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt;</code></span></h3><div class='docblock'><p>Split a communicator by color.</p>
+
+<p>Creates as many new communicators as distinct values of <code>color</code> are given. All processes
+with the same value of <code>color</code> join the same communicator. A process that passes the
+special undefined color will not join a new communicator and <code>None</code> is returned.</p>
+
+<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
+<p>See <code>examples/split.rs</code></p>
+
+<h1 id='standard-sections-4' class='section-header'><a href='#standard-sections-4'>Standard section(s)</a></h1>
+<p>6.4.2</p>
+</div><h3 id='method.split_by_color_with_key' class='method'><span id='split_by_color_with_key.v' class='invisible'><code>fn <a href='#method.split_by_color_with_key' class='fnname'>split_by_color_with_key</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;color: <a class="struct" href="../../mpi/topology/struct.Color.html" title="struct mpi::topology::Color">Color</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;key: <a class="type" href="../../mpi/topology/type.Key.html" title="type mpi::topology::Key">Key</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt;</code></span></h3><div class='docblock'><p>Split a communicator by color.</p>
+
+<p>Like <code>split()</code> but orders processes according to the value of <code>key</code> in the new
+communicators.</p>
+
+<h1 id='standard-sections-5' class='section-header'><a href='#standard-sections-5'>Standard section(s)</a></h1>
+<p>6.4.2</p>
+</div><h3 id='method.split_by_subgroup_collective' class='method'><span id='split_by_subgroup_collective.v' class='invisible'><code>fn <a href='#method.split_by_subgroup_collective' class='fnname'>split_by_subgroup_collective</a>&lt;G:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;group: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G<br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Split a communicator collectively by subgroup.</p>
+
+<p>Proceses pass in a group that is a subgroup of the group associated with the old
+communicator. Different processes may pass in different groups, but if two groups are
+different, they have to be disjunct. One new communicator is created for each distinct
+group. The new communicator is returned if a process is a member of the group he passed in,
+otherwise <code>None</code>.</p>
+
+<p>This call is a collective operation on the old communicator so all processes have to
+partake.</p>
+
+<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
+<p>See <code>examples/split.rs</code></p>
+
+<h1 id='standard-sections-6' class='section-header'><a href='#standard-sections-6'>Standard section(s)</a></h1>
+<p>6.4.2</p>
+</div><h3 id='method.split_by_subgroup' class='method'><span id='split_by_subgroup.v' class='invisible'><code>fn <a href='#method.split_by_subgroup' class='fnname'>split_by_subgroup</a>&lt;G:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, group: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Split a communicator by subgroup.</p>
+
+<p>Like <code>split_by_subgroup_collective()</code> but not a collective operation.</p>
+
+<h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
+<p>See <code>examples/split.rs</code></p>
+
+<h1 id='standard-sections-7' class='section-header'><a href='#standard-sections-7'>Standard section(s)</a></h1>
+<p>6.4.2</p>
+</div><h3 id='method.split_by_subgroup_with_tag' class='method'><span id='split_by_subgroup_with_tag.v' class='invisible'><code>fn <a href='#method.split_by_subgroup_with_tag' class='fnname'>split_by_subgroup_with_tag</a>&lt;G:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;group: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G, <br>&nbsp;&nbsp;&nbsp;&nbsp;tag: <a class="type" href="../../mpi/type.Tag.html" title="type mpi::Tag">Tag</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Split a communicator by subgroup</p>
+
+<p>Like <code>split_by_subgroup()</code> but can avoid collision of concurrent calls
+(i.e. multithreaded) by passing in distinct tags.</p>
+
+<h1 id='standard-sections-8' class='section-header'><a href='#standard-sections-8'>Standard section(s)</a></h1>
+<p>6.4.2</p>
+</div><h3 id='method.group' class='method'><span id='group.v' class='invisible'><code>fn <a href='#method.group' class='fnname'>group</a>(&amp;self) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a></code></span></h3><div class='docblock'><p>The group associated with this communicator</p>
+
+<h1 id='standard-sections-9' class='section-header'><a href='#standard-sections-9'>Standard section(s)</a></h1>
+<p>6.3.2</p>
+</div><h3 id='method.abort' class='method'><span id='abort.v' class='invisible'><code>fn <a href='#method.abort' class='fnname'>abort</a>(&amp;self, errorcode: <a class="type" href="https://doc.rust-lang.org/nightly/std/os/raw/type.c_int.html" title="type std::os::raw::c_int">c_int</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.never.html">!</a></code></span></h3><div class='docblock'><p>Abort program execution</p>
+
+<h1 id='standard-sections-10' class='section-header'><a href='#standard-sections-10'>Standard section(s)</a></h1>
+<p>8.7</p>
+</div></div>
+        <h2 id='implementors' class='small-section-header'>
+          Implementors<a href='#implementors' class='anchor'></a>
+        </h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><div class='out-of-band'><a class='srclink' href='../../src/mpi/topology.rs.html#92' title='goto source code'>[src]</a></div><code>impl Communicator for <a class="struct" href="../../mpi/topology/struct.SystemCommunicator.html" title="struct mpi::topology::SystemCommunicator">SystemCommunicator</a></code></li>
+<li><div class='out-of-band'><a class='srclink' href='../../src/mpi/topology.rs.html#139' title='goto source code'>[src]</a></div><code>impl Communicator for <a class="struct" href="../../mpi/topology/struct.UserCommunicator.html" title="struct mpi::topology::UserCommunicator">UserCommunicator</a></code></li>
+</ul><script type="text/javascript" async
+                         src="../../implementors/mpi/topology/trait.Communicator.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

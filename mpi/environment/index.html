@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `environment` mod in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, environment">
+
+    <title>mpi::environment - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Module environment</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'><a href='../index.html'>mpi</a></p><script>window.sidebarCurrent = {name: 'environment', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>mpi</a>::<wbr><a class="mod" href=''>environment</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/environment.rs.html#1-301' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Environmental management</p>
+
+<p>This module provides ways for an MPI program to interact with its environment.</p>
+
+<h1 id='unfinished-features' class='section-header'><a href='#unfinished-features'>Unfinished features</a></h1>
+<ul>
+<li><strong>8.1.2</strong>: <code>MPI_TAG_UB</code>, ...</li>
+<li><strong>8.2</strong>: Memory allocation</li>
+<li><strong>8.3, 8.4, and 8.5</strong>: Error handling</li>
+</ul>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Universe.html"
+                                  title='struct mpi::environment::Universe'>Universe</a></td>
+                           <td class='docblock-short'>
+                                <p>Global context</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.Threading.html"
+                                  title='enum mpi::environment::Threading'>Threading</a></td>
+                           <td class='docblock-short'>
+                                <p>Describes the various levels of multithreading that can be supported by an MPI library.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.initialize.html"
+                                  title='fn mpi::environment::initialize'>initialize</a></td>
+                           <td class='docblock-short'>
+                                <p>Initialize MPI.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.initialize_with_threading.html"
+                                  title='fn mpi::environment::initialize_with_threading'>initialize_with_threading</a></td>
+                           <td class='docblock-short'>
+                                <p>Initialize MPI with desired level of multithreading support.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.library_version.html"
+                                  title='fn mpi::environment::library_version'>library_version</a></td>
+                           <td class='docblock-short'>
+                                <p>Describes the version of the MPI library itself.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.processor_name.html"
+                                  title='fn mpi::environment::processor_name'>processor_name</a></td>
+                           <td class='docblock-short'>
+                                <p>Names the processor that the calling process is running on.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.threading_support.html"
+                                  title='fn mpi::environment::threading_support'>threading_support</a></td>
+                           <td class='docblock-short'>
+                                <p>Level of multithreading supported by this MPI universe</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.time.html"
+                                  title='fn mpi::environment::time'>time</a></td>
+                           <td class='docblock-short'>
+                                <p>Time in seconds since an arbitrary time in the past.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.time_resolution.html"
+                                  title='fn mpi::environment::time_resolution'>time_resolution</a></td>
+                           <td class='docblock-short'>
+                                <p>Resolution of timer used in <code>time()</code> in seconds</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.version.html"
+                                  title='fn mpi::environment::version'>version</a></td>
+                           <td class='docblock-short'>
+                                <p>Identifies the version of the MPI standard implemented by the library.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

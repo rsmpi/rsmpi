@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `prep_cif` fn in crate `libffi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, prep_cif">
+
+    <title>libffi::low::prep_cif - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc fn">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'><a href='../index.html'>libffi</a>::<wbr><a href='index.html'>low</a></p><script>window.sidebarCurrent = {name: 'prep_cif', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Function <a href='../index.html'>libffi</a>::<wbr><a href='index.html'>low</a>::<wbr><a class="fn" href=''>prep_cif</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/libffi/low.rs.html#241-252' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub unsafe fn prep_cif(<br>&nbsp;&nbsp;&nbsp;&nbsp;cif: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="struct" href="../../libffi/low/struct.ffi_cif.html" title="struct libffi::low::ffi_cif">ffi_cif</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;abi: <a class="type" href="../../libffi/low/type.ffi_abi.html" title="type libffi::low::ffi_abi">ffi_abi</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;nargs: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;rtype: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="struct" href="../../libffi/low/struct.ffi_type.html" title="struct libffi::low::ffi_type">ffi_type</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;atypes: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="struct" href="../../libffi/low/struct.ffi_type.html" title="struct libffi::low::ffi_type">ffi_type</a><br>) -&gt; <a class="type" href="../../libffi/low/type.Result.html" title="type libffi::low::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>&gt;</pre><div class='docblock'><p>Initalizes a CIF (Call Interface) with the given ABI
+and types.</p>
+
+<p>We need to initialize a CIF before we can use it to call a function
+or create a closure. This function lets us specify the calling
+convention to use and the argument and result types. For varargs
+CIF initialization, see <a href="fn.prep_cif_var.html"><code>prep_cif_var</code></a>.</p>
+
+<h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
+<p>The CIF <code>cif</code> retains references to <code>rtype</code> and <code>atypes</code>, so if
+they are no longer live when the CIF is used then the behavior is
+undefined.</p>
+
+<h1 id='arguments' class='section-header'><a href='#arguments'>Arguments</a></h1>
+<ul>
+<li><code>cif</code> — the CIF to initialize</li>
+<li><code>abi</code> — the calling convention to use</li>
+<li><code>nargs</code> — the number of arguments</li>
+<li><code>rtype</code> — the result type</li>
+<li><code>atypes</code> — the argument types (length must be at least <code>nargs</code>)</li>
+</ul>
+
+<h1 id='result' class='section-header'><a href='#result'>Result</a></h1>
+<p><code>Ok(())</code> for success or <code>Err(e)</code> for failure.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">libffi</span>::<span class="ident">low</span>::<span class="kw-2">*</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">args</span>: [<span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi_type</span>; <span class="number">2</span>] <span class="op">=</span> <span class="kw">unsafe</span> {
+    [ <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">types</span>::<span class="ident">sint32</span>,
+      <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">types</span>::<span class="ident">uint64</span> ]
+};
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cif</span>: <span class="ident">ffi_cif</span> <span class="op">=</span> <span class="ident">Default</span>::<span class="ident">default</span>();
+
+<span class="kw">unsafe</span> {
+    <span class="ident">prep_cif</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cif</span>, <span class="ident">ffi_abi_FFI_DEFAULT_ABI</span>, <span class="number">2</span>,
+             <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">types</span>::<span class="ident">pointer</span>, <span class="ident">args</span>.<span class="ident">as_mut_ptr</span>())
+}.<span class="ident">unwrap</span>();</pre>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "libffi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

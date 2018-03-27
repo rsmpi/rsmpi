@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Root` trait in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Root">
+
+    <title>mpi::collective::Root - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc trait">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Trait Root</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.root_rank">root_rank</a></div><a class="sidebar-title" href="#provided-methods">Provided Methods</a><div class="sidebar-links"><a href="#method.broadcast_into">broadcast_into</a><a href="#method.gather_into">gather_into</a><a href="#method.gather_into_root">gather_into_root</a><a href="#method.gather_varcount_into">gather_varcount_into</a><a href="#method.gather_varcount_into_root">gather_varcount_into_root</a><a href="#method.scatter_into">scatter_into</a><a href="#method.scatter_into_root">scatter_into_root</a><a href="#method.scatter_varcount_into">scatter_varcount_into</a><a href="#method.scatter_varcount_into_root">scatter_varcount_into_root</a><a href="#method.reduce_into">reduce_into</a><a href="#method.reduce_into_root">reduce_into_root</a><a href="#method.immediate_broadcast_into">immediate_broadcast_into</a><a href="#method.immediate_gather_into">immediate_gather_into</a><a href="#method.immediate_gather_into_root">immediate_gather_into_root</a><a href="#method.immediate_gather_varcount_into">immediate_gather_varcount_into</a><a href="#method.immediate_gather_varcount_into_root">immediate_gather_varcount_into_root</a><a href="#method.immediate_scatter_into">immediate_scatter_into</a><a href="#method.immediate_scatter_into_root">immediate_scatter_into_root</a><a href="#method.immediate_scatter_varcount_into">immediate_scatter_varcount_into</a><a href="#method.immediate_scatter_varcount_into_root">immediate_scatter_varcount_into_root</a><a href="#method.immediate_reduce_into">immediate_reduce_into</a><a href="#method.immediate_reduce_into_root">immediate_reduce_into_root</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='../index.html'>mpi</a>::<wbr><a href='index.html'>collective</a></p><script>window.sidebarCurrent = {name: 'Root', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>mpi</a>::<wbr><a href='index.html'>collective</a>::<wbr><a class="trait" href=''>Root</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/collective.rs.html#626-1441' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Root: <a class="trait" href="../../mpi/topology/trait.AsCommunicator.html" title="trait mpi::topology::AsCommunicator">AsCommunicator</a> {
+    fn <a href='#tymethod.root_rank' class='fnname'>root_rank</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>;
+
+    fn <a href='#method.broadcast_into' class='fnname'>broadcast_into</a>&lt;Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, buffer: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>Buf)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Buf: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.gather_into' class='fnname'>gather_into</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.gather_into_root' class='fnname'>gather_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.gather_varcount_into' class='fnname'>gather_varcount_into</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.gather_varcount_into_root' class='fnname'>gather_varcount_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.PartitionedBufferMut.html" title="trait mpi::datatype::PartitionedBufferMut">PartitionedBufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.scatter_into' class='fnname'>scatter_into</a>&lt;R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.scatter_into_root' class='fnname'>scatter_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.scatter_varcount_into' class='fnname'>scatter_varcount_into</a>&lt;R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.scatter_varcount_into_root' class='fnname'>scatter_varcount_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.PartitionedBuffer.html" title="trait mpi::datatype::PartitionedBuffer">PartitionedBuffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.reduce_into' class='fnname'>reduce_into</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, O&gt;(&amp;self, sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, op: O)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;O: <a class="trait" href="../../mpi/collective/trait.Operation.html" title="trait mpi::collective::Operation">Operation</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.reduce_into_root' class='fnname'>reduce_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, O&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;op: O<br>&nbsp;&nbsp;&nbsp;&nbsp;)<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;O: <a class="trait" href="../../mpi/collective/trait.Operation.html" title="trait mpi::collective::Operation">Operation</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_broadcast_into' class='fnname'>immediate_broadcast_into</a>&lt;'a, Sc, Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>Buf<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Buf: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_gather_into' class='fnname'>immediate_gather_into</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_gather_into_root' class='fnname'>immediate_gather_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_gather_varcount_into' class='fnname'>immediate_gather_varcount_into</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_gather_varcount_into_root' class='fnname'>immediate_gather_varcount_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.PartitionedBufferMut.html" title="trait mpi::datatype::PartitionedBufferMut">PartitionedBufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_scatter_into' class='fnname'>immediate_scatter_into</a>&lt;'a, Sc, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_scatter_into_root' class='fnname'>immediate_scatter_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_scatter_varcount_into' class='fnname'>immediate_scatter_varcount_into</a>&lt;'a, Sc, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_scatter_varcount_into_root' class='fnname'>immediate_scatter_varcount_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.PartitionedBuffer.html" title="trait mpi::datatype::PartitionedBuffer">PartitionedBuffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_reduce_into' class='fnname'>immediate_reduce_into</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, O&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;op: O<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;O: 'a + <a class="trait" href="../../mpi/collective/trait.Operation.html" title="trait mpi::collective::Operation">Operation</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.immediate_reduce_into_root' class='fnname'>immediate_reduce_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, O&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;op: O<br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;O: 'a + <a class="trait" href="../../mpi/collective/trait.Operation.html" title="trait mpi::collective::Operation">Operation</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;</span>,
+    { ... }
+}</pre><div class='docblock'><p>Something that can take the role of &#39;root&#39; in a collective operation.</p>
+
+<p>Many collective operations define a &#39;root&#39; process that takes a special role in the
+communication. These collective operations are implemented as default methods of this trait.</p>
+</div>
+            <h2 id='required-methods' class='small-section-header'>
+              Required Methods<a href='#required-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='tymethod.root_rank' class='method'><span id='root_rank.v' class='invisible'><code>fn <a href='#tymethod.root_rank' class='fnname'>root_rank</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a></code></span></h3><div class='docblock'><p>Rank of the root process</p>
+</div></div>
+            <h2 id='provided-methods' class='small-section-header'>
+              Provided Methods<a href='#provided-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='method.broadcast_into' class='method'><span id='broadcast_into.v' class='invisible'><code>fn <a href='#method.broadcast_into' class='fnname'>broadcast_into</a>&lt;Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, buffer: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>Buf) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Buf: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Broadcast of the contents of a buffer</p>
+
+<p>After the call completes, the <code>Buffer</code> on all processes in the <code>Communicator</code> of the <code>Root</code>
+<code>&amp;self</code> will contain what it contains on the <code>Root</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>See <code>examples/broadcast.rs</code></p>
+
+<h1 id='standard-sections' class='section-header'><a href='#standard-sections'>Standard section(s)</a></h1>
+<p>5.4</p>
+</div><h3 id='method.gather_into' class='method'><span id='gather_into.v' class='invisible'><code>fn <a href='#method.gather_into' class='fnname'>gather_into</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Gather contents of buffers on <code>Root</code>.</p>
+
+<p>After the call completes, the contents of the <code>Buffer</code>s on all ranks will be
+concatenated into the <code>Buffer</code> on <code>Root</code>.</p>
+
+<p>All send <code>Buffer</code>s must have the same count of elements.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<p>See <code>examples/gather.rs</code></p>
+
+<h1 id='standard-sections-1' class='section-header'><a href='#standard-sections-1'>Standard section(s)</a></h1>
+<p>5.5</p>
+</div><h3 id='method.gather_into_root' class='method'><span id='gather_into_root.v' class='invisible'><code>fn <a href='#method.gather_into_root' class='fnname'>gather_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Gather contents of buffers on <code>Root</code>.</p>
+
+<p>After the call completes, the contents of the <code>Buffer</code>s on all ranks will be
+concatenated into the <code>Buffer</code> on <code>Root</code>.</p>
+
+<p>All send <code>Buffer</code>s must have the same count of elements.</p>
+
+<p>This function must be called on the root process.</p>
+
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<p>See <code>examples/gather.rs</code></p>
+
+<h1 id='standard-sections-2' class='section-header'><a href='#standard-sections-2'>Standard section(s)</a></h1>
+<p>5.5</p>
+</div><h3 id='method.gather_varcount_into' class='method'><span id='gather_varcount_into.v' class='invisible'><code>fn <a href='#method.gather_varcount_into' class='fnname'>gather_varcount_into</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Gather contents of buffers on <code>Root</code>.</p>
+
+<p>After the call completes, the contents of the <code>Buffer</code>s on all ranks will be
+concatenated into the <code>Buffer</code> on <code>Root</code>.</p>
+
+<p>The send <code>Buffer</code>s may contain different counts of elements on different processes. The
+distribution of elements in the receive <code>Buffer</code> is specified via <code>Partitioned</code>.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<p>See <code>examples/gather_varcount.rs</code></p>
+
+<h1 id='standard-sections-3' class='section-header'><a href='#standard-sections-3'>Standard section(s)</a></h1>
+<p>5.5</p>
+</div><h3 id='method.gather_varcount_into_root' class='method'><span id='gather_varcount_into_root.v' class='invisible'><code>fn <a href='#method.gather_varcount_into_root' class='fnname'>gather_varcount_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R<br>) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.PartitionedBufferMut.html" title="trait mpi::datatype::PartitionedBufferMut">PartitionedBufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Gather contents of buffers on <code>Root</code>.</p>
+
+<p>After the call completes, the contents of the <code>Buffer</code>s on all ranks will be
+concatenated into the <code>Buffer</code> on <code>Root</code>.</p>
+
+<p>The send <code>Buffer</code>s may contain different counts of elements on different processes. The
+distribution of elements in the receive <code>Buffer</code> is specified via <code>Partitioned</code>.</p>
+
+<p>This function must be called on the root process.</p>
+
+<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
+<p>See <code>examples/gather_varcount.rs</code></p>
+
+<h1 id='standard-sections-4' class='section-header'><a href='#standard-sections-4'>Standard section(s)</a></h1>
+<p>5.5</p>
+</div><h3 id='method.scatter_into' class='method'><span id='scatter_into.v' class='invisible'><code>fn <a href='#method.scatter_into' class='fnname'>scatter_into</a>&lt;R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Scatter contents of a buffer on the root process to all processes.</p>
+
+<p>After the call completes each participating process will have received a part of the send
+<code>Buffer</code> on the root process.</p>
+
+<p>All send <code>Buffer</code>s must have the same count of elements.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
+<p>See <code>examples/scatter.rs</code></p>
+
+<h1 id='standard-sections-5' class='section-header'><a href='#standard-sections-5'>Standard section(s)</a></h1>
+<p>5.6</p>
+</div><h3 id='method.scatter_into_root' class='method'><span id='scatter_into_root.v' class='invisible'><code>fn <a href='#method.scatter_into_root' class='fnname'>scatter_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Scatter contents of a buffer on the root process to all processes.</p>
+
+<p>After the call completes each participating process will have received a part of the send
+<code>Buffer</code> on the root process.</p>
+
+<p>All send <code>Buffer</code>s must have the same count of elements.</p>
+
+<p>This function must be called on the root process.</p>
+
+<h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
+<p>See <code>examples/scatter.rs</code></p>
+
+<h1 id='standard-sections-6' class='section-header'><a href='#standard-sections-6'>Standard section(s)</a></h1>
+<p>5.6</p>
+</div><h3 id='method.scatter_varcount_into' class='method'><span id='scatter_varcount_into.v' class='invisible'><code>fn <a href='#method.scatter_varcount_into' class='fnname'>scatter_varcount_into</a>&lt;R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(&amp;self, recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Scatter contents of a buffer on the root process to all processes.</p>
+
+<p>After the call completes each participating process will have received a part of the send
+<code>Buffer</code> on the root process.</p>
+
+<p>The send <code>Buffer</code> may contain different counts of elements for different processes. The
+distribution of elements in the send <code>Buffer</code> is specified via <code>Partitioned</code>.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-7' class='section-header'><a href='#examples-7'>Examples</a></h1>
+<p>See <code>examples/scatter_varcount.rs</code></p>
+
+<h1 id='standard-sections-7' class='section-header'><a href='#standard-sections-7'>Standard section(s)</a></h1>
+<p>5.6</p>
+</div><h3 id='method.scatter_varcount_into_root' class='method'><span id='scatter_varcount_into_root.v' class='invisible'><code>fn <a href='#method.scatter_varcount_into_root' class='fnname'>scatter_varcount_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R<br>) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.PartitionedBuffer.html" title="trait mpi::datatype::PartitionedBuffer">PartitionedBuffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Scatter contents of a buffer on the root process to all processes.</p>
+
+<p>After the call completes each participating process will have received a part of the send
+<code>Buffer</code> on the root process.</p>
+
+<p>The send <code>Buffer</code> may contain different counts of elements for different processes. The
+distribution of elements in the send <code>Buffer</code> is specified via <code>Partitioned</code>.</p>
+
+<p>This function must be called on the root process.</p>
+
+<h1 id='examples-8' class='section-header'><a href='#examples-8'>Examples</a></h1>
+<p>See <code>examples/scatter_varcount.rs</code></p>
+
+<h1 id='standard-sections-8' class='section-header'><a href='#standard-sections-8'>Standard section(s)</a></h1>
+<p>5.6</p>
+</div><h3 id='method.reduce_into' class='method'><span id='reduce_into.v' class='invisible'><code>fn <a href='#method.reduce_into' class='fnname'>reduce_into</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, O&gt;(&amp;self, sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, op: O) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;O: <a class="trait" href="../../mpi/collective/trait.Operation.html" title="trait mpi::collective::Operation">Operation</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Performs a global reduction under the operation <code>op</code> of the input data in <code>sendbuf</code> and
+stores the result on the <code>Root</code> process.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-9' class='section-header'><a href='#examples-9'>Examples</a></h1>
+<p>See <code>examples/reduce.rs</code></p>
+
+<h1 id='standard-sections-9' class='section-header'><a href='#standard-sections-9'>Standard section(s)</a></h1>
+<p>5.9.1</p>
+</div><h3 id='method.reduce_into_root' class='method'><span id='reduce_into_root.v' class='invisible'><code>fn <a href='#method.reduce_into_root' class='fnname'>reduce_into_root</a>&lt;S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, O&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>R, <br>&nbsp;&nbsp;&nbsp;&nbsp;op: O<br>) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;O: <a class="trait" href="../../mpi/collective/trait.Operation.html" title="trait mpi::collective::Operation">Operation</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Performs a global reduction under the operation <code>op</code> of the input data in <code>sendbuf</code> and
+stores the result on the <code>Root</code> process.</p>
+
+<p>This function must be called on the root process.</p>
+
+<h1 id='examples-10' class='section-header'><a href='#examples-10'>Examples</a></h1>
+<p>See <code>examples/reduce.rs</code></p>
+
+<h1 id='standard-sections-10' class='section-header'><a href='#standard-sections-10'>Standard section(s)</a></h1>
+<p>5.9.1</p>
+</div><h3 id='method.immediate_broadcast_into' class='method'><span id='immediate_broadcast_into.v' class='invisible'><code>fn <a href='#method.immediate_broadcast_into' class='fnname'>immediate_broadcast_into</a>&lt;'a, Sc, Buf:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;buf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>Buf<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Buf: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate broadcast of a value from the <code>Root</code> process to all other processes.</p>
+
+<h1 id='examples-11' class='section-header'><a href='#examples-11'>Examples</a></h1>
+<p>See <code>examples/immediate_broadcast.rs</code></p>
+
+<h1 id='standard-sections-11' class='section-header'><a href='#standard-sections-11'>Standard section(s)</a></h1>
+<p>5.12.2</p>
+</div><h3 id='method.immediate_gather_into' class='method'><span id='immediate_gather_into.v' class='invisible'><code>fn <a href='#method.immediate_gather_into' class='fnname'>immediate_gather_into</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate non-blocking gather of the contents of all <code>sendbuf</code>s on <code>Root</code> <code>&amp;self</code>.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-12' class='section-header'><a href='#examples-12'>Examples</a></h1>
+<p>See <code>examples/immediate_gather.rs</code></p>
+
+<h1 id='standard-sections-12' class='section-header'><a href='#standard-sections-12'>Standard section(s)</a></h1>
+<p>5.12.3</p>
+</div><h3 id='method.immediate_gather_into_root' class='method'><span id='immediate_gather_into_root.v' class='invisible'><code>fn <a href='#method.immediate_gather_into_root' class='fnname'>immediate_gather_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate non-blocking gather of the contents of all <code>sendbuf</code>s on <code>Root</code> <code>&amp;self</code>.</p>
+
+<p>This function must be called on the root processes.</p>
+
+<h1 id='examples-13' class='section-header'><a href='#examples-13'>Examples</a></h1>
+<p>See <code>examples/immediate_gather.rs</code></p>
+
+<h1 id='standard-sections-13' class='section-header'><a href='#standard-sections-13'>Standard section(s)</a></h1>
+<p>5.12.3</p>
+</div><h3 id='method.immediate_gather_varcount_into' class='method'><span id='immediate_gather_varcount_into.v' class='invisible'><code>fn <a href='#method.immediate_gather_varcount_into' class='fnname'>immediate_gather_varcount_into</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate non-blocking gather of the contents of all <code>sendbuf</code>s on <code>Root</code> <code>&amp;self</code>.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-14' class='section-header'><a href='#examples-14'>Examples</a></h1>
+<p>See <code>examples/immediate_gather_varcount.rs</code></p>
+
+<h1 id='standard-sections-14' class='section-header'><a href='#standard-sections-14'>Standard section(s)</a></h1>
+<p>5.12.3</p>
+</div><h3 id='method.immediate_gather_varcount_into_root' class='method'><span id='immediate_gather_varcount_into_root.v' class='invisible'><code>fn <a href='#method.immediate_gather_varcount_into_root' class='fnname'>immediate_gather_varcount_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.PartitionedBufferMut.html" title="trait mpi::datatype::PartitionedBufferMut">PartitionedBufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate non-blocking gather of the contents of all <code>sendbuf</code>s on <code>Root</code> <code>&amp;self</code>.</p>
+
+<p>This function must be called on the root processes.</p>
+
+<h1 id='examples-15' class='section-header'><a href='#examples-15'>Examples</a></h1>
+<p>See <code>examples/immediate_gather_varcount.rs</code></p>
+
+<h1 id='standard-sections-15' class='section-header'><a href='#standard-sections-15'>Standard section(s)</a></h1>
+<p>5.12.3</p>
+</div><h3 id='method.immediate_scatter_into' class='method'><span id='immediate_scatter_into.v' class='invisible'><code>fn <a href='#method.immediate_scatter_into' class='fnname'>immediate_scatter_into</a>&lt;'a, Sc, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate non-blocking scatter of the contents of <code>sendbuf</code> from <code>Root</code> <code>&amp;self</code>.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-16' class='section-header'><a href='#examples-16'>Examples</a></h1>
+<p>See <code>examples/immediate_scatter.rs</code></p>
+
+<h1 id='standard-sections-16' class='section-header'><a href='#standard-sections-16'>Standard section(s)</a></h1>
+<p>5.12.4</p>
+</div><h3 id='method.immediate_scatter_into_root' class='method'><span id='immediate_scatter_into_root.v' class='invisible'><code>fn <a href='#method.immediate_scatter_into_root' class='fnname'>immediate_scatter_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate non-blocking scatter of the contents of <code>sendbuf</code> from <code>Root</code> <code>&amp;self</code>.</p>
+
+<p>This function must be called on the root processes.</p>
+
+<h1 id='examples-17' class='section-header'><a href='#examples-17'>Examples</a></h1>
+<p>See <code>examples/immediate_scatter.rs</code></p>
+
+<h1 id='standard-sections-17' class='section-header'><a href='#standard-sections-17'>Standard section(s)</a></h1>
+<p>5.12.4</p>
+</div><h3 id='method.immediate_scatter_varcount_into' class='method'><span id='immediate_scatter_varcount_into.v' class='invisible'><code>fn <a href='#method.immediate_scatter_varcount_into' class='fnname'>immediate_scatter_varcount_into</a>&lt;'a, Sc, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate non-blocking scatter of the contents of <code>sendbuf</code> from <code>Root</code> <code>&amp;self</code>.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-18' class='section-header'><a href='#examples-18'>Examples</a></h1>
+<p>See <code>examples/immediate_scatter_varcount.rs</code></p>
+
+<h1 id='standard-sections-18' class='section-header'><a href='#standard-sections-18'>Standard section(s)</a></h1>
+<p>5.12.4</p>
+</div><h3 id='method.immediate_scatter_varcount_into_root' class='method'><span id='immediate_scatter_varcount_into_root.v' class='invisible'><code>fn <a href='#method.immediate_scatter_varcount_into_root' class='fnname'>immediate_scatter_varcount_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.PartitionedBuffer.html" title="trait mpi::datatype::PartitionedBuffer">PartitionedBuffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiate non-blocking scatter of the contents of <code>sendbuf</code> from <code>Root</code> <code>&amp;self</code>.</p>
+
+<p>This function must be called on the root processes.</p>
+
+<h1 id='examples-19' class='section-header'><a href='#examples-19'>Examples</a></h1>
+<p>See <code>examples/immediate_scatter_varcount.rs</code></p>
+
+<h1 id='standard-sections-19' class='section-header'><a href='#standard-sections-19'>Standard section(s)</a></h1>
+<p>5.12.4</p>
+</div><h3 id='method.immediate_reduce_into' class='method'><span id='immediate_reduce_into.v' class='invisible'><code>fn <a href='#method.immediate_reduce_into' class='fnname'>immediate_reduce_into</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, O&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;op: O<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;O: 'a + <a class="trait" href="../../mpi/collective/trait.Operation.html" title="trait mpi::collective::Operation">Operation</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiates a non-blacking global reduction under the operation <code>op</code> of the input data in
+<code>sendbuf</code> and stores the result on the <code>Root</code> process.</p>
+
+<p>This function must be called on all non-root processes.</p>
+
+<h1 id='examples-20' class='section-header'><a href='#examples-20'>Examples</a></h1>
+<p>See <code>examples/immediate_reduce.rs</code></p>
+
+<h1 id='standard-sections-20' class='section-header'><a href='#standard-sections-20'>Standard section(s)</a></h1>
+<p>5.12.7</p>
+</div><h3 id='method.immediate_reduce_into_root' class='method'><span id='immediate_reduce_into_root.v' class='invisible'><code>fn <a href='#method.immediate_reduce_into_root' class='fnname'>immediate_reduce_into_root</a>&lt;'a, Sc, S:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, R:&nbsp;?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>, O&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;self, <br>&nbsp;&nbsp;&nbsp;&nbsp;scope: Sc, <br>&nbsp;&nbsp;&nbsp;&nbsp;sendbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a </a>S, <br>&nbsp;&nbsp;&nbsp;&nbsp;recvbuf: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;'a mut </a>R, <br>&nbsp;&nbsp;&nbsp;&nbsp;op: O<br>) -&gt; <a class="struct" href="../../mpi/request/struct.Request.html" title="struct mpi::request::Request">Request</a>&lt;'a, Sc&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: 'a + <a class="trait" href="../../mpi/datatype/trait.Buffer.html" title="trait mpi::datatype::Buffer">Buffer</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: 'a + <a class="trait" href="../../mpi/datatype/trait.BufferMut.html" title="trait mpi::datatype::BufferMut">BufferMut</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;O: 'a + <a class="trait" href="../../mpi/collective/trait.Operation.html" title="trait mpi::collective::Operation">Operation</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;Sc: <a class="trait" href="../../mpi/request/trait.Scope.html" title="trait mpi::request::Scope">Scope</a>&lt;'a&gt;,&nbsp;</span></code></span></h3><div class='docblock'><p>Initiates a non-blocking global reduction under the operation <code>op</code> of the input data in
+<code>sendbuf</code> and stores the result on the <code>Root</code> process.</p>
+
+<h1 id='examples-21' class='section-header'><a href='#examples-21'>Examples</a></h1>
+<p>See <code>examples/immediate_reduce.rs</code></p>
+
+<p>This function must be called on the root process.</p>
+
+<h1 id='standard-sections-21' class='section-header'><a href='#standard-sections-21'>Standard section(s)</a></h1>
+<p>5.12.7</p>
+</div></div>
+        <h2 id='implementors' class='small-section-header'>
+          Implementors<a href='#implementors' class='anchor'></a>
+        </h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><div class='out-of-band'><a class='srclink' href='../../src/mpi/collective.rs.html#1443-1447' title='goto source code'>[src]</a></div><code>impl&lt;'a, C:&nbsp;'a + <a class="trait" href="../../mpi/topology/trait.Communicator.html" title="trait mpi::topology::Communicator">Communicator</a>&gt; Root for <a class="struct" href="../../mpi/topology/struct.Process.html" title="struct mpi::topology::Process">Process</a>&lt;'a, C&gt;</code></li>
+</ul><script type="text/javascript" async
+                         src="../../implementors/mpi/collective/trait.Root.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

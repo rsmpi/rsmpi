@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Group` trait in crate `mpi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Group">
+
+    <title>mpi::topology::Group - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc trait">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Trait Group</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#provided-methods">Provided Methods</a><div class="sidebar-links"><a href="#method.union">union</a><a href="#method.intersection">intersection</a><a href="#method.difference">difference</a><a href="#method.include">include</a><a href="#method.exclude">exclude</a><a href="#method.size">size</a><a href="#method.rank">rank</a><a href="#method.translate_rank">translate_rank</a><a href="#method.translate_ranks">translate_ranks</a><a href="#method.compare">compare</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='../index.html'>mpi</a>::<wbr><a href='index.html'>topology</a></p><script>window.sidebarCurrent = {name: 'Group', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>mpi</a>::<wbr><a href='index.html'>topology</a>::<wbr><a class="trait" href=''>Group</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/mpi/topology.rs.html#546-720' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Group: <a class="trait" href="../../mpi/raw/trait.AsRaw.html" title="trait mpi::raw::AsRaw">AsRaw</a>&lt;Raw = <a class="type" href="../../mpi_sys/type.MPI_Group.html" title="type mpi_sys::MPI_Group">MPI_Group</a>&gt; {
+    fn <a href='#method.union' class='fnname'>union</a>&lt;G&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.intersection' class='fnname'>intersection</a>&lt;G&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.difference' class='fnname'>difference</a>&lt;G&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.include' class='fnname'>include</a>(&amp;self, ranks: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.exclude' class='fnname'>exclude</a>(&amp;self, ranks: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.size' class='fnname'>size</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a> { ... }
+<div class='item-spacer'></div>    fn <a href='#method.rank' class='fnname'>rank</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>&gt; { ... }
+<div class='item-spacer'></div>    fn <a href='#method.translate_rank' class='fnname'>translate_rank</a>&lt;G&gt;(&amp;self, rank: <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.translate_ranks' class='fnname'>translate_ranks</a>&lt;G&gt;(&amp;self, ranks: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>&gt;&gt;<br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+<div class='item-spacer'></div>    fn <a href='#method.compare' class='fnname'>compare</a>&lt;G&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="enum" href="../../mpi/topology/enum.GroupRelation.html" title="enum mpi::topology::GroupRelation">GroupRelation</a><br>&nbsp;&nbsp;&nbsp; <span class="where">where<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a></span>,
+    { ... }
+}</pre><div class='docblock'><p>Groups are collections of parallel processes</p>
+</div>
+            <h2 id='provided-methods' class='small-section-header'>
+              Provided Methods<a href='#provided-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='method.union' class='method'><span id='union.v' class='invisible'><code>fn <a href='#method.union' class='fnname'>union</a>&lt;G&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Group union</p>
+
+<p>Constructs a new group that contains all members of the first group followed by all members
+of the second group that are not also members of the first group.</p>
+
+<h1 id='standard-sections' class='section-header'><a href='#standard-sections'>Standard section(s)</a></h1>
+<p>6.3.2</p>
+</div><h3 id='method.intersection' class='method'><span id='intersection.v' class='invisible'><code>fn <a href='#method.intersection' class='fnname'>intersection</a>&lt;G&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Group intersection</p>
+
+<p>Constructs a new group that contains all processes that are members of both the first and
+second group in the order they have in the first group.</p>
+
+<h1 id='standard-sections-1' class='section-header'><a href='#standard-sections-1'>Standard section(s)</a></h1>
+<p>6.3.2</p>
+</div><h3 id='method.difference' class='method'><span id='difference.v' class='invisible'><code>fn <a href='#method.difference' class='fnname'>difference</a>&lt;G&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Group difference</p>
+
+<p>Constructs a new group that contains all members of the first group that are not also
+members of the second group in the order they have in the first group.</p>
+
+<h1 id='standard-sections-2' class='section-header'><a href='#standard-sections-2'>Standard section(s)</a></h1>
+<p>6.3.2</p>
+</div><h3 id='method.include' class='method'><span id='include.v' class='invisible'><code>fn <a href='#method.include' class='fnname'>include</a>(&amp;self, ranks: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a></code></span></h3><div class='docblock'><p>Subgroup including specified ranks</p>
+
+<p>Constructs a new group where the process with rank <code>ranks[i]</code> in the old group has rank <code>i</code>
+in the new group.</p>
+
+<h1 id='standard-sections-3' class='section-header'><a href='#standard-sections-3'>Standard section(s)</a></h1>
+<p>6.3.2</p>
+</div><h3 id='method.exclude' class='method'><span id='exclude.v' class='invisible'><code>fn <a href='#method.exclude' class='fnname'>exclude</a>(&amp;self, ranks: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>) -&gt; <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a></code></span></h3><div class='docblock'><p>Subgroup including specified ranks</p>
+
+<p>Constructs a new group containing those processes from the old group that are not mentioned
+in <code>ranks</code>.</p>
+
+<h1 id='standard-sections-4' class='section-header'><a href='#standard-sections-4'>Standard section(s)</a></h1>
+<p>6.3.2</p>
+</div><h3 id='method.size' class='method'><span id='size.v' class='invisible'><code>fn <a href='#method.size' class='fnname'>size</a>(&amp;self) -&gt; <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a></code></span></h3><div class='docblock'><p>Number of processes in the group.</p>
+
+<h1 id='standard-sections-5' class='section-header'><a href='#standard-sections-5'>Standard section(s)</a></h1>
+<p>6.3.1</p>
+</div><h3 id='method.rank' class='method'><span id='rank.v' class='invisible'><code>fn <a href='#method.rank' class='fnname'>rank</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>&gt;</code></span></h3><div class='docblock'><p>Rank of this process within the group.</p>
+
+<h1 id='standard-sections-6' class='section-header'><a href='#standard-sections-6'>Standard section(s)</a></h1>
+<p>6.3.1</p>
+</div><h3 id='method.translate_rank' class='method'><span id='translate_rank.v' class='invisible'><code>fn <a href='#method.translate_rank' class='fnname'>translate_rank</a>&lt;G&gt;(&amp;self, rank: <a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Find the rank in group <code>other&#39; of the process that has rank</code>rank` in this group.</p>
+
+<p>If the process is not a member of the other group, returns <code>None</code>.</p>
+
+<h1 id='standard-sections-7' class='section-header'><a href='#standard-sections-7'>Standard section(s)</a></h1>
+<p>6.3.1</p>
+</div><h3 id='method.translate_ranks' class='method'><span id='translate_ranks.v' class='invisible'><code>fn <a href='#method.translate_ranks' class='fnname'>translate_ranks</a>&lt;G&gt;(&amp;self, ranks: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a>, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="type" href="../../mpi/topology/type.Rank.html" title="type mpi::topology::Rank">Rank</a>&gt;&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Find the ranks in group <code>other&#39; of the processes that have ranks</code>ranks` in this group.</p>
+
+<p>If a process is not a member of the other group, returns <code>None</code>.</p>
+
+<h1 id='standard-sections-8' class='section-header'><a href='#standard-sections-8'>Standard section(s)</a></h1>
+<p>6.3.1</p>
+</div><h3 id='method.compare' class='method'><span id='compare.v' class='invisible'><code>fn <a href='#method.compare' class='fnname'>compare</a>&lt;G&gt;(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>G) -&gt; <a class="enum" href="../../mpi/topology/enum.GroupRelation.html" title="enum mpi::topology::GroupRelation">GroupRelation</a> <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;G: <a class="trait" href="../../mpi/topology/trait.Group.html" title="trait mpi::topology::Group">Group</a>,&nbsp;</span></code></span></h3><div class='docblock'><p>Compare two groups.</p>
+
+<h1 id='standard-sections-9' class='section-header'><a href='#standard-sections-9'>Standard section(s)</a></h1>
+<p>6.3.1</p>
+</div></div>
+        <h2 id='implementors' class='small-section-header'>
+          Implementors<a href='#implementors' class='anchor'></a>
+        </h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><div class='out-of-band'><a class='srclink' href='../../src/mpi/topology.rs.html#518' title='goto source code'>[src]</a></div><code>impl Group for <a class="struct" href="../../mpi/topology/struct.SystemGroup.html" title="struct mpi::topology::SystemGroup">SystemGroup</a></code></li>
+<li><div class='out-of-band'><a class='srclink' href='../../src/mpi/topology.rs.html#543' title='goto source code'>[src]</a></div><code>impl Group for <a class="struct" href="../../mpi/topology/struct.UserGroup.html" title="struct mpi::topology::UserGroup">UserGroup</a></code></li>
+</ul><script type="text/javascript" async
+                         src="../../implementors/mpi/topology/trait.Group.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

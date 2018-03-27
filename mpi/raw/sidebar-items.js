@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["traits","Rust C bridge traits"]],"trait":[["AsRaw","A rust type than can identify as a raw value understood by the MPI C API."],["AsRawMut","A rust type than can provide a mutable pointer to a raw value understood by the MPI C API."]]});

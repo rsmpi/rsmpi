@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ApproxInto` trait in crate `conv`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ApproxInto">
+
+    <title>conv::ApproxInto - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc trait">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Trait ApproxInto</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#associated-types">Associated Types</a><div class="sidebar-links"><a href="#associatedtype.Err">Err</a></div><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.approx_into">approx_into</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='index.html'>conv</a></p><script>window.sidebarCurrent = {name: 'ApproxInto', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>conv</a>::<wbr><a class="trait" href=''>ApproxInto</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/conv/lib.rs.html#299-305' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait ApproxInto&lt;Dst, Scheme&nbsp;=&nbsp;<a class="enum" href="../conv/enum.DefaultApprox.html" title="enum conv::DefaultApprox">DefaultApprox</a>&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Scheme: <a class="trait" href="../conv/trait.ApproxScheme.html" title="trait conv::ApproxScheme">ApproxScheme</a>,&nbsp;</span>{
+    type <a href='#associatedtype.Err' class="type">Err</a>: <a class="trait" href="https://doc.rust-lang.org/nightly/std/error/trait.Error.html" title="trait std::error::Error">Error</a>;
+    fn <a href='#tymethod.approx_into' class='fnname'>approx_into</a>(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.ApproxInto.html#associatedtype.Err" title="type conv::ApproxInto::Err">Err</a>&gt;;
+}</pre><div class='docblock'><p>This is the dual of <code>ApproxFrom</code>; see that trait for information.</p>
+
+<p>Where possible, prefer <em>using</em> this trait over <code>ApproxFrom</code> for generic constraints, but prefer <em>implementing</em> <code>ApproxFrom</code>.</p>
+</div>
+            <h2 id='associated-types' class='small-section-header'>
+              Associated Types<a href='#associated-types' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='associatedtype.Err' class='method'><span id='Err.t' class='invisible'><code>type <a href='#associatedtype.Err' class="type">Err</a>: <a class="trait" href="https://doc.rust-lang.org/nightly/std/error/trait.Error.html" title="trait std::error::Error">Error</a></code></span></h3><div class='docblock'><p>The error type produced by a failed conversion.</p>
+</div></div>
+            <h2 id='required-methods' class='small-section-header'>
+              Required Methods<a href='#required-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='tymethod.approx_into' class='method'><span id='approx_into.v' class='invisible'><code>fn <a href='#tymethod.approx_into' class='fnname'>approx_into</a>(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Dst, Self::<a class="type" href="../conv/trait.ApproxInto.html#associatedtype.Err" title="type conv::ApproxInto::Err">Err</a>&gt;</code></span></h3><div class='docblock'><p>Convert the subject into an approximately equivalent representation.</p>
+</div></div>
+        <h2 id='implementors' class='small-section-header'>
+          Implementors<a href='#implementors' class='anchor'></a>
+        </h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl&lt;Dst, Src, Scheme&gt; ApproxInto&lt;Dst, Scheme&gt; for Src <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Dst: <a class="trait" href="../conv/trait.ApproxFrom.html" title="trait conv::ApproxFrom">ApproxFrom</a>&lt;Src, Scheme&gt;,<br>&nbsp;&nbsp;&nbsp;&nbsp;Scheme: <a class="trait" href="../conv/trait.ApproxScheme.html" title="trait conv::ApproxScheme">ApproxScheme</a>,&nbsp;</span><span class="where fmt-newline">  type <a href='#associatedtype.Err' class="type">Err</a> = Dst::<a class="type" href="../conv/trait.ApproxFrom.html#associatedtype.Err" title="type conv::ApproxFrom::Err">Err</a>;</span></code></li>
+</ul><script type="text/javascript" async
+                         src="../implementors/conv/trait.ApproxInto.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "conv";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

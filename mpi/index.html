@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `mpi` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, mpi">
+
+    <title>mpi - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc mod">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Crate mpi</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'mpi', ty: 'mod', relpath: '../'};</script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>mpi</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/mpi/lib.rs.html#1-179' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Message Passing Interface bindings for Rust</p>
+
+<p>The <a href="http://www.mpi-forum.org">Message Passing Interface</a> (MPI) is a specification for a
+message-passing style concurrency library. Implementations of MPI are often used to structure
+parallel computation on High Performance Computing systems. The MPI specification describes
+bindings for the C programming language (and through it C++) as well as for the Fortran
+programming language. This library tries to bridge the gap into a more rustic world.</p>
+
+<h1 id='usage' class='section-header'><a href='#usage'>Usage</a></h1>
+<p>Add the <code>mpi</code> crate as a dependency in your <code>Cargo.toml</code>:</p>
+
+<pre><code class="language-toml">[dependencies]
+mpi = &quot;0.5&quot;
+</code></pre>
+
+<p>Then use it in your program like this:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">mpi</span>;
+
+<span class="kw">use</span> <span class="ident">mpi</span>::<span class="ident">traits</span>::<span class="kw-2">*</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="kw">let</span> <span class="ident">universe</span> <span class="op">=</span> <span class="ident">mpi</span>::<span class="ident">initialize</span>().<span class="ident">unwrap</span>();
+    <span class="kw">let</span> <span class="ident">world</span> <span class="op">=</span> <span class="ident">universe</span>.<span class="ident">world</span>();
+    <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">world</span>.<span class="ident">size</span>();
+    <span class="kw">let</span> <span class="ident">rank</span> <span class="op">=</span> <span class="ident">world</span>.<span class="ident">rank</span>();
+
+    <span class="kw">if</span> <span class="ident">size</span> <span class="op">!=</span> <span class="number">2</span> {
+        <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Size of MPI_COMM_WORLD must be 2, but is {}!&quot;</span>, <span class="ident">size</span>);
+     }
+
+    <span class="kw">match</span> <span class="ident">rank</span> {
+        <span class="number">0</span> <span class="op">=&gt;</span> {
+            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="number">4.0f64</span>, <span class="number">8.0</span>, <span class="number">15.0</span>];
+            <span class="ident">world</span>.<span class="ident">process_at_rank</span>(<span class="ident">rank</span> <span class="op">+</span> <span class="number">1</span>).<span class="ident">send</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>[..]);
+        }
+        <span class="number">1</span> <span class="op">=&gt;</span> {
+            <span class="kw">let</span> (<span class="ident">msg</span>, <span class="ident">status</span>) <span class="op">=</span> <span class="ident">world</span>.<span class="ident">any_process</span>().<span class="ident">receive_vec</span>::<span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>();
+            <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;Process {} got message {:?}.\nStatus is: {:?}&quot;</span>, <span class="ident">rank</span>, <span class="ident">msg</span>, <span class="ident">status</span>);
+        }
+        _ <span class="op">=&gt;</span> <span class="macro">unreachable</span><span class="macro">!</span>()
+    }
+}</pre>
+
+<h1 id='features' class='section-header'><a href='#features'>Features</a></h1>
+<p>The bindings follow the MPI 3.1 specification.</p>
+
+<p>Currently supported:</p>
+
+<ul>
+<li><strong>Groups, Contexts, Communicators</strong>:
+
+<ul>
+<li>Group and (Intra-)Communicator management from section 6 is mostly complete.</li>
+<li>no Inter-Communicators</li>
+<li>no process topologies</li>
+</ul></li>
+<li><strong>Point to point communication</strong>:
+
+<ul>
+<li>standard, buffered, synchronous and ready mode send in blocking and non-blocking variants</li>
+<li>receive in blocking and non-blocking variants</li>
+<li>send-receive</li>
+<li>probe</li>
+<li>matched probe/receive</li>
+</ul></li>
+<li><strong>Collective communication</strong>:
+
+<ul>
+<li>barrier</li>
+<li>broadcast</li>
+<li>(all) gather</li>
+<li>scatter</li>
+<li>all to all</li>
+<li>varying counts operations</li>
+<li>reductions/scans</li>
+<li>blocking and non-blocking variants</li>
+</ul></li>
+<li><strong>Datatypes</strong>: Bridging between Rust types and MPI basic types as well as custom MPI datatypes
+which can act as views into buffers.</li>
+</ul>
+
+<p>Not supported (yet):</p>
+
+<ul>
+<li>Process management</li>
+<li>One-sided communication (RMA)</li>
+<li>MPI parallel I/O</li>
+<li>A million small things</li>
+</ul>
+
+<p>The sub-modules contain a more detailed description of which features are and are not
+supported.</p>
+
+<h1 id='further-reading' class='section-header'><a href='#further-reading'>Further Reading</a></h1>
+<p>While every publicly defined item in this crate should have some documentation attached to it,
+most of the descriptions are quite terse for now and to the uninitiated will only make sense in
+combination with the <a href="http://www.mpi-forum.org/docs/docs.html">MPI specification</a>.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="collective/index.html"
+                                  title='mod mpi::collective'>collective</a></td>
+                           <td class='docblock-short'>
+                                <p>Collective communication</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="datatype/index.html"
+                                  title='mod mpi::datatype'>datatype</a></td>
+                           <td class='docblock-short'>
+                                <p>Describing data</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="environment/index.html"
+                                  title='mod mpi::environment'>environment</a></td>
+                           <td class='docblock-short'>
+                                <p>Environmental management</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="ffi/index.html"
+                                  title='mod mpi::ffi'>ffi</a></td>
+                           <td class='docblock-short'>
+                                <p>The raw C language MPI API</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="point_to_point/index.html"
+                                  title='mod mpi::point_to_point'>point_to_point</a></td>
+                           <td class='docblock-short'>
+                                <p>Point to point communication</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="raw/index.html"
+                                  title='mod mpi::raw'>raw</a></td>
+                           <td class='docblock-short'>
+                                <p>Bridge between rust types and raw values</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="request/index.html"
+                                  title='mod mpi::request'>request</a></td>
+                           <td class='docblock-short'>
+                                <p>Request objects for non-blocking operations</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="topology/index.html"
+                                  title='mod mpi::topology'>topology</a></td>
+                           <td class='docblock-short'>
+                                <p>Organizing processes as groups and communicators</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="mod" href="traits/index.html"
+                                  title='mod mpi::traits'>traits</a></td>
+                           <td class='docblock-short'>
+                                <p>Re-exports all traits.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.Threading.html"
+                                  title='enum mpi::Threading'>Threading</a></td>
+                           <td class='docblock-short'>
+                                <p>Describes the various levels of multithreading that can be supported by an MPI library.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.initialize.html"
+                                  title='fn mpi::initialize'>initialize</a></td>
+                           <td class='docblock-short'>
+                                <p>Initialize MPI.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.initialize_with_threading.html"
+                                  title='fn mpi::initialize_with_threading'>initialize_with_threading</a></td>
+                           <td class='docblock-short'>
+                                <p>Initialize MPI with desired level of multithreading support.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.time.html"
+                                  title='fn mpi::time'>time</a></td>
+                           <td class='docblock-short'>
+                                <p>Time in seconds since an arbitrary time in the past.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="fn" href="fn.time_resolution.html"
+                                  title='fn mpi::time_resolution'>time_resolution</a></td>
+                           <td class='docblock-short'>
+                                <p>Resolution of timer used in <code>time()</code> in seconds</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Address.html"
+                                  title='type mpi::Address'>Address</a></td>
+                           <td class='docblock-short'>
+                                <p>An address in memory</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Count.html"
+                                  title='type mpi::Count'>Count</a></td>
+                           <td class='docblock-short'>
+                                <p>Encodes number of values in multi-value messages.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Error.html"
+                                  title='type mpi::Error'>Error</a></td>
+                           <td class='docblock-short'>
+                                <p>Encodes error values returned by MPI functions.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="type" href="type.Tag.html"
+                                  title='type mpi::Tag'>Tag</a></td>
+                           <td class='docblock-short'>
+                                <p>Can be used to tag messages on the sender side and match on the receiver side.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "mpi";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
