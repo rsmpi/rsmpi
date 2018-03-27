@@ -62,7 +62,7 @@ fn is_null(request: MPI_Request) -> bool {
 /// 3.7.1
 #[must_use]
 #[derive(Debug)]
-pub struct Request<'a, S: Scope<'a> = StaticScope> {
+pub struct Request<'a, S: Scope<'a>> {
     request: MPI_Request,
     scope: S,
     phantom: PhantomData<Cell<&'a ()>>,
@@ -227,7 +227,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
 ///
 /// See `examples/immediate.rs`
 #[derive(Debug)]
-pub struct WaitGuard<'a, S: Scope<'a> = StaticScope>(Option<Request<'a, S>>);
+pub struct WaitGuard<'a, S: Scope<'a>>(Option<Request<'a, S>>);
 
 impl<'a, S: Scope<'a>> Drop for WaitGuard<'a, S> {
     fn drop(&mut self) {
@@ -271,7 +271,7 @@ impl<'a, S: Scope<'a>> WaitGuard<'a, S> {
 ///
 /// See `examples/immediate.rs`
 #[derive(Debug)]
-pub struct CancelGuard<'a, S: Scope<'a> = StaticScope>(WaitGuard<'a, S>);
+pub struct CancelGuard<'a, S: Scope<'a>>(WaitGuard<'a, S>);
 
 impl<'a, S: Scope<'a>> Drop for CancelGuard<'a, S> {
     fn drop(&mut self) {
