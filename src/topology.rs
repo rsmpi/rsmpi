@@ -402,8 +402,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
 
     /// Set the communicator name
     ///
-    /// # MPI standard reference
-    /// Section 6.8, see the `MPI_Comm_set_name` function
+    /// # Standard section(s)
+    ///
+    /// 6.8, see the `MPI_Comm_set_name` function
     fn set_name(&self, name: &str) {
         let c_name = CString::new(name).expect("Failed to convert the Rust string to a C string");
         unsafe {
@@ -413,8 +414,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
 
     /// Get the communicator name
     ///
-    /// # MPI standard reference
-    /// Section 6.8, see the `MPI_Comm_get_name` function
+    /// # Standard section(s)
+    ///
+    /// 6.8, see the `MPI_Comm_get_name` function
     fn get_name(&self) -> String {
         type BufType = [c_char; ffi::MPI_MAX_OBJECT_NAME as usize];
 
