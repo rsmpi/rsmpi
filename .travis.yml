@@ -31,7 +31,7 @@ matrix:
       rust: stable
     - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.0 RELEASE_CONFIG=false
+    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.1 RELEASE_CONFIG=false
       rust: stable
     - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=2.1.3 RELEASE_CONFIG=false
       rust: stable
