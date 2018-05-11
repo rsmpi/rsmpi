@@ -457,7 +457,7 @@ where
     T: Equivalence,
 {
     unsafe fn pointer(&self) -> *const c_void {
-        mem::transmute(self.as_ptr())
+        self.as_ptr() as _
     }
 }
 
@@ -482,7 +482,7 @@ where
     T: Equivalence,
 {
     unsafe fn pointer_mut(&mut self) -> *mut c_void {
-        mem::transmute(self.as_mut_ptr())
+        self.as_mut_ptr() as _
     }
 }
 

@@ -46,7 +46,7 @@ impl Universe {
             let mut buffer = vec![0; size];
             unsafe {
                 ffi::MPI_Buffer_attach(
-                    mem::transmute(buffer.as_mut_ptr()),
+                    buffer.as_mut_ptr() as _,
                     buffer
                         .len()
                         .value_as()
@@ -65,7 +65,7 @@ impl Universe {
             let mut size: c_int = 0;
             unsafe {
                 ffi::MPI_Buffer_detach(addr_ptr as *mut c_void, &mut size);
-                assert_eq!(addr, mem::transmute(buffer.as_ptr()));
+                assert_eq!(addr, buffer.as_ptr() as _);
             }
             assert_eq!(
                 size,
