@@ -307,7 +307,7 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.1
-    fn immediate_barrier(&self) -> Request<'static, StaticScope> {
+    fn immediate_barrier(&self) -> Request<'static> {
         let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Ibarrier(self.as_raw(), &mut request);

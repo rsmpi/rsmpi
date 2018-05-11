@@ -1231,7 +1231,7 @@ where
 #[must_use]
 pub struct ReceiveFuture<T> {
     val: Box<T>,
-    req: Request<'static, StaticScope>,
+    req: Request<'static>,
 }
 
 impl<T> ReceiveFuture<T>
