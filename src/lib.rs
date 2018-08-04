@@ -5,7 +5,6 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
-#![deny(warnings)]
 #![cfg_attr(feature = "cargo-clippy", warn(cast_possible_truncation))]
 #![cfg_attr(feature = "cargo-clippy", warn(cast_possible_wrap))]
 #![cfg_attr(feature = "cargo-clippy", warn(cast_precision_loss))]
