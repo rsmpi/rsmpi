@@ -1532,7 +1532,7 @@ impl<T> Erased for T {}
 #[cfg(feature = "user-operations")]
 pub struct UserOperation<'a> {
     op: MPI_Op,
-    anchor: Box<Erased + 'a>, // keeps the internal data alive
+    _anchor: Box<Erased + 'a>, // keeps the internal data alive
 }
 
 #[cfg(feature = "user-operations")]
@@ -1625,7 +1625,7 @@ impl<'a> UserOperation<'a> {
             ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, &mut op);
             mem::transmute(ffi_closure) // erase the lifetime
         });
-        UserOperation { op, anchor }
+        UserOperation { op, _anchor: anchor }
     }
 
     /// Creates a `UserOperation` from raw parts.
@@ -1633,7 +1633,7 @@ impl<'a> UserOperation<'a> {
     /// Here, `anchor` is an arbitrary object that is stored alongside the `MPI_Op`.
     /// This can be used to attach finalizers to the object.
     pub unsafe fn from_raw<T: 'a>(op: MPI_Op, anchor: Box<T>) -> Self {
-        Self { op, anchor }
+        Self { op, _anchor: anchor }
     }
 }
 
