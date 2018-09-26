@@ -19,10 +19,11 @@
 //! - **6.8**: Naming objects
 //! - **7**: Process topologies
 //! - **Parts of sections**: 8, 10, 12
-use std::{mem, process};
-use std::os::raw::{c_int, c_char};
 use std::ffi::{CStr, CString};
+use std::os::raw::{c_char, c_int};
+use std::{mem, process};
 
+#[cfg(not(msmpi))]
 use super::Tag;
 use ffi;
 use ffi::{MPI_Comm, MPI_Group};
@@ -349,6 +350,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.2
+    #[cfg(not(msmpi))]
     fn split_by_subgroup<G: ?Sized>(&self, group: &G) -> Option<UserCommunicator>
     where
         G: Group,
@@ -364,6 +366,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.2
+    #[cfg(not(msmpi))]
     fn split_by_subgroup_with_tag<G: ?Sized>(&self, group: &G, tag: Tag) -> Option<UserCommunicator>
     where
         G: Group,

@@ -16,6 +16,6 @@ license = "MIT/Apache-2.0"
 [dependencies]
 
 [build-dependencies]
-gcc = "0.3"
+cc = "1.0.25"
 bindgen = "0.31.3"
 build-probe-mpi = { path = "../build-probe-mpi", version = "0.1" }

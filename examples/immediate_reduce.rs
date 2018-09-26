@@ -2,14 +2,20 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 extern crate mpi;
 
+#[cfg(not(msmpi))]
 use std::os::raw::{c_int, c_void};
 
-use mpi::traits::*;
-use mpi::topology::Rank;
-use mpi::collective::{SystemOperation, UnsafeUserOperation};
+use mpi::collective::SystemOperation;
 #[cfg(feature = "user-operations")]
 use mpi::collective::UserOperation;
+
+#[cfg(not(msmpi))]
+use mpi::collective::UnsafeUserOperation;
+
+#[cfg(not(msmpi))]
 use mpi::ffi::MPI_Datatype;
+use mpi::topology::Rank;
+use mpi::traits::*;
 
 #[cfg(feature = "user-operations")]
 fn test_user_operations<C: Communicator>(comm: C) {
@@ -33,6 +39,7 @@ fn test_user_operations<C: Communicator>(comm: C) {
 #[cfg(not(feature = "user-operations"))]
 fn test_user_operations<C: Communicator>(_: C) {}
 
+#[cfg(not(msmpi))]
 unsafe extern "C" fn unsafe_add(
     invec: *mut c_void,
     inoutvec: *mut c_void,
@@ -94,12 +101,15 @@ fn main() {
 
     test_user_operations(universe.world());
 
-    let mut d = 0;
-    let op = unsafe { UnsafeUserOperation::commutative(unsafe_add) };
-    mpi::request::scope(|scope| {
-        world
-            .immediate_all_reduce_into(scope, &rank, &mut d, &op)
-            .wait();
-    });
-    assert_eq!(d, size * (size - 1) / 2);
+    #[cfg(not(msmpi))]
+    {
+        let mut d = 0;
+        let op = unsafe { UnsafeUserOperation::commutative(unsafe_add) };
+        mpi::request::scope(|scope| {
+            world
+                .immediate_all_reduce_into(scope, &rank, &mut d, &op)
+                .wait();
+        });
+        assert_eq!(d, size * (size - 1) / 2);
+    }
 }

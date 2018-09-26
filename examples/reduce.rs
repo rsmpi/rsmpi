@@ -3,14 +3,20 @@
 #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 extern crate mpi;
 
+#[cfg(not(msmpi))]
 use std::os::raw::{c_int, c_void};
 
-use mpi::traits::*;
-use mpi::topology::Rank;
-use mpi::collective::{self, SystemOperation, UnsafeUserOperation};
 #[cfg(feature = "user-operations")]
 use mpi::collective::UserOperation;
+use mpi::collective::{self, SystemOperation};
+
+#[cfg(not(msmpi))]
+use mpi::collective::UnsafeUserOperation;
+
+#[cfg(not(msmpi))]
 use mpi::ffi::MPI_Datatype;
+use mpi::topology::Rank;
+use mpi::traits::*;
 
 #[cfg(feature = "user-operations")]
 fn test_user_operations<C: Communicator>(comm: C) {
@@ -34,6 +40,7 @@ fn test_user_operations<C: Communicator>(comm: C) {
 #[cfg(not(feature = "user-operations"))]
 fn test_user_operations<C: Communicator>(_: C) {}
 
+#[cfg(not(msmpi))]
 unsafe extern "C" fn unsafe_add(
     invec: *mut c_void,
     inoutvec: *mut c_void,
@@ -96,8 +103,11 @@ fn main() {
 
     test_user_operations(universe.world());
 
-    let mut i = 0;
-    let op = unsafe { UnsafeUserOperation::commutative(unsafe_add) };
-    world.all_reduce_into(&(rank + 1), &mut i, &op);
-    assert_eq!(i, size * (size + 1) / 2);
+    #[cfg(not(msmpi))]
+    {
+        let mut i = 0;
+        let op = unsafe { UnsafeUserOperation::commutative(unsafe_add) };
+        world.all_reduce_into(&(rank + 1), &mut i, &op);
+        assert_eq!(i, size * (size + 1) / 2);
+    }
 }

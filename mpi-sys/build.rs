@@ -1,5 +1,5 @@
 // Compiles the `rsmpi` C shim library.
-extern crate gcc;
+extern crate cc;
 // Generates the Rust header for the C API.
 extern crate bindgen;
 // Finds out information about the MPI library
@@ -9,11 +9,6 @@ use std::env;
 use std::path::Path;
 
 fn main() {
-    // Use `mpicc` wrapper rather than the system C compiler.
-    env::set_var("CC", "mpicc");
-    // Build the `rsmpi` C shim library.
-    gcc::Build::new().file("src/rsmpi.c").compile("librsmpi.a");
-
     // Try to find an MPI library
     let lib = match build_probe_mpi::probe() {
         Ok(lib) => lib,
@@ -25,6 +20,26 @@ fn main() {
             panic!();
         }
     };
+
+    // Use `mpicc` wrapper on Unix rather than the system C compiler.
+    if cfg!(windows) {
+        let mut builder = cc::Build::new();
+
+        builder.file("src/rsmpi.c");
+
+        for inc in &lib.include_paths {
+            builder.include(inc);
+        }
+
+        builder.compile("librsmpi.a");
+
+        // Adds a cfg to identify MS-MPI
+        println!("cargo:rustc-cfg=msmpi");
+    } else {
+        env::set_var("CC", "mpicc");
+        // Build the `rsmpi` C shim library.
+        cc::Build::new().file("src/rsmpi.c").compile("librsmpi.a");
+    }
 
     // Let `rustc` know about the library search directories.
     for dir in &lib.lib_paths {
