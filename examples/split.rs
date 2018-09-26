@@ -1,8 +1,8 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::topology::{Color, GroupRelation, SystemGroup};
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -46,17 +46,20 @@ fn main() {
         assert!(odd_comm.is_none());
     }
 
-    if even_group.rank().is_some() {
-        let even_comm = world.split_by_subgroup(&even_group);
-        assert!(even_comm.is_some());
-        let even_comm = even_comm.unwrap();
-        assert_eq!(
-            GroupRelation::Identical,
-            even_comm.group().compare(&even_group)
-        );
+    #[cfg(not(msmpi))]
+    {
+        if even_group.rank().is_some() {
+            let even_comm = world.split_by_subgroup(&even_group);
+            assert!(even_comm.is_some());
+            let even_comm = even_comm.unwrap();
+            assert_eq!(
+                GroupRelation::Identical,
+                even_comm.group().compare(&even_group)
+            );
 
-        let no_comm = world.split_by_subgroup(&odd_group);
-        assert!(no_comm.is_none());
+            let no_comm = world.split_by_subgroup(&odd_group);
+            assert!(no_comm.is_none());
+        }
     }
 
     let oddness_comm = world.split_by_color(Color::with_value(world.rank() % 2));

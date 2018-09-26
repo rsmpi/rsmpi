@@ -9,8 +9,9 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::{fmt, mem, ptr};
+#[cfg(not(msmpi))]
 use std::os::raw::{c_int, c_void};
+use std::{fmt, mem, ptr};
 
 #[cfg(feature = "user-operations")]
 use libffi::high::Closure4;
@@ -18,9 +19,9 @@ use libffi::high::Closure4;
 use ffi;
 use ffi::{MPI_Op, MPI_Request};
 
+use datatype::traits::*;
 #[cfg(feature = "user-operations")]
 use datatype::{DatatypeRef, DynBuffer, DynBufferMut};
-use datatype::traits::*;
 use raw::traits::*;
 use request::{Request, Scope, StaticScope};
 use topology::traits::*;
@@ -1625,7 +1626,10 @@ impl<'a> UserOperation<'a> {
             ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, &mut op);
             mem::transmute(ffi_closure) // erase the lifetime
         });
-        UserOperation { op, _anchor: anchor }
+        UserOperation {
+            op,
+            _anchor: anchor,
+        }
     }
 
     /// Creates a `UserOperation` from raw parts.
@@ -1633,7 +1637,10 @@ impl<'a> UserOperation<'a> {
     /// Here, `anchor` is an arbitrary object that is stored alongside the `MPI_Op`.
     /// This can be used to attach finalizers to the object.
     pub unsafe fn from_raw<T: 'a>(op: MPI_Op, anchor: Box<T>) -> Self {
-        Self { op, _anchor: anchor }
+        Self {
+            op,
+            _anchor: anchor,
+        }
     }
 }
 
@@ -1698,9 +1705,11 @@ unsafe impl AsRaw for UnsafeUserOperation {
 impl<'a> Operation for &'a UnsafeUserOperation {}
 
 /// A raw pointer to a function that can be used to define an `UnsafeUserOperation`.
+#[cfg(not(msmpi))]
 pub type UnsafeUserFunction =
     unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
 
+#[cfg(not(msmpi))]
 impl UnsafeUserOperation {
     /// Define an unsafe operation using a function pointer. The operation must be associative.
     ///
