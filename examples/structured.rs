@@ -1,7 +1,7 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::{datatype::UserDatatype, traits::*};
+use mpi::{self, datatype::UserDatatype, traits::*};
 use std::mem::size_of;
 
 struct MyInts([i32; 3]);
@@ -9,10 +9,11 @@ struct MyInts([i32; 3]);
 unsafe impl Equivalence for MyInts {
     type Out = UserDatatype;
     fn equivalent_datatype() -> Self::Out {
+        
         let int_datatype = i32::equivalent_datatype();
         mpi::datatype::UserDatatype::structured(
             &[1, 1, 1],
-            &[(size_of::<i32>() * 2) as i64, size_of::<i32>() as i64, 0],
+            &[(size_of::<i32>() * 2) as mpi::Address, size_of::<i32>() as mpi::Address, 0],
             &[&int_datatype, &int_datatype, &int_datatype],
         )
     }
