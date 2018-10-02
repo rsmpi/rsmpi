@@ -25,7 +25,6 @@
 //!
 //! # Unfinished features
 //!
-//! - **4.1.2**: Datatype constructors, `MPI_Type_create_struct()`
 //! - **4.1.3**: Subarray datatype constructors, `MPI_Type_create_subarray()`,
 //! - **4.1.4**: Distributed array datatype constructors, `MPI_Type_create_darray()`
 //! - **4.1.5**: Address and size functions, `MPI_Get_address()`, `MPI_Aint_add()`,
@@ -228,7 +227,12 @@ impl UserDatatype {
     where
         D: Datatype,
     {
-        assert_eq!(blocklengths.len(), displacements.len());
+        assert_eq!(
+            blocklengths.len(),
+            displacements.len(),
+            "'blocklengths' and 'displacements' must be the same length"
+        );
+
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_indexed(
@@ -258,7 +262,11 @@ impl UserDatatype {
     where
         D: Datatype,
     {
-        assert_eq!(blocklengths.len(), displacements.len());
+        assert_eq!(
+            blocklengths.len(),
+            displacements.len(),
+            "'blocklengths' and 'displacements' must be the same length"
+        );
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_hindexed(
@@ -337,16 +345,26 @@ impl UserDatatype {
     ///
     /// 4.1.2
     pub fn structured(
-        count: Count,
         blocklengths: &[Count],
         displacements: &[Address],
         types: &[&Datatype<Raw = MPI_Datatype>],
     ) -> UserDatatype {
+        assert_eq!(
+            blocklengths.len(),
+            displacements.len(),
+            "'displacements', 'blocklengths', and 'types' must be the same length"
+        );
+        assert_eq!(
+            blocklengths.len(),
+            types.len(),
+            "'displacements', 'blocklengths', and 'types' must be the same length"
+        );
+
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         let types = types.iter().map(|t| t.as_raw()).collect::<Vec<_>>();
         unsafe {
             ffi::MPI_Type_create_struct(
-                count,
+                blocklengths.count(),
                 blocklengths.as_ptr(),
                 displacements.as_ptr(),
                 types.as_ptr(),
