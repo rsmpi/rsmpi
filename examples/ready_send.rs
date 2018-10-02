@@ -1,8 +1,8 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::topology::Rank;
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -17,14 +17,14 @@ fn main() {
     } else {
         let mut v = vec![0u8; (size - 1) as usize];
         mpi::request::scope(|scope| {
-            let reqs = v.iter_mut()
+            let reqs = v
+                .iter_mut()
                 .zip(1..)
                 .map(|(x, i)| {
                     world
                         .process_at_rank(i as Rank)
                         .immediate_receive_into(scope, x)
-                })
-                .collect::<Vec<_>>();
+                }).collect::<Vec<_>>();
             world.barrier();
             for req in reqs {
                 req.wait();

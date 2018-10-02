@@ -130,19 +130,28 @@ extern crate mpi_sys;
 /// Documented in the [Message Passing Interface specification][spec]
 ///
 /// [spec]: http://www.mpi-forum.org/docs/docs.html
-#[allow(missing_docs, dead_code, non_snake_case, non_camel_case_types)]
+#[allow(
+    missing_docs,
+    dead_code,
+    non_snake_case,
+    non_camel_case_types
+)]
 #[macro_use]
 pub mod ffi {
     pub use mpi_sys::*;
 
     #[cfg(extern_statics_are_unsafe)]
     macro_rules! unsafe_extern_static {
-        ( $x:expr ) => { unsafe { $x } }
+        ( $x:expr ) => {
+            unsafe { $x }
+        };
     }
 
     #[cfg(not(extern_statics_are_unsafe))]
     macro_rules! unsafe_extern_static {
-        ( $x:expr ) => { $x }
+        ( $x:expr ) => {
+            $x
+        };
     }
 }
 

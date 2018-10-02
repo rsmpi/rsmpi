@@ -11,8 +11,8 @@
 //! - **3.9**: Persistent requests, `MPI_Send_init()`, `MPI_Bsend_init()`, `MPI_Ssend_init()`,
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 
-use std::{fmt, mem};
 use std::os::raw::c_int;
+use std::{fmt, mem};
 
 use conv::ConvUtil;
 
@@ -24,8 +24,8 @@ use ffi::{MPI_Message, MPI_Request, MPI_Status};
 use datatype::traits::*;
 use raw::traits::*;
 use request::{Request, Scope, StaticScope};
-use topology::{AnyProcess, CommunicatorRelation, Process, Rank};
 use topology::traits::*;
+use topology::{AnyProcess, CommunicatorRelation, Process, Rank};
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
 

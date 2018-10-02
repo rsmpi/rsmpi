@@ -1,8 +1,8 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::datatype::Partition;
+use mpi::traits::*;
 use mpi::Count;
 
 fn main() {
@@ -26,8 +26,7 @@ fn main() {
                 let tmp = *acc;
                 *acc += x;
                 Some(tmp)
-            })
-            .collect();
+            }).collect();
         let partition = Partition::new(&msg[..], counts, &displs[..]);
         mpi::request::scope(|scope| {
             root_process

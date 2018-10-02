@@ -2,8 +2,8 @@
 #![cfg_attr(feature = "cargo-clippy", allow(float_cmp))]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::request::{CancelGuard, WaitGuard};
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
