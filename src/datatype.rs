@@ -25,7 +25,6 @@
 //!
 //! # Unfinished features
 //!
-//! - **4.1.2**: Datatype constructors, `MPI_Type_create_struct()`
 //! - **4.1.3**: Subarray datatype constructors, `MPI_Type_create_subarray()`,
 //! - **4.1.4**: Distributed array datatype constructors, `MPI_Type_create_darray()`
 //! - **4.1.5**: Address and size functions, `MPI_Get_address()`, `MPI_Aint_add()`,
@@ -41,10 +40,10 @@
 //! - **4.3**: Canonical pack and unpack, `MPI_Pack_external()`, `MPI_Unpack_external()`,
 //! `MPI_Pack_external_size()`
 
-use std::{mem, slice};
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 use std::os::raw::c_void;
+use std::{mem, slice};
 
 use conv::ConvUtil;
 
@@ -57,8 +56,10 @@ use raw::traits::*;
 
 /// Datatype traits
 pub mod traits {
-    pub use super::{AsDatatype, Buffer, BufferMut, Collection, Datatype, Equivalence, Partitioned,
-                    PartitionedBuffer, PartitionedBufferMut, Pointer, PointerMut};
+    pub use super::{
+        AsDatatype, Buffer, BufferMut, Collection, Datatype, Equivalence, Partitioned,
+        PartitionedBuffer, PartitionedBufferMut, Pointer, PointerMut,
+    };
 }
 
 /// A reference to an MPI data type.
@@ -109,14 +110,14 @@ pub unsafe trait Equivalence {
 }
 
 macro_rules! equivalent_system_datatype {
-    ($rstype:path, $mpitype:path) => (
+    ($rstype:path, $mpitype:path) => {
         unsafe impl Equivalence for $rstype {
             type Out = SystemDatatype;
             fn equivalent_datatype() -> Self::Out {
                 unsafe { DatatypeRef::from_raw($mpitype) }
             }
         }
-    )
+    };
 }
 
 equivalent_system_datatype!(bool, ffi::RSMPI_C_BOOL);
@@ -226,7 +227,12 @@ impl UserDatatype {
     where
         D: Datatype,
     {
-        assert_eq!(blocklengths.len(), displacements.len());
+        assert_eq!(
+            blocklengths.len(),
+            displacements.len(),
+            "'blocklengths' and 'displacements' must be the same length"
+        );
+
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_indexed(
@@ -256,7 +262,11 @@ impl UserDatatype {
     where
         D: Datatype,
     {
-        assert_eq!(blocklengths.len(), displacements.len());
+        assert_eq!(
+            blocklengths.len(),
+            displacements.len(),
+            "'blocklengths' and 'displacements' must be the same length"
+        );
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Type_create_hindexed(
@@ -335,16 +345,26 @@ impl UserDatatype {
     ///
     /// 4.1.2
     pub fn structured(
-        count: Count,
         blocklengths: &[Count],
         displacements: &[Address],
         types: &[&Datatype<Raw = MPI_Datatype>],
     ) -> UserDatatype {
+        assert_eq!(
+            blocklengths.len(),
+            displacements.len(),
+            "'displacements', 'blocklengths', and 'types' must be the same length"
+        );
+        assert_eq!(
+            blocklengths.len(),
+            types.len(),
+            "'displacements', 'blocklengths', and 'types' must be the same length"
+        );
+
         let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         let types = types.iter().map(|t| t.as_raw()).collect::<Vec<_>>();
         unsafe {
             ffi::MPI_Type_create_struct(
-                count,
+                blocklengths.count(),
                 blocklengths.as_ptr(),
                 displacements.as_ptr(),
                 types.as_ptr(),
@@ -376,11 +396,7 @@ impl Datatype for UserDatatype {}
 
 /// A Datatype describes the layout of messages in memory.
 pub trait Datatype: AsRaw<Raw = MPI_Datatype> {}
-impl<'a, D> Datatype for &'a D
-where
-    D: 'a + Datatype,
-{
-}
+impl<'a, D> Datatype for &'a D where D: 'a + Datatype {}
 
 /// Something that has an associated datatype
 pub unsafe trait AsDatatype {
@@ -489,30 +505,14 @@ where
 /// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
 /// `as_datatype()`.
 pub unsafe trait Buffer: Pointer + Collection + AsDatatype {}
-unsafe impl<T> Buffer for T
-where
-    T: Equivalence,
-{
-}
-unsafe impl<T> Buffer for [T]
-where
-    T: Equivalence,
-{
-}
+unsafe impl<T> Buffer for T where T: Equivalence {}
+unsafe impl<T> Buffer for [T] where T: Equivalence {}
 
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
 /// copies of `as_datatype()`.
 pub unsafe trait BufferMut: PointerMut + Collection + AsDatatype {}
-unsafe impl<T> BufferMut for T
-where
-    T: Equivalence,
-{
-}
-unsafe impl<T> BufferMut for [T]
-where
-    T: Equivalence,
-{
-}
+unsafe impl<T> BufferMut for T where T: Equivalence {}
+unsafe impl<T> BufferMut for [T] where T: Equivalence {}
 
 /// An immutable dynamically-typed buffer.
 ///
@@ -799,8 +799,7 @@ unsafe impl<'d, 'b, D, B: ?Sized> Buffer for View<'d, 'b, D, B>
 where
     D: 'd + Datatype,
     B: 'b + Pointer,
-{
-}
+{}
 
 /// A buffer with a user specified count and datatype
 ///
@@ -876,8 +875,7 @@ unsafe impl<'d, 'b, D, B: ?Sized> BufferMut for MutView<'d, 'b, D, B>
 where
     D: 'd + Datatype,
     B: 'b + PointerMut,
-{
-}
+{}
 
 /// Describes how a `Buffer` is partitioned by specifying the count of elements and displacement
 /// from the start of the buffer for each partition.
@@ -973,8 +971,7 @@ where
     B: 'b + Pointer + AsDatatype,
     C: Borrow<[Count]>,
     D: Borrow<[Count]>,
-{
-}
+{}
 
 /// Adds a partitioning to an existing `BufferMut` so that it becomes `Partitioned`
 pub struct PartitionMut<'b, B: 'b + ?Sized, C, D> {
@@ -1046,8 +1043,7 @@ where
     B: 'b + PointerMut + AsDatatype,
     C: Borrow<[Count]>,
     D: Borrow<[Count]>,
-{
-}
+{}
 
 /// Returns the address of the argument in a format suitable for use with datatype constructors
 ///
