@@ -1,8 +1,8 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::topology::Rank;
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();

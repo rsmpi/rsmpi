@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 #![allow(missing_copy_implementations)]
 #![cfg_attr(test, allow(trivial_casts))]
-#![cfg_attr(feature="cargo-clippy", allow(clippy))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy))]
 include!(concat!(env!("OUT_DIR"), "/functions_and_types.rs"));
 
 #[cfg(test)]

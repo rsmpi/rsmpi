@@ -1,8 +1,8 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::datatype::{MutView, UserDatatype, View};
+use mpi::traits::*;
 use mpi::Count;
 
 fn main() {
