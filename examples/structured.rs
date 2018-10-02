@@ -1,7 +1,7 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::{self, datatype::UserDatatype, traits::*};
+use mpi::{datatype::UserDatatype, traits::*};
 use std::mem::size_of;
 
 struct MyInts([i32; 3]);
