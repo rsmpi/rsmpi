@@ -15,6 +15,7 @@ categories = [ "concurrency" ]
 license = "MIT/Apache-2.0"
 
 [workspace]
+members = ["mpi-derive"]
 
 [features]
 default = ["user-operations"]
