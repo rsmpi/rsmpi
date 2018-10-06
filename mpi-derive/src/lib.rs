@@ -49,7 +49,7 @@ fn new_for_struct(ast: &syn::DeriveInput, fields: &syn::Fields) -> TokenStream2 
 
     let field_datatypes = fields.iter().map(|field| {
         let ty = &field.ty;
-        quote!(#ty::equivalent_datatype())
+        quote!(<#ty as ::mpi::datatype::Equivalence>::equivalent_datatype())
     });
     let datatypes_tuple = quote!{(#(#field_datatypes),*)};
 
