@@ -2,14 +2,28 @@ extern crate mpi;
 #[macro_use]
 extern crate mpi_derive;
 
-use mpi::{collective::Root, topology::Communicator};
+use std::fmt::Debug;
+
+use mpi::topology::{Communicator, SystemCommunicator};
+use mpi::traits::*;
+
+fn assert_equivalence<A, B>(comm: &SystemCommunicator, a: &A, b: &B)
+where
+    A: Buffer,
+    B: BufferMut + PartialEq + Default + Debug,
+{
+    let packed = comm.pack(a);
+
+    let mut new_b = B::default();
+    comm.unpack_into(&packed, &mut new_b, 0);
+
+    assert_eq!(b, &new_b);
+}
 
 fn main() {
     let universe = mpi::initialize().unwrap();
 
     let world = universe.world();
-
-    let root_process = world.process_at_rank(0);
 
     #[derive(Datatype, Default)]
     struct MyDataRust {
@@ -18,7 +32,7 @@ fn main() {
         i: u16,
     }
 
-    #[derive(Datatype, Default)]
+    #[derive(Datatype, Default, PartialEq, Debug)]
     #[repr(C)]
     struct MyDataC {
         b: bool,
@@ -26,24 +40,49 @@ fn main() {
         i: u16,
     }
 
-    if world.rank() == 0 {
-        let mut data = MyDataRust {
+    assert_equivalence(
+        &world,
+        &MyDataRust {
             b: true,
             f: 3.4,
             i: 7,
-        };
+        },
+        &MyDataC {
+            b: true,
+            f: 3.4,
+            i: 7,
+        },
+    );
 
-        root_process.broadcast_into(&mut data);
+    // #[derive(Datatype, Default, PartialEq, Debug)]
+    // struct MyDataOrdered {
+    //     bf: (bool, f64),
+    //     i: u16,
+    // };
 
-        assert_eq!(true, data.b);
-        assert_eq!(3.4, data.f);
-        assert_eq!(7, data.i);
-    } else {
-        let mut data = MyDataC::default();
-        root_process.broadcast_into(&mut data);
+    // assert_equivalence(
+    //     &world,
+    //     &MyDataRust {
+    //         b: true,
+    //         f: 3.4,
+    //         i: 7,
+    //     },
+    //     &MyDataOrdered {
+    //         bf: (true, 3.4),
+    //         i: 7,
+    //     },
+    // );
 
-        assert_eq!(true, data.b);
-        assert_eq!(3.4, data.f);
-        assert_eq!(7, data.i);
-    };
+    // #[derive(Datatype, Default, PartialEq, Debug)]
+    // struct MyDataUnnamed(bool, f64, u16);
+
+    // assert_equivalence(
+    //     &world,
+    //     &MyDataRust {
+    //         b: true,
+    //         f: 3.4,
+    //         i: 7,
+    //     },
+    //     &MyDataUnnamed(true, 3.4, 7),
+    // );
 }
