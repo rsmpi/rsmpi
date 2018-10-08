@@ -9,12 +9,14 @@ struct MyInts([i32; 3]);
 unsafe impl Equivalence for MyInts {
     type Out = UserDatatype;
     fn equivalent_datatype() -> Self::Out {
-        
-        let int_datatype = i32::equivalent_datatype();
-        mpi::datatype::UserDatatype::structured(
+        UserDatatype::structured(
             &[1, 1, 1],
-            &[(size_of::<i32>() * 2) as mpi::Address, size_of::<i32>() as mpi::Address, 0],
-            &[&int_datatype, &int_datatype, &int_datatype],
+            &[
+                (size_of::<i32>() * 2) as mpi::Address,
+                size_of::<i32>() as mpi::Address,
+                0,
+            ],
+            &[i32::equivalent_datatype(); 3],
         )
     }
 }
@@ -31,8 +33,6 @@ fn main() {
         let mut ints: [i32; 3] = [0, 0, 0];
         root_process.broadcast_into(&mut ints[..]);
 
-        assert_eq!(1, ints[0]);
-        assert_eq!(2, ints[1]);
-        assert_eq!(3, ints[2]);
+        assert_eq!([1, 2, 3], ints);
     }
 }
