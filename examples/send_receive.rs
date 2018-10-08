@@ -1,9 +1,9 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::point_to_point as p2p;
 use mpi::topology::Rank;
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();

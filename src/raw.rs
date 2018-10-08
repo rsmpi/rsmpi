@@ -2,7 +2,7 @@
 
 /// Rust C bridge traits
 pub mod traits {
-    pub use super::{AsRaw, AsRawMut};
+    pub use super::{AsRaw, AsRawMut, FromRaw, MatchesRaw};
 }
 
 /// A rust type than can identify as a raw value understood by the MPI C API.
@@ -28,3 +28,14 @@ pub unsafe trait AsRawMut: AsRaw {
     /// A mutable pointer to the raw value
     fn as_raw_mut(&mut self) -> *mut <Self as AsRaw>::Raw;
 }
+
+/// Conversion for the Rust type from the raw MPI handle type.
+pub trait FromRaw: AsRaw {
+    /// Constructs the Rust type, with all its semantics, from the raw MPI type.
+    unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self;
+}
+
+/// A marker trait that indicates the Rust type is exactly equivalent in representation to the Raw
+/// type, allowing slices of the type to be used with MPI APIs that accept arrays of its Raw MPI
+/// handle.
+pub unsafe trait MatchesRaw: AsRaw {}

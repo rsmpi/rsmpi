@@ -2,8 +2,8 @@
 #![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names))]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::topology::{GroupRelation, Rank, SystemGroup};
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();

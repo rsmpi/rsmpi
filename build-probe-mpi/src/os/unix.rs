@@ -63,8 +63,7 @@ fn collect_args_with_prefix(cmd: &str, prefix: &str) -> Vec<String> {
             } else {
                 None
             }
-        })
-        .collect()
+        }).collect()
 }
 
 /// Probe the environment for an installed MPI library

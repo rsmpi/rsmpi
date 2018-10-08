@@ -28,8 +28,8 @@
 //!   - Cancellation, `MPI_Test_cancelled()`
 
 use std::cell::Cell;
-use std::mem;
 use std::marker::PhantomData;
+use std::mem;
 use std::os::raw::c_int;
 
 use ffi;

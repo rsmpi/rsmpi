@@ -1,9 +1,9 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
-use mpi::topology::Rank;
 use mpi::collective::SystemOperation;
+use mpi::topology::Rank;
+use mpi::traits::*;
 
 fn fac(n: Rank) -> Rank {
     (1..n + 1).product()

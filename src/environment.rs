@@ -7,10 +7,10 @@
 //! - **8.1.2**: `MPI_TAG_UB`, ...
 //! - **8.2**: Memory allocation
 //! - **8.3, 8.4, and 8.5**: Error handling
-use std::{mem, ptr};
 use std::cmp::Ordering;
-use std::string::FromUtf8Error;
 use std::os::raw::{c_char, c_double, c_int, c_void};
+use std::string::FromUtf8Error;
+use std::{mem, ptr};
 
 use conv::ConvUtil;
 

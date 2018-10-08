@@ -1,8 +1,8 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::datatype::PartitionMut;
+use mpi::traits::*;
 use mpi::Count;
 
 fn main() {
@@ -25,8 +25,7 @@ fn main() {
                 let tmp = *acc;
                 *acc += x;
                 Some(tmp)
-            })
-            .collect();
+            }).collect();
 
         let mut buf = vec![0; (size * (size - 1) / 2) as usize];
         {
