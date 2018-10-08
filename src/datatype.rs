@@ -33,7 +33,6 @@
 //! `MPI_Type_get_extent_x()`, `MPI_Type_create_resized()`
 //! - **4.1.8**: True extent of datatypes, `MPI_Type_get_true_extent()`,
 //! `MPI_Type_get_true_extent_x()`
-//! - **4.1.10**: Duplicating a datatype, `MPI_Type_dup()`
 //! - **4.1.11**: `MPI_Get_elements()`, `MPI_Get_elements_x()`
 //! - **4.1.13**: Decoding a datatype, `MPI_Type_get_envelope()`, `MPI_Type_get_contents()`
 //! - **4.2**: Pack and unpack, `MPI_Pack()`, `MPI_Unpack()`, `MPI_Pack_size()`
@@ -376,6 +375,12 @@ impl UserDatatype {
     }
 }
 
+impl Clone for UserDatatype {
+    fn clone(&self) -> Self {
+        self.dup()
+    }
+}
+
 impl Drop for UserDatatype {
     fn drop(&mut self) {
         unsafe {
@@ -395,7 +400,24 @@ unsafe impl AsRaw for UserDatatype {
 impl Datatype for UserDatatype {}
 
 /// A Datatype describes the layout of messages in memory.
-pub trait Datatype: AsRaw<Raw = MPI_Datatype> {}
+pub trait Datatype: AsRaw<Raw = MPI_Datatype> {
+    /// Creates a new datatype with the same key-values as this datatype.
+    ///
+    /// # Standard section(s)
+    /// 4.1.10
+    fn dup(&self) -> UserDatatype {
+        unsafe {
+            let mut new_type: MPI_Datatype = mem::uninitialized();
+            ffi::MPI_Type_dup(self.as_raw(), &mut new_type);
+            UserDatatype(new_type)
+        }
+    }
+
+    /// Creates a DatatypeRef from this datatype object.
+    fn as_ref<'a>(&'a self) -> DatatypeRef<'a> {
+        unsafe { DatatypeRef::from_raw(self.as_raw()) }
+    }
+}
 impl<'a, D> Datatype for &'a D where D: 'a + Datatype {}
 
 /// Something that has an associated datatype
