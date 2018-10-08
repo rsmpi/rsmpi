@@ -661,6 +661,9 @@ impl<'a> From<&'a UncommittedUserDatatype> for UncommittedDatatypeRef<'a> {
 }
 
 /// A Datatype describes the layout of messages in memory.
+///
+/// `Datatype` always represents a committed datatype that can be immediately used for sending and
+/// receiving messages. `UncommittedDatatype` is used for datatypes that are possibly uncommitted.
 pub trait Datatype: AsRaw<Raw = MPI_Datatype> {}
 impl<'a, D> Datatype for &'a D where D: 'a + Datatype {}
 
