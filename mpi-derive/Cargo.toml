@@ -7,7 +7,7 @@ authors = ["Andrew Gaspar <andrew.gaspar@outlook.com>"]
 proc-macro = true
 
 [dependencies]
-syn = "0.15.6"
+syn = "0.15.9"
 quote = "0.6.8"
 proc-macro2 = "0.4.19"
 

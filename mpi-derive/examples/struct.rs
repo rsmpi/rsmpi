@@ -10,11 +10,11 @@ use mpi::traits::*;
 fn assert_equivalence<A, B>(comm: &SystemCommunicator, a: &A, b: &B)
 where
     A: Buffer,
-    B: BufferMut + PartialEq + Default + Debug,
+    B: BufferMut + PartialEq + Debug,
 {
     let packed = comm.pack(a);
 
-    let mut new_b = B::default();
+    let mut new_b = unsafe { std::mem::uninitialized() };
     comm.unpack_into(&packed, &mut new_b, 0);
 
     assert_eq!(b, &new_b);
@@ -25,14 +25,28 @@ fn main() {
 
     let world = universe.world();
 
-    #[derive(Equivalence, Default)]
+    #[derive(Equivalence, PartialEq, Debug)]
     struct MyDataRust {
         b: bool,
         f: f64,
         i: u16,
     }
 
-    #[derive(Equivalence, Default, PartialEq, Debug)]
+    assert_equivalence(
+        &world,
+        &MyDataRust {
+            b: true,
+            f: 3.4,
+            i: 7,
+        },
+        &MyDataRust {
+            b: true,
+            f: 3.4,
+            i: 7,
+        },
+    );
+
+    #[derive(Equivalence, PartialEq, Debug)]
     #[repr(C)]
     struct MyDataC {
         b: bool,
@@ -54,26 +68,43 @@ fn main() {
         },
     );
 
-    // #[derive(Datatype, Default, PartialEq, Debug)]
-    // struct MyDataOrdered {
-    //     bf: (bool, f64),
-    //     i: u16,
-    // };
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct MyDataOrdered {
+        bf: (bool, f64),
+        i: u16,
+    };
 
-    // assert_equivalence(
-    //     &world,
-    //     &MyDataRust {
-    //         b: true,
-    //         f: 3.4,
-    //         i: 7,
-    //     },
-    //     &MyDataOrdered {
-    //         bf: (true, 3.4),
-    //         i: 7,
-    //     },
-    // );
+    assert_equivalence(
+        &world,
+        &MyDataRust {
+            b: true,
+            f: 3.4,
+            i: 7,
+        },
+        &MyDataOrdered {
+            bf: (true, 3.4),
+            i: 7,
+        },
+    );
 
-    // #[derive(Datatype, Default, PartialEq, Debug)]
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct MyDataNestedTuple {
+        bfi: (bool, (f64, u16)),
+    };
+
+    assert_equivalence(
+        &world,
+        &MyDataRust {
+            b: true,
+            f: 3.4,
+            i: 7,
+        },
+        &MyDataNestedTuple {
+            bfi: (true, (3.4, 7)),
+        },
+    );
+
+    // #[derive(Equivalence, PartialEq, Debug)]
     // struct MyDataUnnamed(bool, f64, u16);
 
     // assert_equivalence(
