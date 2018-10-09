@@ -49,12 +49,11 @@ fn new_for_struct(ast: &syn::DeriveInput, fields: &syn::Fields) -> TokenStream2 
 
     let field_datatypes = fields.iter().map(|field| {
         let ty = &field.ty;
-        quote!(<#ty as ::mpi::datatype::Equivalence>::equivalent_datatype())
+        quote!(
+            ::mpi::datatype::UncommittedDatatypeRef::from(
+                <#ty as ::mpi::datatype::Equivalence>::equivalent_datatype()))
     });
-    let datatypes_tuple = quote!{(#(#field_datatypes),*)};
-
-    let field_datatype_ref = (0..field_count).map(|field_i| quote!(datatypes.#field_i.as_raw()));
-    let datatype_refs = quote!{[#(#field_datatype_ref),*]};
+    let datatypes = quote!{[#(#field_datatypes),*]};
 
     let count = quote!{#field_count};
 
@@ -65,25 +64,19 @@ fn new_for_struct(ast: &syn::DeriveInput, fields: &syn::Fields) -> TokenStream2 
                 use ::mpi::raw::AsRaw;
 
                 thread_local!(static DATATYPE: ::mpi::datatype::DatatypeRef<'static> = {
-                    let datatypes = #datatypes_tuple;
-
-                    let blocklengths = #blocklengths;
-                    let displacements = #displacements;
-                    let types = #datatype_refs;
-
-                    unsafe {
-                        let mut newtype: ::mpi::ffi::MPI_Datatype =
-                            unsafe { ::std::mem::uninitialized() };
-                        ::mpi::ffi::MPI_Type_create_struct(
-                            #count as ::mpi::Count,
-                            blocklengths.as_ptr(),
-                            displacements.as_ptr(),
-                            types.as_ptr(),
-                            &mut newtype,
+                    let datatype =
+                        ::mpi::datatype::UserDatatype::structured(
+                            &#blocklengths,
+                            &#displacements,
+                            &#datatypes,
                         );
-                        ::mpi::ffi::MPI_Type_commit(&mut newtype);
-                        ::mpi::datatype::DatatypeRef::from_raw(newtype)
-                    }
+
+                    let datatype_ref =
+                        unsafe { ::mpi::datatype::DatatypeRef::from_raw(datatype.as_raw()) };
+
+                    ::std::mem::forget(datatype);
+
+                    datatype_ref
                 });
 
                 DATATYPE.with(|datatype| datatype.clone())
