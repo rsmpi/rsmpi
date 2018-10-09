@@ -1,0 +1,10 @@
+image: Visual Studio 2017
+
+install:
+  - ps: ci\windows\install.ps1
+
+build_script:
+  - ps: ci\windows\build.ps1
+
+test_script:
+  - ps: ci\windows\test.ps1
