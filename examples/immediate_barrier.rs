@@ -1,9 +1,15 @@
 #![deny(warnings)]
 extern crate mpi;
 
-use mpi::traits::*;
-
+#[cfg(msmpi)]
 fn main() {
+    // There appears to be a bug with MPI_Ibarrier on MS-MPI. Its state machine is not advanced
+    // while other I/O is blocking.
+}
+
+#[cfg(not(msmpi))]
+fn main() {
+    use mpi::traits::*;
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let size = world.size();
