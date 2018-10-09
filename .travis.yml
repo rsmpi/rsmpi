@@ -18,7 +18,6 @@ addons:
 
 env:
   global:
-    - LIBCLANG_PATH=/usr/lib/llvm-3.9/lib
     # GH_TOKEN=...
     - secure: "b/XSfdfqZZCP+hG65bqi+wPPh0z5lMRCL7X4Y0vNPt01WGqu851RHF6XGvkBa8MQWWYylDAAZTFWHDHG0uAb94Dpvo2+XpU4PtRrTUd52lN3U66bRyR1H5wRlhCBYpqnke7S3zP2XKvHfTUFNPyF6NliCVKPsntTPsb7szYevZzYzIBIjsPq5IbUqezsV6aVvjJ6wcIjMdzhsDafefNGxEkSis6XhSPXif02enyglKCN6qhPcd+RdaCP4NyUhxxyNO7w6tGooCo1V534/EPH08u0tU78htV/TNzlvobjAvxrC4lnCY7MJW1lFkJL9tzTo1LC2xaFMzLwzsYr3b+PCBg94Iz4OcA7le630SiZC0iI2lLL7xsaSp+qSFK1YTp0nPH0LXE67XesAjFHnRh/EroJK9UK58L+enBWUzsm6Q4ey2k+AaOw9IkHvDXtgjAJknmG+na3dRVbmEetxVkxm9yucAzUxw12h4ZHwYv2LPWDtu+CL7TbUItqgHIkw0AGGX5eII3uThOib+aKuG8g86G16XHQ2aXEZmkA9BdXqlLG4P5qSDN1SiO+s8W6Q2WVgVHlk4tlpSEOXXx0AbeBndQzRAFHKEyBeVq3NKYLncikHjndR1/jvzTMSVIli2ptbUJbXTZMTT5B05QWIR9Xh95gxKunc1kfNJ6YSEhVDf0="
     # CRATES_IO_TOKEN=...
@@ -27,28 +26,50 @@ env:
 
 matrix:
   include:
-    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=true
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=true
       rust: stable
-    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4 RELEASE_CONFIG=false
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.1.2 RELEASE_CONFIG=false
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.1.2 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.2 RELEASE_CONFIG=false
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.2 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=2.1.5 RELEASE_CONFIG=false
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=2.1.5 RELEASE_CONFIG=false
       rust: stable
-    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
       rust: beta
-    - env: MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
       rust: nightly
+      os: linux
+    - env: MPI_LIBRARY=msmpi MPI_LIBRARY_VERSION=10.0.0 RELEASE_CONFIG=false
+      rust: stable
+      os: windows
+    - env: MPI_LIBRARY=msmpi MPI_LIBRARY_VERSION=10.0.0 RELEASE_CONFIG=false
+      rust: nightly
+      os: windows
   allow_failures:
     - rust: nightly
 
 install:
-  - sh ci/install-mpi.sh
-  - export MPI_PREFIX="${HOME}/opt/${MPI_LIBRARY}-${MPI_LIBRARY_VERSION}"
-  - export PATH="${HOME}/.local/bin:${MPI_PREFIX}/bin${PATH:+":${PATH}"}"
-  - export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"
+  # Linux set-up
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sh ci/install-mpi.sh; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export MPI_PREFIX="${HOME}/opt/${MPI_LIBRARY}-${MPI_LIBRARY_VERSION}"; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PATH="${HOME}/.local/bin:${MPI_PREFIX}/bin${PATH:+":${PATH}"}"; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"; fi
+  # Windows set-up
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then sh ci/install-mpi-windows.sh; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export MSMPI_BIN="C:\\Program Files\\Microsoft MPI\\Bin\\"; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export MSMPI_INC="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\\"; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export MSMPI_LIB32="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x86\\"; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export MSMPI_LIB64="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x64\\"; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export PATH="${HOME}/.cargo/bin:${MSMPI_BIN}${PATH:+":${PATH}"}"; fi
+  # Global set-up
   - cargo install --force cargo-mpirun
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
       cargo install --force clippy;
@@ -56,8 +77,11 @@ install:
 
 script:
   - env RUSTFLAGS="--deny warnings" cargo build -v --no-default-features
-  - env RUSTFLAGS="--deny warnings" cargo build -v
-  - env RUSTFLAGS="--deny warnings" cargo test --all -v && sh ci/run-examples.sh
+  # Don't build with default features on Windows
+  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then env RUSTFLAGS="--deny warnings" cargo build -v; fi
+  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then env RUSTFLAGS="--deny warnings" cargo test --all -v; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then env RUSTFLAGS="--deny warnings" cargo test --all -v --no-default-features; fi
+  - env RUSTFLAGS="--deny warnings" sh ci/run-examples.sh
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
       env RUSTFLAGS="--deny warnings" cargo clippy -v;
     fi
