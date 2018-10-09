@@ -5,6 +5,12 @@ set -e
 # enable oversubscribing when using newer Open MPI
 export OMPI_MCA_rmaps_base_oversubscribe=1
 
+EXTRA_CARGO_FLAGS=""
+if test "$TRAVIS_OS_NAME" = "windows";
+then
+  EXTRA_CARGO_FLAGS="--no-default-features"
+fi
+
 EXAMPLES_DIR="examples"
 
 examples=$(ls ${EXAMPLES_DIR} | sed "s/\\.rs\$//")
@@ -22,7 +28,7 @@ do
   output_file="/tmp/${example}_output"
   for num_proc in $(seq 2 8)
   do
-    if (cargo mpirun --verbose -n ${num_proc} --example "${example}" > "${output_file}" 2>&1)
+    if (cargo mpirun ${EXTRA_CARGO_FLAGS} --verbose -n ${num_proc} --example "${example}" > "${output_file}" 2>&1)
     then
       printf "."
       rm -f "${output_file}"
