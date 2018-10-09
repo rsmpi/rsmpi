@@ -25,14 +25,14 @@ fn main() {
 
     let world = universe.world();
 
-    #[derive(Datatype, Default)]
+    #[derive(Equivalence, Default)]
     struct MyDataRust {
         b: bool,
         f: f64,
         i: u16,
     }
 
-    #[derive(Datatype, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     #[repr(C)]
     struct MyDataC {
         b: bool,

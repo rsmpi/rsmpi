@@ -10,12 +10,12 @@ extern crate syn;
 type TokenStream1 = proc_macro::TokenStream;
 type TokenStream2 = proc_macro2::TokenStream;
 
-#[proc_macro_derive(Datatype)]
+#[proc_macro_derive(Equivalence)]
 pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
     let ast: syn::DeriveInput = syn::parse(input).expect("Couldn't parse struct");
     let result = match ast.data {
-        syn::Data::Enum(_) => panic!("#[derive(Datatype)] is not compatible with enums"),
-        syn::Data::Union(_) => panic!("#[derive(Datatype)] is not compatible with unions"),
+        syn::Data::Enum(_) => panic!("#[derive(Equivalence)] is not compatible with enums"),
+        syn::Data::Union(_) => panic!("#[derive(Equivalence)] is not compatible with unions"),
         syn::Data::Struct(ref s) => new_for_struct(&ast, &s.fields),
     };
     result.into()
@@ -23,8 +23,6 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
 
 fn new_for_struct(ast: &syn::DeriveInput, fields: &syn::Fields) -> TokenStream2 {
     let ident = &ast.ident;
-
-    let field_count = fields.iter().count();
 
     let field_blocklengths = fields.iter().map(|_| quote!{1 as ::mpi::Count});
     let blocklengths = quote!{[#(#field_blocklengths),*]};
@@ -54,8 +52,6 @@ fn new_for_struct(ast: &syn::DeriveInput, fields: &syn::Fields) -> TokenStream2 
                 <#ty as ::mpi::datatype::Equivalence>::equivalent_datatype()))
     });
     let datatypes = quote!{[#(#field_datatypes),*]};
-
-    let count = quote!{#field_count};
 
     quote!{
         unsafe impl ::mpi::datatype::Equivalence for #ident {
