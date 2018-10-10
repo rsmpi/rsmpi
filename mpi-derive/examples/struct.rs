@@ -148,4 +148,26 @@ fn main() {
     struct ZeroArray([i32; 0]);
 
     assert_equivalence(&world, &ZeroArray([]), &Empty);
+
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct Parent {
+        b: bool,
+        child: Child,
+    }
+
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct Child(f64, u16);
+
+    assert_equivalence(
+        &world,
+        &MyDataRust {
+            b: true,
+            f: 3.4,
+            i: 7,
+        },
+        &Parent {
+            b: true,
+            child: Child(3.4, 7),
+        },
+    );
 }
