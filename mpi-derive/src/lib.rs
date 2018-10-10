@@ -10,7 +10,7 @@ extern crate syn;
 type TokenStream1 = proc_macro::TokenStream;
 type TokenStream2 = proc_macro2::TokenStream;
 
-use syn::Type;
+use syn::{Fields, Type};
 
 #[proc_macro_derive(Equivalence)]
 pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
@@ -77,15 +77,27 @@ fn equivalence_for_field(field: &syn::Field) -> TokenStream2 {
     equivalence_for_type(&field.ty)
 }
 
-fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &syn::Fields) -> TokenStream2 {
+fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStream2 {
     let ident = &ast.ident;
 
     let field_blocklengths = fields.iter().map(|_| quote!{1 as ::mpi::Count});
     let blocklengths = quote!{[#(#field_blocklengths),*]};
 
-    let field_displacements = fields
-        .iter()
-        .map(|field| offset_of(&ident, field.ident.as_ref().unwrap()));
+    let field_displacements: Vec<_> = match fields {
+        Fields::Named(ref fields) => fields
+            .named
+            .iter()
+            .map(|field| offset_of(&ident, field.ident.as_ref().unwrap()))
+            .collect(),
+        Fields::Unnamed(ref fields) => fields
+            .unnamed
+            .iter()
+            .enumerate()
+            .map(|(i, _)| offset_of(&ident, &i))
+            .collect(),
+        Fields::Unit => vec![],
+    };
+
     let displacements = quote!{[#(#field_displacements as ::mpi::Address),*]};
 
     let field_datatypes = fields.iter().map(equivalence_for_field);

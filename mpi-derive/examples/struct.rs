@@ -104,16 +104,16 @@ fn main() {
         },
     );
 
-    // #[derive(Equivalence, PartialEq, Debug)]
-    // struct MyDataUnnamed(bool, f64, u16);
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct MyDataUnnamed(bool, f64, u16);
 
-    // assert_equivalence(
-    //     &world,
-    //     &MyDataRust {
-    //         b: true,
-    //         f: 3.4,
-    //         i: 7,
-    //     },
-    //     &MyDataUnnamed(true, 3.4, 7),
-    // );
+    assert_equivalence(
+        &world,
+        &MyDataRust {
+            b: true,
+            f: 3.4,
+            i: 7,
+        },
+        &MyDataUnnamed(true, 3.4, 7),
+    );
 }
