@@ -64,11 +64,18 @@ fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
     }
 }
 
+fn equivalence_for_array_field(type_array: &syn::TypeArray) -> TokenStream2 {
+    let ty = equivalence_for_type(&type_array.elem);
+    let len = &type_array.len;
+    quote! { &::mpi::datatype::UncommittedUserDatatype::contiguous(#len, &#ty) }
+}
+
 fn equivalence_for_type(ty: &syn::Type) -> TokenStream2 {
     match ty {
         Type::Path(ref type_path) => quote!(
                 <#type_path as ::mpi::datatype::Equivalence>::equivalent_datatype()),
         Type::Tuple(ref type_tuple) => equivalence_for_tuple_field(&type_tuple),
+        Type::Array(ref type_array) => equivalence_for_array_field(&type_array),
         _ => panic!("Unsupported type!"),
     }
 }

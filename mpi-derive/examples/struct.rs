@@ -116,4 +116,16 @@ fn main() {
         },
         &MyDataUnnamed(true, 3.4, 7),
     );
+
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct BoolBoolBool(bool, bool, bool);
+
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct ThreeBool([bool; 3]);
+
+    assert_equivalence(
+        &world,
+        &BoolBoolBool(true, false, true),
+        &ThreeBool([true, false, true]),
+    );
 }
