@@ -140,4 +140,12 @@ fn main() {
         &ComplexComplexComplex((1, true, 1), (2, false, 2), (3, true, 3)),
         &ThreeComplex([(1, true, 1), (2, false, 2), (3, true, 3)]),
     );
+
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct Empty;
+
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct ZeroArray([i32; 0]);
+
+    assert_equivalence(&world, &ZeroArray([]), &Empty);
 }

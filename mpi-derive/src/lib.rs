@@ -117,12 +117,9 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
                 use ::mpi::raw::AsRaw;
 
                 thread_local!(static DATATYPE: ::mpi::datatype::DatatypeRef<'static> = {
-                    let datatype =
-                        ::mpi::datatype::UserDatatype::structured(
-                            &#blocklengths,
-                            &#displacements,
-                            &#datatypes,
-                        );
+                    let datatype = ::mpi::datatype::UserDatatype::structured::<
+                        ::mpi::datatype::UncommittedDatatypeRef,
+                    >(&#blocklengths, &#displacements, &#datatypes);
 
                     let datatype_ref =
                         unsafe { ::mpi::datatype::DatatypeRef::from_raw(datatype.as_raw()) };
