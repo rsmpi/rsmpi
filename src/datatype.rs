@@ -62,7 +62,6 @@
 //! `MPI_Type_get_true_extent_x()`
 //! - **4.1.11**: `MPI_Get_elements()`, `MPI_Get_elements_x()`
 //! - **4.1.13**: Decoding a datatype, `MPI_Type_get_envelope()`, `MPI_Type_get_contents()`
-//! - **4.2**: Pack and unpack, `MPI_Pack()`, `MPI_Unpack()`, `MPI_Pack_size()`
 //! - **4.3**: Canonical pack and unpack, `MPI_Pack_external()`, `MPI_Unpack_external()`,
 //! `MPI_Pack_external_size()`
 
