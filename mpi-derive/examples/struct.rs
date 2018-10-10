@@ -128,4 +128,16 @@ fn main() {
         &BoolBoolBool(true, false, true),
         &ThreeBool([true, false, true]),
     );
+
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct ComplexComplexComplex((i8, bool, i8), (i8, bool, i8), (i8, bool, i8));
+
+    #[derive(Equivalence, PartialEq, Debug)]
+    struct ThreeComplex([(i8, bool, i8); 3]);
+
+    assert_equivalence(
+        &world,
+        &ComplexComplexComplex((1, true, 1), (2, false, 2), (3, true, 3)),
+        &ThreeComplex([(1, true, 1), (2, false, 2), (3, true, 3)]),
+    );
 }
