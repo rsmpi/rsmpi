@@ -436,7 +436,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         }
     }
 
-    /// Gets the implementation-defined buffer size required to pack 'incout' elements of type
+    /// Gets the implementation-defined buffer size required to pack 'incount' elements of type
     /// 'datatype'.
     ///
     /// # Standard section(s)
