@@ -1,5 +1,3 @@
-//! Describing data
-//!
 //! The core function of MPI is getting data from point A to point B (where A and B are e.g. single
 //! processes, multiple processes, the filesystem, ...). It offers facilities to describe that data
 //! (layout in memory, behavior under certain operators) that go beyound a start address and a
@@ -14,6 +12,35 @@
 //! an object in memory like all elements below the diagonal of a dense matrix stored in row-major
 //! order.
 //!
+//! ## Derived Datatypes
+//! Derived MPI datatypes can exist in either an "uncommitted" or "committed" state. Only
+//! "committed" datatypes can be used in MPI communication. There is a cost to committing a
+//! datatype: only a final aggregate type should be committed when building it from component
+//! derived datatypes.
+//!
+//! In order to represent the difference between committed and uncommitted `MPI_Datatype` objects,
+//! two different flavors of types representing the "committed"-ness of the type are exposed.
+//! Orthogonally, there are types representing both "owned" `MPI_Datatype` objects and "borrowed"
+//! `MPI_Datatype` objects. This means there are four different types for `MPI_Datatype`:
+//! - `UserDatatype` represents a committed, owned `MPI_Datatype`
+//! - `DatatypeRef<'_>` represents a committed, borrowed `MPI_Datatype`.
+//!   - All builtin types are `DatatypeRef<'static>`
+//! - `UncommittedUserDatatype` represents an uncommitted, owned `MPI_Datatype`
+//! - `UncommittedDatatypeRef<'_>` represents an uncommitted, borrowed `MPI_Datatype`
+//!
+//! Along with this, there are two traits that are applied to these types:
+//! - `UncommittedDatatype` indicates the type represents a possibly uncommitted `MPI_Datatype`
+//! - `Datatype` indicates the type represents a committed `MPI_Datatype`
+//!
+//! An important concept here is that all committed `Datatype` objects are also
+//! `UncommittedDatatype` objects. This may seem unintuitive at first, but as far as MPI is
+//! concerned, "committing" a datatype is purely a promotion, enabling more capabilities. This
+//! allows `Datatype` and `UncommittedDatatype` objects to be used interchangeably in the same
+//! `Datatype` constructors.
+//!
+//! For more information on derived datatypes, see section 4.1 of the MPI 3.1 Standard.
+//!
+//! ## Data Buffers
 //! A `Buffer` describes a specific piece of data in memory that MPI should operate on. In addition
 //! to specifying the datatype of the data. It knows the address in memory where the data begins
 //! and how many instances of the datatype are contained in the data. The `Buffer` trait is
