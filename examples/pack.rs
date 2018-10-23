@@ -11,7 +11,9 @@ fn main() {
     let packed = world.pack(&ints[..]);
 
     let mut new_ints = [0, 0, 0];
-    world.unpack_into(&packed, &mut new_ints[..], 0);
+    unsafe {
+        world.unpack_into(&packed, &mut new_ints[..], 0);
+    }
 
     assert_eq!([3, 2, 1], new_ints);
 }
