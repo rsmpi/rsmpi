@@ -111,8 +111,8 @@ pub struct UserCommunicator(MPI_Comm);
 
 impl UserCommunicator {
     /// If the raw value is the null handle returns `None`
-    fn from_raw(raw: MPI_Comm) -> Option<UserCommunicator> {
-        if raw == unsafe_extern_static!(ffi::RSMPI_COMM_NULL) {
+    pub unsafe fn from_raw(raw: MPI_Comm) -> Option<UserCommunicator> {
+        if raw == ffi::RSMPI_COMM_NULL {
             None
         } else {
             Some(UserCommunicator(raw))
@@ -308,8 +308,8 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Comm_split(self.as_raw(), color.as_raw(), key, &mut newcomm);
+            UserCommunicator::from_raw(newcomm)
         }
-        UserCommunicator::from_raw(newcomm)
     }
 
     /// Split a communicator collectively by subgroup.
@@ -337,8 +337,8 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Comm_create(self.as_raw(), group.as_raw(), &mut newcomm);
+            UserCommunicator::from_raw(newcomm)
         }
-        UserCommunicator::from_raw(newcomm)
     }
 
     /// Split a communicator by subgroup.
