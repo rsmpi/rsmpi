@@ -25,19 +25,24 @@ use std::{mem, process};
 
 use conv::ConvUtil;
 
-use super::Count;
 #[cfg(not(msmpi))]
 use super::Tag;
+use super::{Count, IntArray};
 
 use datatype::traits::*;
 use ffi;
 use ffi::{MPI_Comm, MPI_Group};
 use raw::traits::*;
 
+mod cartesian;
+
 /// Topology traits
 pub mod traits {
     pub use super::{AsCommunicator, Communicator, Group};
 }
+
+// Re-export cartesian functions and types from topology modules.
+pub use self::cartesian::*;
 
 /// Something that has a communicator associated with it
 pub trait AsCommunicator {
@@ -102,6 +107,31 @@ impl AsCommunicator for SystemCommunicator {
     }
 }
 
+/// An enum describing the topology of a communicator
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum Topology {
+    /// Graph topology type
+    Graph,
+    /// Cartesian topology type
+    Cartesian,
+    /// DistributedGraph topology type
+    DistributedGraph,
+    /// Undefined topology type
+    Undefined,
+}
+
+/// An enum indirecting between different concrete communicator topology types
+pub enum IntoTopology {
+    /// Graph topology type
+    Graph(GraphCommunicator),
+    /// Cartesian topology type
+    Cartesian(CartesianCommunicator),
+    /// DistributedGraph topology type
+    DistributedGraph(DistributedGraphCommunicator),
+    /// Undefined topology type
+    Undefined(UserCommunicator),
+}
+
 /// A user-defined communicator
 ///
 /// # Standard section(s)
@@ -123,6 +153,42 @@ impl UserCommunicator {
     fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
         debug_assert_ne!(raw, unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
         UserCommunicator(raw)
+    }
+
+    /// Gets the topology of the communicator.
+    ///
+    /// # Standard section(s)
+    /// 7.5.5
+    pub fn topology(&self) -> Topology {
+        unsafe {
+            let mut status: c_int = mem::uninitialized();
+            ffi::MPI_Topo_test(self.as_raw(), &mut status);
+
+            if status == ffi::RSMPI_GRAPH {
+                Topology::Graph
+            } else if status == ffi::RSMPI_CART {
+                Topology::Cartesian
+            } else if status == ffi::RSMPI_DIST_GRAPH {
+                Topology::DistributedGraph
+            } else if status == ffi::RSMPI_UNDEFINED {
+                Topology::Undefined
+            } else {
+                panic!("Unexpected Topology type!")
+            }
+        }
+    }
+
+    /// Converts the communicator into its precise communicator type.
+    ///
+    /// # Standard section(s)
+    /// 7.5.5
+    pub fn into_topology(self) -> IntoTopology {
+        match self.topology() {
+            Topology::Graph => unimplemented!(),
+            Topology::Cartesian => IntoTopology::Cartesian(CartesianCommunicator(self)),
+            Topology::DistributedGraph => unimplemented!(),
+            Topology::Undefined => IntoTopology::Undefined(self),
+        }
     }
 }
 
@@ -150,6 +216,20 @@ impl Drop for UserCommunicator {
         assert_eq!(self.0, unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
     }
 }
+
+impl From<CartesianCommunicator> for UserCommunicator {
+    fn from(cart_comm: CartesianCommunicator) -> Self {
+        cart_comm.0
+    }
+}
+
+/// Unimplemented
+#[allow(missing_copy_implementations)]
+pub struct GraphCommunicator;
+
+/// Unimplemented
+#[allow(missing_copy_implementations)]
+pub struct DistributedGraphCommunicator;
 
 /// A color used in a communicator split
 #[derive(Copy, Clone, Debug)]
@@ -433,6 +513,85 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
 
             let buf_cstr = CStr::from_ptr(buf.as_ptr());
             buf_cstr.to_string_lossy().into_owned()
+        }
+    }
+
+    /// Creates a communicator with ranks laid out in a multi-dimensional space, allowing for easy
+    /// neighbor-to-neighbor communication, while providing MPI with information to allow it to
+    /// better optimize the physical locality of ranks that are logically close.
+    ///
+    /// * `dims` - array of spatial extents for the cartesian space
+    /// * `periods` - Must match length of `dims`. For i in 0 to dims.len(), periods[i] indicates if
+    ///     axis i is periodic. i.e. if true, the element at dims[i] - 1 in axis i is a neighbor of
+    ///     element 0 in axis i
+    /// * `reorder` - If true, MPI may re-order ranks in the new communicator.
+    ///
+    /// # Standard section(s)
+    /// 7.5.1 (MPI_Cart_create)
+    fn create_cartesian_communicator(
+        &self,
+        dims: &[Count],
+        periods: &[bool],
+        reorder: bool,
+    ) -> Option<CartesianCommunicator> {
+        assert_eq!(
+            dims.len(),
+            periods.len(),
+            "dims and periods must be parallel, equal-sized arrays"
+        );
+
+        let periods: IntArray = periods.iter().map(|x| *x as i32).collect();
+
+        unsafe {
+            let mut comm_cart = ffi::RSMPI_COMM_NULL;
+            ffi::MPI_Cart_create(
+                self.as_raw(),
+                dims.count(),
+                dims.as_ptr(),
+                periods.as_ptr(),
+                reorder as Count,
+                &mut comm_cart,
+            );
+            CartesianCommunicator::from_raw(comm_cart)
+        }
+    }
+
+    /// Gets the target rank of this rank as-if
+    /// [`create_cartesian_communicator`](#method.create_cartesian_communicator) had been called
+    /// with `dims`, `periods`, and `reorder = true`.
+    ///
+    /// Returns `None` if the local process would not particate in the new CartesianCommunciator.
+    ///
+    /// * `dims` - array of spatial extents for the cartesian space
+    /// * `periods` - Must match length of `dims`. For i in 0 to dims.len(), periods[i] indicates if
+    ///     axis i is periodic. i.e. if true, the element at dims[i] - 1 in axis i is a neighbor of
+    ///     element 0 in axis i
+    ///
+    /// # Standard section
+    /// 7.5.8 (MPI_Cart_map)
+    fn cartesian_map(&self, dims: &[Count], periods: &[bool]) -> Option<Rank> {
+        assert_eq!(
+            dims.len(),
+            periods.len(),
+            "dims and periods must be parallel, equal-sized arrays"
+        );
+
+        let periods: IntArray = periods.iter().map(|x| *x as i32).collect();
+
+        unsafe {
+            let mut new_rank = ffi::MPI_UNDEFINED;
+            ffi::MPI_Cart_map(
+                self.as_raw(),
+                dims.count(),
+                dims.as_ptr(),
+                periods.as_ptr(),
+                &mut new_rank,
+            );
+            if new_rank == ffi::MPI_UNDEFINED {
+                None
+            } else {
+                Some(new_rank)
+            }
         }
     }
 

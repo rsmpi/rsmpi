@@ -124,6 +124,8 @@ extern crate conv;
 #[cfg(feature = "user-operations")]
 extern crate libffi;
 extern crate mpi_sys;
+#[macro_use]
+extern crate smallvec;
 
 /// The raw C language MPI API
 ///
@@ -185,3 +187,7 @@ pub type Count = c_int;
 pub type Tag = c_int;
 /// An address in memory
 pub type Address = MPI_Aint;
+
+/// IntArray is used to translate Rust bool values to and from the int-bool types preferred by MPI
+/// without incurring allocation in the common case.
+type IntArray = smallvec::SmallVec<[c_int; 8]>;
