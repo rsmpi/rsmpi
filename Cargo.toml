@@ -25,6 +25,7 @@ user-operations = ["libffi"]
 conv = "0.3"
 libffi = { version = "0.6.3", optional = true }
 mpi-sys = { path = "mpi-sys", version = "0.1" }
+smallvec = "0.6.5"
 
 [build-dependencies]
 rustc_version = "0.2"

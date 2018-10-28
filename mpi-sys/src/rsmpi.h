@@ -56,6 +56,10 @@ extern const int RSMPI_THREAD_FUNNELED;
 extern const int RSMPI_THREAD_SERIALIZED;
 extern const int RSMPI_THREAD_MULTIPLE;
 
+extern const int RSMPI_GRAPH;
+extern const int RSMPI_CART;
+extern const int RSMPI_DIST_GRAPH;
+
 extern const int RSMPI_MAX_LIBRARY_VERSION_STRING;
 extern const int RSMPI_MAX_PROCESSOR_NAME;
 
