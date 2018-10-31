@@ -376,8 +376,8 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         let mut newcomm: MPI_Comm = unsafe { mem::uninitialized() };
         unsafe {
             ffi::MPI_Comm_create_group(self.as_raw(), group.as_raw(), tag, &mut newcomm);
+            UserCommunicator::from_raw(newcomm)
         }
-        UserCommunicator::from_raw(newcomm)
     }
 
     /// The group associated with this communicator
