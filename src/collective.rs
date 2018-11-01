@@ -9,7 +9,6 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-#[cfg(not(msmpi))]
 use std::os::raw::{c_int, c_void};
 use std::{fmt, mem, ptr};
 
@@ -1709,7 +1708,14 @@ impl<'a> Operation for &'a UnsafeUserOperation {}
 pub type UnsafeUserFunction =
     unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
 
-#[cfg(not(msmpi))]
+/// A raw pointer to a function that can be used to define an `UnsafeUserOperation`.
+///
+/// MS-MPI uses "stdcall" rather than "C" calling convention. These are actually equivalent on
+/// 64-bit Windows, but diverge on 32-bit Windows.
+#[cfg(msmpi)]
+pub type UnsafeUserFunction =
+    unsafe extern "stdcall" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
+
 impl UnsafeUserOperation {
     /// Define an unsafe operation using a function pointer. The operation must be associative.
     ///
@@ -1744,6 +1750,16 @@ impl UnsafeUserOperation {
     /// 5.9.5
     pub unsafe fn new(commute: bool, function: UnsafeUserFunction) -> Self {
         let mut op = mem::uninitialized();
+
+        // NOTE 10/31/2018: bindgen, on both the currently used version of 0.31.3, and the most
+        // recent version, 0.43.0, does not generate correct function signatures for functions
+        // with __stdcall calling conventions. So here we cast the function pointer to the
+        // degenerate function signature that the bindgen'd MPI_Op_create function expects.
+        //
+        // See: https://github.com/rust-lang-nursery/rust-bindgen/issues/1433
+        #[cfg(msmpi)]
+        let function = mem::transmute(function);
+
         ffi::MPI_Op_create(Some(function), commute as _, &mut op);
         UnsafeUserOperation { op }
     }
