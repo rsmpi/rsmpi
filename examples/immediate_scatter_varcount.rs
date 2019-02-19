@@ -26,7 +26,8 @@ fn main() {
                 let tmp = *acc;
                 *acc += x;
                 Some(tmp)
-            }).collect();
+            })
+            .collect();
         let partition = Partition::new(&msg[..], counts, &displs[..]);
         mpi::request::scope(|scope| {
             root_process

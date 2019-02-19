@@ -1127,7 +1127,8 @@ unsafe impl<'d, 'b, D, B: ?Sized> Buffer for View<'d, 'b, D, B>
 where
     D: 'd + Datatype,
     B: 'b + Pointer,
-{}
+{
+}
 
 /// A buffer with a user specified count and datatype
 ///
@@ -1203,7 +1204,8 @@ unsafe impl<'d, 'b, D, B: ?Sized> BufferMut for MutView<'d, 'b, D, B>
 where
     D: 'd + Datatype,
     B: 'b + PointerMut,
-{}
+{
+}
 
 /// Describes how a `Buffer` is partitioned by specifying the count of elements and displacement
 /// from the start of the buffer for each partition.
@@ -1245,13 +1247,11 @@ where
     /// Partition `buf` using `counts` and `displs`
     pub fn new(buf: &B, counts: C, displs: D) -> Partition<B, C, D> {
         let n = buf.count();
-        assert!(
-            counts
-                .borrow()
-                .iter()
-                .zip(displs.borrow().iter())
-                .all(|(&c, &d)| c + d <= n)
-        );
+        assert!(counts
+            .borrow()
+            .iter()
+            .zip(displs.borrow().iter())
+            .all(|(&c, &d)| c + d <= n));
 
         Partition {
             buf,
@@ -1299,7 +1299,8 @@ where
     B: 'b + Pointer + AsDatatype,
     C: Borrow<[Count]>,
     D: Borrow<[Count]>,
-{}
+{
+}
 
 /// Adds a partitioning to an existing `BufferMut` so that it becomes `Partitioned`
 pub struct PartitionMut<'b, B: 'b + ?Sized, C, D> {
@@ -1317,13 +1318,11 @@ where
     /// Partition `buf` using `counts` and `displs`
     pub fn new(buf: &mut B, counts: C, displs: D) -> PartitionMut<B, C, D> {
         let n = buf.count();
-        assert!(
-            counts
-                .borrow()
-                .iter()
-                .zip(displs.borrow().iter())
-                .all(|(&c, &d)| c + d <= n)
-        );
+        assert!(counts
+            .borrow()
+            .iter()
+            .zip(displs.borrow().iter())
+            .all(|(&c, &d)| c + d <= n));
 
         PartitionMut {
             buf,
@@ -1371,7 +1370,8 @@ where
     B: 'b + PointerMut + AsDatatype,
     C: Borrow<[Count]>,
     D: Borrow<[Count]>,
-{}
+{
+}
 
 /// Returns the address of the argument in a format suitable for use with datatype constructors
 ///

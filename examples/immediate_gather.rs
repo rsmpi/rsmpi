@@ -22,11 +22,10 @@ fn main() {
                 .wait();
         });
         println!("Root gathered sequence: {:?}.", a);
-        assert!(
-            a.iter()
-                .enumerate()
-                .all(|(a, &b)| b == 2u64.pow(a as u32 + 1))
-        );
+        assert!(a
+            .iter()
+            .enumerate()
+            .all(|(a, &b)| b == 2u64.pow(a as u32 + 1)));
     } else {
         mpi::request::scope(|scope| {
             root_process.immediate_gather_into(scope, &i).wait();
@@ -50,11 +49,9 @@ fn main() {
         for r in t.chunks(count) {
             println!("{:?}", r);
         }
-        assert!(
-            (0_u64..)
-                .zip(t.iter())
-                .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
-        );
+        assert!((0_u64..)
+            .zip(t.iter())
+            .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
     } else {
         mpi::request::scope(|scope| {
             root_process.immediate_gather_into(scope, &a[..]).wait();
@@ -81,11 +78,9 @@ fn main() {
         for r in t.chunks(count) {
             println!("{:?}", r);
         }
-        assert!(
-            (0_u64..)
-                .zip(t.iter())
-                .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
-        );
+        assert!((0_u64..)
+            .zip(t.iter())
+            .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
     } else {
         mpi::request::scope(|scope| {
             root_process.immediate_gather_into(scope, &sv).wait();
