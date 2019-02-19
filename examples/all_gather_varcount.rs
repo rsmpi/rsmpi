@@ -21,7 +21,8 @@ fn main() {
             let tmp = *acc;
             *acc += x;
             Some(tmp)
-        }).collect();
+        })
+        .collect();
 
     let mut buf = vec![0; (size * (size - 1) / 2) as usize];
     {
@@ -29,10 +30,9 @@ fn main() {
         world.all_gather_varcount_into(&msg[..], &mut partition);
     }
 
-    assert!(
-        buf.iter()
-            .zip((0..size).flat_map(|r| (0..r)))
-            .all(|(&i, j)| i == j)
-    );
+    assert!(buf
+        .iter()
+        .zip((0..size).flat_map(|r| (0..r)))
+        .all(|(&i, j)| i == j));
     println!("Process {} got message {:?}", rank, buf);
 }

@@ -18,11 +18,10 @@ fn main() {
         let mut a = vec![0u64; count];
         root_process.gather_into_root(&i, &mut a[..]);
         println!("Root gathered sequence: {:?}.", a);
-        assert!(
-            a.iter()
-                .enumerate()
-                .all(|(a, &b)| b == 2u64.pow(a as u32 + 1))
-        );
+        assert!(a
+            .iter()
+            .enumerate()
+            .all(|(a, &b)| b == 2u64.pow(a as u32 + 1)));
     } else {
         root_process.gather_into(&i);
     }
@@ -40,11 +39,9 @@ fn main() {
         for r in t.chunks(count) {
             println!("{:?}", r);
         }
-        assert!(
-            (0_u64..)
-                .zip(t.iter())
-                .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
-        );
+        assert!((0_u64..)
+            .zip(t.iter())
+            .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
     } else {
         root_process.gather_into(&a[..]);
     }
@@ -65,11 +62,9 @@ fn main() {
         for r in t.chunks(count) {
             println!("{:?}", r);
         }
-        assert!(
-            (0_u64..)
-                .zip(t.iter())
-                .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
-        );
+        assert!((0_u64..)
+            .zip(t.iter())
+            .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
     } else {
         root_process.gather_into(&sv);
     }

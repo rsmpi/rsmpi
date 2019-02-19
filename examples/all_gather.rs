@@ -19,11 +19,10 @@ fn main() {
     if world.rank() == root_rank {
         println!("Root gathered sequence: {:?}.", a);
     }
-    assert!(
-        a.iter()
-            .enumerate()
-            .all(|(a, &b)| b == 2u64.pow(a as u32 + 1))
-    );
+    assert!(a
+        .iter()
+        .enumerate()
+        .all(|(a, &b)| b == 2u64.pow(a as u32 + 1)));
 
     let factor = world.rank() as u64 + 1;
     let a = (1_u64..)
@@ -40,11 +39,9 @@ fn main() {
             println!("{:?}", r);
         }
     }
-    assert!(
-        (0_u64..)
-            .zip(t.iter())
-            .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
-    );
+    assert!((0_u64..)
+        .zip(t.iter())
+        .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
 
     let d = UserDatatype::contiguous(count as Count, &u64::equivalent_datatype());
     t = vec![0u64; count * count];
@@ -62,9 +59,7 @@ fn main() {
             println!("{:?}", r);
         }
     }
-    assert!(
-        (0_u64..)
-            .zip(t.iter())
-            .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1))
-    );
+    assert!((0_u64..)
+        .zip(t.iter())
+        .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
 }

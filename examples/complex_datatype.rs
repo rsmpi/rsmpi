@@ -49,7 +49,8 @@ unsafe impl Equivalence for ComplexDatatype {
                         offset_of!(TupleType, 1) as Address,
                     ],
                     &[f32::equivalent_datatype(), u8::equivalent_datatype()],
-                ).as_ref(),
+                )
+                .as_ref(),
             ],
         )
     }
