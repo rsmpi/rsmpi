@@ -9,19 +9,19 @@ use ffi::MPI_Comm;
 /// Contains arrays describing the layout of the
 /// [`CartesianCommunicator`](struct.CartesianCommunicator.html).
 ///
-/// dims[i] is the extent of the array in axis i, periods[i] is true if axis i is periodic, and
-/// coords[i] is the cartesian coordinate for the local rank in axis i.
+/// `dims[i]` is the extent of the array in axis `i`, `periods[i]` is `true` if axis `i` is periodic, and
+/// `coords[i]` is the cartesian coordinate for the local rank in axis `i`.
 ///
 /// Each array, when received from a method in
 /// [`CartesianCommunicator`](struct.CartesianCommunicator.html), will be of length
 /// [`num_dimensions`](struct.CartesianCommunicator.html#method.num_dimensions).
 pub struct CartesianLayout {
-    /// dims[i] is the extent of the array in axis i
+    /// `dims[i]` is the extent of the array in axis `i`
     pub dims: Vec<Count>,
-    /// periods[i] is true if axis i is periodic, meaning an element at dims[i] - 1 in axis i
-    /// is neighbors with element 0 in axis i
+    /// `periods[i]` is `true` if axis `i` is periodic, meaning an element at `dims[i] - 1` in axis `i`
+    /// is neighbors with element 0 in axis `i`
     pub periods: Vec<bool>,
-    /// coords[i] is the cartesian coordinate for the local rank in axis i
+    /// `coords[i]` is the cartesian coordinate for the local rank in axis `i`
     pub coords: Vec<Count>,
 }
 

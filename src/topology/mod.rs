@@ -521,9 +521,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// better optimize the physical locality of ranks that are logically close.
     ///
     /// * `dims` - array of spatial extents for the cartesian space
-    /// * `periods` - Must match length of `dims`. For i in 0 to dims.len(), periods[i] indicates if
-    ///     axis i is periodic. i.e. if true, the element at dims[i] - 1 in axis i is a neighbor of
-    ///     element 0 in axis i
+    /// * `periods` - Must match length of `dims`. For `i` in 0 to `dims.len()`, `periods[i]` indicates if
+    ///     axis `i` is periodic. i.e. if `true`, the element at `dims[i] - 1` in axis `i` is a neighbor of
+    ///     element 0 in axis `i`
     /// * `reorder` - If true, MPI may re-order ranks in the new communicator.
     ///
     /// # Standard section(s)
@@ -563,9 +563,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// Returns `None` if the local process would not particate in the new CartesianCommunciator.
     ///
     /// * `dims` - array of spatial extents for the cartesian space
-    /// * `periods` - Must match length of `dims`. For i in 0 to dims.len(), periods[i] indicates if
-    ///     axis i is periodic. i.e. if true, the element at dims[i] - 1 in axis i is a neighbor of
-    ///     element 0 in axis i
+    /// * `periods` - Must match length of `dims`. For `i` in 0 to `dims.len()`, `periods[i]` indicates if
+    ///     axis `i` is periodic. i.e. if `true`, the element at `dims[i] - 1` in axis `i` is a neighbor of
+    ///     element 0 in axis `i`
     ///
     /// # Standard section
     /// 7.5.8 (MPI_Cart_map)
