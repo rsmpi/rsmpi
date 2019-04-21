@@ -50,13 +50,7 @@ fn main() {
     }
 
     let mut builder = bindgen::builder();
-    // Let `bindgen` know about libraries and search directories.
-    for lib in &lib.libs {
-        builder = builder.link(lib.clone());
-    }
-    for dir in &lib.lib_paths {
-        builder = builder.clang_arg(format!("-L{}", dir.display()));
-    }
+    // Let `bindgen` know about header search directories.
     for dir in &lib.include_paths {
         builder = builder.clang_arg(format!("-I{}", dir.display()));
     }
