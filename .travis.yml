@@ -26,25 +26,25 @@ env:
 
 matrix:
   include:
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=true
-      rust: stable
-      os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.1.4 RELEASE_CONFIG=false
-      rust: stable
-      os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.1.2 RELEASE_CONFIG=false
-      rust: stable
-      os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.2 RELEASE_CONFIG=false
-      rust: stable
-      os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=2.1.5 RELEASE_CONFIG=false
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=true
       rust: stable
       os: linux
     - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
+      rust: stable
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=4.0.1 RELEASE_CONFIG=false
+      rust: stable
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.1.4 RELEASE_CONFIG=false
+      rust: stable
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.4 RELEASE_CONFIG=false
+      rust: stable
+      os: linux
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=false
       rust: beta
       os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
+    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=false
       rust: nightly
       os: linux
     - env: MPI_LIBRARY=msmpi MPI_LIBRARY_VERSION=10.0.0 RELEASE_CONFIG=false
