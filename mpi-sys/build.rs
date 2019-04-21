@@ -59,8 +59,6 @@ fn main() {
     let bindings = builder
         .header("src/rsmpi.h")
         .emit_builtins()
-        .blacklist_type("mpich_struct_mpi_long_double_int")
-        .blacklist_type("max_align_t") // https://github.com/servo/rust-bindgen/issues/550
         .generate()
         .unwrap();
 
