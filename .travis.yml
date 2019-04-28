@@ -83,7 +83,7 @@ script:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then env RUSTFLAGS="--deny warnings" cargo test --all -v --no-default-features; fi
   - env RUSTFLAGS="--deny warnings" sh ci/run-examples.sh
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
-      env RUSTFLAGS="--deny warnings" cargo clippy -v;
+      env RUSTFLAGS="--deny warnings" cargo clippy -v --all --examples --tests;
     fi
 
 before_deploy:
