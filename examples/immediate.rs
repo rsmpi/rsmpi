@@ -1,5 +1,5 @@
 #![deny(warnings)]
-#![cfg_attr(feature = "cargo-clippy", allow(float_cmp))]
+#![allow(clippy::float_cmp)]
 extern crate mpi;
 
 use mpi::request::{CancelGuard, WaitGuard};

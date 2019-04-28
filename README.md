@@ -65,8 +65,8 @@ Then use it in your program like this:
 ```rust
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::request::WaitGuard;
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -75,15 +75,22 @@ fn main() {
     let rank = world.rank();
 
     let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
-    let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
+    let previous_rank = if rank > 0 { rank - 1 } else { size - 1 };
 
-    let msg = vec![rank , 2 * rank, 4 * rank];
+    let msg = vec![rank, 2 * rank, 4 * rank];
     mpi::request::scope(|scope| {
-        let _sreq = WaitGuard::from(world.process_at_rank(next_rank).immediate_send(scope, &msg[..]));
+        let _sreq = WaitGuard::from(
+            world
+                .process_at_rank(next_rank)
+                .immediate_send(scope, &msg[..]),
+        );
 
         let (msg, status) = world.any_process().receive_vec();
 
-        println!("Process {} got message {:?}.\nStatus is: {:?}", rank, msg, status);
+        println!(
+            "Process {} got message {:?}.\nStatus is: {:?}",
+            rank, msg, status
+        );
         let x = status.source_rank();
         assert_eq!(x, previous_rank);
         assert_eq!(vec![x, 2 * x, 4 * x], msg);

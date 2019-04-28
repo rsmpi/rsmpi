@@ -1,4 +1,5 @@
 #![deny(warnings)]
+#![allow(clippy::forget_copy)]
 extern crate mpi;
 
 use mpi::{

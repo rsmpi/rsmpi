@@ -3,7 +3,7 @@ extern crate mpi;
 
 use mpi::traits::*;
 
-const CNAME: &'static str = "__rsmpi__test";
+const CNAME: &str = "__rsmpi__test";
 
 fn main() {
     let universe = mpi::initialize().unwrap();
