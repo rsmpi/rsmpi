@@ -252,7 +252,7 @@ impl Color {
     }
 
     /// The raw value understood by the MPI C API
-    fn as_raw(&self) -> c_int {
+    fn as_raw(self) -> c_int {
         self.0
     }
 }
