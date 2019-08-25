@@ -1532,7 +1532,7 @@ impl<T> Erased for T {}
 #[cfg(feature = "user-operations")]
 pub struct UserOperation<'a> {
     op: MPI_Op,
-    _anchor: Box<Erased + 'a>, // keeps the internal data alive
+    _anchor: Box<dyn Erased + 'a>, // keeps the internal data alive
 }
 
 #[cfg(feature = "user-operations")]
