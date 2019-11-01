@@ -79,6 +79,8 @@ use ffi::MPI_Datatype;
 
 use raw::traits::*;
 
+use with_uninitialized;
+
 /// Datatype traits
 pub mod traits {
     pub use super::{
@@ -430,11 +432,13 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_contiguous(count, oldtype.as_raw(), &mut newtype);
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype|
+                   ffi::MPI_Type_contiguous(count, oldtype.as_raw(), newtype)
+                ).1
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Construct a new datatype out of `count` blocks of `blocklength` elements of `oldtype`
@@ -450,11 +454,13 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_vector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype|
+                    ffi::MPI_Type_vector(count, blocklength, stride, oldtype.as_raw(), newtype)
+                ).1
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Like `vector()` but `stride` is given in bytes rather than elements of `oldtype`.
@@ -471,17 +477,19 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_hvector(
-                count,
-                blocklength,
-                stride,
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype|
+                    ffi::MPI_Type_create_hvector(
+                        count,
+                        blocklength,
+                        stride,
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                ).1
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Constructs a new type out of multiple blocks of individual length and displacement.
@@ -501,17 +509,19 @@ impl UncommittedUserDatatype {
             "'blocklengths' and 'displacements' must be the same length"
         );
 
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_indexed(
-                blocklengths.count(),
-                blocklengths.as_ptr(),
-                displacements.as_ptr(),
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype|
+                    ffi::MPI_Type_indexed(
+                        blocklengths.count(),
+                        blocklengths.as_ptr(),
+                        displacements.as_ptr(),
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                ).1
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Constructs a new type out of multiple blocks of individual length and displacement.
@@ -534,17 +544,19 @@ impl UncommittedUserDatatype {
             displacements.len(),
             "'blocklengths' and 'displacements' must be the same length"
         );
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_hindexed(
-                blocklengths.count(),
-                blocklengths.as_ptr(),
-                displacements.as_ptr(),
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype|
+                    ffi::MPI_Type_create_hindexed(
+                        blocklengths.count(),
+                        blocklengths.as_ptr(),
+                        displacements.as_ptr(),
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                ).1
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Construct a new type out of blocks of the same length and individual displacements.
@@ -556,17 +568,19 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_indexed_block(
-                displacements.count(),
-                blocklength,
-                displacements.as_ptr(),
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype|
+                    ffi::MPI_Type_create_indexed_block(
+                        displacements.count(),
+                        blocklength,
+                        displacements.as_ptr(),
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                ).1
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Construct a new type out of blocks of the same length and individual displacements.
@@ -583,17 +597,19 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_hindexed_block(
-                displacements.count(),
-                blocklength,
-                displacements.as_ptr(),
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype|
+                    ffi::MPI_Type_create_hindexed_block(
+                        displacements.count(),
+                        blocklength,
+                        displacements.as_ptr(),
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                ).1
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Constructs a new datatype out of blocks of different length, displacement and datatypes
@@ -619,17 +635,19 @@ impl UncommittedUserDatatype {
             "'displacements', 'blocklengths', and 'types' must be the same length"
         );
 
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_struct(
-                blocklengths.count(),
-                blocklengths.as_ptr(),
-                displacements.as_ptr(),
-                types.as_ptr() as *const _,
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype|
+                    ffi::MPI_Type_create_struct(
+                        blocklengths.count(),
+                        blocklengths.as_ptr(),
+                        displacements.as_ptr(),
+                        types.as_ptr() as *const _,
+                        newtype,
+                    )
+                ).1
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Commits a datatype to a specific representation so that it can be used in MPI calls.
@@ -713,9 +731,11 @@ pub trait UncommittedDatatype: AsRaw<Raw = MPI_Datatype> {
     /// 4.1.10
     fn dup(&self) -> Self::DuplicatedDatatype {
         unsafe {
-            let mut new_type = mem::uninitialized();
-            ffi::MPI_Type_dup(self.as_raw(), &mut new_type);
-            Self::DuplicatedDatatype::from_raw(new_type)
+            Self::DuplicatedDatatype::from_raw(
+                with_uninitialized(|newtype|
+                    ffi::MPI_Type_dup(self.as_raw(), newtype)
+                ).1
+            )
         }
     }
 }
@@ -1382,10 +1402,8 @@ where
 ///
 /// 4.1.5
 pub fn address_of<T>(x: &T) -> Address {
-    let mut address = unsafe { mem::uninitialized() };
     let x: *const T = x;
     unsafe {
-        ffi::MPI_Get_address(x as *const c_void, &mut address);
+        with_uninitialized(|address| ffi::MPI_Get_address(x as *const c_void, address)).1
     }
-    address
 }

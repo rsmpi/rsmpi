@@ -10,12 +10,13 @@
 use std::cmp::Ordering;
 use std::os::raw::{c_char, c_double, c_int, c_void};
 use std::string::FromUtf8Error;
-use std::{mem, ptr};
+use std::ptr;
 
 use conv::ConvUtil;
 
 use ffi;
 use topology::SystemCommunicator;
+use {with_uninitialized, with_uninitialized2};
 
 /// Global context
 pub struct Universe {
@@ -153,11 +154,9 @@ impl From<c_int> for Threading {
 
 /// Whether the MPI library has been initialized
 fn is_initialized() -> bool {
-    let mut res: c_int = unsafe { mem::uninitialized() };
     unsafe {
-        ffi::MPI_Initialized(&mut res);
+        with_uninitialized(|initialized| ffi::MPI_Initialized(initialized)).1 != 0
     }
-    res != 0
 }
 
 /// Initialize MPI.
@@ -195,15 +194,16 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
     if is_initialized() {
         None
     } else {
-        let mut provided: c_int = unsafe { mem::uninitialized() };
-        unsafe {
-            ffi::MPI_Init_thread(
-                ptr::null_mut(),
-                ptr::null_mut(),
-                threading.as_raw(),
-                &mut provided,
-            );
-        }
+        let (_, provided ) = unsafe {
+            with_uninitialized(|provided|
+                ffi::MPI_Init_thread(
+                    ptr::null_mut(),
+                    ptr::null_mut(),
+                    threading.as_raw(),
+                    provided,
+                )
+            )
+        };
         Some((Universe { buffer: None }, provided.into()))
     }
 }
@@ -215,11 +215,11 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
 /// # Examples
 /// See `examples/init_with_threading.rs`
 pub fn threading_support() -> Threading {
-    let mut res: c_int = unsafe { mem::uninitialized() };
     unsafe {
-        ffi::MPI_Query_thread(&mut res);
+        with_uninitialized(|threading|
+            ffi::MPI_Query_thread(threading)
+        ).1.into()
     }
-    res.into()
 }
 
 /// Identifies the version of the MPI standard implemented by the library.
@@ -228,11 +228,11 @@ pub fn threading_support() -> Threading {
 ///
 /// Can be called without initializing MPI.
 pub fn version() -> (c_int, c_int) {
-    let mut version: c_int = unsafe { mem::uninitialized() };
-    let mut subversion: c_int = unsafe { mem::uninitialized() };
-    unsafe {
-        ffi::MPI_Get_version(&mut version, &mut subversion);
-    }
+    let (_, version, subversion) = unsafe {
+        with_uninitialized2(|version, subversion|
+            ffi::MPI_Get_version(version, subversion)
+        )
+    };
     (version, subversion)
 }
 

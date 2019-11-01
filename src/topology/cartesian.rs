@@ -2,7 +2,7 @@ use std::mem;
 
 use conv::ConvUtil;
 
-use super::super::{datatype::traits::*, ffi, raw::traits::*, Count, IntArray};
+use super::super::{with_uninitialized, with_uninitialized2, datatype::traits::*, ffi, raw::traits::*, Count, IntArray};
 use super::{AsCommunicator, Communicator, IntoTopology, Rank, UserCommunicator};
 use ffi::MPI_Comm;
 
@@ -78,9 +78,7 @@ impl CartesianCommunicator {
     /// 7.5.5 (MPI_Cartdim_get)
     pub fn num_dimensions(&self) -> Count {
         unsafe {
-            let mut count = mem::uninitialized();
-            ffi::MPI_Cartdim_get(self.as_raw(), &mut count);
-            count
+            with_uninitialized(|count| ffi::MPI_Cartdim_get(self.as_raw(), count)).1
         }
     }
 
@@ -106,7 +104,7 @@ impl CartesianCommunicator {
         periods: &mut [bool],
         coords: &mut [Count],
     ) {
-        let mut periods_int: IntArray = smallvec![mem::uninitialized(); periods.len()];
+        let mut periods_int: IntArray = smallvec![0; periods.len()];
 
         ffi::MPI_Cart_get(
             self.as_raw(),
@@ -207,9 +205,7 @@ impl CartesianCommunicator {
     /// # Standard section(s)
     /// 7.5.5 (MPI_Cart_rank)
     pub unsafe fn coordinates_to_rank_unchecked(&self, coords: &[Count]) -> Rank {
-        let mut rank: Rank = mem::uninitialized();
-        ffi::MPI_Cart_rank(self.as_raw(), coords.as_ptr(), &mut rank);
-        rank
+        with_uninitialized(|rank| ffi::MPI_Cart_rank(self.as_raw(), coords.as_ptr(), rank)).1
     }
 
     /// Converts a set of cartesian coordinates to its rank in the CartesianCommunicator.
@@ -348,14 +344,14 @@ impl CartesianCommunicator {
         dimension: Count,
         displacement: Count,
     ) -> (Option<Rank>, Option<Rank>) {
-        let mut rank_source = mem::uninitialized();
-        let mut rank_destination = mem::uninitialized();
-        ffi::MPI_Cart_shift(
-            self.as_raw(),
-            dimension,
-            displacement,
-            &mut rank_source,
-            &mut rank_destination,
+        let (_, rank_source, rank_destination) = with_uninitialized2(|rank_source, rank_destination|
+            ffi::MPI_Cart_shift(
+                self.as_raw(),
+                dimension,
+                displacement,
+                rank_source,
+                rank_destination,
+            )
         );
 
         let rank_source = if rank_source != ffi::RSMPI_PROC_NULL {
@@ -418,9 +414,7 @@ impl CartesianCommunicator {
     pub unsafe fn subgroup_unchecked(&self, retain: &[bool]) -> CartesianCommunicator {
         let retain_int: IntArray = retain.iter().map(|b| *b as _).collect();
 
-        let mut newcomm = mem::uninitialized();
-        ffi::MPI_Cart_sub(self.as_raw(), retain_int.as_ptr(), &mut newcomm);
-        CartesianCommunicator::from_raw_unchecked(newcomm)
+        CartesianCommunicator::from_raw_unchecked(with_uninitialized(|newcomm| ffi::MPI_Cart_sub(self.as_raw(), retain_int.as_ptr(), newcomm)).1)
     }
 
     /// Partitions an existing Cartesian communicator into a new Cartesian communicator in a lower
