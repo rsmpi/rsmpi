@@ -2,26 +2,17 @@
 #![allow(clippy::forget_copy)]
 extern crate mpi;
 
+#[macro_use]
+extern crate memoffset;
+
 use mpi::{
     datatype::{UncommittedUserDatatype, UserDatatype},
     traits::*,
     Address,
 };
 
-macro_rules! offset_of {
-    ($T:ty, $field:tt) => {{
-        let value: $T = unsafe { ::std::mem::uninitialized() };
-
-        let value_loc = &value as *const _ as usize;
-        let field_loc = &value.$field as *const _ as usize;
-
-        ::std::mem::forget(value);
-
-        field_loc - value_loc
-    }};
-}
-
-type TupleType = ([f32; 2], u8);
+#[derive(Default)]
+struct TupleType([f32; 2], u8);
 
 #[derive(Default)]
 struct ComplexDatatype {
@@ -67,7 +58,7 @@ fn main() {
         ComplexDatatype {
             b: true,
             ints: [1, -2, 3, -4],
-            tuple: ([-0.1, 0.1], 7),
+            tuple: TupleType([-0.1, 0.1], 7),
         }
     } else {
         ComplexDatatype::default()
