@@ -71,6 +71,15 @@ extern const MPI_Op RSMPI_BOR;
 extern const MPI_Op RSMPI_LXOR;
 extern const MPI_Op RSMPI_BXOR;
 
+extern const MPI_Errhandler RSMPI_ERRORS_ARE_FATAL;
+extern const MPI_Errhandler RSMPI_ERRORS_RETURN;
+
+extern const MPI_File RSMPI_FILE_NULL;
+
+extern const MPI_Info RSMPI_INFO_NULL;
+
+extern const MPI_Win RSMPI_WIN_NULL;
+
 double RSMPI_Wtime();
 double RSMPI_Wtick();
 
