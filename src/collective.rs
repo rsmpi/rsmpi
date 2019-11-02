@@ -11,7 +11,7 @@
 
 use std::os::raw::{c_int, c_void};
 use std::{fmt, ptr};
-#[cfg(feature = "user-operations")]
+#[cfg(any(msmpi, feature = "user-operations"))]
 use std::mem;
 
 #[cfg(feature = "user-operations")]
