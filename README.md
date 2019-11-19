@@ -27,6 +27,7 @@ An implementation of the C language interface that conforms to MPI-3.1. `rsmpi` 
 - [OpenMPI][OpenMPI] 3.0.4, 3.1.4, 4.0.1
 - [MPICH][MPICH] 3.3, 3.2.1
 - [MS-MPI (Windows)][MS-MPI] 10.0.0
+- [Spectrum MPI][Spectrum-MPI] 10.3.0.1
 
 For a reasonable chance of success with `rsmpi` any MPI implementation that you want to use with it should satisfy the following assumptions that `rsmpi` currently makes:
 
@@ -45,6 +46,7 @@ Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` 
 [OpenMPI]: https://www.open-mpi.org
 [MPICH]: https://www.mpich.org
 [MS-MPI]: https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi
+[Spectrum-MPI]: https://www.ibm.com/us-en/marketplace/spectrum-mpi
 [rsmpih]: https://github.com/bsteinb/rsmpi/blob/master/src/ffi/rsmpi.h
 [rsmpic]: https://github.com/bsteinb/rsmpi/blob/master/src/ffi/rsmpi.c
 [buildrs]: https://github.com/bsteinb/rsmpi/blob/master/build.rs
