@@ -22,7 +22,7 @@ use crate::ffi::MPI_Op;
 
 use crate::datatype::traits::*;
 #[cfg(feature = "user-operations")]
-use crate::datatype::DatatypeRef;
+use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
 use crate::topology::traits::*;
