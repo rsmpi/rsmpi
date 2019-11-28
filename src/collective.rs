@@ -21,13 +21,13 @@ use crate::ffi;
 use crate::ffi::MPI_Op;
 
 use crate::datatype::traits::*;
+#[cfg(feature = "user-operations")]
+use crate::datatype::DatatypeRef;
 use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
 use crate::topology::traits::*;
 use crate::topology::{Process, Rank};
 use crate::with_uninitialized;
-#[cfg(feature = "user-operations")]
-use datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 
 /// Collective communication traits
 pub mod traits {
