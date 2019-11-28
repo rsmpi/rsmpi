@@ -29,15 +29,15 @@
 
 use std::cell::Cell;
 use std::marker::PhantomData;
-use std::mem::{ self, MaybeUninit };
+use std::mem::{self, MaybeUninit};
 use std::ptr;
 
-use ffi;
-use ffi::{MPI_Request, MPI_Status};
+use crate::ffi;
+use crate::ffi::{MPI_Request, MPI_Status};
 
-use point_to_point::Status;
-use raw::traits::*;
-use with_uninitialized;
+use crate::point_to_point::Status;
+use crate::raw::traits::*;
+use crate::with_uninitialized;
 
 /// Check if the request is `MPI_REQUEST_NULL`.
 fn is_null(request: MPI_Request) -> bool {
@@ -137,9 +137,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// 3.7.3
     pub fn wait(self) -> Status {
-        unsafe {
-            Status::from_raw(with_uninitialized(|status| self.wait_with(status)).1)
-        }
+        unsafe { Status::from_raw(with_uninitialized(|status| self.wait_with(status)).1) }
     }
 
     /// Wait for an operation to finish, but don’t bother retrieving the `Status` information.
@@ -170,9 +168,8 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
             let mut status = MaybeUninit::uninit();
             let mut request = self.as_raw();
 
-            let (_, flag) = with_uninitialized(|flag|
-                ffi::MPI_Test(&mut request, flag, status.as_mut_ptr())
-            );
+            let (_, flag) =
+                with_uninitialized(|flag| ffi::MPI_Test(&mut request, flag, status.as_mut_ptr()));
             if flag != 0 {
                 assert!(is_null(request)); // persistent requests are not supported
                 self.into_raw();

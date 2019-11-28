@@ -9,14 +9,14 @@
 //! - **8.3, 8.4, and 8.5**: Error handling
 use std::cmp::Ordering;
 use std::os::raw::{c_char, c_double, c_int, c_void};
-use std::string::FromUtf8Error;
 use std::ptr;
+use std::string::FromUtf8Error;
 
 use conv::ConvUtil;
 
-use ffi;
-use topology::SystemCommunicator;
-use {with_uninitialized, with_uninitialized2};
+use crate::ffi;
+use crate::topology::SystemCommunicator;
+use crate::{with_uninitialized, with_uninitialized2};
 
 /// Global context
 pub struct Universe {
@@ -154,9 +154,7 @@ impl From<c_int> for Threading {
 
 /// Whether the MPI library has been initialized
 fn is_initialized() -> bool {
-    unsafe {
-        with_uninitialized(|initialized| ffi::MPI_Initialized(initialized)).1 != 0
-    }
+    unsafe { with_uninitialized(|initialized| ffi::MPI_Initialized(initialized)).1 != 0 }
 }
 
 /// Initialize MPI.
@@ -194,15 +192,15 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
     if is_initialized() {
         None
     } else {
-        let (_, provided ) = unsafe {
-            with_uninitialized(|provided|
+        let (_, provided) = unsafe {
+            with_uninitialized(|provided| {
                 ffi::MPI_Init_thread(
                     ptr::null_mut(),
                     ptr::null_mut(),
                     threading.as_raw(),
                     provided,
                 )
-            )
+            })
         };
         Some((Universe { buffer: None }, provided.into()))
     }
@@ -216,9 +214,9 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
 /// See `examples/init_with_threading.rs`
 pub fn threading_support() -> Threading {
     unsafe {
-        with_uninitialized(|threading|
-            ffi::MPI_Query_thread(threading)
-        ).1.into()
+        with_uninitialized(|threading| ffi::MPI_Query_thread(threading))
+            .1
+            .into()
     }
 }
 
@@ -229,9 +227,7 @@ pub fn threading_support() -> Threading {
 /// Can be called without initializing MPI.
 pub fn version() -> (c_int, c_int) {
     let (_, version, subversion) = unsafe {
-        with_uninitialized2(|version, subversion|
-            ffi::MPI_Get_version(version, subversion)
-        )
+        with_uninitialized2(|version, subversion| ffi::MPI_Get_version(version, subversion))
     };
     (version, subversion)
 }
