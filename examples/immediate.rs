@@ -58,12 +58,12 @@ fn main() {
     assert_eq!(x, msg);
 
     let future = world.any_process().immediate_receive();
-    let res = future.try();
+    let res = future.r#try();
     assert!(res.is_err());
     let mut future = res.err().unwrap();
     world.this_process().send(&x);
     loop {
-        match future.try() {
+        match future.r#try() {
             Ok((msg, _)) => {
                 assert_eq!(x, msg);
                 break;
