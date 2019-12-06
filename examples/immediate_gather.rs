@@ -16,20 +16,20 @@ fn main() {
 
     if world.rank() == root_rank {
         let mut a = vec![0u64; count];
-        mpi::request::scope(|scope| {
+        {
+            mpi::define_scope!(scope);
             root_process
                 .immediate_gather_into_root(scope, &i, &mut a[..])
                 .wait();
-        });
+        }
         println!("Root gathered sequence: {:?}.", a);
         assert!(a
             .iter()
             .enumerate()
             .all(|(a, &b)| b == 2u64.pow(a as u32 + 1)));
     } else {
-        mpi::request::scope(|scope| {
-            root_process.immediate_gather_into(scope, &i).wait();
-        });
+        mpi::define_scope!(scope);
+        root_process.immediate_gather_into(scope, &i).wait();
     }
 
     let factor = world.rank() as u64 + 1;
@@ -40,11 +40,12 @@ fn main() {
 
     if world.rank() == root_rank {
         let mut t = vec![0u64; count * count];
-        mpi::request::scope(|scope| {
+        {
+            mpi::define_scope!(scope);
             root_process
                 .immediate_gather_into_root(scope, &a[..], &mut t[..])
                 .wait();
-        });
+        }
         println!("Root gathered table:");
         for r in t.chunks(count) {
             println!("{:?}", r);
@@ -53,9 +54,8 @@ fn main() {
             .zip(t.iter())
             .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
     } else {
-        mpi::request::scope(|scope| {
-            root_process.immediate_gather_into(scope, &a[..]).wait();
-        });
+        mpi::define_scope!(scope);
+        root_process.immediate_gather_into(scope, &a[..]).wait();
     }
 
     let d = UserDatatype::contiguous(count as Count, &u64::equivalent_datatype());
@@ -67,11 +67,11 @@ fn main() {
         {
             let mut rv =
                 unsafe { MutView::with_count_and_datatype(&mut t[..], count as Count, &d) };
-            mpi::request::scope(|scope| {
-                root_process
-                    .immediate_gather_into_root(scope, &sv, &mut rv)
-                    .wait();
-            });
+
+            mpi::define_scope!(scope);
+            root_process
+                .immediate_gather_into_root(scope, &sv, &mut rv)
+                .wait();
         }
 
         println!("Root gathered table:");
@@ -82,8 +82,7 @@ fn main() {
             .zip(t.iter())
             .all(|(a, &b)| b == (a / count as u64 + 1) * (a % count as u64 + 1)));
     } else {
-        mpi::request::scope(|scope| {
-            root_process.immediate_gather_into(scope, &sv).wait();
-        });
+        mpi::define_scope!(scope);
+        root_process.immediate_gather_into(scope, &sv).wait();
     }
 }
