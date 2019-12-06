@@ -28,8 +28,9 @@
 //!   - Cancellation, `MPI_Test_cancelled()`
 
 use std::cell::Cell;
-use std::marker::PhantomData;
+use std::marker::{PhantomData, PhantomPinned};
 use std::mem::{self, MaybeUninit};
+use std::pin::Pin;
 use std::ptr;
 
 use crate::ffi;
@@ -345,7 +346,27 @@ unsafe impl Scope<'static> for StaticScope {
 #[derive(Debug)]
 pub struct LocalScope<'a> {
     num_requests: Cell<usize>,
-    phantom: PhantomData<Cell<&'a ()>>, // Cell needed to ensure 'a is invariant
+    phantom: PhantomData<Cell<&'a ()>>, // Cell needed to ensure 'a is invariant,
+    phantom_pinned: PhantomPinned,      // disables Unpin so that pinning is unsafe
+}
+
+impl<'a> LocalScope<'a> {
+    /// Constructs a `LocalScope`. Note that a `LocalScope` cannot be used for much on its own.
+    /// You'll need to `Pin` the scope first, which is an unsafe operation. Prefer using
+    /// [`mpi::request::scope`](fn.scope.html) or [`mpi::define_scope!`](macro.define_scope.html).
+    pub fn new() -> Self {
+        Self {
+            num_requests: Cell::new(0),
+            phantom: PhantomData,
+            phantom_pinned: PhantomPinned,
+        }
+    }
+
+    /// Constructs a `LocalScope` pinned in a `Box`. To use this scope, you must either pass it as
+    /// a reference or call `as_ref()` on it.
+    pub fn pinned() -> Pin<Box<LocalScope<'a>>> {
+        Box::new(LocalScope::new()).into()
+    }
 }
 
 impl<'a> Drop for LocalScope<'a> {
@@ -356,7 +377,7 @@ impl<'a> Drop for LocalScope<'a> {
     }
 }
 
-unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
+unsafe impl<'a, 'b> Scope<'a> for Pin<&'b LocalScope<'a>> {
     fn register(&self) {
         self.num_requests.set(self.num_requests.get() + 1)
     }
@@ -368,6 +389,16 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
                 .checked_sub(1)
                 .expect("unregister has been called more times than register"),
         )
+    }
+}
+
+unsafe impl<'a, 'b> Scope<'a> for &'b Pin<Box<LocalScope<'a>>> {
+    fn register(&self) {
+        self.as_ref().register()
+    }
+
+    unsafe fn unregister(&self) {
+        self.as_ref().unregister()
     }
 }
 
@@ -394,10 +425,8 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
 /// See `examples/immediate.rs`
 pub fn scope<'a, F, R>(f: F) -> R
 where
-    F: FnOnce(&LocalScope<'a>) -> R,
+    F: FnOnce(Pin<&LocalScope<'a>>) -> R,
 {
-    f(&LocalScope {
-        num_requests: Default::default(),
-        phantom: Default::default(),
-    })
+    crate::define_scope!(scope);
+    f(scope)
 }
