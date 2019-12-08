@@ -10,8 +10,9 @@ fn main() {
     let rank = world.rank();
     let count = world.size() as usize;
 
-    let mut a = vec![false; count];
+    let mut a = vec![0u8; count];
     world.all_gather_into(&(rank % 2 == 0), &mut a[..]);
+    let a = safe_transmute::bool::transmute_bool_vec_pedantic(a).unwrap();
 
     let answer: Vec<_> = (0..count).map(|i| i % 2 == 0).collect();
 

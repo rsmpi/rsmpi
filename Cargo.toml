@@ -38,8 +38,11 @@ smallvec = "1.0.0"
 [build-dependencies]
 build-probe-mpi = { path = "build-probe-mpi", version = "0.1" }
 
-# The following tests depend on specific features
+[dev-dependencies]
+memoffset = "0.5"
+safe-transmute = "0.11.0-rc.2"
 
+# The following tests depend on specific features
 [[example]]
 name = "struct"
 required-features = ["derive"]

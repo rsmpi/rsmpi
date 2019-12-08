@@ -27,6 +27,7 @@ use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
 use crate::topology::traits::*;
 use crate::topology::{AnyProcess, CommunicatorRelation, Process, Rank};
+use crate::transmute::traits::*;
 use crate::{with_uninitialized, with_uninitialized2};
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
@@ -246,7 +247,7 @@ pub unsafe trait Source: AsCommunicator {
     /// 3.2.4
     fn receive_vec_with_tag<Msg>(&self, tag: Tag) -> (Vec<Msg>, Status)
     where
-        Msg: Equivalence,
+        Msg: Equivalence + FromAnyBytes,
     {
         self.matched_probe_with_tag(tag).matched_receive_vec()
     }
@@ -264,7 +265,7 @@ pub unsafe trait Source: AsCommunicator {
     /// 3.2.4
     fn receive_vec<Msg>(&self) -> (Vec<Msg>, Status)
     where
-        Msg: Equivalence,
+        Msg: Equivalence + FromAnyBytes,
     {
         self.receive_vec_with_tag(unsafe { ffi::RSMPI_ANY_TAG })
     }
@@ -1070,13 +1071,13 @@ pub trait MatchedReceiveVec {
     /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`.
     fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status)
     where
-        Msg: Equivalence;
+        Msg: Equivalence + FromAnyBytes;
 }
 
 impl MatchedReceiveVec for (Message, Status) {
     fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status)
     where
-        Msg: Equivalence,
+        Msg: Equivalence + FromAnyBytes,
     {
         let (message, status) = self;
         let count = status
@@ -1094,6 +1095,8 @@ impl MatchedReceiveVec for (Message, Status) {
                 M::equivalent_datatype()
             }
         }
+
+        unsafe impl<M: Equivalence> FromAnyBytes for UninitMsg<M> {}
 
         let mut res = (0..count)
             .map(|_| UninitMsg::<Msg>(MaybeUninit::uninit()))

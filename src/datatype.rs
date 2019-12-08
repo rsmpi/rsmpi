@@ -76,8 +76,8 @@ use super::{Address, Count};
 
 use crate::ffi;
 use crate::ffi::MPI_Datatype;
-
 use crate::raw::traits::*;
+use crate::transmute::traits::*;
 
 use crate::with_uninitialized;
 
@@ -922,14 +922,14 @@ where
 /// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
 /// `as_datatype()`.
 pub unsafe trait Buffer: Pointer + Collection + AsDatatype {}
-unsafe impl<T> Buffer for T where T: Equivalence {}
-unsafe impl<T> Buffer for [T] where T: Equivalence {}
+unsafe impl<T> Buffer for T where T: Equivalence + ToBytes {}
+unsafe impl<T> Buffer for [T] where T: Equivalence + ToBytes {}
 
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
 /// copies of `as_datatype()`.
 pub unsafe trait BufferMut: PointerMut + Collection + AsDatatype {}
-unsafe impl<T> BufferMut for T where T: Equivalence {}
-unsafe impl<T> BufferMut for [T] where T: Equivalence {}
+unsafe impl<T> BufferMut for T where T: Equivalence + FromAnyBytes {}
+unsafe impl<T> BufferMut for [T] where T: Equivalence + FromAnyBytes {}
 
 /// An immutable dynamically-typed buffer.
 ///

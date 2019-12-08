@@ -1,9 +1,9 @@
 #![deny(warnings)]
 #![allow(clippy::forget_copy)]
-extern crate mpi;
 
-#[macro_use]
-extern crate memoffset;
+use std::mem::size_of;
+
+use memoffset::offset_of;
 
 use mpi::{
     datatype::{UncommittedUserDatatype, UserDatatype},
@@ -11,12 +11,26 @@ use mpi::{
     Address,
 };
 
-#[derive(Default)]
-struct TupleType([f32; 2], u8);
+#[derive(Default, Copy, Clone)]
+#[repr(C)]
+struct TupleType(
+    [f32; 2],
+    u8,
+    u8,  // unused
+    u16, // unused
+);
 
-#[derive(Default)]
+// no padding
+unsafe impl ToBytes for TupleType {}
+// All subfields are `FromAnyBytes`.
+unsafe impl FromAnyBytes for TupleType {}
+
+#[derive(Default, Copy, Clone)]
+#[repr(C)]
 struct ComplexDatatype {
-    b: bool,
+    b: u8,
+    _unused1: u8,
+    _unused2: u16,
     ints: [i32; 4],
     tuple: TupleType,
 }
@@ -48,17 +62,33 @@ unsafe impl Equivalence for ComplexDatatype {
     }
 }
 
+// no padding
+unsafe impl ToBytes for ComplexDatatype {}
+// All subfields are `FromAnyBytes`.
+unsafe impl FromAnyBytes for ComplexDatatype {}
+
 fn main() {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
 
     let root_process = world.process_at_rank(0);
 
+    // verify that our types are the right size
+    assert_eq!(12, size_of::<TupleType>());
+    assert_eq!(32, size_of::<ComplexDatatype>());
+
     let mut data = if world.rank() == 0 {
         ComplexDatatype {
-            b: true,
+            b: 1,
+            _unused1: 0,
+            _unused2: 0,
             ints: [1, -2, 3, -4],
-            tuple: TupleType([-0.1, 0.1], 7),
+            tuple: TupleType(
+                [-0.1, 0.1],
+                7,
+                0, // unused
+                0, // unused
+            ),
         }
     } else {
         ComplexDatatype::default()
@@ -66,7 +96,7 @@ fn main() {
 
     root_process.broadcast_into(&mut data);
 
-    assert_eq!(true, data.b);
+    assert_eq!(1, data.b);
     assert_eq!([1, -2, 3, -4], data.ints);
     assert_eq!([-0.1, 0.1], data.tuple.0);
     assert_eq!(7, data.tuple.1);
