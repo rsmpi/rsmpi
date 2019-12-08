@@ -351,7 +351,12 @@ pub struct LocalScope<'a> {
 impl<'a> Drop for LocalScope<'a> {
     fn drop(&mut self) {
         if self.num_requests.get() != 0 {
-            panic!("at least one request was dropped without being completed");
+            std::mem::forget(std::panic::catch_unwind(|| {
+                panic!("at least one request was dropped without being completed");
+            }));
+            // we must abort execution - there's no way to tell MPI to release the buffers that
+            // were passed to it. Therefore we must abort execution.
+            std::process::abort();
         }
     }
 }
