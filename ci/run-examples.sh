@@ -6,9 +6,9 @@ set -e
 export OMPI_MCA_rmaps_base_oversubscribe=1
 
 EXTRA_CARGO_FLAGS=""
-if test "$TRAVIS_OS_NAME" = "windows";
+if test "$TRAVIS_OS_NAME" != "windows";
 then
-  EXTRA_CARGO_FLAGS="--no-default-features"
+  EXTRA_CARGO_FLAGS="--all-features"
 fi
 
 EXAMPLES_DIR="examples"

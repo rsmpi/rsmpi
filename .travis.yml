@@ -78,8 +78,8 @@ install:
 script:
   - env RUSTFLAGS="--deny warnings" cargo build -v --no-default-features
   # Don't build with default features on Windows
-  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then env RUSTFLAGS="--deny warnings" cargo build -v; fi
-  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then env RUSTFLAGS="--deny warnings" cargo test --all -v; fi
+  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then env RUSTFLAGS="--deny warnings" cargo build --all-features -v; fi
+  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then env RUSTFLAGS="--deny warnings" cargo test --all --all-features -v; fi
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then env RUSTFLAGS="--deny warnings" cargo test --all -v --no-default-features; fi
   - env RUSTFLAGS="--deny warnings" sh ci/run-examples.sh
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
