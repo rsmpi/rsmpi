@@ -18,7 +18,7 @@ edition = "2018"
 [workspace]
 
 [features]
-default = ["user-operations"]
+default = []
 
 user-operations = ["libffi"]
 
