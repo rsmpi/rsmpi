@@ -354,8 +354,8 @@ impl<'a> Drop for LocalScope<'a> {
             std::mem::forget(std::panic::catch_unwind(|| {
                 panic!("at least one request was dropped without being completed");
             }));
-            // we must abort execution - there's no way to tell MPI to release the buffers that
-            // were passed to it. Therefore we must abort execution.
+            // There's no way to tell MPI to release the buffers that were passed to it. Therefore
+            // we must abort execution.
             std::process::abort();
         }
     }
