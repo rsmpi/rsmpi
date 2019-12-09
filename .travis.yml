@@ -23,14 +23,11 @@ env:
     # CRATES_IO_TOKEN=...
     - secure: "FYoav+St+90i6AQzyMw+NJdtktG2UMK7szt7ar88ww7bkkCd9I9qgtqqW6mopzpnguRhBusxoCsmiroFbXVO1R3vSP1ugECUTDCK7x/Tqkc/wa0MOqlmBneG+bZOF3YjiDTfaAIUI8r10RstfRhRwIKgZI3vE/8TEgTGlWW+cZuHaz7U4wesHUY+euuSoLuD7XrlI1N9EBAbHwTtLpfHoONSw8fxVQc0nQ7vTBrC+UQiRZA8oFP7qpJ/9xfsCMWSyVihuSzdHoCRIxCs+rWROBpULAqvPa0vYdxE7oQHPwbaQ8bsv088Mowjaq5Dp8NimodimQsx7D58g/e+INEk9q3dwj/RN0iMgNYqhYv9Wu+vMWNMbvReSHlJtIYWtl2varXQI2hOPC/+6OhfzlAT1hBsrkJjZ6bQ9Yv9NUGNQHNrFvdCKOEvSG3wHNB10mfBB/KSVzB/ya8suEBR07CjzbrzTlH2SUYfSHS5iNbP791kAYp2MyMn69ZajeEZ3iYwwG2lHH2CONB/QiAX6ZDc5J3jM8gmxu2S5QkZkZieBnDZG/OsYjOw7Zka3ktlGW+Khn3RRRsDYMrpAN5qmiEO6vdDP/XcRZw4ERfHQd8A9kEhnhJGOlg6KGyNM0pi7s4IX8VWkbxAmY53HqsyK1eagIVLsxkzCn3GKfVQuufHBBc="
 
-jobs:
-  include:
-  - script:
-    - cargo fmt --all
-      git diff --exit-code
-
 matrix:
   include:
+    - script:
+      - cargo fmt --all
+        git diff --exit-code
     - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=true
       rust: stable
       os: linux
