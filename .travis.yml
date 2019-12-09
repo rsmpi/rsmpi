@@ -26,10 +26,10 @@ env:
 matrix:
   include:
     # Special format job
-    - install: [] # Don't need this for formatting the code
-      script:
+    - install:
       - rustup component add rustfmt
-        cargo fmt --all
+      script:
+      - cargo fmt --all
         git diff --exit-code
     # Build matrix of MPI builds
     # We put the latest versions of MPICH, OpenMPI, and MS-MPI first. Everything
