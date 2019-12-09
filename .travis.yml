@@ -26,7 +26,8 @@ env:
 jobs:
   include:
     # Special format job
-    - install:
+    - name: "cargo fmt"
+      install:
       - rustup component add rustfmt
       script:
       - cargo fmt --all
