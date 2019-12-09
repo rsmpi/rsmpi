@@ -31,7 +31,7 @@ jobs:
       - rustup component add rustfmt
       script:
       - cargo fmt --all
-        git diff --exit-code
+      - git diff --exit-code
     # Build matrix of MPI builds
     # We put the latest versions of MPICH, OpenMPI, and MS-MPI first. Everything
     # else comes later.
