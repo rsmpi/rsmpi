@@ -35,31 +35,40 @@ jobs:
     # Build matrix of MPI builds
     # We put the latest versions of MPICH, OpenMPI, and MS-MPI first. Everything
     # else comes later.
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=true
+    - name: "MPICH 3.3"
+      env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=true
       rust: stable
       os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=4.0.1 RELEASE_CONFIG=false
+    - name: "OpenMPI 4.0.1"
+      env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=4.0.1 RELEASE_CONFIG=false
       rust: stable
       os: linux
-    - env: MPI_LIBRARY=msmpi MPI_LIBRARY_VERSION=10.0.0 RELEASE_CONFIG=false
+    - name: "MS-MPI 10.0.0"
+      env: MPI_LIBRARY=msmpi MPI_LIBRARY_VERSION=10.0.0 RELEASE_CONFIG=false
       rust: stable
       os: windows
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
+    - name: "MPICH 3.2.1"
+      env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.2.1 RELEASE_CONFIG=false
       rust: stable
       os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.1.4 RELEASE_CONFIG=false
+    - name: "MPICH 3.1.4"
+      env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.1.4 RELEASE_CONFIG=false
       rust: stable
       os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.4 RELEASE_CONFIG=false
+    - name: "OpenMPI 3.0.4"
+      env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=openmpi MPI_LIBRARY_VERSION=3.0.4 RELEASE_CONFIG=false
       rust: stable
       os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=false
+    - name: "MPICH 3.3 [Rust beta]"
+      env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=false
       rust: beta
       os: linux
-    - env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=false
+    - name: "MPICH 3.3 [Rust nightly]"
+      env: LIBCLANG_PATH=/usr/lib/llvm-3.9/lib MPI_LIBRARY=mpich MPI_LIBRARY_VERSION=3.3 RELEASE_CONFIG=false
       rust: nightly
       os: linux
-    - env: MPI_LIBRARY=msmpi MPI_LIBRARY_VERSION=10.0.0 RELEASE_CONFIG=false
+    - name: "MS-MPI 10.0.0 [Rust nightly]"
+      env: MPI_LIBRARY=msmpi MPI_LIBRARY_VERSION=10.0.0 RELEASE_CONFIG=false
       rust: nightly
       os: windows
   allow_failures:
