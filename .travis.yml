@@ -32,7 +32,7 @@ jobs:
       script:
       - cargo fmt --all
       - git diff --exit-code
-      cache: []
+      cache:
     # Build matrix of MPI builds
     # We put the latest versions of MPICH, OpenMPI, and MS-MPI first. Everything
     # else comes later.
