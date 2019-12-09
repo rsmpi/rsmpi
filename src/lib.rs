@@ -190,7 +190,7 @@ type IntArray = smallvec::SmallVec<[c_int; 8]>;
 
 unsafe fn with_uninitialized<F, U, R>(f: F) -> (R, U)
 where
-    F: FnOnce(*mut U) -> R
+    F: FnOnce(*mut U) -> R,
 {
     let mut uninitialized = MaybeUninit::uninit();
     let res = f(uninitialized.as_mut_ptr());
@@ -199,10 +199,14 @@ where
 
 unsafe fn with_uninitialized2<F, U1, U2, R>(f: F) -> (R, U1, U2)
 where
-    F: FnOnce(*mut U1, *mut U2) -> R
+    F: FnOnce(*mut U1, *mut U2) -> R,
 {
     let mut uninitialized1 = MaybeUninit::uninit();
     let mut uninitialized2 = MaybeUninit::uninit();
     let res = f(uninitialized1.as_mut_ptr(), uninitialized2.as_mut_ptr());
-    (res, uninitialized1.assume_init(), uninitialized2.assume_init())
+    (
+        res,
+        uninitialized1.assume_init(),
+        uninitialized2.assume_init(),
+    )
 }

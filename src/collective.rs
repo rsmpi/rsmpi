@@ -9,10 +9,10 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::os::raw::{c_int, c_void};
-use std::{fmt, ptr};
 #[cfg(any(msmpi, feature = "user-operations"))]
 use std::mem;
+use std::os::raw::{c_int, c_void};
+use std::{fmt, ptr};
 
 #[cfg(feature = "user-operations")]
 use libffi::high::Closure4;
@@ -312,7 +312,10 @@ pub trait CommunicatorCollectives: Communicator {
     /// 5.12.1
     fn immediate_barrier(&self) -> Request<'static> {
         unsafe {
-            Request::from_raw(with_uninitialized(|request| ffi::MPI_Ibarrier(self.as_raw(), request)).1, StaticScope)
+            Request::from_raw(
+                with_uninitialized(|request| ffi::MPI_Ibarrier(self.as_raw(), request)).1,
+                StaticScope,
+            )
         }
     }
 
@@ -340,7 +343,7 @@ pub trait CommunicatorCollectives: Communicator {
         unsafe {
             let recvcount = recvbuf.count() / self.size();
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iallgather(
                         sendbuf.pointer(),
                         sendbuf.count(),
@@ -351,8 +354,9 @@ pub trait CommunicatorCollectives: Communicator {
                         self.as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -380,7 +384,7 @@ pub trait CommunicatorCollectives: Communicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iallgatherv(
                         sendbuf.pointer(),
                         sendbuf.count(),
@@ -391,9 +395,10 @@ pub trait CommunicatorCollectives: Communicator {
                         recvbuf.as_datatype().as_raw(),
                         self.as_raw(),
                         request,
-                        )
-                ).1,
-                scope
+                    )
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -421,7 +426,7 @@ pub trait CommunicatorCollectives: Communicator {
         let c_size = self.size();
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Ialltoall(
                         sendbuf.pointer(),
                         sendbuf.count() / c_size,
@@ -432,8 +437,9 @@ pub trait CommunicatorCollectives: Communicator {
                         self.as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -456,7 +462,7 @@ pub trait CommunicatorCollectives: Communicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Ialltoallv(
                         sendbuf.pointer(),
                         sendbuf.counts_ptr(),
@@ -469,8 +475,9 @@ pub trait CommunicatorCollectives: Communicator {
                         self.as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -500,7 +507,7 @@ pub trait CommunicatorCollectives: Communicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iallreduce(
                         sendbuf.pointer(),
                         recvbuf.pointer_mut(),
@@ -510,8 +517,9 @@ pub trait CommunicatorCollectives: Communicator {
                         self.as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -543,7 +551,7 @@ pub trait CommunicatorCollectives: Communicator {
         assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Ireduce_scatter_block(
                         sendbuf.pointer(),
                         recvbuf.pointer_mut(),
@@ -553,8 +561,9 @@ pub trait CommunicatorCollectives: Communicator {
                         self.as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -584,7 +593,7 @@ pub trait CommunicatorCollectives: Communicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iscan(
                         sendbuf.pointer(),
                         recvbuf.pointer_mut(),
@@ -594,8 +603,9 @@ pub trait CommunicatorCollectives: Communicator {
                         self.as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -625,7 +635,7 @@ pub trait CommunicatorCollectives: Communicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iexscan(
                         sendbuf.pointer(),
                         recvbuf.pointer_mut(),
@@ -635,8 +645,9 @@ pub trait CommunicatorCollectives: Communicator {
                         self.as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1056,7 +1067,7 @@ pub trait Root: AsCommunicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Ibcast(
                         buf.pointer_mut(),
                         buf.count(),
@@ -1065,8 +1076,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1090,7 +1102,7 @@ pub trait Root: AsCommunicator {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Igather(
                         sendbuf.pointer(),
                         sendbuf.count(),
@@ -1102,8 +1114,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1134,7 +1147,7 @@ pub trait Root: AsCommunicator {
         unsafe {
             let recvcount = recvbuf.count() / self.as_communicator().size();
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Igather(
                         sendbuf.pointer(),
                         sendbuf.count(),
@@ -1146,8 +1159,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1175,7 +1189,7 @@ pub trait Root: AsCommunicator {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Igatherv(
                         sendbuf.pointer(),
                         sendbuf.count(),
@@ -1188,8 +1202,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1219,7 +1234,7 @@ pub trait Root: AsCommunicator {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Igatherv(
                         sendbuf.pointer(),
                         sendbuf.count(),
@@ -1232,8 +1247,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1261,7 +1277,7 @@ pub trait Root: AsCommunicator {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iscatter(
                         ptr::null(),
                         0,
@@ -1273,8 +1289,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1305,7 +1322,7 @@ pub trait Root: AsCommunicator {
         unsafe {
             let sendcount = sendbuf.count() / self.as_communicator().size();
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iscatter(
                         sendbuf.pointer(),
                         sendcount,
@@ -1317,8 +1334,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1346,7 +1364,7 @@ pub trait Root: AsCommunicator {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iscatterv(
                         ptr::null(),
                         ptr::null(),
@@ -1359,8 +1377,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1390,7 +1409,7 @@ pub trait Root: AsCommunicator {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Iscatterv(
                         sendbuf.pointer(),
                         sendbuf.counts_ptr(),
@@ -1403,8 +1422,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1435,7 +1455,7 @@ pub trait Root: AsCommunicator {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Ireduce(
                         sendbuf.pointer(),
                         ptr::null_mut(),
@@ -1446,8 +1466,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1480,7 +1501,7 @@ pub trait Root: AsCommunicator {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Ireduce(
                         sendbuf.pointer(),
                         recvbuf.pointer_mut(),
@@ -1491,8 +1512,9 @@ pub trait Root: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -1679,7 +1701,10 @@ impl<'a> UserOperation<'a> {
         let op;
         anchor.ffi_closure = Some(unsafe {
             let ffi_closure = Closure4::new(&anchor.rust_closure);
-            op = with_uninitialized(|op| ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, op)).1;
+            op = with_uninitialized(|op| {
+                ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, op)
+            })
+            .1;
             mem::transmute(ffi_closure) // erase the lifetime
         });
         UserOperation {
@@ -1815,7 +1840,9 @@ impl UnsafeUserOperation {
         #[cfg(msmpi)]
         let function = mem::transmute(function);
 
-        UnsafeUserOperation { op: with_uninitialized(|op| ffi::MPI_Op_create(Some(function), commute as _, op)).1 }
+        UnsafeUserOperation {
+            op: with_uninitialized(|op| ffi::MPI_Op_create(Some(function), commute as _, op)).1,
+        }
     }
 }
 

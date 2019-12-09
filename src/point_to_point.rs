@@ -12,8 +12,8 @@
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 
 use std::alloc::{self, Layout};
-use std::{fmt, ptr};
 use std::mem::MaybeUninit;
+use std::{fmt, ptr};
 
 use conv::ConvUtil;
 
@@ -66,14 +66,15 @@ pub unsafe trait Source: AsCommunicator {
     fn probe_with_tag(&self, tag: Tag) -> Status {
         unsafe {
             Status(
-                with_uninitialized(|status|
+                with_uninitialized(|status| {
                     ffi::MPI_Probe(
                         self.source_rank(),
                         tag,
                         self.as_communicator().as_raw(),
                         status,
                     )
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -107,7 +108,7 @@ pub unsafe trait Source: AsCommunicator {
     /// 3.8.2
     fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status) {
         let (_, message, status) = unsafe {
-            with_uninitialized2(|message, status|
+            with_uninitialized2(|message, status| {
                 ffi::MPI_Mprobe(
                     self.source_rank(),
                     tag,
@@ -115,7 +116,7 @@ pub unsafe trait Source: AsCommunicator {
                     message,
                     status,
                 )
-            )
+            })
         };
         (Message(message), Status(status))
     }
@@ -148,7 +149,7 @@ pub unsafe trait Source: AsCommunicator {
         Msg: Equivalence,
     {
         unsafe {
-            let (_, msg, status) = with_uninitialized2(|msg, status|
+            let (_, msg, status) = with_uninitialized2(|msg, status| {
                 ffi::MPI_Recv(
                     msg as _,
                     1,
@@ -158,7 +159,7 @@ pub unsafe trait Source: AsCommunicator {
                     self.as_communicator().as_raw(),
                     status,
                 )
-            );
+            });
             let status = Status(status);
             if status.count(Msg::equivalent_datatype()) == 0 {
                 panic!("Received an empty message.");
@@ -205,7 +206,7 @@ pub unsafe trait Source: AsCommunicator {
     {
         unsafe {
             Status(
-                with_uninitialized(|status|
+                with_uninitialized(|status| {
                     ffi::MPI_Recv(
                         buf.pointer_mut(),
                         buf.count(),
@@ -215,7 +216,8 @@ pub unsafe trait Source: AsCommunicator {
                         self.as_communicator().as_raw(),
                         status,
                     )
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -286,7 +288,7 @@ pub unsafe trait Source: AsCommunicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Irecv(
                         buf.pointer_mut(),
                         buf.count(),
@@ -296,8 +298,9 @@ pub unsafe trait Source: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -335,7 +338,7 @@ pub unsafe trait Source: AsCommunicator {
     {
         unsafe {
             let val = alloc::alloc(Layout::new::<Msg>()) as *mut Msg;
-            let (_, request) = with_uninitialized(|request|
+            let (_, request) = with_uninitialized(|request| {
                 ffi::MPI_Irecv(
                     val as _,
                     1,
@@ -345,7 +348,7 @@ pub unsafe trait Source: AsCommunicator {
                     self.as_communicator().as_raw(),
                     request,
                 )
-            );
+            });
             ReceiveFuture {
                 val,
                 req: Request::from_raw(request, StaticScope),
@@ -381,7 +384,7 @@ pub unsafe trait Source: AsCommunicator {
         unsafe {
             let mut status = MaybeUninit::uninit();
 
-            let (_, flag) = with_uninitialized(|flag|
+            let (_, flag) = with_uninitialized(|flag| {
                 ffi::MPI_Iprobe(
                     self.source_rank(),
                     tag,
@@ -389,7 +392,7 @@ pub unsafe trait Source: AsCommunicator {
                     flag,
                     status.as_mut_ptr(),
                 )
-            );
+            });
 
             if flag != 0 {
                 Some(Status(status.assume_init()))
@@ -427,7 +430,7 @@ pub unsafe trait Source: AsCommunicator {
             let mut message = MaybeUninit::uninit();
             let mut status = MaybeUninit::uninit();
 
-            let (_, flag) = with_uninitialized(|flag|
+            let (_, flag) = with_uninitialized(|flag| {
                 ffi::MPI_Improbe(
                     self.source_rank(),
                     tag,
@@ -436,7 +439,7 @@ pub unsafe trait Source: AsCommunicator {
                     message.as_mut_ptr(),
                     status.as_mut_ptr(),
                 )
-            );
+            });
 
             if flag != 0 {
                 Some((Message(message.assume_init()), Status(status.assume_init())))
@@ -680,7 +683,7 @@ pub trait Destination: AsCommunicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Isend(
                         buf.pointer(),
                         buf.count(),
@@ -690,8 +693,9 @@ pub trait Destination: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -733,7 +737,7 @@ pub trait Destination: AsCommunicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Ibsend(
                         buf.pointer(),
                         buf.count(),
@@ -743,8 +747,9 @@ pub trait Destination: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -787,7 +792,7 @@ pub trait Destination: AsCommunicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Issend(
                         buf.pointer(),
                         buf.count(),
@@ -797,8 +802,9 @@ pub trait Destination: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -841,7 +847,7 @@ pub trait Destination: AsCommunicator {
     {
         unsafe {
             Request::from_raw(
-                with_uninitialized(|request|
+                with_uninitialized(|request| {
                     ffi::MPI_Irsend(
                         buf.pointer(),
                         buf.count(),
@@ -851,8 +857,9 @@ pub trait Destination: AsCommunicator {
                         self.as_communicator().as_raw(),
                         request,
                     )
-                ).1,
-                scope
+                })
+                .1,
+                scope,
             )
         }
     }
@@ -953,7 +960,7 @@ impl Message {
         Msg: Equivalence,
     {
         unsafe {
-            let (_, res, status) = with_uninitialized2(|res, status|
+            let (_, res, status) = with_uninitialized2(|res, status| {
                 ffi::MPI_Mrecv(
                     res as _,
                     1,
@@ -961,7 +968,7 @@ impl Message {
                     self.as_raw_mut(),
                     status,
                 )
-            );
+            });
             let status = Status(status);
             if status.count(Msg::equivalent_datatype()) == 0 {
                 panic!("Received an empty message.");
@@ -983,7 +990,7 @@ impl Message {
     {
         let status;
         unsafe {
-            status = with_uninitialized(|status|
+            status = with_uninitialized(|status| {
                 ffi::MPI_Mrecv(
                     buf.pointer_mut(),
                     buf.count(),
@@ -991,7 +998,8 @@ impl Message {
                     self.as_raw_mut(),
                     status,
                 )
-            ).1;
+            })
+            .1;
             assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
         };
         Status(status)
@@ -1014,7 +1022,7 @@ impl Message {
         Sc: Scope<'a>,
     {
         unsafe {
-            let request = with_uninitialized(|request|
+            let request = with_uninitialized(|request| {
                 ffi::MPI_Imrecv(
                     buf.pointer_mut(),
                     buf.count(),
@@ -1022,7 +1030,8 @@ impl Message {
                     self.as_raw_mut(),
                     request,
                 )
-            ).1;
+            })
+            .1;
             assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
             Request::from_raw(request, scope)
         }
@@ -1109,7 +1118,7 @@ where
         CommunicatorRelation::Identical
     );
     unsafe {
-        let (_, res, status) = with_uninitialized2(|res, status|
+        let (_, res, status) = with_uninitialized2(|res, status| {
             ffi::MPI_Sendrecv(
                 msg.pointer(),
                 msg.count(),
@@ -1124,7 +1133,7 @@ where
                 source.as_communicator().as_raw(),
                 status,
             )
-        );
+        });
         let status = Status(status);
         (res, status)
     }
@@ -1184,7 +1193,7 @@ where
     );
     unsafe {
         Status(
-            with_uninitialized(|status|
+            with_uninitialized(|status| {
                 ffi::MPI_Sendrecv(
                     msg.pointer(),
                     msg.count(),
@@ -1199,8 +1208,9 @@ where
                     source.as_communicator().as_raw(),
                     status,
                 )
-            ).1
-       )
+            })
+            .1,
+        )
     }
 }
 
@@ -1260,7 +1270,7 @@ where
     );
     unsafe {
         Status(
-            with_uninitialized(|status|
+            with_uninitialized(|status| {
                 ffi::MPI_Sendrecv_replace(
                     buf.pointer_mut(),
                     buf.count(),
@@ -1272,7 +1282,8 @@ where
                     source.as_communicator().as_raw(),
                     status,
                 )
-            ).1
+            })
+            .1,
         )
     }
 }
@@ -1320,9 +1331,7 @@ where
         if status.count(T::equivalent_datatype()) == 0 {
             panic!("Received an empty message into a ReceiveFuture.");
         }
-        unsafe {
-            (ptr::read(self.val), status)
-        }
+        unsafe { (ptr::read(self.val), status) }
     }
 
     /// Check whether the receive operation has finished.
@@ -1335,9 +1344,7 @@ where
                 if status.count(T::equivalent_datatype()) == 0 {
                     panic!("Received an empty message into a ReceiveFuture.");
                 }
-                unsafe {
-                    Ok((ptr::read(self.val), status))
-                }
+                unsafe { Ok((ptr::read(self.val), status)) }
             }
             Err(request) => {
                 self.req = request;

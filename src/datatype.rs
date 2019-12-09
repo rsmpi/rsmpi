@@ -434,9 +434,10 @@ impl UncommittedUserDatatype {
     {
         unsafe {
             UncommittedUserDatatype(
-                with_uninitialized(|newtype|
-                   ffi::MPI_Type_contiguous(count, oldtype.as_raw(), newtype)
-                ).1
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_contiguous(count, oldtype.as_raw(), newtype)
+                })
+                .1,
             )
         }
     }
@@ -456,9 +457,10 @@ impl UncommittedUserDatatype {
     {
         unsafe {
             UncommittedUserDatatype(
-                with_uninitialized(|newtype|
+                with_uninitialized(|newtype| {
                     ffi::MPI_Type_vector(count, blocklength, stride, oldtype.as_raw(), newtype)
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -479,7 +481,7 @@ impl UncommittedUserDatatype {
     {
         unsafe {
             UncommittedUserDatatype(
-                with_uninitialized(|newtype|
+                with_uninitialized(|newtype| {
                     ffi::MPI_Type_create_hvector(
                         count,
                         blocklength,
@@ -487,7 +489,8 @@ impl UncommittedUserDatatype {
                         oldtype.as_raw(),
                         newtype,
                     )
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -511,7 +514,7 @@ impl UncommittedUserDatatype {
 
         unsafe {
             UncommittedUserDatatype(
-                with_uninitialized(|newtype|
+                with_uninitialized(|newtype| {
                     ffi::MPI_Type_indexed(
                         blocklengths.count(),
                         blocklengths.as_ptr(),
@@ -519,7 +522,8 @@ impl UncommittedUserDatatype {
                         oldtype.as_raw(),
                         newtype,
                     )
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -546,7 +550,7 @@ impl UncommittedUserDatatype {
         );
         unsafe {
             UncommittedUserDatatype(
-                with_uninitialized(|newtype|
+                with_uninitialized(|newtype| {
                     ffi::MPI_Type_create_hindexed(
                         blocklengths.count(),
                         blocklengths.as_ptr(),
@@ -554,7 +558,8 @@ impl UncommittedUserDatatype {
                         oldtype.as_raw(),
                         newtype,
                     )
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -570,7 +575,7 @@ impl UncommittedUserDatatype {
     {
         unsafe {
             UncommittedUserDatatype(
-                with_uninitialized(|newtype|
+                with_uninitialized(|newtype| {
                     ffi::MPI_Type_create_indexed_block(
                         displacements.count(),
                         blocklength,
@@ -578,7 +583,8 @@ impl UncommittedUserDatatype {
                         oldtype.as_raw(),
                         newtype,
                     )
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -599,7 +605,7 @@ impl UncommittedUserDatatype {
     {
         unsafe {
             UncommittedUserDatatype(
-                with_uninitialized(|newtype|
+                with_uninitialized(|newtype| {
                     ffi::MPI_Type_create_hindexed_block(
                         displacements.count(),
                         blocklength,
@@ -607,7 +613,8 @@ impl UncommittedUserDatatype {
                         oldtype.as_raw(),
                         newtype,
                     )
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -637,7 +644,7 @@ impl UncommittedUserDatatype {
 
         unsafe {
             UncommittedUserDatatype(
-                with_uninitialized(|newtype|
+                with_uninitialized(|newtype| {
                     ffi::MPI_Type_create_struct(
                         blocklengths.count(),
                         blocklengths.as_ptr(),
@@ -645,7 +652,8 @@ impl UncommittedUserDatatype {
                         types.as_ptr() as *const _,
                         newtype,
                     )
-                ).1
+                })
+                .1,
             )
         }
     }
@@ -732,9 +740,7 @@ pub trait UncommittedDatatype: AsRaw<Raw = MPI_Datatype> {
     fn dup(&self) -> Self::DuplicatedDatatype {
         unsafe {
             Self::DuplicatedDatatype::from_raw(
-                with_uninitialized(|newtype|
-                    ffi::MPI_Type_dup(self.as_raw(), newtype)
-                ).1
+                with_uninitialized(|newtype| ffi::MPI_Type_dup(self.as_raw(), newtype)).1,
             )
         }
     }
@@ -1403,7 +1409,5 @@ where
 /// 4.1.5
 pub fn address_of<T>(x: &T) -> Address {
     let x: *const T = x;
-    unsafe {
-        with_uninitialized(|address| ffi::MPI_Get_address(x as *const c_void, address)).1
-    }
+    unsafe { with_uninitialized(|address| ffi::MPI_Get_address(x as *const c_void, address)).1 }
 }

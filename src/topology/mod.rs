@@ -163,7 +163,8 @@ impl UserCommunicator {
     /// 7.5.5
     pub fn topology(&self) -> Topology {
         unsafe {
-            let (_, topology) = with_uninitialized(|topology| ffi::MPI_Topo_test(self.as_raw(), topology));
+            let (_, topology) =
+                with_uninitialized(|topology| ffi::MPI_Topo_test(self.as_raw(), topology));
 
             if topology == ffi::RSMPI_GRAPH {
                 Topology::Graph
@@ -272,9 +273,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.1
     fn size(&self) -> Rank {
-        unsafe {
-            with_uninitialized(|size| ffi::MPI_Comm_size(self.as_raw(), size)).1
-        }
+        unsafe { with_uninitialized(|size| ffi::MPI_Comm_size(self.as_raw(), size)).1 }
     }
 
     /// The `Rank` that identifies the calling process within this communicator
@@ -286,9 +285,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.1
     fn rank(&self) -> Rank {
-        unsafe {
-            with_uninitialized(|rank| ffi::MPI_Comm_rank(self.as_raw(), rank)).1
-        }
+        unsafe { with_uninitialized(|rank| ffi::MPI_Comm_rank(self.as_raw(), rank)).1 }
     }
 
     /// Bundles a reference to this communicator with a specific `Rank` into a `Process`.
@@ -333,7 +330,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         C: Communicator,
     {
         unsafe {
-            with_uninitialized(|cmp| ffi::MPI_Comm_compare(self.as_raw(), other.as_raw(), cmp)).1.into()
+            with_uninitialized(|cmp| ffi::MPI_Comm_compare(self.as_raw(), other.as_raw(), cmp))
+                .1
+                .into()
         }
     }
 
@@ -348,7 +347,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// 6.4.2
     fn duplicate(&self) -> UserCommunicator {
         unsafe {
-            UserCommunicator::from_raw_unchecked(with_uninitialized(|newcomm| ffi::MPI_Comm_dup(self.as_raw(), newcomm)).1)
+            UserCommunicator::from_raw_unchecked(
+                with_uninitialized(|newcomm| ffi::MPI_Comm_dup(self.as_raw(), newcomm)).1,
+            )
         }
     }
 
@@ -379,7 +380,12 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// 6.4.2
     fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<UserCommunicator> {
         unsafe {
-            UserCommunicator::from_raw(with_uninitialized(|newcomm| ffi::MPI_Comm_split(self.as_raw(), color.as_raw(), key, newcomm)).1)
+            UserCommunicator::from_raw(
+                with_uninitialized(|newcomm| {
+                    ffi::MPI_Comm_split(self.as_raw(), color.as_raw(), key, newcomm)
+                })
+                .1,
+            )
         }
     }
 
@@ -406,7 +412,12 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         G: Group,
     {
         unsafe {
-            UserCommunicator::from_raw(with_uninitialized(|newcomm| ffi::MPI_Comm_create(self.as_raw(), group.as_raw(), newcomm)).1)
+            UserCommunicator::from_raw(
+                with_uninitialized(|newcomm| {
+                    ffi::MPI_Comm_create(self.as_raw(), group.as_raw(), newcomm)
+                })
+                .1,
+            )
         }
     }
 
@@ -443,7 +454,12 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         G: Group,
     {
         unsafe {
-            UserCommunicator::from_raw(with_uninitialized(|newcomm| ffi::MPI_Comm_create_group(self.as_raw(), group.as_raw(), tag, newcomm)).1)
+            UserCommunicator::from_raw(
+                with_uninitialized(|newcomm| {
+                    ffi::MPI_Comm_create_group(self.as_raw(), group.as_raw(), tag, newcomm)
+                })
+                .1,
+            )
         }
     }
 
@@ -493,9 +509,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         unsafe {
             let mut buf = MaybeUninit::<BufType>::uninit();
 
-            let (_, _resultlen) = with_uninitialized(|resultlen|
+            let (_, _resultlen) = with_uninitialized(|resultlen| {
                 ffi::MPI_Comm_get_name(self.as_raw(), &mut (*buf.as_mut_ptr())[0], resultlen)
-            );
+            });
 
             let buf_cstr = CStr::from_ptr(buf.assume_init().as_ptr());
             buf_cstr.to_string_lossy().into_owned()
@@ -592,7 +608,10 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         Dt: Datatype,
     {
         unsafe {
-            with_uninitialized(|size| ffi::MPI_Pack_size(incount, datatype.as_raw(), self.as_raw(), size)).1
+            with_uninitialized(|size| {
+                ffi::MPI_Pack_size(incount, datatype.as_raw(), self.as_raw(), size)
+            })
+            .1
         }
     }
 
@@ -837,7 +856,12 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
         G: Group,
     {
         unsafe {
-            UserGroup(with_uninitialized(|newgroup| ffi::MPI_Group_union(self.as_raw(), other.as_raw(), newgroup)).1)
+            UserGroup(
+                with_uninitialized(|newgroup| {
+                    ffi::MPI_Group_union(self.as_raw(), other.as_raw(), newgroup)
+                })
+                .1,
+            )
         }
     }
 
@@ -854,7 +878,12 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
         G: Group,
     {
         unsafe {
-            UserGroup(with_uninitialized(|newgroup| ffi::MPI_Group_intersection(self.as_raw(), other.as_raw(), newgroup)).1)
+            UserGroup(
+                with_uninitialized(|newgroup| {
+                    ffi::MPI_Group_intersection(self.as_raw(), other.as_raw(), newgroup)
+                })
+                .1,
+            )
         }
     }
 
@@ -871,7 +900,12 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
         G: Group,
     {
         unsafe {
-            UserGroup(with_uninitialized(|newgroup| ffi::MPI_Group_difference(self.as_raw(), other.as_raw(), newgroup)).1)
+            UserGroup(
+                with_uninitialized(|newgroup| {
+                    ffi::MPI_Group_difference(self.as_raw(), other.as_raw(), newgroup)
+                })
+                .1,
+            )
         }
     }
 
@@ -885,7 +919,12 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     /// 6.3.2
     fn include(&self, ranks: &[Rank]) -> UserGroup {
         unsafe {
-            UserGroup(with_uninitialized(|newgroup| ffi::MPI_Group_incl(self.as_raw(), ranks.count(), ranks.as_ptr(), newgroup)).1)
+            UserGroup(
+                with_uninitialized(|newgroup| {
+                    ffi::MPI_Group_incl(self.as_raw(), ranks.count(), ranks.as_ptr(), newgroup)
+                })
+                .1,
+            )
         }
     }
 
@@ -899,7 +938,12 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     /// 6.3.2
     fn exclude(&self, ranks: &[Rank]) -> UserGroup {
         unsafe {
-            UserGroup(with_uninitialized(|newgroup| ffi::MPI_Group_excl(self.as_raw(), ranks.count(), ranks.as_ptr(), newgroup)).1)
+            UserGroup(
+                with_uninitialized(|newgroup| {
+                    ffi::MPI_Group_excl(self.as_raw(), ranks.count(), ranks.as_ptr(), newgroup)
+                })
+                .1,
+            )
         }
     }
 
@@ -909,9 +953,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     ///
     /// 6.3.1
     fn size(&self) -> Rank {
-        unsafe {
-            with_uninitialized(|size| ffi::MPI_Group_size(self.as_raw(), size)).1
-        }
+        unsafe { with_uninitialized(|size| ffi::MPI_Group_size(self.as_raw(), size)).1 }
     }
 
     /// Rank of this process within the group.
@@ -942,7 +984,9 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
         G: Group,
     {
         unsafe {
-            let (_, translated) = with_uninitialized(|translated| ffi::MPI_Group_translate_ranks(self.as_raw(), 1, &rank, other.as_raw(), translated));
+            let (_, translated) = with_uninitialized(|translated| {
+                ffi::MPI_Group_translate_ranks(self.as_raw(), 1, &rank, other.as_raw(), translated)
+            });
             if translated == ffi::RSMPI_UNDEFINED {
                 None
             } else {
@@ -978,7 +1022,11 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
         G: Group,
     {
         unsafe {
-            with_uninitialized(|relation| ffi::MPI_Group_compare(self.as_raw(), other.as_raw(), relation)).1.into()
+            with_uninitialized(|relation| {
+                ffi::MPI_Group_compare(self.as_raw(), other.as_raw(), relation)
+            })
+            .1
+            .into()
         }
     }
 }
