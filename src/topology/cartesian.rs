@@ -2,12 +2,12 @@ use std::mem;
 
 use conv::ConvUtil;
 
-use super::super::{
+use super::{AsCommunicator, Communicator, IntoTopology, Rank, UserCommunicator};
+use crate::ffi::MPI_Comm;
+use crate::{
     datatype::traits::*, ffi, raw::traits::*, with_uninitialized, with_uninitialized2, Count,
     IntArray,
 };
-use super::{AsCommunicator, Communicator, IntoTopology, Rank, UserCommunicator};
-use ffi::MPI_Comm;
 
 /// Contains arrays describing the layout of the
 /// [`CartesianCommunicator`](struct.CartesianCommunicator.html).
@@ -105,7 +105,7 @@ impl CartesianCommunicator {
         periods: &mut [bool],
         coords: &mut [Count],
     ) {
-        let mut periods_int: IntArray = smallvec![0; periods.len()];
+        let mut periods_int: IntArray = smallvec::smallvec![0; periods.len()];
 
         ffi::MPI_Cart_get(
             self.as_raw(),

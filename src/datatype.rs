@@ -74,12 +74,12 @@ use conv::ConvUtil;
 
 use super::{Address, Count};
 
-use ffi;
-use ffi::MPI_Datatype;
+use crate::ffi;
+use crate::ffi::MPI_Datatype;
 
-use raw::traits::*;
+use crate::raw::traits::*;
 
-use with_uninitialized;
+use crate::with_uninitialized;
 
 /// Datatype traits
 pub mod traits {

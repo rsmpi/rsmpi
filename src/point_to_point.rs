@@ -19,15 +19,15 @@ use conv::ConvUtil;
 
 use super::{Count, Tag};
 
-use ffi;
-use ffi::{MPI_Message, MPI_Status};
+use crate::ffi;
+use crate::ffi::{MPI_Message, MPI_Status};
 
-use datatype::traits::*;
-use raw::traits::*;
-use request::{Request, Scope, StaticScope};
-use topology::traits::*;
-use topology::{AnyProcess, CommunicatorRelation, Process, Rank};
-use {with_uninitialized, with_uninitialized2};
+use crate::datatype::traits::*;
+use crate::raw::traits::*;
+use crate::request::{Request, Scope, StaticScope};
+use crate::topology::traits::*;
+use crate::topology::{AnyProcess, CommunicatorRelation, Process, Rank};
+use crate::{with_uninitialized, with_uninitialized2};
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
 
@@ -1338,7 +1338,7 @@ where
     ///
     /// If the operation has finished, the data received is returned. Otherwise the future itself
     /// is returned.
-    pub fn try(mut self) -> Result<(T, Status), Self> {
+    pub fn r#try(mut self) -> Result<(T, Status), Self> {
         match self.req.test() {
             Ok(status) => {
                 if status.count(T::equivalent_datatype()) == 0 {

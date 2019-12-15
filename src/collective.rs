@@ -17,17 +17,17 @@ use std::{fmt, ptr};
 #[cfg(feature = "user-operations")]
 use libffi::high::Closure4;
 
-use ffi;
-use ffi::MPI_Op;
+use crate::ffi;
+use crate::ffi::MPI_Op;
 
-use datatype::traits::*;
+use crate::datatype::traits::*;
 #[cfg(feature = "user-operations")]
-use datatype::{DatatypeRef, DynBuffer, DynBufferMut};
-use raw::traits::*;
-use request::{Request, Scope, StaticScope};
-use topology::traits::*;
-use topology::{Process, Rank};
-use with_uninitialized;
+use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
+use crate::raw::traits::*;
+use crate::request::{Request, Scope, StaticScope};
+use crate::topology::traits::*;
+use crate::topology::{Process, Rank};
+use crate::with_uninitialized;
 
 /// Collective communication traits
 pub mod traits {

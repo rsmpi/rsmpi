@@ -121,13 +121,6 @@
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
 
-extern crate conv;
-#[cfg(feature = "user-operations")]
-extern crate libffi;
-extern crate mpi_sys;
-#[macro_use]
-extern crate smallvec;
-
 /// The raw C language MPI API
 ///
 /// Documented in the [Message Passing Interface specification][spec]
@@ -163,17 +156,19 @@ pub mod topology;
 
 /// Re-exports all traits.
 pub mod traits {
-    pub use collective::traits::*;
-    pub use datatype::traits::*;
-    pub use point_to_point::traits::*;
-    pub use raw::traits::*;
-    pub use topology::traits::*;
+    pub use crate::collective::traits::*;
+    pub use crate::datatype::traits::*;
+    pub use crate::point_to_point::traits::*;
+    pub use crate::raw::traits::*;
+    pub use crate::topology::traits::*;
 }
 
 #[doc(inline)]
-pub use environment::{initialize, initialize_with_threading, time, time_resolution, Threading};
+pub use crate::environment::{
+    initialize, initialize_with_threading, time, time_resolution, Threading,
+};
 
-use ffi::MPI_Aint;
+use crate::ffi::MPI_Aint;
 
 /// Encodes error values returned by MPI functions.
 pub type Error = c_int;

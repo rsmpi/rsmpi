@@ -32,12 +32,12 @@ use std::marker::PhantomData;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
 
-use ffi;
-use ffi::{MPI_Request, MPI_Status};
+use crate::ffi;
+use crate::ffi::{MPI_Request, MPI_Status};
 
-use point_to_point::Status;
-use raw::traits::*;
-use with_uninitialized;
+use crate::point_to_point::Status;
+use crate::raw::traits::*;
+use crate::with_uninitialized;
 
 /// Check if the request is `MPI_REQUEST_NULL`.
 fn is_null(request: MPI_Request) -> bool {

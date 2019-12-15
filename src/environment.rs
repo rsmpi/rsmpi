@@ -14,9 +14,9 @@ use std::string::FromUtf8Error;
 
 use conv::ConvUtil;
 
-use ffi;
-use topology::SystemCommunicator;
-use {with_uninitialized, with_uninitialized2};
+use crate::ffi;
+use crate::topology::SystemCommunicator;
+use crate::{with_uninitialized, with_uninitialized2};
 
 /// Global context
 pub struct Universe {

@@ -27,14 +27,14 @@ use std::process;
 use conv::ConvUtil;
 
 #[cfg(not(msmpi))]
-use super::Tag;
-use super::{Count, IntArray};
+use crate::Tag;
+use crate::{Count, IntArray};
 
-use super::with_uninitialized;
-use datatype::traits::*;
-use ffi;
-use ffi::{MPI_Comm, MPI_Group};
-use raw::traits::*;
+use crate::datatype::traits::*;
+use crate::ffi;
+use crate::ffi::{MPI_Comm, MPI_Group};
+use crate::raw::traits::*;
+use crate::with_uninitialized;
 
 mod cartesian;
 
