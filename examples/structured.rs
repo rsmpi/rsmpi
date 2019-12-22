@@ -10,13 +10,14 @@ unsafe impl Equivalence for MyInts {
     type Out = UserDatatype;
     fn equivalent_datatype() -> Self::Out {
         UserDatatype::structured(
-            &[1, 1, 1],
+            3,
+            &[1;3],
             &[
                 (size_of::<i32>() * 2) as mpi::Address,
                 size_of::<i32>() as mpi::Address,
                 0,
             ],
-            &[i32::equivalent_datatype(); 3],
+            &[&i32::equivalent_datatype() as &dyn mpi::datatype::Datatype; 3],
         )
     }
 }
