@@ -2,10 +2,8 @@
 #![allow(clippy::float_cmp)]
 extern crate mpi;
 
-use mpi::request::{CancelGuard, LocalScope, WaitGuard};
+use mpi::request::{CancelGuard, WaitGuard};
 use mpi::traits::*;
-
-use std::pin::Pin;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -40,15 +38,9 @@ fn main() {
 
     y = 0.0;
     {
-        // Scopes can also be pinned to the heap, though this has some overhead. This scope must
-        // be passed by reference, or you must convert it into a `Pin<&LocalScope>` using
-        // `as_ref()`.
-        let scope: Pin<Box<LocalScope>> = LocalScope::pinned();
+        mpi::define_scope!(scope);
 
-        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(&scope, &mut y));
-
-        // Converts to a `Pin<&LocalScope>`, which can be passed directly to immediate routines.
-        let scope: Pin<&LocalScope> = scope.as_ref();
+        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(scope, &mut y));
         let _sreq = WaitGuard::from(world.this_process().immediate_ready_send(scope, &x));
     }
     assert_eq!(x, y);
@@ -57,7 +49,7 @@ fn main() {
     assert!(world.any_process().immediate_matched_probe().is_none());
 
     y = 0.0;
-    // last of all, you can use the `scope` routine
+    // You can also use the `scope` routine
     mpi::request::scope(|scope| {
         let _sreq: WaitGuard<_> = world
             .this_process()

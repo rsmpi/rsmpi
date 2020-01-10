@@ -231,7 +231,7 @@ where
 #[macro_export]
 macro_rules! define_scope {
     ($name:ident) => {
-        let $name = $crate::request::LocalScope::new();
-        let $name = unsafe { ::std::pin::Pin::new_unchecked(&$name) };
+        let $name = unsafe { $crate::request::LocalScope::new() };
+        let $name = &$name;
     };
 }
