@@ -82,6 +82,7 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PATH="${HOME}/.local/bin:${MPI_PREFIX}/bin${PATH:+":${PATH}"}"; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export LD_LIBRARY_PATH="${MPI_PREFIX}/lib${LD_LIBRARY_PATH:+":${LD_LIBRARY_PATH}"}"; fi
   # Windows set-up
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then rustup default $TRAVIS_RUST_VERSION-x86_64-pc-windows-msvc; fi
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then sh ci/install-mpi-windows.sh; fi
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export MSMPI_BIN="C:\\Program Files\\Microsoft MPI\\Bin\\"; fi
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then export MSMPI_INC="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\\"; fi
