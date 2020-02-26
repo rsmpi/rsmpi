@@ -8,14 +8,14 @@ parallel computation on High Performance Computing systems. The MPI specificatio
 bindings for the C programming language (and through it C++) as well as for the Fortran
 programming language. This library tries to bridge the gap into a more rustic world.
 
-[travis-shield]: https://img.shields.io/travis/bsteinb/rsmpi/master.svg?style=flat-square
-[travis]: https://travis-ci.org/bsteinb/rsmpi
+[travis-shield]: https://img.shields.io/travis/rsmpi/rsmpi/master.svg?style=flat-square
+[travis]: https://travis-ci.org/rsmpi/rsmpi
 [doc-shield]: https://img.shields.io/badge/documentation-hosted-blue.svg?style=flat-square
-[doc]: http://bsteinb.github.io/rsmpi/
+[doc]: http://rsmpi.github.io/rsmpi/
 [license-shield]: https://img.shields.io/badge/license-Apache_License_2.0_or_MIT-blue.svg?style=flat-square
-[license]: https://github.com/bsteinb/rsmpi#license
-[release-shield]: https://img.shields.io/github/release/bsteinb/rsmpi.svg?style=flat-square
-[release]: https://github.com/bsteinb/rsmpi/releases/latest
+[license]: https://github.com/rsmpi/rsmpi#license
+[release-shield]: https://img.shields.io/github/release/rsmpi/rsmpi.svg?style=flat-square
+[release]: https://github.com/rsmpi/rsmpi/releases/latest
 [crate-shield]: https://img.shields.io/crates/v/mpi.svg?style=flat-square
 [crate]: https://crates.io/crates/mpi
 [MPI]: http://www.mpi-forum.org
@@ -48,9 +48,9 @@ Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` 
 [MPICH]: https://www.mpich.org
 [MS-MPI]: https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi
 [Spectrum-MPI]: https://www.ibm.com/us-en/marketplace/spectrum-mpi
-[rsmpih]: https://github.com/bsteinb/rsmpi/blob/master/src/ffi/rsmpi.h
-[rsmpic]: https://github.com/bsteinb/rsmpi/blob/master/src/ffi/rsmpi.c
-[buildrs]: https://github.com/bsteinb/rsmpi/blob/master/build.rs
+[rsmpih]: https://github.com/rsmpi/rsmpi/blob/master/src/ffi/rsmpi.h
+[rsmpic]: https://github.com/rsmpi/rsmpi/blob/master/src/ffi/rsmpi.c
+[buildrs]: https://github.com/rsmpi/rsmpi/blob/master/build.rs
 [bindgen]: https://github.com/servo/rust-bindgen
 [libffi]: https://github.com/tov/libffi-rs
 
@@ -163,7 +163,7 @@ Documentation for the latest version of the crate released to crates.io is [host
 
 See files in [examples/][examples]. These examples also act as [integration tests][travis].
 
-[examples]: https://github.com/bsteinb/rsmpi/tree/master/examples
+[examples]: https://github.com/rsmpi/rsmpi/tree/master/examples
 
 ## License
 
