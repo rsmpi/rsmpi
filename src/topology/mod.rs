@@ -40,7 +40,7 @@ mod cartesian;
 
 /// Topology traits
 pub mod traits {
-    pub use super::{AsCommunicator, Attribute, Communicator, Group};
+    pub use super::{AsCommunicator, Attribute, Communicator, CommunicatorHandle, Group};
 }
 
 // Re-export cartesian functions and types from topology modules.
@@ -53,6 +53,9 @@ pub trait AsCommunicator {
     /// Returns the associated communicator.
     fn as_communicator(&self) -> &Self::Out;
 }
+
+/// A handle to a communicator
+pub trait CommunicatorHandle: AsRaw<Raw = MPI_Comm> {}
 
 /// Identifies a certain process within a communicator.
 pub type Rank = c_int;
@@ -100,7 +103,11 @@ unsafe impl AsRaw for SystemCommunicator {
     }
 }
 
-impl Communicator for SystemCommunicator {}
+impl Communicator for SystemCommunicator {
+    fn target_size(&self) -> Rank {
+        self.size()
+    }
+}
 
 impl AsCommunicator for SystemCommunicator {
     type Out = SystemCommunicator;
@@ -108,6 +115,42 @@ impl AsCommunicator for SystemCommunicator {
         self
     }
 }
+
+/// A handle to a built-in communicator, e.g. `MPI_COMM_WORLD`
+///
+/// # Standard section(s)
+///
+/// 6.4
+#[derive(Copy, Clone)]
+pub struct SystemCommunicatorHandle(MPI_Comm);
+
+impl SystemCommunicatorHandle {
+    /// If the raw value is the null handle returns `None`
+    #[allow(dead_code)]
+    pub(crate) fn from_raw(raw: MPI_Comm) -> Option<SystemCommunicatorHandle> {
+        if raw == unsafe { ffi::RSMPI_COMM_NULL } {
+            None
+        } else {
+            Some(SystemCommunicatorHandle(raw))
+        }
+    }
+
+    /// Wraps the raw value without checking for null handle
+    #[allow(dead_code)]
+    pub(crate) fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicatorHandle {
+        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
+        SystemCommunicatorHandle(raw)
+    }
+}
+
+unsafe impl AsRaw for SystemCommunicatorHandle {
+    type Raw = MPI_Comm;
+    fn as_raw(&self) -> Self::Raw {
+        self.0
+    }
+}
+
+impl CommunicatorHandle for SystemCommunicatorHandle {}
 
 /// An enum describing the topology of a communicator
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -217,7 +260,11 @@ unsafe impl AsRaw for UserCommunicator {
     }
 }
 
-impl Communicator for UserCommunicator {}
+impl Communicator for UserCommunicator {
+    fn target_size(&self) -> Rank {
+        self.size()
+    }
+}
 
 impl Drop for UserCommunicator {
     fn drop(&mut self) {
@@ -233,6 +280,137 @@ impl From<CartesianCommunicator> for UserCommunicator {
         cart_comm.0
     }
 }
+
+/// A handle to a user-defined communicator
+///
+/// # Standard section(s)
+///
+/// 6.4
+pub struct UserCommunicatorHandle(MPI_Comm);
+
+impl UserCommunicatorHandle {
+    /// If the raw value is the null handle returns `None`
+    pub unsafe fn from_raw(raw: MPI_Comm) -> Option<UserCommunicatorHandle> {
+        if raw == ffi::RSMPI_COMM_NULL {
+            None
+        } else {
+            Some(UserCommunicatorHandle(raw))
+        }
+    }
+
+    /// Wraps the raw value without checking for null handle
+    #[allow(dead_code)]
+    fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicatorHandle {
+        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
+        UserCommunicatorHandle(raw)
+    }
+}
+
+unsafe impl AsRaw for UserCommunicatorHandle {
+    type Raw = MPI_Comm;
+    fn as_raw(&self) -> Self::Raw {
+        self.0
+    }
+}
+
+impl CommunicatorHandle for UserCommunicatorHandle {}
+
+/// A communicator for inter-communication, which represents a point-to-point communication between
+/// disjoint groups
+///
+/// # Standard Sections
+/// 6.6
+pub struct InterCommunicator<C: CommunicatorHandle>(pub(crate) C);
+
+impl<C: CommunicatorHandle> InterCommunicator<C> {
+    /// Construct an Intercommunicator from a raw handle
+    pub fn from_handle(handle: C) -> Option<Self> {
+        let mut flag = c_int::min_value();
+        unsafe {
+            ffi::MPI_Comm_test_inter(handle.as_raw(), &mut flag);
+        }
+
+        let is_intercomm = flag != 0;
+
+        if is_intercomm {
+            Some(InterCommunicator(handle))
+        } else {
+            None
+        }
+    }
+
+    /// Construct an Intercommunicator from a raw handle without checking if it's an Intercomm
+    pub unsafe fn from_handle_unchecked(handle: C) -> Self {
+        debug_assert!({
+            let mut flag = c_int::min_value();
+            ffi::MPI_Comm_test_inter(handle.as_raw(), &mut flag);
+            flag != 0
+        });
+
+        InterCommunicator(handle)
+    }
+
+    /// The number of processes in the remote group of comm
+    ///
+    /// # Standard Section(s)
+    ///
+    /// 6.6.1, See MPI_Comm_remote_size
+    pub fn remote_size(&self) -> Rank {
+        let mut size = Rank::min_value();
+        unsafe {
+            ffi::MPI_Comm_remote_size(self.as_raw(), &mut size);
+        }
+        size
+    }
+
+    /// The remote group corresponding to the intercomm
+    ///
+    /// # Standard Section(s)
+    /// 6.6.1, See MPI_Comm_remote_group
+    pub fn remote_group(&self) -> UserGroup {
+        unsafe {
+            let (_, g) = with_uninitialized(|g| {
+                ffi::MPI_Comm_remote_group(self.as_raw(), g);
+            });
+            UserGroup(g)
+        }
+    }
+}
+
+impl Drop for UserCommunicatorHandle {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::MPI_Comm_disconnect(&mut self.0);
+        }
+        assert_eq!(self.0, unsafe { ffi::RSMPI_COMM_NULL });
+    }
+}
+
+impl<C: CommunicatorHandle> AsCommunicator for InterCommunicator<C> {
+    type Out = InterCommunicator<C>;
+    fn as_communicator(&self) -> &Self::Out {
+        self
+    }
+}
+
+unsafe impl<C: CommunicatorHandle> AsRaw for InterCommunicator<C> {
+    type Raw = MPI_Comm;
+    fn as_raw(&self) -> Self::Raw {
+        self.0.as_raw()
+    }
+}
+
+impl<C: CommunicatorHandle> Communicator for InterCommunicator<C> {
+    fn target_size(&self) -> Rank {
+        self.remote_size()
+    }
+}
+
+/// A system-defined inter-communicator
+pub type SystemInterCommunicator = InterCommunicator<SystemCommunicatorHandle>;
+
+/// A user-defined inter-communicator
+pub type UserInterCommunicator = InterCommunicator<UserCommunicatorHandle>;
 
 /// Unimplemented
 #[allow(missing_copy_implementations)]
@@ -273,6 +451,11 @@ pub type Key = c_int;
 
 /// Communicators are contexts for communication
 pub trait Communicator: AsRaw<Raw = MPI_Comm> {
+    /// Returns the number of processes available to communicate with in this `Communicator`. For
+    /// intra-communicators, this is equivalent to [`size`](#method.size). For inter-communicators,
+    /// this is equivalent to [`remote_size`](struct.InterCommunicator.html#method.remote_size).
+    fn target_size(&self) -> Rank;
+
     /// Number of processes in this communicator
     ///
     /// # Examples
@@ -329,7 +512,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     where
         Self: Sized,
     {
-        assert!(0 <= r && r < self.size());
+        assert!(0 <= r && r < self.target_size());
         Process::by_rank_unchecked(self, r)
     }
 
@@ -549,6 +732,19 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         process::abort();
     }
 
+    /// Tests if the communicator is an inter-communicator.
+    ///
+    /// # Standard sections(s)
+    ///
+    /// 6.6.1, See MPI_Comm_test_inter
+    fn test_inter(&self) -> bool {
+        let mut flag = c_int::min_value();
+        unsafe {
+            ffi::MPI_Comm_test_inter(self.as_raw(), &mut flag);
+        }
+        flag != 0
+    }
+
     /// Set the communicator name
     ///
     /// # Standard section(s)
@@ -763,6 +959,19 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
             self.as_raw(),
         );
         position
+    }
+
+    /// Returns the parent Communicator, if any
+    ///
+    /// # Standard Sections
+    /// 10.3.2, see MPI_Comm_get_parent
+    fn parent(&self) -> Option<SystemInterCommunicator> {
+        let handle = unsafe {
+            let mut comm = ffi::RSMPI_COMM_NULL;
+            ffi::MPI_Comm_get_parent(&mut comm);
+            SystemCommunicatorHandle::from_raw(comm)?
+        };
+        InterCommunicator::from_handle(handle)
     }
 }
 

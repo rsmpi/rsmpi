@@ -81,7 +81,7 @@ pub trait CommunicatorCollectives: Communicator {
                 sendbuf.count(),
                 sendbuf.as_datatype().as_raw(),
                 recvbuf.pointer_mut(),
-                recvbuf.count() / self.size(),
+                recvbuf.count() / self.target_size(),
                 recvbuf.as_datatype().as_raw(),
                 self.as_raw(),
             );
@@ -138,7 +138,7 @@ pub trait CommunicatorCollectives: Communicator {
         S: Buffer,
         R: BufferMut,
     {
-        let c_size = self.size();
+        let c_size = self.target_size();
         unsafe {
             ffi::MPI_Alltoall(
                 sendbuf.pointer(),
@@ -229,7 +229,7 @@ pub trait CommunicatorCollectives: Communicator {
         R: BufferMut,
         O: Operation,
     {
-        assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
+        assert_eq!(recvbuf.count() * self.target_size(), sendbuf.count());
         unsafe {
             ffi::MPI_Reduce_scatter_block(
                 sendbuf.pointer(),
@@ -342,7 +342,7 @@ pub trait CommunicatorCollectives: Communicator {
         Sc: Scope<'a>,
     {
         unsafe {
-            let recvcount = recvbuf.count() / self.size();
+            let recvcount = recvbuf.count() / self.target_size();
             Request::from_raw(
                 with_uninitialized(|request| {
                     ffi::MPI_Iallgather(
@@ -426,7 +426,7 @@ pub trait CommunicatorCollectives: Communicator {
         R: 'a + BufferMut,
         Sc: Scope<'a>,
     {
-        let c_size = self.size();
+        let c_size = self.target_size();
         unsafe {
             Request::from_raw(
                 with_uninitialized(|request| {
@@ -554,7 +554,7 @@ pub trait CommunicatorCollectives: Communicator {
         O: 'a + Operation,
         Sc: Scope<'a>,
     {
-        assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
+        assert_eq!(recvbuf.count() * self.target_size(), sendbuf.count());
         unsafe {
             Request::from_raw(
                 with_uninitialized(|request| {
@@ -757,7 +757,7 @@ pub trait Root: AsCommunicator {
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
-            let recvcount = recvbuf.count() / self.as_communicator().size();
+            let recvcount = recvbuf.count() / self.as_communicator().target_size();
             ffi::MPI_Gather(
                 sendbuf.pointer(),
                 sendbuf.count(),
@@ -903,7 +903,7 @@ pub trait Root: AsCommunicator {
         R: BufferMut,
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
-        let sendcount = sendbuf.count() / self.as_communicator().size();
+        let sendcount = sendbuf.count() / self.as_communicator().target_size();
         unsafe {
             ffi::MPI_Scatter(
                 sendbuf.pointer(),
@@ -1160,7 +1160,7 @@ pub trait Root: AsCommunicator {
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
-            let recvcount = recvbuf.count() / self.as_communicator().size();
+            let recvcount = recvbuf.count() / self.as_communicator().target_size();
             Request::from_raw(
                 with_uninitialized(|request| {
                     ffi::MPI_Igather(
@@ -1339,7 +1339,7 @@ pub trait Root: AsCommunicator {
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
-            let sendcount = sendbuf.count() / self.as_communicator().size();
+            let sendcount = sendbuf.count() / self.as_communicator().target_size();
             Request::from_raw(
                 with_uninitialized(|request| {
                     ffi::MPI_Iscatter(

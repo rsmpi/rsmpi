@@ -20,8 +20,11 @@ use std::{
 use conv::ConvUtil;
 use once_cell::sync::Lazy;
 
-use crate::topology::{Communicator, SystemCommunicator};
 use crate::{ffi, topology::SystemAttribute};
+use crate::{
+    topology::{Communicator, InterCommunicator, SystemCommunicator, UserCommunicatorHandle},
+    traits::AsRaw,
+};
 use crate::{with_uninitialized, with_uninitialized2};
 
 /// Internal data structure used to uphold certain MPI invariants.
@@ -110,6 +113,34 @@ impl Universe {
             );
         }
     }
+
+    /// Disconnect parent
+    ///
+    /// MPICH can be configured to print leaked MPI objects. At this time (circa
+    /// 4.1b1), it reports a leak if a child process exits without freeing the
+    /// parent. This seems overly aggressive given the following.
+    ///
+    /// Advice to users.
+    ///   MPI_COMM_GET_PARENT returns a handle to a single inter-
+    ///   communicator. Calling MPI_COMM_GET_PARENT a second time returns a handle
+    ///   to the same inter-communicator. Freeing the handle with MPI_COMM_DISCONNECT
+    ///   or MPI_COMM_FREE will cause other references to the inter-communicator to become
+    ///   invalid (dangling). Note that calling MPI_COMM_FREE on the parent communicator
+    ///   is not useful.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 11.8.2
+    pub fn disconnect_parent(&mut self) {
+        if let Some(parent) = self.world().parent() {
+            // Make it look like a user communicator so it can be dropped
+            let _p = unsafe {
+                InterCommunicator::from_handle_unchecked(
+                    UserCommunicatorHandle::from_raw(parent.as_raw()).unwrap(),
+                )
+            };
+        }
+    }
 }
 
 impl Drop for Universe {
@@ -123,6 +154,7 @@ impl Drop for Universe {
             .expect("rsmpi internal error: UNIVERSE_STATE lock poisoned");
 
         self.detach_buffer();
+        self.disconnect_parent();
         unsafe {
             ffi::MPI_Finalize();
         }
