@@ -9,11 +9,14 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
+use std::ffi::{CString, NulError};
 #[cfg(any(msmpi, feature = "user-operations"))]
 use std::mem;
+use std::os::raw::c_char;
 use std::os::raw::{c_int, c_void};
 use std::{fmt, ptr};
 
+use conv::ConvUtil;
 #[cfg(feature = "user-operations")]
 use libffi::high::Closure4;
 
@@ -26,7 +29,7 @@ use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
 use crate::topology::traits::*;
-use crate::topology::{Process, Rank};
+use crate::topology::{Process, Rank, UserCommunicator};
 use crate::with_uninitialized;
 
 /// Collective communication traits
@@ -1516,6 +1519,119 @@ pub trait Root: AsCommunicator {
                 .1,
                 scope,
             )
+        }
+    }
+
+    /// Spawns child processes
+    ///
+    /// # Standard sections
+    /// 10.3.2, see MPI_Comm_spawn
+    fn spawn(
+        &self,
+        command: &str,
+        argv: &[&str],
+        maxprocs: c_int,
+    ) -> Result<UserCommunicator, NulError> {
+        let command = CString::new(command)?;
+
+        let mut argv: Vec<_> = argv
+            .iter()
+            .map(|a| CString::new(*a).map(|c| c.into_bytes_with_nul()))
+            .collect::<Result<Vec<_>, NulError>>()?;
+
+        let mut argv: Vec<*mut c_char> = argv
+            .iter_mut()
+            .map(|a| a.as_mut_ptr() as *mut c_char)
+            .chain(std::iter::once(std::ptr::null_mut()))
+            .collect();
+
+        let mut result = unsafe { ffi::RSMPI_COMM_NULL };
+        let mut errcodes: Vec<_> = Vec::new();
+        errcodes.resize(maxprocs.value_as().unwrap(), 0);
+
+        unsafe {
+            ffi::MPI_Comm_spawn(
+                command.as_ptr(),
+                argv.as_mut_ptr(),
+                maxprocs,
+                ffi::RSMPI_INFO_NULL,
+                self.root_rank(),
+                self.as_communicator().as_raw(),
+                &mut result,
+                errcodes.as_mut_ptr(),
+            );
+
+            Ok(UserCommunicator::from_raw(result).unwrap())
+        }
+    }
+
+    /// Spawns child processes
+    ///
+    /// # Standard sections
+    /// 10.3.3, see MPI_Comm_spawn_multiple
+    fn spawn_multiple(
+        &self,
+        commands: &[&str],
+        argvs: &[&[&str]],
+        maxprocs: &[c_int],
+    ) -> Result<UserCommunicator, NulError> {
+        assert_eq!(commands.len(), argvs.len());
+        assert_eq!(commands.len(), maxprocs.len());
+
+        let mut commands: Vec<_> = commands
+            .iter()
+            .map(|s| CString::new(*s).map(|c| c.into_bytes_with_nul()))
+            .collect::<Result<Vec<_>, NulError>>()?;
+
+        let mut commands: Vec<*mut c_char> = commands
+            .iter_mut()
+            .map(|c| c.as_mut_ptr() as *mut c_char)
+            .collect();
+
+        let mut argvs: Vec<Vec<_>> = argvs
+            .iter()
+            .map(|argv| {
+                argv.iter()
+                    .map(|a| CString::new(*a).map(|c| c.into_bytes_with_nul()))
+                    .collect::<Result<Vec<_>, NulError>>()
+            })
+            .collect::<Result<Vec<_>, NulError>>()?;
+
+        let mut argvs: Vec<Vec<*mut c_char>> = argvs
+            .iter_mut()
+            .map(|argv| {
+                argv.iter_mut()
+                    .map(|a| a.as_mut_ptr() as *mut c_char)
+                    .chain(std::iter::once(std::ptr::null_mut()))
+                    .collect()
+            })
+            .collect();
+
+        let mut argvs: Vec<*mut *mut c_char> =
+            argvs.iter_mut().map(|argv| argv.as_mut_ptr()).collect();
+
+        let infos: Vec<_> = (0..commands.len())
+            .map(|_| unsafe { ffi::RSMPI_INFO_NULL })
+            .collect();
+
+        let mut result = unsafe { ffi::RSMPI_COMM_NULL };
+        let mut errcodes: Vec<_> = Vec::new();
+        errcodes.resize(commands.len(), 0);
+
+        unsafe {
+            ffi::MPI_Comm_spawn_multiple(
+                commands.len().value_as().unwrap(),
+                commands.as_mut_ptr(),
+                argvs.as_mut_ptr(),
+                maxprocs.as_ptr(),
+                infos.as_ptr(),
+                self.root_rank(),
+                self.as_communicator().as_raw(),
+                &mut result,
+                errcodes.as_mut_ptr(),
+            );
+
+            Ok(UserCommunicator::from_raw(result).unwrap())
         }
     }
 }

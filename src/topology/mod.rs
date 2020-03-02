@@ -697,6 +697,18 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         );
         position
     }
+
+    /// Returns the parent Communicator, if any
+    ///
+    /// # Standard Sections
+    /// 10.3.2, see MPI_Comm_get_parent
+    fn parent(&self) -> Option<SystemCommunicator> {
+        unsafe {
+            let mut comm = ffi::RSMPI_COMM_NULL;
+            ffi::MPI_Comm_get_parent(&mut comm);
+            SystemCommunicator::from_raw(comm)
+        }
+    }
 }
 
 /// The relation between two communicators.
