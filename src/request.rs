@@ -94,7 +94,7 @@ impl<'a, S: Scope<'a>> Drop for Request<'a, S> {
 ///
 /// See `examples/wait_any.rs`
 pub fn wait_any<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> (i32, Status) {
-    let mut mpi_requests: Vec<*mut mpi_sys::ompi_request_t> = Vec::with_capacity(requests.len());
+    let mut mpi_requests: Vec<MPI_Request> = Vec::with_capacity(requests.len());
     let mut scopes: Vec<S> = Vec::with_capacity(requests.len());
     unsafe {
         let mut index: i32 = mpi_sys::MPI_UNDEFINED;
