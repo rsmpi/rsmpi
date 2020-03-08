@@ -22,12 +22,13 @@
 //! # Unfinished features
 //!
 //! - **3.7**: Nonblocking mode:
-//!   - Completion, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
+//!   - Completion, `MPI_Waitall()`, `MPI_Waitsome()`,
 //!   `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`, `MPI_Request_get_status()`
 //! - **3.8**:
 //!   - Cancellation, `MPI_Test_cancelled()`
 
 use std::cell::Cell;
+use std::convert::TryInto;
 use std::marker::PhantomData;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
@@ -79,6 +80,54 @@ unsafe impl<'a, S: Scope<'a>> AsRaw for Request<'a, S> {
 impl<'a, S: Scope<'a>> Drop for Request<'a, S> {
     fn drop(&mut self) {
         panic!("request was dropped without being completed");
+    }
+}
+
+/// Wait for the completion of one of the requests in the vector,
+/// returns the index of the request completed and the status of the request.
+///
+/// The completed request is removed from the vector of requests.
+///
+/// If no Request is active the index returned is mpi_sys::MPI_UNDEFINED.
+///
+/// # Examples
+///
+/// See `examples/wait_any.rs`
+pub fn wait_any<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> (i32, Status) {
+    let mut mpi_requests: Vec<*mut mpi_sys::ompi_request_t> = Vec::with_capacity(requests.len());
+    let mut scopes: Vec<S> = Vec::with_capacity(requests.len());
+    unsafe {
+        let mut index: i32 = mpi_sys::MPI_UNDEFINED;
+        while let Some(r) = requests.pop() {
+            let (request, scope) = r.into_raw();
+            mpi_requests.push(request);
+            scopes.push(scope);
+        }
+        let size: i32 = mpi_requests
+            .len()
+            .try_into()
+            .expect("Error while casting usize to i32");
+
+        let status = Status::from_raw(
+            with_uninitialized(|s| {
+                ffi::MPI_Waitany(size, mpi_requests.as_mut_ptr(), &mut index, s);
+                s
+            })
+            .1,
+        );
+
+        if index != mpi_sys::MPI_UNDEFINED {
+            let u_index: usize = index.try_into().expect("Error while casting i32 to usize");
+            index = size - index - 1;
+            assert!(is_null(mpi_requests[u_index]));
+            mpi_requests.remove(u_index);
+            scopes.remove(u_index);
+        }
+        while let (Some(req), Some(scope)) = (mpi_requests.pop(), scopes.pop()) {
+            requests.push(Request::from_raw(req, scope));
+        }
+
+        (index, status)
     }
 }
 
