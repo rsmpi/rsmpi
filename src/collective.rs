@@ -9,12 +9,13 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::ffi::{CString, NulError};
+use std::ffi::{CStr, CString};
+use std::fmt;
+use std::iter;
 #[cfg(any(msmpi, feature = "user-operations"))]
 use std::mem;
-use std::os::raw::c_char;
-use std::os::raw::{c_int, c_void};
-use std::{fmt, ptr};
+use std::os::raw::{c_char, c_int, c_void};
+use std::ptr;
 
 use conv::ConvUtil;
 #[cfg(feature = "user-operations")]
@@ -1528,23 +1529,20 @@ pub trait Root: AsCommunicator {
     ///
     /// # Standard sections
     /// 10.3.2, see MPI_Comm_spawn
-    fn spawn(
-        &self,
-        command: &str,
-        argv: &[&str],
-        maxprocs: c_int,
-    ) -> Result<UserInterCommunicator, NulError> {
-        let command = CString::new(command)?;
-
+    fn spawn(&self, command: &CStr, argv: &[&CStr], maxprocs: c_int) -> UserInterCommunicator {
+        // Unfortunately `MPI_Comm_spawn` accepts a list of mutable strings, so we need to clone the
+        // supplied strings so we can get mutable access to them.
         let mut argv: Vec<_> = argv
             .iter()
-            .map(|a| CString::new(*a).map(|c| c.into_bytes_with_nul()))
-            .collect::<Result<Vec<_>, NulError>>()?;
+            .cloned()
+            .map(ToOwned::to_owned)
+            .map(CString::into_bytes_with_nul)
+            .collect();
 
         let mut argv: Vec<*mut c_char> = argv
             .iter_mut()
             .map(|a| a.as_mut_ptr() as *mut c_char)
-            .chain(std::iter::once(std::ptr::null_mut()))
+            .chain(iter::once(ptr::null_mut()))
             .collect();
 
         let mut result = unsafe { ffi::RSMPI_COMM_NULL };
@@ -1563,9 +1561,9 @@ pub trait Root: AsCommunicator {
                 errcodes.as_mut_ptr(),
             );
 
-            Ok(InterCommunicator::from_handle_unchecked(
+            InterCommunicator::from_handle_unchecked(
                 UserCommunicatorHandle::from_raw(result).unwrap(),
-            ))
+            )
         }
     }
 
@@ -1575,17 +1573,19 @@ pub trait Root: AsCommunicator {
     /// 10.3.3, see MPI_Comm_spawn_multiple
     fn spawn_multiple(
         &self,
-        commands: &[&str],
-        argvs: &[&[&str]],
+        commands: &[&CStr],
+        argvs: &[&[&CStr]],
         maxprocs: &[c_int],
-    ) -> Result<UserInterCommunicator, NulError> {
+    ) -> UserInterCommunicator {
         assert_eq!(commands.len(), argvs.len());
         assert_eq!(commands.len(), maxprocs.len());
 
         let mut commands: Vec<_> = commands
             .iter()
-            .map(|s| CString::new(*s).map(|c| c.into_bytes_with_nul()))
-            .collect::<Result<Vec<_>, NulError>>()?;
+            .cloned()
+            .map(ToOwned::to_owned)
+            .map(CString::into_bytes_with_nul)
+            .collect::<Vec<_>>();
 
         let mut commands: Vec<*mut c_char> = commands
             .iter_mut()
@@ -1596,23 +1596,24 @@ pub trait Root: AsCommunicator {
             .iter()
             .map(|argv| {
                 argv.iter()
-                    .map(|a| CString::new(*a).map(|c| c.into_bytes_with_nul()))
-                    .collect::<Result<Vec<_>, NulError>>()
+                    .cloned()
+                    .map(ToOwned::to_owned)
+                    .map(CString::into_bytes_with_nul)
+                    .collect()
             })
-            .collect::<Result<Vec<_>, NulError>>()?;
+            .collect::<Vec<_>>();
 
-        let mut argvs: Vec<Vec<*mut c_char>> = argvs
+        let mut argvs: Vec<Vec<_>> = argvs
             .iter_mut()
             .map(|argv| {
                 argv.iter_mut()
                     .map(|a| a.as_mut_ptr() as *mut c_char)
-                    .chain(std::iter::once(std::ptr::null_mut()))
+                    .chain(iter::once(ptr::null_mut()))
                     .collect()
             })
             .collect();
 
-        let mut argvs: Vec<*mut *mut c_char> =
-            argvs.iter_mut().map(|argv| argv.as_mut_ptr()).collect();
+        let mut argvs: Vec<_> = argvs.iter_mut().map(|argv| argv.as_mut_ptr()).collect();
 
         let infos: Vec<_> = (0..commands.len())
             .map(|_| unsafe { ffi::RSMPI_INFO_NULL })
@@ -1635,9 +1636,9 @@ pub trait Root: AsCommunicator {
                 errcodes.as_mut_ptr(),
             );
 
-            Ok(InterCommunicator::from_handle_unchecked(
+            InterCommunicator::from_handle_unchecked(
                 UserCommunicatorHandle::from_raw(result).unwrap(),
-            ))
+            )
         }
     }
 }
