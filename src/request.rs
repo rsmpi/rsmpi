@@ -88,46 +88,38 @@ impl<'a, S: Scope<'a>> Drop for Request<'a, S> {
 ///
 /// The completed request is removed from the vector of requests.
 ///
-/// If no Request is active the index returned is mpi_sys::MPI_UNDEFINED.
+/// If no Request is active None is returned.
 ///
 /// # Examples
 ///
 /// See `examples/wait_any.rs`
-pub fn wait_any<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> (i32, Status) {
-    let mut mpi_requests: Vec<MPI_Request> = Vec::with_capacity(requests.len());
-    let mut scopes: Vec<S> = Vec::with_capacity(requests.len());
+pub fn wait_any<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<(usize, Status)> {
+    let mut mpi_requests: Vec<_> = requests.iter().map(|r| r.as_raw()).collect();
+    let mut index: i32 = mpi_sys::MPI_UNDEFINED;
+    let size: i32 = mpi_requests
+        .len()
+        .try_into()
+        .expect("Error while casting usize to i32");
+    let status;
     unsafe {
-        let mut index: i32 = mpi_sys::MPI_UNDEFINED;
-        while let Some(r) = requests.pop() {
-            let (request, scope) = r.into_raw();
-            mpi_requests.push(request);
-            scopes.push(scope);
-        }
-        let size: i32 = mpi_requests
-            .len()
-            .try_into()
-            .expect("Error while casting usize to i32");
-
-        let status = Status::from_raw(
+        status = Status::from_raw(
             with_uninitialized(|s| {
                 ffi::MPI_Waitany(size, mpi_requests.as_mut_ptr(), &mut index, s);
                 s
             })
             .1,
         );
-
-        if index != mpi_sys::MPI_UNDEFINED {
-            let u_index: usize = index.try_into().expect("Error while casting i32 to usize");
-            index = size - index - 1;
-            assert!(is_null(mpi_requests[u_index]));
-            mpi_requests.remove(u_index);
-            scopes.remove(u_index);
+    }
+    if index != mpi_sys::MPI_UNDEFINED {
+        let u_index: usize = index.try_into().expect("Error while casting i32 to usize");
+        assert!(is_null(mpi_requests[u_index]));
+        let r = requests.remove(u_index);
+        unsafe {
+            r.into_raw();
         }
-        while let (Some(req), Some(scope)) = (mpi_requests.pop(), scopes.pop()) {
-            requests.push(Request::from_raw(req, scope));
-        }
-
-        (index, status)
+        Some((u_index, status))
+    } else {
+        None
     }
 }
 

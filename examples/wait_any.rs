@@ -24,13 +24,8 @@ fn main() {
             }
 
             println!("World size {}", world.size());
-            for _i in 1..world.size() + 1 {
-                let (index, _status) = mpi::request::wait_any(&mut requests);
-                if index != mpi_sys::MPI_UNDEFINED {
-                    println!("Request with index {} completed", index);
-                } else {
-                    println!("No requests can be completed");
-                }
+            while let Some((index, _status)) = mpi::request::wait_any(&mut requests) {
+                println!("Request with index {} completed", index);
             }
             println!("All requests completed");
         } else {
