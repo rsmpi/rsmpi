@@ -22,12 +22,13 @@
 //! # Unfinished features
 //!
 //! - **3.7**: Nonblocking mode:
-//!   - Completion, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
+//!   - Completion, `MPI_Waitall()`, `MPI_Waitsome()`,
 //!   `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`, `MPI_Request_get_status()`
 //! - **3.8**:
 //!   - Cancellation, `MPI_Test_cancelled()`
 
 use std::cell::Cell;
+use std::convert::TryInto;
 use std::marker::PhantomData;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
@@ -79,6 +80,46 @@ unsafe impl<'a, S: Scope<'a>> AsRaw for Request<'a, S> {
 impl<'a, S: Scope<'a>> Drop for Request<'a, S> {
     fn drop(&mut self) {
         panic!("request was dropped without being completed");
+    }
+}
+
+/// Wait for the completion of one of the requests in the vector,
+/// returns the index of the request completed and the status of the request.
+///
+/// The completed request is removed from the vector of requests.
+///
+/// If no Request is active None is returned.
+///
+/// # Examples
+///
+/// See `examples/wait_any.rs`
+pub fn wait_any<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<(usize, Status)> {
+    let mut mpi_requests: Vec<_> = requests.iter().map(|r| r.as_raw()).collect();
+    let mut index: i32 = mpi_sys::MPI_UNDEFINED;
+    let size: i32 = mpi_requests
+        .len()
+        .try_into()
+        .expect("Error while casting usize to i32");
+    let status;
+    unsafe {
+        status = Status::from_raw(
+            with_uninitialized(|s| {
+                ffi::MPI_Waitany(size, mpi_requests.as_mut_ptr(), &mut index, s);
+                s
+            })
+            .1,
+        );
+    }
+    if index != mpi_sys::MPI_UNDEFINED {
+        let u_index: usize = index.try_into().expect("Error while casting i32 to usize");
+        assert!(is_null(mpi_requests[u_index]));
+        let r = requests.remove(u_index);
+        unsafe {
+            r.into_raw();
+        }
+        Some((u_index, status))
+    } else {
+        None
     }
 }
 
