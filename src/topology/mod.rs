@@ -474,6 +474,18 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         }
     }
 
+    /// Split the communicator into subcommunicators, each of which can create a shared memory region
+    ///
+    /// Within each subgroup, the processes are ranked in the order defined by the value of the
+    /// argument key, with ties broken according to their rank in the old group.
+    /// I.e., if the key is equal zero or `self.rank()`, then rank in a subgroup will remain the
+    /// relative order or a  process.
+    fn split_shared(&self, key: c_int) -> Option<UserCommunicator> {
+        unsafe {
+            UserCommunicator::from_raw(with_uninitialized(|newcomm| ffi::MPI_Comm_split_type(self.as_raw(), ffi::MPI_COMM_TYPE_SHARED as c_int, key, ffi::RSMPI_INFO_NULL, newcomm)).1)
+        }
+    }
+
     /// Abort program execution
     ///
     /// # Standard section(s)
