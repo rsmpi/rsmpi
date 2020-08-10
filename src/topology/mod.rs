@@ -389,6 +389,32 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         }
     }
 
+    /// Split the communicator into subcommunicators, each of which can create a shared memory
+    /// region.
+    ///
+    /// Within each subgroup, the processes are ranked in the order defined by the value of the
+    /// argument key, with ties broken according to their rank in the old group.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4.2 (See: `MPI_Comm_split_type`)
+    fn split_shared(&self, key: c_int) -> UserCommunicator {
+        unsafe {
+            UserCommunicator::from_raw(
+                with_uninitialized(|newcomm| {
+                    ffi::MPI_Comm_split_type(
+                        self.as_raw(),
+                        ffi::RSMPI_COMM_TYPE_SHARED,
+                        key,
+                        ffi::RSMPI_INFO_NULL,
+                        newcomm,
+                    )
+                })
+                .1,
+            ).expect("rsmpi internal error: MPI implementation incorrectly returned MPI_COMM_NULL from MPI_Comm_split_type(..., MPI_COMM_TYPE_SHARED, ...)")
+        }
+    }
+
     /// Split a communicator collectively by subgroup.
     ///
     /// Proceses pass in a group that is a subgroup of the group associated with the old
@@ -471,18 +497,6 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn group(&self) -> UserGroup {
         unsafe {
             UserGroup(with_uninitialized(|group| ffi::MPI_Comm_group(self.as_raw(), group)).1)
-        }
-    }
-
-    /// Split the communicator into subcommunicators, each of which can create a shared memory region
-    ///
-    /// Within each subgroup, the processes are ranked in the order defined by the value of the
-    /// argument key, with ties broken according to their rank in the old group.
-    /// I.e., if the key is equal zero or `self.rank()`, then rank in a subgroup will remain the
-    /// relative order or a  process.
-    fn split_shared(&self, key: c_int) -> Option<UserCommunicator> {
-        unsafe {
-            UserCommunicator::from_raw(with_uninitialized(|newcomm| ffi::MPI_Comm_split_type(self.as_raw(), ffi::MPI_COMM_TYPE_SHARED as c_int, key, ffi::RSMPI_INFO_NULL, newcomm)).1)
         }
     }
 

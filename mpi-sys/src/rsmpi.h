@@ -27,6 +27,8 @@ extern const MPI_Comm RSMPI_COMM_WORLD;
 extern const MPI_Comm RSMPI_COMM_NULL;
 extern const MPI_Comm RSMPI_COMM_SELF;
 
+extern const int RSMPI_COMM_TYPE_SHARED;
+
 extern const MPI_Group RSMPI_GROUP_EMPTY;
 extern const MPI_Group RSMPI_GROUP_NULL;
 extern const int RSMPI_UNDEFINED;
