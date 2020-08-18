@@ -31,6 +31,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm-10-dev
+      - name: List Clangs
+        run: which -a clang
       - name: Clang Version
         run: clang --version
       - name: Install Rust
