@@ -26,6 +26,13 @@ jobs:
           - stable
           - nightly
     steps:
+      - name: Install LLVM (Ubuntu)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-10-dev
+      - name: Clang Version
+        run: clang --version
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
