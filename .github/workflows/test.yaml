@@ -31,6 +31,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm-10-dev
+      - name: Install LLVM (Mac)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew install llvm@10
+      - name: Install LLVM (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          choco install llvm --version 10.0.0 -y
       - name: List Clangs
         run: which -a clang
       - name: Clang Version
