@@ -39,6 +39,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           choco install llvm --version 10.0.0 -y
+          echo "::set-env name=PATH::/c/Program Files/LLVM/bin:$PATH"
       - name: List Clangs
         run: which -a clang
       - name: Clang Version
