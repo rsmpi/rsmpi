@@ -12,7 +12,7 @@
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 
 use std::alloc::{self, Layout};
-use std::mem::MaybeUninit;
+use std::mem::{transmute, MaybeUninit};
 use std::{fmt, ptr};
 
 use conv::ConvUtil;
@@ -1083,11 +1083,26 @@ impl MatchedReceiveVec for (Message, Status) {
             .count(Msg::equivalent_datatype())
             .value_as()
             .expect("Message element count cannot be expressed as a usize.");
-        let mut res = Vec::with_capacity(count);
-        unsafe {
-            res.set_len(count);
+
+        #[repr(transparent)]
+        struct UninitMsg<M>(MaybeUninit<M>);
+
+        unsafe impl<M: Equivalence> Equivalence for UninitMsg<M> {
+            type Out = M::Out;
+
+            fn equivalent_datatype() -> Self::Out {
+                M::equivalent_datatype()
+            }
         }
+
+        let mut res = (0..count)
+            .map(|_| UninitMsg::<Msg>(MaybeUninit::uninit()))
+            .collect::<Vec<_>>();
+
         let status = message.matched_receive_into(&mut res[..]);
+
+        let res = unsafe { transmute(res) };
+
         (res, status)
     }
 }
