@@ -6,7 +6,7 @@ use mpi::topology::Rank;
 use mpi::traits::*;
 
 fn fac(n: Rank) -> Rank {
-    (1..n + 1).product()
+    (1..=n).product()
 }
 
 fn main() {

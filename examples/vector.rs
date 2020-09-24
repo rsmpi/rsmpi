@@ -14,7 +14,7 @@ fn main() {
 
     let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
     let next_process = world.process_at_rank(next_rank);
-    let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
+    let previous_rank = if rank > 0 { rank - 1 } else { size - 1 };
     let previous_process = world.process_at_rank(previous_rank);
 
     let b1 = (1..).map(|x| rank * x).take(6).collect::<Vec<_>>();

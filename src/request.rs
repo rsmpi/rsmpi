@@ -22,21 +22,23 @@
 //! # Unfinished features
 //!
 //! - **3.7**: Nonblocking mode:
-//!   - Completion, `MPI_Waitany()`, `MPI_Waitall()`, `MPI_Waitsome()`,
+//!   - Completion, `MPI_Waitall()`, `MPI_Waitsome()`,
 //!   `MPI_Testany()`, `MPI_Testall()`, `MPI_Testsome()`, `MPI_Request_get_status()`
 //! - **3.8**:
 //!   - Cancellation, `MPI_Test_cancelled()`
 
 use std::cell::Cell;
+use std::convert::TryInto;
 use std::marker::PhantomData;
-use std::mem;
-use std::os::raw::c_int;
+use std::mem::{self, MaybeUninit};
+use std::ptr;
 
-use ffi;
-use ffi::{MPI_Request, MPI_Status};
+use crate::ffi;
+use crate::ffi::{MPI_Request, MPI_Status};
 
-use point_to_point::Status;
-use raw::traits::*;
+use crate::point_to_point::Status;
+use crate::raw::traits::*;
+use crate::with_uninitialized;
 
 /// Check if the request is `MPI_REQUEST_NULL`.
 fn is_null(request: MPI_Request) -> bool {
@@ -81,6 +83,46 @@ impl<'a, S: Scope<'a>> Drop for Request<'a, S> {
     }
 }
 
+/// Wait for the completion of one of the requests in the vector,
+/// returns the index of the request completed and the status of the request.
+///
+/// The completed request is removed from the vector of requests.
+///
+/// If no Request is active None is returned.
+///
+/// # Examples
+///
+/// See `examples/wait_any.rs`
+pub fn wait_any<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<(usize, Status)> {
+    let mut mpi_requests: Vec<_> = requests.iter().map(|r| r.as_raw()).collect();
+    let mut index: i32 = mpi_sys::MPI_UNDEFINED;
+    let size: i32 = mpi_requests
+        .len()
+        .try_into()
+        .expect("Error while casting usize to i32");
+    let status;
+    unsafe {
+        status = Status::from_raw(
+            with_uninitialized(|s| {
+                ffi::MPI_Waitany(size, mpi_requests.as_mut_ptr(), &mut index, s);
+                s
+            })
+            .1,
+        );
+    }
+    if index != mpi_sys::MPI_UNDEFINED {
+        let u_index: usize = index.try_into().expect("Error while casting i32 to usize");
+        assert!(is_null(mpi_requests[u_index]));
+        let r = requests.remove(u_index);
+        unsafe {
+            r.into_raw();
+        }
+        Some((u_index, status))
+    } else {
+        None
+    }
+}
+
 impl<'a, S: Scope<'a>> Request<'a, S> {
     /// Construct a request object from the raw MPI type.
     ///
@@ -104,10 +146,10 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     /// Unregister the request object from its scope and deconstruct it into its raw parts.
     ///
     /// This is unsafe because the request may outlive its associated buffers.
-    pub unsafe fn into_raw(mut self) -> (MPI_Request, S) {
-        let request = mem::replace(&mut self.request, mem::uninitialized());
-        let scope = mem::replace(&mut self.scope, mem::uninitialized());
-        let _ = mem::replace(&mut self.phantom, mem::uninitialized());
+    pub unsafe fn into_raw(self) -> (MPI_Request, S) {
+        let request = ptr::read(&self.request);
+        let scope = ptr::read(&self.scope);
+        let _ = ptr::read(&self.phantom);
         mem::forget(self);
         scope.unregister();
         (request, scope)
@@ -116,13 +158,9 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     /// Wait for the request to finish and unregister the request object from its scope.
     /// If provided, the status is written to the referent of the given reference.
     /// The referent `MPI_Status` object is never read.
-    fn wait_with(self, status: Option<&mut MPI_Status>) {
+    fn wait_with(self, status: *mut MPI_Status) {
         unsafe {
             let (mut request, _) = self.into_raw();
-            let status = match status {
-                Some(r) => r,
-                None => ffi::RSMPI_STATUS_IGNORE,
-            };
             ffi::MPI_Wait(&mut request, status);
             assert!(is_null(request)); // persistent requests are not supported
         }
@@ -140,9 +178,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// 3.7.3
     pub fn wait(self) -> Status {
-        let mut status: MPI_Status = unsafe { mem::uninitialized() };
-        self.wait_with(Some(&mut status));
-        Status::from_raw(status)
+        unsafe { Status::from_raw(with_uninitialized(|status| self.wait_with(status)).1) }
     }
 
     /// Wait for an operation to finish, but don’t bother retrieving the `Status` information.
@@ -153,7 +189,7 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     ///
     /// 3.7.3
     pub fn wait_without_status(self) {
-        self.wait_with(None);
+        self.wait_with(unsafe { ffi::RSMPI_STATUS_IGNORE });
     }
 
     /// Test whether an operation has finished.
@@ -170,14 +206,15 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     /// 3.7.3
     pub fn test(self) -> Result<Status, Self> {
         unsafe {
-            let mut status: MPI_Status = mem::uninitialized();
-            let mut flag: c_int = mem::uninitialized();
+            let mut status = MaybeUninit::uninit();
             let mut request = self.as_raw();
-            ffi::MPI_Test(&mut request, &mut flag, &mut status);
+
+            let (_, flag) =
+                with_uninitialized(|flag| ffi::MPI_Test(&mut request, flag, status.as_mut_ptr()));
             if flag != 0 {
                 assert!(is_null(request)); // persistent requests are not supported
                 self.into_raw();
-                Ok(Status::from_raw(status))
+                Ok(Status::from_raw(status.assume_init()))
             } else {
                 Err(self)
             }
@@ -282,7 +319,7 @@ impl<'a, S: Scope<'a>> Drop for CancelGuard<'a, S> {
 impl<'a, S: Scope<'a>> From<CancelGuard<'a, S>> for WaitGuard<'a, S> {
     fn from(mut guard: CancelGuard<'a, S>) -> Self {
         unsafe {
-            let inner = mem::replace(&mut guard.0, mem::uninitialized());
+            let inner = ptr::read(&mut guard.0);
             mem::forget(guard);
             inner
         }

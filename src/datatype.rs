@@ -74,10 +74,12 @@ use conv::ConvUtil;
 
 use super::{Address, Count};
 
-use ffi;
-use ffi::MPI_Datatype;
+use crate::ffi;
+use crate::ffi::MPI_Datatype;
 
-use raw::traits::*;
+use crate::raw::traits::*;
+
+use crate::with_uninitialized;
 
 /// Datatype traits
 pub mod traits {
@@ -354,7 +356,7 @@ impl UserDatatype {
     }
 
     /// Creates a DatatypeRef from this datatype object.
-    pub fn as_ref<'a>(&'a self) -> DatatypeRef<'a> {
+    pub fn as_ref(&self) -> DatatypeRef<'_> {
         unsafe { DatatypeRef::from_raw(self.as_raw()) }
     }
 }
@@ -430,11 +432,14 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_contiguous(count, oldtype.as_raw(), &mut newtype);
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_contiguous(count, oldtype.as_raw(), newtype)
+                })
+                .1,
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Construct a new datatype out of `count` blocks of `blocklength` elements of `oldtype`
@@ -450,11 +455,14 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_vector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_vector(count, blocklength, stride, oldtype.as_raw(), newtype)
+                })
+                .1,
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Like `vector()` but `stride` is given in bytes rather than elements of `oldtype`.
@@ -471,11 +479,20 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_hvector(count, blocklength, stride, oldtype.as_raw(), &mut newtype);
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_create_hvector(
+                        count,
+                        blocklength,
+                        stride,
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                })
+                .1,
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Constructs a new type out of multiple blocks of individual length and displacement.
@@ -495,17 +512,20 @@ impl UncommittedUserDatatype {
             "'blocklengths' and 'displacements' must be the same length"
         );
 
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_indexed(
-                blocklengths.count(),
-                blocklengths.as_ptr(),
-                displacements.as_ptr(),
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_indexed(
+                        blocklengths.count(),
+                        blocklengths.as_ptr(),
+                        displacements.as_ptr(),
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                })
+                .1,
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Constructs a new type out of multiple blocks of individual length and displacement.
@@ -528,17 +548,20 @@ impl UncommittedUserDatatype {
             displacements.len(),
             "'blocklengths' and 'displacements' must be the same length"
         );
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_hindexed(
-                blocklengths.count(),
-                blocklengths.as_ptr(),
-                displacements.as_ptr(),
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_create_hindexed(
+                        blocklengths.count(),
+                        blocklengths.as_ptr(),
+                        displacements.as_ptr(),
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                })
+                .1,
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Construct a new type out of blocks of the same length and individual displacements.
@@ -550,17 +573,20 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_indexed_block(
-                displacements.count(),
-                blocklength,
-                displacements.as_ptr(),
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_create_indexed_block(
+                        displacements.count(),
+                        blocklength,
+                        displacements.as_ptr(),
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                })
+                .1,
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Construct a new type out of blocks of the same length and individual displacements.
@@ -577,17 +603,20 @@ impl UncommittedUserDatatype {
     where
         D: UncommittedDatatype,
     {
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_hindexed_block(
-                displacements.count(),
-                blocklength,
-                displacements.as_ptr(),
-                oldtype.as_raw(),
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_create_hindexed_block(
+                        displacements.count(),
+                        blocklength,
+                        displacements.as_ptr(),
+                        oldtype.as_raw(),
+                        newtype,
+                    )
+                })
+                .1,
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Constructs a new datatype out of blocks of different length, displacement and datatypes
@@ -613,17 +642,20 @@ impl UncommittedUserDatatype {
             "'displacements', 'blocklengths', and 'types' must be the same length"
         );
 
-        let mut newtype: MPI_Datatype = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Type_create_struct(
-                blocklengths.count(),
-                blocklengths.as_ptr(),
-                displacements.as_ptr(),
-                types.as_ptr() as *const _,
-                &mut newtype,
-            );
+            UncommittedUserDatatype(
+                with_uninitialized(|newtype| {
+                    ffi::MPI_Type_create_struct(
+                        blocklengths.count(),
+                        blocklengths.as_ptr(),
+                        displacements.as_ptr(),
+                        types.as_ptr() as *const _,
+                        newtype,
+                    )
+                })
+                .1,
+            )
         }
-        UncommittedUserDatatype(newtype)
     }
 
     /// Commits a datatype to a specific representation so that it can be used in MPI calls.
@@ -640,7 +672,7 @@ impl UncommittedUserDatatype {
     }
 
     /// Creates an UncommittedDatatypeRef from this datatype object.
-    pub fn as_ref<'a>(&'a self) -> UncommittedDatatypeRef<'a> {
+    pub fn as_ref(&self) -> UncommittedDatatypeRef<'_> {
         unsafe { UncommittedDatatypeRef::from_raw(self.as_raw()) }
     }
 }
@@ -707,9 +739,9 @@ pub trait UncommittedDatatype: AsRaw<Raw = MPI_Datatype> {
     /// 4.1.10
     fn dup(&self) -> Self::DuplicatedDatatype {
         unsafe {
-            let mut new_type = mem::uninitialized();
-            ffi::MPI_Type_dup(self.as_raw(), &mut new_type);
-            Self::DuplicatedDatatype::from_raw(new_type)
+            Self::DuplicatedDatatype::from_raw(
+                with_uninitialized(|newtype| ffi::MPI_Type_dup(self.as_raw(), newtype)).1,
+            )
         }
     }
 }
@@ -1121,7 +1153,8 @@ unsafe impl<'d, 'b, D, B: ?Sized> Buffer for View<'d, 'b, D, B>
 where
     D: 'd + Datatype,
     B: 'b + Pointer,
-{}
+{
+}
 
 /// A buffer with a user specified count and datatype
 ///
@@ -1197,7 +1230,8 @@ unsafe impl<'d, 'b, D, B: ?Sized> BufferMut for MutView<'d, 'b, D, B>
 where
     D: 'd + Datatype,
     B: 'b + PointerMut,
-{}
+{
+}
 
 /// Describes how a `Buffer` is partitioned by specifying the count of elements and displacement
 /// from the start of the buffer for each partition.
@@ -1239,13 +1273,11 @@ where
     /// Partition `buf` using `counts` and `displs`
     pub fn new(buf: &B, counts: C, displs: D) -> Partition<B, C, D> {
         let n = buf.count();
-        assert!(
-            counts
-                .borrow()
-                .iter()
-                .zip(displs.borrow().iter())
-                .all(|(&c, &d)| c + d <= n)
-        );
+        assert!(counts
+            .borrow()
+            .iter()
+            .zip(displs.borrow().iter())
+            .all(|(&c, &d)| c + d <= n));
 
         Partition {
             buf,
@@ -1293,7 +1325,8 @@ where
     B: 'b + Pointer + AsDatatype,
     C: Borrow<[Count]>,
     D: Borrow<[Count]>,
-{}
+{
+}
 
 /// Adds a partitioning to an existing `BufferMut` so that it becomes `Partitioned`
 pub struct PartitionMut<'b, B: 'b + ?Sized, C, D> {
@@ -1311,13 +1344,11 @@ where
     /// Partition `buf` using `counts` and `displs`
     pub fn new(buf: &mut B, counts: C, displs: D) -> PartitionMut<B, C, D> {
         let n = buf.count();
-        assert!(
-            counts
-                .borrow()
-                .iter()
-                .zip(displs.borrow().iter())
-                .all(|(&c, &d)| c + d <= n)
-        );
+        assert!(counts
+            .borrow()
+            .iter()
+            .zip(displs.borrow().iter())
+            .all(|(&c, &d)| c + d <= n));
 
         PartitionMut {
             buf,
@@ -1365,7 +1396,8 @@ where
     B: 'b + PointerMut + AsDatatype,
     C: Borrow<[Count]>,
     D: Borrow<[Count]>,
-{}
+{
+}
 
 /// Returns the address of the argument in a format suitable for use with datatype constructors
 ///
@@ -1376,10 +1408,6 @@ where
 ///
 /// 4.1.5
 pub fn address_of<T>(x: &T) -> Address {
-    let mut address = unsafe { mem::uninitialized() };
     let x: *const T = x;
-    unsafe {
-        ffi::MPI_Get_address(x as *const c_void, &mut address);
-    }
-    address
+    unsafe { with_uninitialized(|address| ffi::MPI_Get_address(x as *const c_void, address)).1 }
 }

@@ -24,7 +24,8 @@ fn main() {
                     world
                         .process_at_rank(i as Rank)
                         .immediate_receive_into(scope, x)
-                }).collect::<Vec<_>>();
+                })
+                .collect::<Vec<_>>();
             world.barrier();
             for req in reqs {
                 req.wait();

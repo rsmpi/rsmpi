@@ -9,23 +9,25 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-#[cfg(not(msmpi))]
+#[cfg(any(msmpi, feature = "user-operations"))]
+use std::mem;
 use std::os::raw::{c_int, c_void};
-use std::{fmt, mem, ptr};
+use std::{fmt, ptr};
 
 #[cfg(feature = "user-operations")]
 use libffi::high::Closure4;
 
-use ffi;
-use ffi::{MPI_Op, MPI_Request};
+use crate::ffi;
+use crate::ffi::MPI_Op;
 
-use datatype::traits::*;
+use crate::datatype::traits::*;
 #[cfg(feature = "user-operations")]
-use datatype::{DatatypeRef, DynBuffer, DynBufferMut};
-use raw::traits::*;
-use request::{Request, Scope, StaticScope};
-use topology::traits::*;
-use topology::{Process, Rank};
+use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
+use crate::raw::traits::*;
+use crate::request::{Request, Scope, StaticScope};
+use crate::topology::traits::*;
+use crate::topology::{Process, Rank};
+use crate::with_uninitialized;
 
 /// Collective communication traits
 pub mod traits {
@@ -309,10 +311,11 @@ pub trait CommunicatorCollectives: Communicator {
     ///
     /// 5.12.1
     fn immediate_barrier(&self) -> Request<'static> {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ibarrier(self.as_raw(), &mut request);
-            Request::from_raw(request, StaticScope)
+            Request::from_raw(
+                with_uninitialized(|request| ffi::MPI_Ibarrier(self.as_raw(), request)).1,
+                StaticScope,
+            )
         }
     }
 
@@ -337,20 +340,24 @@ pub trait CommunicatorCollectives: Communicator {
         R: 'a + BufferMut,
         Sc: Scope<'a>,
     {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             let recvcount = recvbuf.count() / self.size();
-            ffi::MPI_Iallgather(
-                sendbuf.pointer(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvcount,
-                recvbuf.as_datatype().as_raw(),
-                self.as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iallgather(
+                        sendbuf.pointer(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvcount,
+                        recvbuf.as_datatype().as_raw(),
+                        self.as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -375,20 +382,24 @@ pub trait CommunicatorCollectives: Communicator {
         R: 'a + PartitionedBufferMut,
         Sc: Scope<'a>,
     {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iallgatherv(
-                sendbuf.pointer(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvbuf.counts_ptr(),
-                recvbuf.displs_ptr(),
-                recvbuf.as_datatype().as_raw(),
-                self.as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iallgatherv(
+                        sendbuf.pointer(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.counts_ptr(),
+                        recvbuf.displs_ptr(),
+                        recvbuf.as_datatype().as_raw(),
+                        self.as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -412,20 +423,24 @@ pub trait CommunicatorCollectives: Communicator {
         R: 'a + BufferMut,
         Sc: Scope<'a>,
     {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         let c_size = self.size();
         unsafe {
-            ffi::MPI_Ialltoall(
-                sendbuf.pointer(),
-                sendbuf.count() / c_size,
-                sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvbuf.count() / c_size,
-                recvbuf.as_datatype().as_raw(),
-                self.as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Ialltoall(
+                        sendbuf.pointer(),
+                        sendbuf.count() / c_size,
+                        sendbuf.as_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.count() / c_size,
+                        recvbuf.as_datatype().as_raw(),
+                        self.as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -445,21 +460,25 @@ pub trait CommunicatorCollectives: Communicator {
         R: 'a + PartitionedBufferMut,
         Sc: Scope<'a>,
     {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ialltoallv(
-                sendbuf.pointer(),
-                sendbuf.counts_ptr(),
-                sendbuf.displs_ptr(),
-                sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvbuf.counts_ptr(),
-                recvbuf.displs_ptr(),
-                recvbuf.as_datatype().as_raw(),
-                self.as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Ialltoallv(
+                        sendbuf.pointer(),
+                        sendbuf.counts_ptr(),
+                        sendbuf.displs_ptr(),
+                        sendbuf.as_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.counts_ptr(),
+                        recvbuf.displs_ptr(),
+                        recvbuf.as_datatype().as_raw(),
+                        self.as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -486,18 +505,22 @@ pub trait CommunicatorCollectives: Communicator {
         O: 'a + Operation,
         Sc: Scope<'a>,
     {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iallreduce(
-                sendbuf.pointer(),
-                recvbuf.pointer_mut(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                op.as_raw(),
-                self.as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iallreduce(
+                        sendbuf.pointer(),
+                        recvbuf.pointer_mut(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        op.as_raw(),
+                        self.as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -526,18 +549,22 @@ pub trait CommunicatorCollectives: Communicator {
         Sc: Scope<'a>,
     {
         assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ireduce_scatter_block(
-                sendbuf.pointer(),
-                recvbuf.pointer_mut(),
-                recvbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                op.as_raw(),
-                self.as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Ireduce_scatter_block(
+                        sendbuf.pointer(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        op.as_raw(),
+                        self.as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -564,18 +591,22 @@ pub trait CommunicatorCollectives: Communicator {
         O: 'a + Operation,
         Sc: Scope<'a>,
     {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iscan(
-                sendbuf.pointer(),
-                recvbuf.pointer_mut(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                op.as_raw(),
-                self.as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iscan(
+                        sendbuf.pointer(),
+                        recvbuf.pointer_mut(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        op.as_raw(),
+                        self.as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -602,18 +633,22 @@ pub trait CommunicatorCollectives: Communicator {
         O: 'a + Operation,
         Sc: Scope<'a>,
     {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iexscan(
-                sendbuf.pointer(),
-                recvbuf.pointer_mut(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                op.as_raw(),
-                self.as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iexscan(
+                        sendbuf.pointer(),
+                        recvbuf.pointer_mut(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        op.as_raw(),
+                        self.as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 }
@@ -1030,17 +1065,21 @@ pub trait Root: AsCommunicator {
         Buf: 'a + BufferMut,
         Sc: Scope<'a>,
     {
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ibcast(
-                buf.pointer_mut(),
-                buf.count(),
-                buf.as_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Ibcast(
+                        buf.pointer_mut(),
+                        buf.count(),
+                        buf.as_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1061,20 +1100,24 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Igather(
-                sendbuf.pointer(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                ptr::null_mut(),
-                0,
-                u8::equivalent_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Igather(
+                        sendbuf.pointer(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        ptr::null_mut(),
+                        0,
+                        u8::equivalent_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1101,21 +1144,25 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             let recvcount = recvbuf.count() / self.as_communicator().size();
-            ffi::MPI_Igather(
-                sendbuf.pointer(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvcount,
-                recvbuf.as_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Igather(
+                        sendbuf.pointer(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvcount,
+                        recvbuf.as_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1140,21 +1187,25 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Igatherv(
-                sendbuf.pointer(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                ptr::null_mut(),
-                ptr::null(),
-                ptr::null(),
-                u8::equivalent_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Igatherv(
+                        sendbuf.pointer(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        ptr::null_mut(),
+                        ptr::null(),
+                        ptr::null(),
+                        u8::equivalent_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1181,21 +1232,25 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Igatherv(
-                sendbuf.pointer(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvbuf.counts_ptr(),
-                recvbuf.displs_ptr(),
-                recvbuf.as_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Igatherv(
+                        sendbuf.pointer(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.counts_ptr(),
+                        recvbuf.displs_ptr(),
+                        recvbuf.as_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1220,20 +1275,24 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iscatter(
-                ptr::null(),
-                0,
-                u8::equivalent_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvbuf.count(),
-                recvbuf.as_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iscatter(
+                        ptr::null(),
+                        0,
+                        u8::equivalent_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.count(),
+                        recvbuf.as_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1260,21 +1319,25 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
             let sendcount = sendbuf.count() / self.as_communicator().size();
-            ffi::MPI_Iscatter(
-                sendbuf.pointer(),
-                sendcount,
-                sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvbuf.count(),
-                recvbuf.as_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iscatter(
+                        sendbuf.pointer(),
+                        sendcount,
+                        sendbuf.as_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.count(),
+                        recvbuf.as_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1299,21 +1362,25 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iscatterv(
-                ptr::null(),
-                ptr::null(),
-                ptr::null(),
-                u8::equivalent_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvbuf.count(),
-                recvbuf.as_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iscatterv(
+                        ptr::null(),
+                        ptr::null(),
+                        ptr::null(),
+                        u8::equivalent_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.count(),
+                        recvbuf.as_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1340,21 +1407,25 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Iscatterv(
-                sendbuf.pointer(),
-                sendbuf.counts_ptr(),
-                sendbuf.displs_ptr(),
-                sendbuf.as_datatype().as_raw(),
-                recvbuf.pointer_mut(),
-                recvbuf.count(),
-                recvbuf.as_datatype().as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Iscatterv(
+                        sendbuf.pointer(),
+                        sendbuf.counts_ptr(),
+                        sendbuf.displs_ptr(),
+                        sendbuf.as_datatype().as_raw(),
+                        recvbuf.pointer_mut(),
+                        recvbuf.count(),
+                        recvbuf.as_datatype().as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1382,19 +1453,23 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_ne!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ireduce(
-                sendbuf.pointer(),
-                ptr::null_mut(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                op.as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Ireduce(
+                        sendbuf.pointer(),
+                        ptr::null_mut(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        op.as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 
@@ -1424,19 +1499,23 @@ pub trait Root: AsCommunicator {
         Sc: Scope<'a>,
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
-        let mut request: MPI_Request = unsafe { mem::uninitialized() };
         unsafe {
-            ffi::MPI_Ireduce(
-                sendbuf.pointer(),
-                recvbuf.pointer_mut(),
-                sendbuf.count(),
-                sendbuf.as_datatype().as_raw(),
-                op.as_raw(),
-                self.root_rank(),
-                self.as_communicator().as_raw(),
-                &mut request,
-            );
-            Request::from_raw(request, scope)
+            Request::from_raw(
+                with_uninitialized(|request| {
+                    ffi::MPI_Ireduce(
+                        sendbuf.pointer(),
+                        recvbuf.pointer_mut(),
+                        sendbuf.count(),
+                        sendbuf.as_datatype().as_raw(),
+                        op.as_raw(),
+                        self.root_rank(),
+                        self.as_communicator().as_raw(),
+                        request,
+                    )
+                })
+                .1,
+                scope,
+            )
         }
     }
 }
@@ -1533,7 +1612,7 @@ impl<T> Erased for T {}
 #[cfg(feature = "user-operations")]
 pub struct UserOperation<'a> {
     op: MPI_Op,
-    _anchor: Box<Erased + 'a>, // keeps the internal data alive
+    _anchor: Box<dyn Erased + 'a>, // keeps the internal data alive
 }
 
 #[cfg(feature = "user-operations")]
@@ -1619,11 +1698,13 @@ impl<'a> UserOperation<'a> {
             },
             ffi_closure: None,
         });
-        let mut op;
+        let op;
         anchor.ffi_closure = Some(unsafe {
             let ffi_closure = Closure4::new(&anchor.rust_closure);
-            op = mem::uninitialized();
-            ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, &mut op);
+            op = with_uninitialized(|op| {
+                ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, op)
+            })
+            .1;
             mem::transmute(ffi_closure) // erase the lifetime
         });
         UserOperation {
@@ -1709,7 +1790,14 @@ impl<'a> Operation for &'a UnsafeUserOperation {}
 pub type UnsafeUserFunction =
     unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
 
-#[cfg(not(msmpi))]
+/// A raw pointer to a function that can be used to define an `UnsafeUserOperation`.
+///
+/// MS-MPI uses "stdcall" rather than "C" calling convention. These are actually equivalent on
+/// 64-bit Windows, but diverge on 32-bit Windows.
+#[cfg(msmpi)]
+pub type UnsafeUserFunction =
+    unsafe extern "stdcall" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
+
 impl UnsafeUserOperation {
     /// Define an unsafe operation using a function pointer. The operation must be associative.
     ///
@@ -1743,9 +1831,18 @@ impl UnsafeUserOperation {
     ///
     /// 5.9.5
     pub unsafe fn new(commute: bool, function: UnsafeUserFunction) -> Self {
-        let mut op = mem::uninitialized();
-        ffi::MPI_Op_create(Some(function), commute as _, &mut op);
-        UnsafeUserOperation { op }
+        // NOTE 10/31/2018: bindgen, on both the currently used version of 0.31.3, and the most
+        // recent version, 0.43.0, does not generate correct function signatures for functions
+        // with __stdcall calling conventions. So here we cast the function pointer to the
+        // degenerate function signature that the bindgen'd MPI_Op_create function expects.
+        //
+        // See: https://github.com/rust-lang-nursery/rust-bindgen/issues/1433
+        #[cfg(msmpi)]
+        let function = mem::transmute(function);
+
+        UnsafeUserOperation {
+            op: with_uninitialized(|op| ffi::MPI_Op_create(Some(function), commute as _, op)).1,
+        }
     }
 }
 
@@ -1758,7 +1855,7 @@ impl UnsafeUserOperation {
 /// # Standard section(s)
 ///
 /// 5.9.7
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[allow(clippy::needless_pass_by_value)]
 pub fn reduce_local_into<S: ?Sized, R: ?Sized, O>(inbuf: &S, inoutbuf: &mut R, op: O)
 where
     S: Buffer,

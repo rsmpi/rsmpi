@@ -10,13 +10,13 @@ use super::super::Library;
 use std::{env, error::Error, path::PathBuf};
 
 /// Probe the environment for MS-MPI
-pub fn probe() -> Result<Library, Vec<Box<Error>>> {
+pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
     let mut errs = vec![];
 
     let include_path = match env::var("MSMPI_INC") {
         Ok(include_path) => Some(include_path),
         Err(err) => {
-            let err: Box<Error> = Box::new(err);
+            let err: Box<dyn Error> = Box::new(err);
             errs.push(err);
             None
         }
@@ -33,7 +33,7 @@ pub fn probe() -> Result<Library, Vec<Box<Error>>> {
     let lib_path = match env::var(lib_env) {
         Ok(lib_path) => Some(lib_path),
         Err(err) => {
-            let err: Box<Error> = Box::new(err);
+            let err: Box<dyn Error> = Box::new(err);
             errs.push(err);
             None
         }

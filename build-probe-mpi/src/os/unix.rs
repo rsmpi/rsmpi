@@ -63,17 +63,18 @@ fn collect_args_with_prefix(cmd: &str, prefix: &str) -> Vec<String> {
             } else {
                 None
             }
-        }).collect()
+        })
+        .collect()
 }
 
 /// Probe the environment for an installed MPI library
-pub fn probe() -> Result<Library, Vec<Box<Error>>> {
+pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
     let mut errs = vec![];
 
     match probe_via_mpicc(&env::var("MPICC").unwrap_or_else(|_| String::from("mpicc"))) {
         Ok(lib) => return Ok(lib),
         Err(err) => {
-            let err: Box<Error> = Box::new(err);
+            let err: Box<dyn Error> = Box::new(err);
             errs.push(err)
         }
     }
@@ -81,7 +82,7 @@ pub fn probe() -> Result<Library, Vec<Box<Error>>> {
     match Config::new().cargo_metadata(false).probe("mpich") {
         Ok(lib) => return Ok(Library::from(lib)),
         Err(err) => {
-            let err: Box<Error> = Box::new(err);
+            let err: Box<dyn Error> = Box::new(err);
             errs.push(err)
         }
     }
@@ -89,7 +90,7 @@ pub fn probe() -> Result<Library, Vec<Box<Error>>> {
     match Config::new().cargo_metadata(false).probe("openmpi") {
         Ok(lib) => return Ok(Library::from(lib)),
         Err(err) => {
-            let err: Box<Error> = Box::new(err);
+            let err: Box<dyn Error> = Box::new(err);
             errs.push(err)
         }
     }

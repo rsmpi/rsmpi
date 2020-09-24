@@ -27,6 +27,8 @@ extern const MPI_Comm RSMPI_COMM_WORLD;
 extern const MPI_Comm RSMPI_COMM_NULL;
 extern const MPI_Comm RSMPI_COMM_SELF;
 
+extern const int RSMPI_COMM_TYPE_SHARED;
+
 extern const MPI_Group RSMPI_GROUP_EMPTY;
 extern const MPI_Group RSMPI_GROUP_NULL;
 extern const int RSMPI_UNDEFINED;
@@ -40,11 +42,8 @@ extern const MPI_Message RSMPI_MESSAGE_NO_PROC;
 
 extern const MPI_Request RSMPI_REQUEST_NULL;
 
-// FIXME: bindgen issue #511
-// extern MPI_Status* const RSMPI_STATUS_IGNORE;
-extern MPI_Status* RSMPI_STATUS_IGNORE;
-// extern MPI_Status* const RSMPI_STATUSES_IGNORE;
-extern MPI_Status* RSMPI_STATUSES_IGNORE;
+extern MPI_Status* const RSMPI_STATUS_IGNORE;
+extern MPI_Status* const RSMPI_STATUSES_IGNORE;
 
 extern const int RSMPI_IDENT;
 extern const int RSMPI_CONGRUENT;
@@ -55,6 +54,10 @@ extern const int RSMPI_THREAD_SINGLE;
 extern const int RSMPI_THREAD_FUNNELED;
 extern const int RSMPI_THREAD_SERIALIZED;
 extern const int RSMPI_THREAD_MULTIPLE;
+
+extern const int RSMPI_GRAPH;
+extern const int RSMPI_CART;
+extern const int RSMPI_DIST_GRAPH;
 
 extern const int RSMPI_MAX_LIBRARY_VERSION_STRING;
 extern const int RSMPI_MAX_PROCESSOR_NAME;
@@ -69,6 +72,15 @@ extern const MPI_Op RSMPI_LOR;
 extern const MPI_Op RSMPI_BOR;
 extern const MPI_Op RSMPI_LXOR;
 extern const MPI_Op RSMPI_BXOR;
+
+extern const MPI_Errhandler RSMPI_ERRORS_ARE_FATAL;
+extern const MPI_Errhandler RSMPI_ERRORS_RETURN;
+
+extern const MPI_File RSMPI_FILE_NULL;
+
+extern const MPI_Info RSMPI_INFO_NULL;
+
+extern const MPI_Win RSMPI_WIN_NULL;
 
 double RSMPI_Wtime();
 double RSMPI_Wtick();

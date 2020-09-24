@@ -5,22 +5,22 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
-#![cfg_attr(feature = "cargo-clippy", warn(cast_possible_truncation))]
-#![cfg_attr(feature = "cargo-clippy", warn(cast_possible_wrap))]
-#![cfg_attr(feature = "cargo-clippy", warn(cast_precision_loss))]
-#![cfg_attr(feature = "cargo-clippy", warn(cast_sign_loss))]
-#![cfg_attr(feature = "cargo-clippy", warn(enum_glob_use))]
-#![cfg_attr(feature = "cargo-clippy", warn(mut_mut))]
-#![cfg_attr(feature = "cargo-clippy", warn(mutex_integer))]
-#![cfg_attr(feature = "cargo-clippy", warn(non_ascii_literal))]
-#![cfg_attr(feature = "cargo-clippy", warn(nonminimal_bool))]
-#![cfg_attr(feature = "cargo-clippy", warn(option_unwrap_used))]
-#![cfg_attr(feature = "cargo-clippy", warn(result_unwrap_used))]
-#![cfg_attr(feature = "cargo-clippy", warn(single_match_else))]
-#![cfg_attr(feature = "cargo-clippy", warn(string_add))]
-#![cfg_attr(feature = "cargo-clippy", warn(string_add_assign))]
-#![cfg_attr(feature = "cargo-clippy", warn(unicode_not_nfc))]
-#![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
+#![warn(clippy::cast_possible_truncation)]
+#![warn(clippy::cast_possible_wrap)]
+#![warn(clippy::cast_precision_loss)]
+#![warn(clippy::cast_sign_loss)]
+#![warn(clippy::enum_glob_use)]
+#![warn(clippy::mut_mut)]
+#![warn(clippy::mutex_integer)]
+#![warn(clippy::non_ascii_literal)]
+#![warn(clippy::nonminimal_bool)]
+#![warn(clippy::option_unwrap_used)]
+#![warn(clippy::result_unwrap_used)]
+#![warn(clippy::single_match_else)]
+#![warn(clippy::string_add)]
+#![warn(clippy::string_add_assign)]
+#![warn(clippy::unicode_not_nfc)]
+#![warn(clippy::wrong_pub_self_convention)]
 
 //! Message Passing Interface bindings for Rust
 //!
@@ -118,24 +118,15 @@
 //!
 //! [MPIspec]: http://www.mpi-forum.org/docs/docs.html
 
+use std::mem::MaybeUninit;
 use std::os::raw::c_int;
-
-extern crate conv;
-#[cfg(feature = "user-operations")]
-extern crate libffi;
-extern crate mpi_sys;
 
 /// The raw C language MPI API
 ///
 /// Documented in the [Message Passing Interface specification][spec]
 ///
 /// [spec]: http://www.mpi-forum.org/docs/docs.html
-#[allow(
-    missing_docs,
-    dead_code,
-    non_snake_case,
-    non_camel_case_types
-)]
+#[allow(missing_docs, dead_code, non_snake_case, non_camel_case_types)]
 #[macro_use]
 pub mod ffi {
     pub use mpi_sys::*;
@@ -165,17 +156,19 @@ pub mod topology;
 
 /// Re-exports all traits.
 pub mod traits {
-    pub use collective::traits::*;
-    pub use datatype::traits::*;
-    pub use point_to_point::traits::*;
-    pub use raw::traits::*;
-    pub use topology::traits::*;
+    pub use crate::collective::traits::*;
+    pub use crate::datatype::traits::*;
+    pub use crate::point_to_point::traits::*;
+    pub use crate::raw::traits::*;
+    pub use crate::topology::traits::*;
 }
 
 #[doc(inline)]
-pub use environment::{initialize, initialize_with_threading, time, time_resolution, Threading};
+pub use crate::environment::{
+    initialize, initialize_with_threading, time, time_resolution, Threading,
+};
 
-use ffi::MPI_Aint;
+use crate::ffi::MPI_Aint;
 
 /// Encodes error values returned by MPI functions.
 pub type Error = c_int;
@@ -185,3 +178,30 @@ pub type Count = c_int;
 pub type Tag = c_int;
 /// An address in memory
 pub type Address = MPI_Aint;
+
+/// IntArray is used to translate Rust bool values to and from the int-bool types preferred by MPI
+/// without incurring allocation in the common case.
+type IntArray = smallvec::SmallVec<[c_int; 8]>;
+
+unsafe fn with_uninitialized<F, U, R>(f: F) -> (R, U)
+where
+    F: FnOnce(*mut U) -> R,
+{
+    let mut uninitialized = MaybeUninit::uninit();
+    let res = f(uninitialized.as_mut_ptr());
+    (res, uninitialized.assume_init())
+}
+
+unsafe fn with_uninitialized2<F, U1, U2, R>(f: F) -> (R, U1, U2)
+where
+    F: FnOnce(*mut U1, *mut U2) -> R,
+{
+    let mut uninitialized1 = MaybeUninit::uninit();
+    let mut uninitialized2 = MaybeUninit::uninit();
+    let res = f(uninitialized1.as_mut_ptr(), uninitialized2.as_mut_ptr());
+    (
+        res,
+        uninitialized1.assume_init(),
+        uninitialized2.assume_init(),
+    )
+}

@@ -13,5 +13,5 @@ proc-macro2 = "0.4.19"
 
 [dependencies.mpi]
 path = ".."
-version = "0.5"
+version = "0.6"
 default-features = false

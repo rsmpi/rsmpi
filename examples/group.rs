@@ -1,5 +1,5 @@
 #![deny(warnings)]
-#![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names))]
+#![allow(clippy::many_single_char_names)]
 extern crate mpi;
 
 use mpi::topology::{GroupRelation, Rank, SystemGroup};

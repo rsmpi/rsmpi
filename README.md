@@ -8,14 +8,14 @@ parallel computation on High Performance Computing systems. The MPI specificatio
 bindings for the C programming language (and through it C++) as well as for the Fortran
 programming language. This library tries to bridge the gap into a more rustic world.
 
-[travis-shield]: https://img.shields.io/travis/bsteinb/rsmpi/master.svg?style=flat-square
-[travis]: https://travis-ci.org/bsteinb/rsmpi
+[travis-shield]: https://img.shields.io/travis/rsmpi/rsmpi/master.svg?style=flat-square
+[travis]: https://travis-ci.org/rsmpi/rsmpi
 [doc-shield]: https://img.shields.io/badge/documentation-hosted-blue.svg?style=flat-square
-[doc]: http://bsteinb.github.io/rsmpi/
+[doc]: http://rsmpi.github.io/rsmpi/
 [license-shield]: https://img.shields.io/badge/license-Apache_License_2.0_or_MIT-blue.svg?style=flat-square
-[license]: https://github.com/bsteinb/rsmpi#license
-[release-shield]: https://img.shields.io/github/release/bsteinb/rsmpi.svg?style=flat-square
-[release]: https://github.com/bsteinb/rsmpi/releases/latest
+[license]: https://github.com/rsmpi/rsmpi#license
+[release-shield]: https://img.shields.io/github/release/rsmpi/rsmpi.svg?style=flat-square
+[release]: https://github.com/rsmpi/rsmpi/releases/latest
 [crate-shield]: https://img.shields.io/crates/v/mpi.svg?style=flat-square
 [crate]: https://crates.io/crates/mpi
 [MPI]: http://www.mpi-forum.org
@@ -23,10 +23,12 @@ programming language. This library tries to bridge the gap into a more rustic wo
 ## Requirements
 
 An implementation of the C language interface that conforms to MPI-3.1. `rsmpi` is currently tested with these implementations:
+- [OpenMPI][OpenMPI] 3.0.4, 3.1.4, 4.0.1
+- [MPICH][MPICH] 3.3, 3.2.1
+- [MS-MPI (Windows)][MS-MPI] 10.0.0
 
-- [OpenMPI][OpenMPI] 2.0.4, 2.1.2, 3.0.0
-- [MPICH][MPICH] 3.2.1, 3.1.4
-- [MS-MPI (Windows)][MS-MPI] 9.0.1
+Users have also had success with these MPI implementations, but they are not tested in CI:
+- [Spectrum MPI][Spectrum-MPI] 10.3.0.1
 
 For a reasonable chance of success with `rsmpi` any MPI implementation that you want to use with it should satisfy the following assumptions that `rsmpi` currently makes:
 
@@ -45,9 +47,10 @@ Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` 
 [OpenMPI]: https://www.open-mpi.org
 [MPICH]: https://www.mpich.org
 [MS-MPI]: https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi
-[rsmpih]: https://github.com/bsteinb/rsmpi/blob/master/src/ffi/rsmpi.h
-[rsmpic]: https://github.com/bsteinb/rsmpi/blob/master/src/ffi/rsmpi.c
-[buildrs]: https://github.com/bsteinb/rsmpi/blob/master/build.rs
+[Spectrum-MPI]: https://www.ibm.com/us-en/marketplace/spectrum-mpi
+[rsmpih]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/src/rsmpi.h
+[rsmpic]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/src/rsmpi.c
+[buildrs]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/build.rs
 [bindgen]: https://github.com/servo/rust-bindgen
 [libffi]: https://github.com/tov/libffi-rs
 
@@ -65,8 +68,8 @@ Then use it in your program like this:
 ```rust
 extern crate mpi;
 
-use mpi::traits::*;
 use mpi::request::WaitGuard;
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
@@ -75,15 +78,22 @@ fn main() {
     let rank = world.rank();
 
     let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
-    let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
+    let previous_rank = if rank > 0 { rank - 1 } else { size - 1 };
 
-    let msg = vec![rank , 2 * rank, 4 * rank];
+    let msg = vec![rank, 2 * rank, 4 * rank];
     mpi::request::scope(|scope| {
-        let _sreq = WaitGuard::from(world.process_at_rank(next_rank).immediate_send(scope, &msg[..]));
+        let _sreq = WaitGuard::from(
+            world
+                .process_at_rank(next_rank)
+                .immediate_send(scope, &msg[..]),
+        );
 
         let (msg, status) = world.any_process().receive_vec();
 
-        println!("Process {} got message {:?}.\nStatus is: {:?}", rank, msg, status);
+        println!(
+            "Process {} got message {:?}.\nStatus is: {:?}",
+            rank, msg, status
+        );
         let x = status.source_rank();
         assert_eq!(x, previous_rank);
         assert_eq!(vec![x, 2 * x, 4 * x], msg);
@@ -153,7 +163,7 @@ Documentation for the latest version of the crate released to crates.io is [host
 
 See files in [examples/][examples]. These examples also act as [integration tests][travis].
 
-[examples]: https://github.com/bsteinb/rsmpi/tree/master/examples
+[examples]: https://github.com/rsmpi/rsmpi/tree/master/examples
 
 ## License
 

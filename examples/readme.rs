@@ -11,7 +11,7 @@ fn main() {
     let rank = world.rank();
 
     let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
-    let previous_rank = if rank - 1 >= 0 { rank - 1 } else { size - 1 };
+    let previous_rank = if rank > 0 { rank - 1 } else { size - 1 };
 
     let msg = vec![rank, 2 * rank, 4 * rank];
     mpi::request::scope(|scope| {
