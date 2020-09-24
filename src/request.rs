@@ -348,15 +348,21 @@ pub struct LocalScope<'a> {
     phantom: PhantomData<Cell<&'a ()>>, // Cell needed to ensure 'a is invariant
 }
 
+#[cold]
+fn abort_on_unhandled_request() {
+    let _ = std::panic::catch_unwind(|| {
+        panic!("at least one request was dropped without being completed");
+    });
+
+    // There's no way to tell MPI to release the buffers that were passed to it. Therefore
+    // we must abort execution.
+    std::process::abort();
+}
+
 impl<'a> Drop for LocalScope<'a> {
     fn drop(&mut self) {
         if self.num_requests.get() != 0 {
-            std::mem::forget(std::panic::catch_unwind(|| {
-                panic!("at least one request was dropped without being completed");
-            }));
-            // There's no way to tell MPI to release the buffers that were passed to it. Therefore
-            // we must abort execution.
-            std::process::abort();
+            abort_on_unhandled_request();
         }
     }
 }
