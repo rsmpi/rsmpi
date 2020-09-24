@@ -26,7 +26,7 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
 fn offset_of(type_ident: &dyn quote::ToTokens, field_name: &dyn quote::ToTokens) -> TokenStream2 {
     quote!(
         {
-            let value_uninit: ::std::mem::MaybeUninit<#type_ident> = ::std::mem::MaybeUninit::zeroed();
+            let value_uninit: ::std::mem::MaybeUninit<#type_ident> = ::std::mem::MaybeUninit::uninit();
 
             // This is very UB, but Rust core devs insist this pattern will not be broken by
             // compiler updates. See: https://github.com/rsmpi/rsmpi/pull/52#issuecomment-697835472
