@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
 use mpi::topology::{Communicator, SystemCommunicator};
-use mpi::Equivalence;
 use mpi::traits::*;
+use mpi::Equivalence;
 
 fn assert_equivalence<A, B: Default>(comm: &SystemCommunicator, a: &A, b: &B)
 where

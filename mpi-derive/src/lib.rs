@@ -37,21 +37,21 @@ fn offset_of(type_ident: &dyn quote::ToTokens, field_name: &dyn quote::ToTokens)
 }
 
 fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
-    let field_blocklengths = type_tuple.elems.iter().map(|_| quote!{1 as ::mpi::Count});
-    let blocklengths = quote!{[#(#field_blocklengths),*]};
+    let field_blocklengths = type_tuple.elems.iter().map(|_| quote! {1 as ::mpi::Count});
+    let blocklengths = quote! {[#(#field_blocklengths),*]};
 
     let field_displacements = type_tuple
         .elems
         .iter()
         .enumerate()
         .map(|(i, _)| offset_of(&type_tuple, &syn::Index::from(i)));
-    let displacements = quote!{[#(#field_displacements as ::mpi::Address),*]};
+    let displacements = quote! {[#(#field_displacements as ::mpi::Address),*]};
 
     let field_datatypes = type_tuple
         .elems
         .iter()
         .map(|elem| equivalence_for_type(&elem));
-    let datatypes = quote!{[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*]};
+    let datatypes = quote! {[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*]};
 
     quote! {
         &::mpi::datatype::UncommittedUserDatatype::structured(
@@ -85,8 +85,8 @@ fn equivalence_for_field(field: &syn::Field) -> TokenStream2 {
 fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStream2 {
     let ident = &ast.ident;
 
-    let field_blocklengths = fields.iter().map(|_| quote!{1 as ::mpi::Count});
-    let blocklengths = quote!{[#(#field_blocklengths),*]};
+    let field_blocklengths = fields.iter().map(|_| quote! {1 as ::mpi::Count});
+    let blocklengths = quote! {[#(#field_blocklengths),*]};
 
     let field_displacements: Vec<_> = match fields {
         Fields::Named(ref fields) => fields
@@ -103,12 +103,12 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
         Fields::Unit => vec![],
     };
 
-    let displacements = quote!{[#(#field_displacements as ::mpi::Address),*]};
+    let displacements = quote! {[#(#field_displacements as ::mpi::Address),*]};
 
     let field_datatypes = fields.iter().map(equivalence_for_field);
-    let datatypes = quote!{[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*]};
+    let datatypes = quote! {[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*]};
 
-    quote!{
+    quote! {
         unsafe impl ::mpi::datatype::Equivalence for #ident {
             type Out = ::mpi::datatype::DatatypeRef<'static>;
             fn equivalent_datatype() -> Self::Out {
