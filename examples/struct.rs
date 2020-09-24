@@ -116,7 +116,7 @@ fn main() {
         &MyDataUnnamed(true, 3.4, 7),
     );
 
-    #[derive(Equivalence, Default, PartialEq, Debug)]
+    #[derive(Equivalence, PartialEq, Debug)]
     struct BoolBoolBool(bool, bool, bool);
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
@@ -128,7 +128,7 @@ fn main() {
         &ThreeBool([true, false, true]),
     );
 
-    #[derive(Equivalence, Default, PartialEq, Debug)]
+    #[derive(Equivalence, PartialEq, Debug)]
     struct ComplexComplexComplex((i8, bool, i8), (i8, bool, i8), (i8, bool, i8));
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
@@ -143,7 +143,7 @@ fn main() {
     #[derive(Equivalence, Default, PartialEq, Debug)]
     struct Empty;
 
-    #[derive(Equivalence, Default, PartialEq, Debug)]
+    #[derive(Equivalence, PartialEq, Debug)]
     struct ZeroArray([i32; 0]);
 
     assert_equivalence(&world, &ZeroArray([]), &Empty);
