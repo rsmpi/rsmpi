@@ -30,8 +30,6 @@ fn offset_of(type_ident: &dyn quote::ToTokens, field_name: &dyn quote::ToTokens)
             let value_loc = value as *const _ as usize;
             let offset_loc = &value.#field_name as *const _ as usize;
 
-            std::mem::forget(value);
-
             offset_loc - value_loc
         }
     )
