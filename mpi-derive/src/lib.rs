@@ -98,7 +98,7 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
             .unnamed
             .iter()
             .enumerate()
-            .map(|(i, _)| offset_of(&ident, &i))
+            .map(|(i, _)| offset_of(&ident, &syn::Index::from(i)))
             .collect(),
         Fields::Unit => vec![],
     };
