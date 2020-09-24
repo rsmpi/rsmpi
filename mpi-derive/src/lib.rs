@@ -26,12 +26,10 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
 fn offset_of(type_ident: &dyn quote::ToTokens, field_name: &dyn quote::ToTokens) -> TokenStream2 {
     quote!(
         {
-            let value: #type_ident = unsafe { ::std::mem::uninitialized() };
+            let value: #type_ident = ::std::default::Default::default();
 
             let value_loc = &value as *const _ as usize;
             let offset_loc = &value.#field_name as *const _ as usize;
-
-            ::std::mem::forget(value);
 
             offset_loc - value_loc
         }
@@ -46,7 +44,7 @@ fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
         .elems
         .iter()
         .enumerate()
-        .map(|(i, _)| offset_of(&type_tuple, &i));
+        .map(|(i, _)| offset_of(&type_tuple, &syn::Index::from(i)));
     let displacements = quote!{[#(#field_displacements as ::mpi::Address),*]};
 
     let field_datatypes = type_tuple

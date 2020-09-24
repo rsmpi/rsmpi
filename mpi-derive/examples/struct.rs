@@ -25,7 +25,7 @@ fn main() {
 
     let world = universe.world();
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataRust {
         b: bool,
         f: f64,
@@ -46,7 +46,7 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     #[repr(C)]
     struct MyDataC {
         b: bool,
@@ -68,7 +68,7 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataOrdered {
         bf: (bool, f64),
         i: u16,
@@ -87,7 +87,7 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataNestedTuple {
         bfi: (bool, (f64, u16)),
     };
@@ -104,7 +104,7 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataUnnamed(bool, f64, u16);
 
     assert_equivalence(
@@ -117,10 +117,10 @@ fn main() {
         &MyDataUnnamed(true, 3.4, 7),
     );
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct BoolBoolBool(bool, bool, bool);
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct ThreeBool([bool; 3]);
 
     assert_equivalence(
@@ -129,10 +129,10 @@ fn main() {
         &ThreeBool([true, false, true]),
     );
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct ComplexComplexComplex((i8, bool, i8), (i8, bool, i8), (i8, bool, i8));
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct ThreeComplex([(i8, bool, i8); 3]);
 
     assert_equivalence(
@@ -141,21 +141,21 @@ fn main() {
         &ThreeComplex([(1, true, 1), (2, false, 2), (3, true, 3)]),
     );
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct Empty;
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct ZeroArray([i32; 0]);
 
     assert_equivalence(&world, &ZeroArray([]), &Empty);
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct Parent {
         b: bool,
         child: Child,
     }
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct Child(f64, u16);
 
     assert_equivalence(

@@ -9,12 +9,10 @@ use mpi::{
 
 macro_rules! offset_of {
     ($T:ty, $field:tt) => {{
-        let value: $T = unsafe { ::std::mem::uninitialized() };
+        let value: $T = Default::default();
 
         let value_loc = &value as *const _ as usize;
         let field_loc = &value.$field as *const _ as usize;
-
-        ::std::mem::forget(value);
 
         field_loc - value_loc
     }};
@@ -49,7 +47,8 @@ unsafe impl Equivalence for ComplexDatatype {
                         offset_of!(TupleType, 1) as Address,
                     ],
                     &[f32::equivalent_datatype(), u8::equivalent_datatype()],
-                ).as_ref(),
+                )
+                .as_ref(),
             ],
         )
     }
