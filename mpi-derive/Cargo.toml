@@ -2,6 +2,7 @@
 name = "mpi-derive"
 version = "0.1.0"
 authors = ["Andrew Gaspar <andrew.gaspar@outlook.com>"]
+edition = "2018"
 
 [lib]
 proc-macro = true
@@ -10,8 +11,3 @@ proc-macro = true
 syn = "0.15.9"
 quote = "0.6.8"
 proc-macro2 = "0.4.19"
-
-[dependencies.mpi]
-path = ".."
-version = "0.6"
-default-features = false
