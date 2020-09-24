@@ -7,15 +7,17 @@ use std::fmt::Debug;
 use mpi::topology::{Communicator, SystemCommunicator};
 use mpi::traits::*;
 
-fn assert_equivalence<A, B>(comm: &SystemCommunicator, a: &A, b: &B)
+fn assert_equivalence<A, B: Default>(comm: &SystemCommunicator, a: &A, b: &B)
 where
     A: Buffer,
     B: BufferMut + PartialEq + Debug,
 {
     let packed = comm.pack(a);
 
-    let mut new_b = unsafe { std::mem::uninitialized() };
-    comm.unpack_into(&packed, &mut new_b, 0);
+    let mut new_b = B::default();
+    unsafe {
+        comm.unpack_into(&packed, &mut new_b, 0);
+    }
 
     assert_eq!(b, &new_b);
 }
