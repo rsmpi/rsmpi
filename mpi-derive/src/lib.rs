@@ -1,15 +1,9 @@
 #![recursion_limit = "256"]
 
-extern crate proc_macro;
-extern crate proc_macro2;
-
-#[macro_use]
-extern crate quote;
-extern crate syn;
-
 type TokenStream1 = proc_macro::TokenStream;
 type TokenStream2 = proc_macro2::TokenStream;
 
+use quote::quote;
 use syn::{Fields, Type};
 
 #[proc_macro_derive(Equivalence)]
