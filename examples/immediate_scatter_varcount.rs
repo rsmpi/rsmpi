@@ -29,17 +29,17 @@ fn main() {
             })
             .collect();
         let partition = Partition::new(&msg[..], counts, &displs[..]);
-        mpi::request::scope(|scope| {
-            root_process
-                .immediate_scatter_varcount_into_root(scope, &partition, &mut buf[..])
-                .wait();
-        });
+
+        mpi::define_scope!(scope);
+        root_process
+            .immediate_scatter_varcount_into_root(scope, &partition, &mut buf[..])
+            .wait();
     } else {
-        mpi::request::scope(|scope| {
-            root_process
-                .immediate_scatter_varcount_into(scope, &mut buf[..])
-                .wait();
-        });
+        mpi::define_scope!(scope);
+
+        root_process
+            .immediate_scatter_varcount_into(scope, &mut buf[..])
+            .wait();
     }
 
     assert!(buf.iter().zip(0..rank).all(|(&i, j)| i == j));

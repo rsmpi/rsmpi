@@ -16,7 +16,9 @@ fn main() {
         world.process_at_rank(0).ready_send(&msg);
     } else {
         let mut v = vec![0u8; (size - 1) as usize];
-        mpi::request::scope(|scope| {
+        {
+            mpi::define_scope!(scope);
+
             let reqs = v
                 .iter_mut()
                 .zip(1..)
@@ -30,7 +32,7 @@ fn main() {
             for req in reqs {
                 req.wait();
             }
-        });
+        }
         println!("Got message: {:?}", v);
         assert!(v.iter().zip(1..).all(|(x, i)| i == *x as usize));
     }

@@ -12,9 +12,15 @@ fn main() {
     let x = std::f32::consts::PI;
     let mut y: f32 = 0.0;
 
-    mpi::request::scope(|scope| {
+    {
+        // Scopes can be defined using the `define_scope!` macro. This is the preferred method.
+        // A scope should be dropped as soon as the requests attached to it complete so that
+        // any borrowed state can be used.
+        mpi::define_scope!(scope);
+
         let mut sreq = world.this_process().immediate_send(scope, &x);
         let rreq = world.any_process().immediate_receive_into(scope, &mut y);
+
         rreq.wait();
         loop {
             match sreq.test() {
@@ -26,20 +32,24 @@ fn main() {
                 }
             }
         }
-    });
+    }
+
     assert_eq!(x, y);
 
     y = 0.0;
-    mpi::request::scope(|scope| {
+    {
+        mpi::define_scope!(scope);
+
         let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(scope, &mut y));
         let _sreq = WaitGuard::from(world.this_process().immediate_ready_send(scope, &x));
-    });
+    }
     assert_eq!(x, y);
 
     assert!(world.any_process().immediate_probe().is_none());
     assert!(world.any_process().immediate_matched_probe().is_none());
 
     y = 0.0;
+    // You can also use the `scope` routine
     mpi::request::scope(|scope| {
         let _sreq: WaitGuard<_> = world
             .this_process()
@@ -74,11 +84,11 @@ fn main() {
         }
     }
 
-    mpi::request::scope(|scope| {
-        let sreq = world.this_process().immediate_send(scope, &x);
-        sreq.cancel();
-        sreq.wait();
+    mpi::define_scope!(scope);
 
-        let _sreq = CancelGuard::from(world.this_process().immediate_receive_into(scope, &mut y));
-    });
+    let sreq = world.this_process().immediate_send(scope, &x);
+    sreq.cancel();
+    sreq.wait();
+
+    let _sreq = CancelGuard::from(world.this_process().immediate_receive_into(scope, &mut y));
 }

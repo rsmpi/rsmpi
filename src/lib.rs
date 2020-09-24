@@ -205,3 +205,33 @@ where
         uninitialized2.assume_init(),
     )
 }
+
+/// Used to create a stack pinned [`LocalScope`](struct.LocalScope.html)
+///
+/// The macro creates a `LocalScope` on the stack, then shadows it with a `Pin` of the `LocalScope`,
+/// preventing the scope destructor from being skipped via `std::mem::forget` or similar.
+///
+/// For safety reasons, all variables and buffers associated with a request
+/// must exist *outside* the scope with which the request is registered.
+///
+/// It is typically used like this:
+///
+/// ```
+/// /* declare variables and buffers here ... */
+/// {
+///     mpi::define_scope!(scope);
+///     /* perform sends and/or receives using 'scope' */
+/// }
+/// /* at end of scope, panic if there are requests that have not yet completed */
+/// ```
+///
+/// # Examples
+///
+/// See `examples/immediate.rs`
+#[macro_export]
+macro_rules! define_scope {
+    ($name:ident) => {
+        let $name = unsafe { $crate::request::LocalScope::new() };
+        let $name = &$name;
+    };
+}

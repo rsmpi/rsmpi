@@ -14,11 +14,13 @@ fn main() {
     let i = 2_u64.pow(world.rank() as u32 + 1);
     let mut a = vec![0u64; count];
 
-    mpi::request::scope(|scope| {
+    {
+        mpi::define_scope!(scope);
+
         world
             .immediate_all_gather_into(scope, &i, &mut a[..])
             .wait();
-    });
+    }
 
     if world.rank() == root_rank {
         println!("Root gathered sequence: {:?}.", a);
@@ -35,11 +37,13 @@ fn main() {
         .collect::<Vec<_>>();
     let mut t = vec![0u64; count * count];
 
-    mpi::request::scope(|scope| {
+    {
+        mpi::define_scope!(scope);
+
         world
             .immediate_all_gather_into(scope, &a[..], &mut t[..])
             .wait();
-    });
+    }
 
     if world.rank() == root_rank {
         println!("Root gathered table:");
@@ -57,9 +61,9 @@ fn main() {
     {
         let sv = unsafe { View::with_count_and_datatype(&a[..], 1, &d) };
         let mut rv = unsafe { MutView::with_count_and_datatype(&mut t[..], count as Count, &d) };
-        mpi::request::scope(|scope| {
-            world.immediate_all_gather_into(scope, &sv, &mut rv).wait();
-        });
+
+        mpi::define_scope!(scope);
+        world.immediate_all_gather_into(scope, &sv, &mut rv).wait();
     }
 
     if world.rank() == root_rank {

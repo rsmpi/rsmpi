@@ -12,11 +12,13 @@ fn main() {
     let u = vec![rank; size as usize];
     let mut v = vec![0; size as usize];
 
-    mpi::request::scope(|scope| {
+    {
+        mpi::define_scope!(scope);
+
         world
             .immediate_all_to_all_into(scope, &u[..], &mut v[..])
             .wait();
-    });
+    }
 
     println!("u: {:?}", u);
     println!("v: {:?}", v);
