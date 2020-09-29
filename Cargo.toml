@@ -22,13 +22,18 @@ members = ["mpi-derive"]
 default = []
 
 user-operations = ["libffi"]
+derive = ["mpi-derive"]
+
+[[example]]
+name = "struct"
+required-features = ["derive"]
 
 [dependencies]
 conv = "0.3"
 libffi = { version = "0.8.0", optional = true }
+mpi-derive = { path = "mpi-derive", optional = true }
 mpi-sys = { path = "mpi-sys", version = "0.2" }
 smallvec = "1.0.0"
-mpi-derive = { path = "mpi-derive" }
 
 [dev-dependencies]
 memoffset = "0.5"

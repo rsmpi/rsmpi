@@ -121,9 +121,6 @@
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
 
-// Re-export derives
-pub use mpi_derive::*;
-
 /// The raw C language MPI API
 ///
 /// Documented in the [Message Passing Interface specification][spec]
@@ -164,6 +161,10 @@ pub mod traits {
     pub use crate::point_to_point::traits::*;
     pub use crate::raw::traits::*;
     pub use crate::topology::traits::*;
+
+    // Re-export derives
+    #[cfg(feature = "derive")]
+    pub use mpi_derive::Equivalence;
 }
 
 #[doc(inline)]

@@ -59,8 +59,9 @@ Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` 
 Add the `mpi` crate as a dependency in your `Cargo.toml`:
 
 ```toml
+# "features" is optional
 [dependencies]
-mpi = "0.5"
+mpi = { version = "0.5", features = ["user-operations", "derive"] }
 ```
 
 Then use it in your program like this:
@@ -148,6 +149,43 @@ Not supported (yet):
 - One-sided communication (RMA)
 - MPI parallel I/O
 - A million small things
+
+
+### Optional Cargo Features
+
+These optional features can be enabled in your cargo manifest. See the [Usage](#usage) section
+above.
+
+`user-operations` enables capturing lambdas and safe creation in `UserOperation`. This feature
+requires the `libffi` system library, which is not available on all systems out-of-the-box.
+
+```rust
+let mut h = 0;
+comm.all_reduce_into(
+    &(rank + 1),
+    &mut h,
+    &UserOperation::commutative(|x, y| {
+        let x: &[Rank] = x.downcast().unwrap();
+        let y: &mut [Rank] = y.downcast().unwrap();
+        for (&x_i, y_i) in x.iter().zip(y) {
+            *y_i += x_i;
+        }
+    }),
+);
+```
+
+`derive` enables the `Equivalence` derive macro, which makes it easy to send structs
+over-the-wire without worrying about safety around padding, and allowing arbitrary datatype
+matching between structs with the same field order but different layout.
+
+```rust
+#[derive(Equivalence)]
+struct MyProgramOpts {
+    name: [u8; 100],
+    num_cycles: u32,
+    material_properties: [f64; 20],
+}
+```
 
 ## Documentation
 

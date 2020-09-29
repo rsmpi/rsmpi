@@ -1,13 +1,11 @@
 use std::fmt::Debug;
 
-use mpi::topology::{Communicator, SystemCommunicator};
-use mpi::traits::*;
-use mpi::Equivalence;
+use mpi::{topology::{Communicator, SystemCommunicator}, traits::*};
 
-fn assert_equivalence<A, B: Default>(comm: &SystemCommunicator, a: &A, b: &B)
+fn assert_equivalence<A, B>(comm: &SystemCommunicator, a: &A, b: &B)
 where
     A: Buffer,
-    B: BufferMut + PartialEq + Debug,
+    B: BufferMut + PartialEq + Debug + Default,
 {
     let packed = comm.pack(a);
 
@@ -23,6 +21,13 @@ fn main() {
     let universe = mpi::initialize().unwrap();
 
     let world = universe.world();
+
+    #[derive(Equivalence)]
+    struct MyProgramOpts {
+        name: [u8; 100],
+        num_cycles: u32,
+        material_properties: [f64; 20],
+    }
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataRust {
