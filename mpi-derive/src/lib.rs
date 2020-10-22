@@ -18,32 +18,17 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
 }
 
 fn offset_of(type_ident: &dyn quote::ToTokens, field_name: &dyn quote::ToTokens) -> TokenStream2 {
-    quote!(
-        {
-            let value_uninit: ::std::mem::MaybeUninit<#type_ident> = ::std::mem::MaybeUninit::uninit();
-
-            // This is very UB, but Rust core devs insist this pattern will not be broken by
-            // compiler updates. See: https://github.com/rsmpi/rsmpi/pull/52#issuecomment-697835472
-
-            let value: &#type_ident = unsafe { &*value_uninit.as_ptr() };
-
-            let value_loc = value as *const _ as usize;
-            let offset_loc = &value.#field_name as *const _ as usize;
-
-            offset_loc - value_loc
-        }
-    )
+    quote!(::memoffset::offset_of!(#type_ident, #field_name))
 }
 
 fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
     let field_blocklengths = type_tuple.elems.iter().map(|_| quote! {1 as ::mpi::Count});
     let blocklengths = quote! {[#(#field_blocklengths),*]};
 
-    let field_displacements = type_tuple
-        .elems
-        .iter()
-        .enumerate()
-        .map(|(i, _)| offset_of(&type_tuple, &syn::Index::from(i)));
+    let field_displacements = type_tuple.elems.iter().enumerate().map(|(i, _)| {
+        let field = syn::Index::from(i);
+        quote!(::memoffset::offset_of_tuple!(#type_tuple, #field))
+    });
     let displacements = quote! {[#(#field_displacements as ::mpi::Address),*]};
 
     let field_datatypes = type_tuple

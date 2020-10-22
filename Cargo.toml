@@ -34,9 +34,8 @@ libffi = { version = "0.8.0", optional = true }
 mpi-derive = { path = "mpi-derive", optional = true }
 mpi-sys = { path = "mpi-sys", version = "0.2" }
 smallvec = "1.0.0"
-
-[dev-dependencies]
-memoffset = "0.5"
+# TODO: This needs to be a real version before this is merged
+memoffset = { git = "https://github.com/AndrewGaspar/memoffset.git", branch = "tuple-offset" }
 
 [build-dependencies]
 rustc_version = "0.2"

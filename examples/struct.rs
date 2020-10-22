@@ -1,6 +1,9 @@
 use std::fmt::Debug;
 
-use mpi::{topology::{Communicator, SystemCommunicator}, traits::*};
+use mpi::{
+    topology::{Communicator, SystemCommunicator},
+    traits::*,
+};
 
 fn assert_equivalence<A, B>(comm: &SystemCommunicator, a: &A, b: &B)
 where
