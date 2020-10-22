@@ -62,10 +62,6 @@ fn equivalence_for_type(ty: &syn::Type) -> TokenStream2 {
     }
 }
 
-fn equivalence_for_field(field: &syn::Field) -> TokenStream2 {
-    equivalence_for_type(&field.ty)
-}
-
 fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStream2 {
     let ident = &ast.ident;
 
@@ -89,7 +85,7 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
 
     let displacements = quote! {[#(#field_displacements as ::mpi::Address),*]};
 
-    let field_datatypes = fields.iter().map(equivalence_for_field);
+    let field_datatypes = fields.iter().map(|field| equivalence_for_type(&field.ty));
     let datatypes = quote! {[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*]};
 
     quote! {
