@@ -69,8 +69,8 @@ fn equivalence_for_field(field: &syn::Field) -> TokenStream2 {
 fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStream2 {
     let ident = &ast.ident;
 
-    let field_blocklengths = fields.iter().map(|_| quote! {1 as ::mpi::Count});
-    let blocklengths = quote! {[#(#field_blocklengths),*]};
+    let field_blocklengths = fields.iter().map(|_| 1);
+    let blocklengths = quote! {[#(#field_blocklengths as ::mpi::Count),*]};
 
     let field_displacements: Vec<_> = match fields {
         Fields::Named(ref fields) => fields
