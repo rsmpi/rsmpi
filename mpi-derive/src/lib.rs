@@ -88,13 +88,21 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
     let field_datatypes = fields.iter().map(|field| equivalence_for_type(&field.ty));
     let datatypes = quote! {[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*]};
 
+    let ident_str = ident.to_string();
+
+    // TODO and NOTE: Technically this code can race with MPI init and finalize, as can any other
+    // code in rsmpi that interacts with the MPI library without taking a handle to `Universe`.
+    // This requires larger attention, and so currently this is not addressed.
     quote! {
         unsafe impl ::mpi::datatype::Equivalence for #ident {
             type Out = ::mpi::datatype::DatatypeRef<'static>;
             fn equivalent_datatype() -> Self::Out {
-                use ::mpi::raw::AsRaw;
+                use ::mpi::raw::{AsRaw, FromRaw};
+                use ::once_cell::sync::Lazy;
 
-                thread_local!(static DATATYPE: ::mpi::datatype::DatatypeRef<'static> = {
+                static DATATYPE: Lazy<::mpi::datatype::DatatypeRef<'static>> = Lazy::new(|| {
+                    ::mpi::datatype::internal::check_derive_equivalence_universe_state(#ident_str);
+
                     let datatype = ::mpi::datatype::UserDatatype::structured::<
                         ::mpi::datatype::UncommittedDatatypeRef,
                     >(&#blocklengths, &#displacements, &#datatypes);
@@ -107,7 +115,7 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
                     datatype_ref
                 });
 
-                DATATYPE.with(|datatype| datatype.clone())
+                DATATYPE.clone()
             }
         }
     }
