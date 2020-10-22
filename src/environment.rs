@@ -238,15 +238,13 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
         })
     };
 
-    let provided = provided.into();
-
     // No need to check if UNIVERSE_STATE has already been set - only one thread can enter this
     // code section per MPI run thanks to the `is_initialized()` check before.
     *universe_state = Some(UniverseState {
         main_thread: thread::current().id(),
     });
 
-    Some((Universe { buffer: None }, provided))
+    Some((Universe { buffer: None }, provided.into()))
 }
 
 /// Level of multithreading supported by this MPI universe
