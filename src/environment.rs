@@ -180,6 +180,8 @@ pub(crate) fn is_initialized() -> bool {
 }
 
 /// Whether the MPI library has been initialized
+/// NOTE: Used by "derive" feature
+#[allow(unused)]
 pub(crate) fn is_finalized() -> bool {
     unsafe { with_uninitialized(|finalized| ffi::MPI_Finalized(finalized)).1 != 0 }
 }
