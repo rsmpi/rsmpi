@@ -100,22 +100,17 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
                 use ::mpi::raw::{AsRaw, FromRaw};
                 use ::once_cell::sync::Lazy;
 
-                static DATATYPE: Lazy<::mpi::datatype::DatatypeRef<'static>> = Lazy::new(|| {
+                static DATATYPE: Lazy<::mpi::datatype::UserDatatype> = Lazy::new(|| {
                     ::mpi::datatype::internal::check_derive_equivalence_universe_state(#ident_str);
 
-                    let datatype = ::mpi::datatype::UserDatatype::structured::<
+                    ::mpi::datatype::UserDatatype::structured::<
                         ::mpi::datatype::UncommittedDatatypeRef,
-                    >(&#blocklengths, &#displacements, &#datatypes);
-
-                    let datatype_ref =
-                        unsafe { ::mpi::datatype::DatatypeRef::from_raw(datatype.as_raw()) };
-
-                    ::std::mem::forget(datatype);
-
-                    datatype_ref
+                    >(&#blocklengths, &#displacements, &#datatypes)
                 });
 
-                DATATYPE.clone()
+                unsafe {
+                    ::mpi::datatype::DatatypeRef::from_raw(DATATYPE.as_raw())
+                }
             }
         }
     }
