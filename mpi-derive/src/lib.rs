@@ -18,7 +18,7 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
 }
 
 fn offset_of(type_ident: &dyn quote::ToTokens, field_name: &dyn quote::ToTokens) -> TokenStream2 {
-    quote!(::memoffset::offset_of!(#type_ident, #field_name))
+    quote!(::mpi::internal::memoffset::offset_of!(#type_ident, #field_name))
 }
 
 fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
@@ -27,7 +27,7 @@ fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
 
     let field_displacements = type_tuple.elems.iter().enumerate().map(|(i, _)| {
         let field = syn::Index::from(i);
-        quote!(::memoffset::offset_of_tuple!(#type_tuple, #field))
+        quote!(::mpi::internal::memoffset::offset_of_tuple!(#type_tuple, #field))
     });
     let displacements = quote! {[#(#field_displacements as ::mpi::Address),*]};
 

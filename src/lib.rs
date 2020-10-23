@@ -167,6 +167,13 @@ pub mod traits {
     pub use mpi_derive::Equivalence;
 }
 
+/// These crates are used by mpi-derive, and so must be public, but shouldn't be used by dependent
+/// crates
+#[doc(hidden)]
+pub mod internal {
+    pub use memoffset;
+}
+
 #[doc(inline)]
 pub use crate::environment::{
     initialize, initialize_with_threading, time, time_resolution, Threading,
