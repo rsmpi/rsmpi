@@ -98,7 +98,7 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
             type Out = ::mpi::datatype::DatatypeRef<'static>;
             fn equivalent_datatype() -> Self::Out {
                 use ::mpi::raw::{AsRaw, FromRaw};
-                use ::once_cell::sync::Lazy;
+                use ::mpi::internal::once_cell::sync::Lazy;
 
                 static DATATYPE: Lazy<::mpi::datatype::UserDatatype> = Lazy::new(|| {
                     ::mpi::datatype::internal::check_derive_equivalence_universe_state(#ident_str);

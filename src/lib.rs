@@ -172,6 +172,7 @@ pub mod traits {
 #[doc(hidden)]
 pub mod internal {
     pub use memoffset;
+    pub use once_cell;
 }
 
 #[doc(inline)]
