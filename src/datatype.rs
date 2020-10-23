@@ -361,6 +361,14 @@ impl UserDatatype {
     }
 }
 
+// TODO and NOTE: These impls are not 100% implemented, but reflect the larger reality that the
+// current API does not strongly enforce the threading requirements of MPI's `MPI_Init_thread`
+// function. In order to enforce uniformity across platforms, these traits are explicitly applied.
+// Due to the nature of MPI implementations, without this declaration some implementations of
+// MPI would otherwise be Send + Sync by default, and others would be !Sync by default.
+unsafe impl Send for UserDatatype {}
+unsafe impl Sync for UserDatatype {}
+
 impl Clone for UserDatatype {
     fn clone(&self) -> Self {
         self.dup()
