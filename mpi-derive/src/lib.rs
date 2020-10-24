@@ -61,20 +61,18 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
 
     let field_blocklengths = fields.iter().map(|_| 1);
 
-    let field_names: Vec<Box<dyn quote::ToTokens>> = match fields {
-        Fields::Named(ref fields) => fields
-            .named
-            .iter()
-            .map(|field| -> Box<dyn quote::ToTokens> { Box::new(field.ident.clone().unwrap()) })
-            .collect(),
-        Fields::Unnamed(ref fields) => fields
-            .unnamed
-            .iter()
-            .enumerate()
-            .map(|(i, _)| -> Box<dyn quote::ToTokens> { Box::new(syn::Index::from(i)) })
-            .collect(),
-        Fields::Unit => vec![],
-    };
+    let field_names = fields
+        .iter()
+        .enumerate()
+        .map(|(i, field)| -> Box<dyn quote::ToTokens> {
+            if let Some(ident) = field.ident.as_ref() {
+                // named struct fields
+                Box::new(ident)
+            } else {
+                // tuple struct fields
+                Box::new(syn::Index::from(i))
+            }
+        });
 
     let field_datatypes = fields.iter().map(|field| equivalence_for_type(&field.ty));
 
