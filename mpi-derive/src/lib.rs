@@ -17,31 +17,25 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
     result.into()
 }
 
-fn offset_of(type_ident: &dyn quote::ToTokens, field_name: &dyn quote::ToTokens) -> TokenStream2 {
-    quote!(::mpi::internal::memoffset::offset_of!(#type_ident, #field_name))
-}
-
 fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
-    let field_blocklengths = type_tuple.elems.iter().map(|_| quote! {1 as ::mpi::Count});
-    let blocklengths = quote! {[#(#field_blocklengths),*]};
+    let field_blocklengths = type_tuple.elems.iter().map(|_| 1);
 
-    let field_displacements = type_tuple.elems.iter().enumerate().map(|(i, _)| {
-        let field = syn::Index::from(i);
-        quote!(::mpi::internal::memoffset::offset_of_tuple!(#type_tuple, #field))
-    });
-    let displacements = quote! {[#(#field_displacements as ::mpi::Address),*]};
+    let fields = type_tuple
+        .elems
+        .iter()
+        .enumerate()
+        .map(|(i, _)| syn::Index::from(i));
 
     let field_datatypes = type_tuple
         .elems
         .iter()
         .map(|elem| equivalence_for_type(&elem));
-    let datatypes = quote! {[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*]};
 
     quote! {
         &::mpi::datatype::UncommittedUserDatatype::structured(
-            &#blocklengths,
-            &#displacements,
-            &#datatypes,
+            &[#(#field_blocklengths as ::mpi::Count),*],
+            &[#(::mpi::internal::memoffset::offset_of_tuple!(#type_tuple, #fields) as ::mpi::Address),*],
+            &[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*],
         )
     }
 }
@@ -66,27 +60,23 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
     let ident = &ast.ident;
 
     let field_blocklengths = fields.iter().map(|_| 1);
-    let blocklengths = quote! {[#(#field_blocklengths as ::mpi::Count),*]};
 
-    let field_displacements: Vec<_> = match fields {
+    let field_names: Vec<Box<dyn quote::ToTokens>> = match fields {
         Fields::Named(ref fields) => fields
             .named
             .iter()
-            .map(|field| offset_of(&ident, field.ident.as_ref().unwrap()))
+            .map(|field| -> Box<dyn quote::ToTokens> { Box::new(field.ident.clone().unwrap()) })
             .collect(),
         Fields::Unnamed(ref fields) => fields
             .unnamed
             .iter()
             .enumerate()
-            .map(|(i, _)| offset_of(&ident, &syn::Index::from(i)))
+            .map(|(i, _)| -> Box<dyn quote::ToTokens> { Box::new(syn::Index::from(i)) })
             .collect(),
         Fields::Unit => vec![],
     };
 
-    let displacements = quote! {[#(#field_displacements as ::mpi::Address),*]};
-
     let field_datatypes = fields.iter().map(|field| equivalence_for_type(&field.ty));
-    let datatypes = quote! {[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*]};
 
     let ident_str = ident.to_string();
 
@@ -104,7 +94,11 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
 
                     ::mpi::datatype::UserDatatype::structured::<
                         ::mpi::datatype::UncommittedDatatypeRef,
-                    >(&#blocklengths, &#displacements, &#datatypes)
+                    >(
+                        &[#(#field_blocklengths as ::mpi::Count),*],
+                        &[#(::mpi::internal::memoffset::offset_of!(#ident, #field_names) as ::mpi::Address),*],
+                        &[#(::mpi::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*],
+                    )
                 });
 
                 unsafe {
