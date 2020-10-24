@@ -99,11 +99,7 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
                     )
                 });
 
-                unsafe {
-                    <::mpi::datatype::DatatypeRef as ::mpi::raw::FromRaw>::from_raw(
-                        <::mpi::datatype::UserDatatype as ::mpi::raw::AsRaw>::as_raw(&DATATYPE)
-                    )
-                }
+                DATATYPE.as_ref()
             }
         }
     }
