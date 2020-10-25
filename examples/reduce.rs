@@ -92,7 +92,7 @@ fn main() {
     let mut g: Rank = 0;
 
     world.reduce_scatter_block_into(&f[..], &mut g, SystemOperation::product());
-    assert_eq!(g, rank.pow(size as u32));
+    assert_eq!(g, rank.wrapping_pow(size as u32));
 
     test_user_operations(universe.world());
 
