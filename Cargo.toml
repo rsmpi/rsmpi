@@ -19,7 +19,7 @@ edition = "2018"
 members = ["mpi-derive"]
 
 [features]
-default = []
+default = ["user-operations"]
 
 user-operations = ["libffi"]
 derive = ["mpi-derive"]
