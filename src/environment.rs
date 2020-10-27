@@ -7,16 +7,32 @@
 //! - **8.1.2**: `MPI_TAG_UB`, ...
 //! - **8.2**: Memory allocation
 //! - **8.3, 8.4, and 8.5**: Error handling
-use std::cmp::Ordering;
-use std::os::raw::{c_char, c_double, c_int, c_void};
-use std::ptr;
-use std::string::FromUtf8Error;
+
+use std::{
+    cmp::Ordering,
+    os::raw::{c_char, c_double, c_int, c_void},
+    ptr,
+    string::FromUtf8Error,
+    sync::RwLock,
+    thread::{self, ThreadId},
+};
 
 use conv::ConvUtil;
+use once_cell::sync::Lazy;
 
 use crate::ffi;
 use crate::topology::SystemCommunicator;
 use crate::{with_uninitialized, with_uninitialized2};
+
+/// Internal data structure used to uphold certain MPI invariants.
+/// State is currently only used with the derive feature.
+pub(crate) struct UniverseState {
+    #[allow(unused)]
+    pub main_thread: ThreadId,
+}
+
+pub(crate) static UNIVERSE_STATE: Lazy<RwLock<Option<UniverseState>>> =
+    Lazy::new(|| RwLock::new(None));
 
 /// Global context
 pub struct Universe {
@@ -81,6 +97,12 @@ impl Universe {
 
 impl Drop for Universe {
     fn drop(&mut self) {
+        // This can only ever be called once since it's only possible to initialize a single
+        // Universe per application run.
+        //
+        // NOTE: The write lock is taken to prevent racing with `#[derive(Equivalence)]`
+        let mut _universe_state = UNIVERSE_STATE.write().unwrap();
+
         self.detach_buffer();
         unsafe {
             ffi::MPI_Finalize();
@@ -153,8 +175,15 @@ impl From<c_int> for Threading {
 }
 
 /// Whether the MPI library has been initialized
-fn is_initialized() -> bool {
+pub(crate) fn is_initialized() -> bool {
     unsafe { with_uninitialized(|initialized| ffi::MPI_Initialized(initialized)).1 != 0 }
+}
+
+/// Whether the MPI library has been initialized
+/// NOTE: Used by "derive" feature
+#[allow(unused)]
+pub(crate) fn is_finalized() -> bool {
+    unsafe { with_uninitialized(|finalized| ffi::MPI_Finalized(finalized)).1 != 0 }
 }
 
 /// Initialize MPI.
@@ -189,21 +218,35 @@ pub fn initialize() -> Option<Universe> {
 ///
 /// 12.4.3
 pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Threading)> {
+    // Takes the lock before checking if MPI is initialized to prevent a race condition
+    // leading to two threads both calling `MPI_Init_thread` at the same time.
+    //
+    // NOTE: This is necessary even without the derive feature - we use this `Mutex` to ensure
+    // no race in initializing MPI.
+    let mut universe_state = UNIVERSE_STATE.write().unwrap();
+
     if is_initialized() {
-        None
-    } else {
-        let (_, provided) = unsafe {
-            with_uninitialized(|provided| {
-                ffi::MPI_Init_thread(
-                    ptr::null_mut(),
-                    ptr::null_mut(),
-                    threading.as_raw(),
-                    provided,
-                )
-            })
-        };
-        Some((Universe { buffer: None }, provided.into()))
+        return None;
     }
+
+    let (_, provided) = unsafe {
+        with_uninitialized(|provided| {
+            ffi::MPI_Init_thread(
+                ptr::null_mut(),
+                ptr::null_mut(),
+                threading.as_raw(),
+                provided,
+            )
+        })
+    };
+
+    // No need to check if UNIVERSE_STATE has already been set - only one thread can enter this
+    // code section per MPI run thanks to the `is_initialized()` check before.
+    *universe_state = Some(UniverseState {
+        main_thread: thread::current().id(),
+    });
+
+    Some((Universe { buffer: None }, provided.into()))
 }
 
 /// Level of multithreading supported by this MPI universe

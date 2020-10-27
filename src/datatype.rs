@@ -361,6 +361,14 @@ impl UserDatatype {
     }
 }
 
+// TODO and NOTE: These impls are not 100% implemented, but reflect the larger reality that the
+// current API does not strongly enforce the threading requirements of MPI's `MPI_Init_thread`
+// function. In order to enforce uniformity across platforms, these traits are explicitly applied.
+// Due to the nature of MPI implementations, without this declaration some implementations of
+// MPI would otherwise be Send + Sync by default, and others would be !Sync by default.
+unsafe impl Send for UserDatatype {}
+unsafe impl Sync for UserDatatype {}
+
 impl Clone for UserDatatype {
     fn clone(&self) -> Self {
         self.dup()
@@ -777,6 +785,61 @@ where
     type Out = <T as Equivalence>::Out;
     fn as_datatype(&self) -> Self::Out {
         <T as Equivalence>::equivalent_datatype()
+    }
+}
+
+#[doc(hidden)]
+pub mod internal {
+    #[cfg(feature = "derive")]
+    pub fn check_derive_equivalence_universe_state(type_name: &str) {
+        use crate::environment::UNIVERSE_STATE;
+
+        // Take lock on UNIVERSE_STATE to prevent racing with mpi::init and mpi::finalize.
+        let universe_state = UNIVERSE_STATE.read().unwrap();
+
+        if !crate::environment::is_initialized() {
+            panic!(
+                "\n\
+                 RSMPI PANIC: Pre-MPI_Init datatype initialization\n\
+                 \n\
+                 Application attempted to initialize datatype of #[derive(Equivalence)] for \
+                 `{}` before initializing rsmpi. You must first initialize rsmpi before attempting \
+                 to use a custom type in an MPI call.\n",
+                type_name
+            );
+        }
+
+        let universe_state = universe_state.as_ref().unwrap();
+
+        if crate::environment::is_finalized() {
+            panic!(
+                "\n\
+                 RSMPI PANIC: Post-MPI_Finalize datatype initialization.\n\
+                 \n\
+                 Application attempted to initialize datatype of #[derive(Equivalence)] for \
+                 `{0}` after finalizing rsmpi. You must not attempt to use `{0}` in an MPI context \
+                 after finalizing rsmpi.\n",
+                type_name
+            );
+        }
+
+        if crate::environment::threading_support() != crate::Threading::Multiple {
+            if universe_state.main_thread != std::thread::current().id() {
+                panic!(
+                    "\n\
+                     RSMPI PANIC: Invalid threaded datatype initialization\n\
+                     \n\
+                     Application attempted to initialize the datatype of #[derive(Equivalence)]
+                     for `{0}` from a different thread than that which initialized `rsmpi`. This \
+                     is only supported when rsmpi is initialized with \
+                     `mpi::Threading::Multiple`. Please explicitly call \
+                     `{0}::equivalent_datatype()` at least once from the same thread as you call \
+                     `rsmpi::initialize*`, or initialize MPI using \
+                     `mpi::initialize_with_threading(mpi::Threading::Multiple)`.\n",
+                    type_name
+                )
+            }
+        }
     }
 }
 

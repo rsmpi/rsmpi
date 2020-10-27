@@ -161,6 +161,18 @@ pub mod traits {
     pub use crate::point_to_point::traits::*;
     pub use crate::raw::traits::*;
     pub use crate::topology::traits::*;
+
+    // Re-export derives
+    #[cfg(feature = "derive")]
+    pub use mpi_derive::Equivalence;
+}
+
+/// These crates are used by mpi-derive, and so must be public, but shouldn't be used by dependent
+/// crates
+#[doc(hidden)]
+pub mod internal {
+    pub use memoffset;
+    pub use once_cell;
 }
 
 #[doc(inline)]
