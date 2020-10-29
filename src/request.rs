@@ -42,7 +42,7 @@ use crate::with_uninitialized;
 
 /// Check if the request is `MPI_REQUEST_NULL`.
 fn is_null(request: MPI_Request) -> bool {
-    request == unsafe_extern_static!(ffi::RSMPI_REQUEST_NULL)
+    request == unsafe { ffi::RSMPI_REQUEST_NULL }
 }
 
 /// A request object for a non-blocking operation registered with a `Scope` of lifetime `'a`

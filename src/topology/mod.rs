@@ -73,13 +73,13 @@ impl SystemCommunicator {
     /// # Examples
     /// See `examples/simple.rs`
     pub fn world() -> SystemCommunicator {
-        SystemCommunicator::from_raw_unchecked(unsafe_extern_static!(ffi::RSMPI_COMM_WORLD))
+        SystemCommunicator::from_raw_unchecked(unsafe { ffi::RSMPI_COMM_WORLD })
     }
 
     /// If the raw value is the null handle returns `None`
     #[allow(dead_code)]
     fn from_raw(raw: MPI_Comm) -> Option<SystemCommunicator> {
-        if raw == unsafe_extern_static!(ffi::RSMPI_COMM_NULL) {
+        if raw == unsafe { ffi::RSMPI_COMM_NULL } {
             None
         } else {
             Some(SystemCommunicator(raw))
@@ -88,7 +88,7 @@ impl SystemCommunicator {
 
     /// Wraps the raw value without checking for null handle
     fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicator {
-        debug_assert_ne!(raw, unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
+        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
         SystemCommunicator(raw)
     }
 }
@@ -153,7 +153,7 @@ impl UserCommunicator {
 
     /// Wraps the raw value without checking for null handle
     fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
-        debug_assert_ne!(raw, unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
+        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
         UserCommunicator(raw)
     }
 
@@ -215,7 +215,7 @@ impl Drop for UserCommunicator {
         unsafe {
             ffi::MPI_Comm_free(&mut self.0);
         }
-        assert_eq!(self.0, unsafe_extern_static!(ffi::RSMPI_COMM_NULL));
+        assert_eq!(self.0, unsafe { ffi::RSMPI_COMM_NULL });
     }
 }
 
@@ -240,7 +240,7 @@ pub struct Color(c_int);
 impl Color {
     /// Special color of undefined value
     pub fn undefined() -> Color {
-        Color(unsafe_extern_static!(ffi::RSMPI_UNDEFINED))
+        Color(unsafe { ffi::RSMPI_UNDEFINED })
     }
 
     /// A color of a certain value
@@ -746,13 +746,13 @@ impl From<c_int> for CommunicatorRelation {
     fn from(i: c_int) -> CommunicatorRelation {
         use self::CommunicatorRelation::*;
         // FIXME: Yuck! These should be made const.
-        if i == unsafe_extern_static!(ffi::RSMPI_IDENT) {
+        if i == unsafe { ffi::RSMPI_IDENT } {
             return Identical;
-        } else if i == unsafe_extern_static!(ffi::RSMPI_CONGRUENT) {
+        } else if i == unsafe { ffi::RSMPI_CONGRUENT } {
             return Congruent;
-        } else if i == unsafe_extern_static!(ffi::RSMPI_SIMILAR) {
+        } else if i == unsafe { ffi::RSMPI_SIMILAR } {
             return Similar;
-        } else if i == unsafe_extern_static!(ffi::RSMPI_UNEQUAL) {
+        } else if i == unsafe { ffi::RSMPI_UNEQUAL } {
             return Unequal;
         }
         panic!("Unknown communicator relation: {}", i)
@@ -775,7 +775,7 @@ where
 {
     #[allow(dead_code)]
     fn by_rank(c: &'a C, r: Rank) -> Option<Self> {
-        if r != unsafe_extern_static!(ffi::RSMPI_PROC_NULL) {
+        if r != unsafe { ffi::RSMPI_PROC_NULL } {
             Some(Process { comm: c, rank: r })
         } else {
             None
@@ -829,7 +829,7 @@ pub struct SystemGroup(MPI_Group);
 impl SystemGroup {
     /// An empty group
     pub fn empty() -> SystemGroup {
-        SystemGroup(unsafe_extern_static!(ffi::RSMPI_GROUP_EMPTY))
+        SystemGroup(unsafe { ffi::RSMPI_GROUP_EMPTY })
     }
 }
 
@@ -854,7 +854,7 @@ impl Drop for UserGroup {
         unsafe {
             ffi::MPI_Group_free(&mut self.0);
         }
-        assert_eq!(self.0, unsafe_extern_static!(ffi::RSMPI_GROUP_NULL));
+        assert_eq!(self.0, unsafe { ffi::RSMPI_GROUP_NULL });
     }
 }
 
@@ -1076,11 +1076,11 @@ impl From<c_int> for GroupRelation {
     fn from(i: c_int) -> GroupRelation {
         use self::GroupRelation::*;
         // FIXME: Yuck! These should be made const.
-        if i == unsafe_extern_static!(ffi::RSMPI_IDENT) {
+        if i == unsafe { ffi::RSMPI_IDENT } {
             return Identical;
-        } else if i == unsafe_extern_static!(ffi::RSMPI_SIMILAR) {
+        } else if i == unsafe { ffi::RSMPI_SIMILAR } {
             return Similar;
-        } else if i == unsafe_extern_static!(ffi::RSMPI_UNEQUAL) {
+        } else if i == unsafe { ffi::RSMPI_UNEQUAL } {
             return Unequal;
         }
         panic!("Unknown group relation: {}", i)

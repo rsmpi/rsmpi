@@ -130,20 +130,6 @@ use std::os::raw::c_int;
 #[macro_use]
 pub mod ffi {
     pub use mpi_sys::*;
-
-    #[cfg(extern_statics_are_unsafe)]
-    macro_rules! unsafe_extern_static {
-        ( $x:expr ) => {
-            unsafe { $x }
-        };
-    }
-
-    #[cfg(not(extern_statics_are_unsafe))]
-    macro_rules! unsafe_extern_static {
-        ( $x:expr ) => {
-            $x
-        };
-    }
 }
 
 pub mod collective;

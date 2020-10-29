@@ -380,7 +380,7 @@ impl Drop for UserDatatype {
         unsafe {
             ffi::MPI_Type_free(&mut self.0);
         }
-        assert_eq!(self.0, unsafe_extern_static!(ffi::RSMPI_DATATYPE_NULL));
+        assert_eq!(self.0, unsafe { ffi::RSMPI_DATATYPE_NULL });
     }
 }
 
@@ -696,7 +696,7 @@ impl Drop for UncommittedUserDatatype {
         unsafe {
             ffi::MPI_Type_free(&mut self.0);
         }
-        assert_eq!(self.0, unsafe_extern_static!(ffi::RSMPI_DATATYPE_NULL));
+        assert_eq!(self.0, unsafe { ffi::RSMPI_DATATYPE_NULL });
     }
 }
 
