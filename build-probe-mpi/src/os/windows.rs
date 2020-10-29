@@ -22,9 +22,9 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
         }
     };
 
-    let lib_env = if cfg!(target_arch = "i686") {
+    let lib_env = if env::var("CARGO_CFG_TARGET_ARCH") == Ok("x86".to_string()) {
         "MSMPI_LIB32"
-    } else if cfg!(target_arch = "x86_64") {
+    } else if env::var("CARGO_CFG_TARGET_ARCH") == Ok("x86_64".to_string()) {
         "MSMPI_LIB64"
     } else {
         panic!("rsmpi does not support your windows architecture!");
@@ -47,7 +47,7 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
         libs: vec!["msmpi".to_owned()],
         lib_paths: vec![lib_path.map(PathBuf::from).unwrap()],
         include_paths: vec![include_path.map(PathBuf::from).unwrap()],
-        version: String::from("unknown"),
+        version: String::from("MS-MPI"),
         _priv: (),
     })
 }

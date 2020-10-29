@@ -1786,8 +1786,17 @@ unsafe impl AsRaw for UnsafeUserOperation {
 impl<'a> Operation for &'a UnsafeUserOperation {}
 
 /// A raw pointer to a function that can be used to define an `UnsafeUserOperation`.
+#[cfg(not(all(msmpi, target_arch = "x86")))]
 pub type UnsafeUserFunction =
     unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
+
+/// A raw pointer to a function that can be used to define an `UnsafeUserOperation`.
+///
+/// MS-MPI uses "stdcall" rather than "C" calling convention. "stdcall" is ignored on x86_64
+/// Windows and the default calling convention is used instead.
+#[cfg(all(msmpi, target_arch = "x86"))]
+pub type UnsafeUserFunction =
+    unsafe extern "stdcall" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
 
 impl UnsafeUserOperation {
     /// Define an unsafe operation using a function pointer. The operation must be associative.
