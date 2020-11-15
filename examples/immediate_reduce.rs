@@ -33,7 +33,24 @@ fn test_user_operations<C: Communicator>(comm: C) {
 #[cfg(not(feature = "user-operations"))]
 fn test_user_operations<C: Communicator>(_: C) {}
 
+#[cfg(not(all(msmpi, target_arch = "x86")))]
 unsafe extern "C" fn unsafe_add(
+    invec: *mut c_void,
+    inoutvec: *mut c_void,
+    len: *mut c_int,
+    _datatype: *mut MPI_Datatype,
+) {
+    use std::slice;
+
+    let x: &[Rank] = slice::from_raw_parts(invec as *const Rank, *len as usize);
+    let y: &mut [Rank] = slice::from_raw_parts_mut(inoutvec as *mut Rank, *len as usize);
+    for (&x_i, y_i) in x.iter().zip(y) {
+        *y_i += x_i;
+    }
+}
+
+#[cfg(all(msmpi, target_arch = "x86"))]
+unsafe extern "stdcall" fn unsafe_add(
     invec: *mut c_void,
     inoutvec: *mut c_void,
     len: *mut c_int,
@@ -90,7 +107,7 @@ fn main() {
             .immediate_reduce_scatter_block_into(scope, &a[..], &mut b, SystemOperation::product())
             .wait();
     });
-    assert_eq!(b, rank.pow(size as u32));
+    assert_eq!(b, rank.wrapping_pow(size as u32));
 
     test_user_operations(universe.world());
 

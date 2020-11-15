@@ -21,25 +21,25 @@ fn main() {
         }
     };
 
-    // Use `mpicc` wrapper on Unix rather than the system C compiler.
+    let mut builder = cc::Build::new();
+    builder.file("src/rsmpi.c");
+
+    let compiler = builder.try_get_compiler();
+
     if cfg!(windows) {
-        let mut builder = cc::Build::new();
-
-        builder.file("src/rsmpi.c");
-
         for inc in &lib.include_paths {
             builder.include(inc);
         }
 
-        builder.compile("librsmpi.a");
-
         // Adds a cfg to identify MS-MPI
         println!("cargo:rustc-cfg=msmpi");
     } else {
+        // Use `mpicc` wrapper on Unix rather than the system C compiler.
         env::set_var("CC", "mpicc");
-        // Build the `rsmpi` C shim library.
-        cc::Build::new().file("src/rsmpi.c").compile("librsmpi.a");
     }
+
+    // Build the `rsmpi` C shim library.
+    builder.compile("rsmpi");
 
     // Let `rustc` know about the library search directories.
     for dir in &lib.lib_paths {
@@ -53,6 +53,22 @@ fn main() {
     // Let `bindgen` know about header search directories.
     for dir in &lib.include_paths {
         builder = builder.clang_arg(format!("-I{}", dir.display()));
+    }
+
+    // Get the same system includes as used to build the "rsmpi" lib. This block only really does
+    // anything when targeting msvc.
+    if let Ok(compiler) = compiler {
+        let include_env = compiler
+            .env()
+            .iter()
+            .filter(|(key, _)| key == "INCLUDE")
+            .next();
+        if let Some((_, include_paths)) = include_env {
+            if let Some(include_paths) = include_paths.to_str() {
+                // Add include paths via -I
+                builder = builder.clang_args(include_paths.split(";").map(|i| format!("-I{}", i)));
+            }
+        }
     }
 
     // Generate Rust bindings for the MPI C API.

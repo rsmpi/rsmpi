@@ -15,7 +15,7 @@ use std::os::raw::{c_int, c_void};
 use std::{fmt, ptr};
 
 #[cfg(feature = "user-operations")]
-use libffi::high::Closure4;
+use libffi::middle::{Cif, Closure, Type};
 
 use crate::ffi;
 use crate::ffi::MPI_Op;
@@ -1687,10 +1687,9 @@ impl<'a> UserOperation<'a> {
     {
         struct ClosureAnchor<F> {
             rust_closure: F,
-            ffi_closure: Option<
-                Closure4<'static, *mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype, ()>,
-            >,
+            ffi_closure: Option<Closure<'static>>,
         }
+
         // must box it to prevent moves
         let mut anchor = Box::new(ClosureAnchor {
             rust_closure: move |invec, inoutvec, len, datatype| unsafe {
@@ -1698,11 +1697,45 @@ impl<'a> UserOperation<'a> {
             },
             ffi_closure: None,
         });
+
+        let args = vec![
+            Type::pointer(), // void *
+            Type::pointer(), // void *
+            Type::pointer(), // int32_t *
+            Type::pointer(), // MPI_Datatype *
+        ];
+        #[allow(unused_mut)]
+        let mut cif = Cif::new(args, Type::void());
+        // MS-MPI uses "stdcall" calling convention on 32-bit x86
+        #[cfg(all(msmpi, target_arch = "x86"))]
+        cif.set_abi(libffi::raw::ffi_abi_FFI_STDCALL);
+
+        unsafe extern "C" fn trampoline<
+            'a,
+            F: Fn(*mut c_void, *mut c_void, *mut i32, *mut ffi::MPI_Datatype) + Sync + 'a,
+        >(
+            cif: &libffi::low::ffi_cif,
+            _result: &mut c_void,
+            args: *const *const c_void,
+            userdata: &F,
+        ) {
+            debug_assert_eq!(4, cif.nargs);
+
+            let (invec, inoutvec, len, datatype) = (
+                *(*args.offset(0) as *const *mut c_void),
+                *(*args.offset(1) as *const *mut c_void),
+                *(*args.offset(2) as *const *mut i32),
+                *(*args.offset(3) as *const *mut ffi::MPI_Datatype),
+            );
+
+            userdata(invec, inoutvec, len, datatype);
+        }
+
         let op;
         anchor.ffi_closure = Some(unsafe {
-            let ffi_closure = Closure4::new(&anchor.rust_closure);
+            let ffi_closure = Closure::new(cif, trampoline, &anchor.rust_closure);
             op = with_uninitialized(|op| {
-                ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, op)
+                ffi::MPI_Op_create(Some(*ffi_closure.instantiate_code_ptr()), commute as _, op)
             })
             .1;
             mem::transmute(ffi_closure) // erase the lifetime
