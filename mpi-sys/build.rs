@@ -58,11 +58,7 @@ fn main() {
     // Get the same system includes as used to build the "rsmpi" lib. This block only really does
     // anything when targeting msvc.
     if let Ok(compiler) = compiler {
-        let include_env = compiler
-            .env()
-            .iter()
-            .filter(|(key, _)| key == "INCLUDE")
-            .next();
+        let include_env = compiler.env().iter().find(|(key, _)| key == "INCLUDE");
         if let Some((_, include_paths)) = include_env {
             if let Some(include_paths) = include_paths.to_str() {
                 // Add include paths via -I
