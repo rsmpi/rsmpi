@@ -24,8 +24,6 @@ fn main() {
     let mut builder = cc::Build::new();
     builder.file("src/rsmpi.c");
 
-    let compiler = builder.try_get_compiler();
-
     if cfg!(windows) {
         for inc in &lib.include_paths {
             builder.include(inc);
@@ -35,8 +33,10 @@ fn main() {
         println!("cargo:rustc-cfg=msmpi");
     } else {
         // Use `mpicc` wrapper on Unix rather than the system C compiler.
-        env::set_var("CC", "mpicc");
+        builder.compiler("mpicc");
     }
+
+    let compiler = builder.try_get_compiler();
 
     // Build the `rsmpi` C shim library.
     builder.compile("rsmpi");
