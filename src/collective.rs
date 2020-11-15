@@ -1692,8 +1692,21 @@ impl<'a> UserOperation<'a> {
 
         // must box it to prevent moves
         let mut anchor = Box::new(ClosureAnchor {
-            rust_closure: move |invec, inoutvec, len, datatype| unsafe {
-                user_operation_landing_pad(&function, invec, inoutvec, len, datatype)
+            rust_closure: move |mut invec: *mut c_void,
+                                mut inoutvec: *mut c_void,
+                                len: *mut i32,
+                                datatype: *mut ffi::MPI_Datatype| unsafe {
+                let len = *len;
+                let datatype = DatatypeRef::from_raw(*datatype);
+                if len == 0 {
+                    // precautionary measure: ensure pointers are not null
+                    invec = [].as_mut_ptr();
+                    inoutvec = [].as_mut_ptr();
+                }
+                function(
+                    DynBuffer::from_raw(invec, len, datatype),
+                    DynBufferMut::from_raw(inoutvec, len, datatype),
+                )
             },
             ffi_closure: None,
         });
@@ -1756,29 +1769,6 @@ impl<'a> UserOperation<'a> {
             _anchor: anchor,
         }
     }
-}
-
-#[cfg(feature = "user-operations")]
-unsafe fn user_operation_landing_pad<F>(
-    function: &F,
-    mut invec: *mut c_void,
-    mut inoutvec: *mut c_void,
-    len: *mut c_int,
-    datatype: *mut ffi::MPI_Datatype,
-) where
-    F: Fn(DynBuffer, DynBufferMut),
-{
-    let len = *len;
-    let datatype = DatatypeRef::from_raw(*datatype);
-    if len == 0 {
-        // precautionary measure: ensure pointers are not null
-        invec = [].as_mut_ptr();
-        inoutvec = [].as_mut_ptr();
-    }
-    function(
-        DynBuffer::from_raw(invec, len, datatype),
-        DynBufferMut::from_raw(inoutvec, len, datatype),
-    );
 }
 
 /// An unsafe user-defined operation.
