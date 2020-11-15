@@ -1692,22 +1692,7 @@ impl<'a> UserOperation<'a> {
 
         // must box it to prevent moves
         let mut anchor = Box::new(ClosureAnchor {
-            rust_closure: move |mut invec: *mut c_void,
-                                mut inoutvec: *mut c_void,
-                                len: *mut i32,
-                                datatype: *mut ffi::MPI_Datatype| unsafe {
-                let len = *len;
-                let datatype = DatatypeRef::from_raw(*datatype);
-                if len == 0 {
-                    // precautionary measure: ensure pointers are not null
-                    invec = [].as_mut_ptr();
-                    inoutvec = [].as_mut_ptr();
-                }
-                function(
-                    DynBuffer::from_raw(invec, len, datatype),
-                    DynBufferMut::from_raw(inoutvec, len, datatype),
-                )
-            },
+            rust_closure: function,
             ffi_closure: None,
         });
 
@@ -1723,25 +1708,33 @@ impl<'a> UserOperation<'a> {
         #[cfg(all(msmpi, target_arch = "x86"))]
         cif.set_abi(libffi::raw::ffi_abi_FFI_STDCALL);
 
-        unsafe extern "C" fn trampoline<
-            'a,
-            F: Fn(*mut c_void, *mut c_void, *mut i32, *mut ffi::MPI_Datatype) + Sync + 'a,
-        >(
+        unsafe extern "C" fn trampoline<'a, F: Fn(DynBuffer, DynBufferMut) + Sync + 'a>(
             cif: &libffi::low::ffi_cif,
             _result: &mut c_void,
             args: *const *const c_void,
-            userdata: &F,
+            user_function: &F,
         ) {
             debug_assert_eq!(4, cif.nargs);
 
-            let (invec, inoutvec, len, datatype) = (
+            let (mut invec, mut inoutvec, len, datatype) = (
                 *(*args.offset(0) as *const *mut c_void),
                 *(*args.offset(1) as *const *mut c_void),
                 *(*args.offset(2) as *const *mut i32),
                 *(*args.offset(3) as *const *mut ffi::MPI_Datatype),
             );
 
-            userdata(invec, inoutvec, len, datatype);
+            let len = *len;
+            let datatype = DatatypeRef::from_raw(*datatype);
+            if len == 0 {
+                // precautionary measure: ensure pointers are not null
+                invec = [].as_mut_ptr();
+                inoutvec = [].as_mut_ptr();
+            }
+
+            user_function(
+                DynBuffer::from_raw(invec, len, datatype),
+                DynBufferMut::from_raw(inoutvec, len, datatype),
+            )
         }
 
         let op;
