@@ -1711,14 +1711,14 @@ impl<'a> UserOperation<'a> {
             ffi_closure: None,
         });
 
-        let args: smallvec::SmallVec<[Type; 4]> = smallvec::smallvec![
+        let args = [
             Type::pointer(), // void *
             Type::pointer(), // void *
             Type::pointer(), // int32_t *
             Type::pointer(), // MPI_Datatype *
         ];
         #[allow(unused_mut)]
-        let mut cif = Cif::new(args, Type::void());
+        let mut cif = Cif::new(args.iter().cloned(), Type::void());
         // MS-MPI uses "stdcall" calling convention on 32-bit x86
         #[cfg(all(msmpi, target_arch = "x86"))]
         cif.set_abi(libffi::raw::ffi_abi_FFI_STDCALL);
