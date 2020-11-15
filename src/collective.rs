@@ -1698,7 +1698,7 @@ impl<'a> UserOperation<'a> {
             ffi_closure: None,
         });
 
-        let args = vec![
+        let args: smallvec::SmallVec<[Type; 4]> = smallvec::smallvec![
             Type::pointer(), // void *
             Type::pointer(), // void *
             Type::pointer(), // int32_t *
