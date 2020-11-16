@@ -34,7 +34,7 @@ fn test_user_operations<C: Communicator>(comm: C) {
 #[cfg(not(feature = "user-operations"))]
 fn test_user_operations<C: Communicator>(_: C) {}
 
-#[cfg(not(msmpi))]
+#[cfg(not(all(msmpi, target_arch = "x86")))]
 unsafe extern "C" fn unsafe_add(
     invec: *mut c_void,
     inoutvec: *mut c_void,
@@ -50,7 +50,7 @@ unsafe extern "C" fn unsafe_add(
     }
 }
 
-#[cfg(msmpi)]
+#[cfg(all(msmpi, target_arch = "x86"))]
 unsafe extern "stdcall" fn unsafe_add(
     invec: *mut c_void,
     inoutvec: *mut c_void,
@@ -109,7 +109,7 @@ fn main() {
     let mut g: Rank = 0;
 
     world.reduce_scatter_block_into(&f[..], &mut g, SystemOperation::product());
-    assert_eq!(g, rank.pow(size as u32));
+    assert_eq!(g, rank.wrapping_pow(size as u32));
 
     test_user_operations(universe.world());
 

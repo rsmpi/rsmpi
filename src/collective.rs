@@ -9,13 +9,13 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-#[cfg(any(msmpi, feature = "user-operations"))]
+#[cfg(feature = "user-operations")]
 use std::mem;
 use std::os::raw::{c_int, c_void};
 use std::{fmt, ptr};
 
 #[cfg(feature = "user-operations")]
-use libffi::high::Closure4;
+use libffi::middle::{Cif, Closure, Type};
 
 use crate::ffi;
 use crate::ffi::MPI_Op;
@@ -1687,22 +1687,61 @@ impl<'a> UserOperation<'a> {
     {
         struct ClosureAnchor<F> {
             rust_closure: F,
-            ffi_closure: Option<
-                Closure4<'static, *mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype, ()>,
-            >,
+            ffi_closure: Option<Closure<'static>>,
         }
+
         // must box it to prevent moves
         let mut anchor = Box::new(ClosureAnchor {
-            rust_closure: move |invec, inoutvec, len, datatype| unsafe {
-                user_operation_landing_pad(&function, invec, inoutvec, len, datatype)
-            },
+            rust_closure: function,
             ffi_closure: None,
         });
+
+        let args = [
+            Type::pointer(), // void *
+            Type::pointer(), // void *
+            Type::pointer(), // int32_t *
+            Type::pointer(), // MPI_Datatype *
+        ];
+        #[allow(unused_mut)]
+        let mut cif = Cif::new(args.iter().cloned(), Type::void());
+        // MS-MPI uses "stdcall" calling convention on 32-bit x86
+        #[cfg(all(msmpi, target_arch = "x86"))]
+        cif.set_abi(libffi::raw::ffi_abi_FFI_STDCALL);
+
+        unsafe extern "C" fn trampoline<'a, F: Fn(DynBuffer, DynBufferMut) + Sync + 'a>(
+            cif: &libffi::low::ffi_cif,
+            _result: &mut c_void,
+            args: *const *const c_void,
+            user_function: &F,
+        ) {
+            debug_assert_eq!(4, cif.nargs);
+
+            let (mut invec, mut inoutvec, len, datatype) = (
+                *(*args.offset(0) as *const *mut c_void),
+                *(*args.offset(1) as *const *mut c_void),
+                *(*args.offset(2) as *const *mut i32),
+                *(*args.offset(3) as *const *mut ffi::MPI_Datatype),
+            );
+
+            let len = *len;
+            let datatype = DatatypeRef::from_raw(*datatype);
+            if len == 0 {
+                // precautionary measure: ensure pointers are not null
+                invec = [].as_mut_ptr();
+                inoutvec = [].as_mut_ptr();
+            }
+
+            user_function(
+                DynBuffer::from_raw(invec, len, datatype),
+                DynBufferMut::from_raw(inoutvec, len, datatype),
+            )
+        }
+
         let op;
         anchor.ffi_closure = Some(unsafe {
-            let ffi_closure = Closure4::new(&anchor.rust_closure);
+            let ffi_closure = Closure::new(cif, trampoline, &anchor.rust_closure);
             op = with_uninitialized(|op| {
-                ffi::MPI_Op_create(Some(*ffi_closure.code_ptr()), commute as _, op)
+                ffi::MPI_Op_create(Some(*ffi_closure.instantiate_code_ptr()), commute as _, op)
             })
             .1;
             mem::transmute(ffi_closure) // erase the lifetime
@@ -1723,29 +1762,6 @@ impl<'a> UserOperation<'a> {
             _anchor: anchor,
         }
     }
-}
-
-#[cfg(feature = "user-operations")]
-unsafe fn user_operation_landing_pad<F>(
-    function: &F,
-    mut invec: *mut c_void,
-    mut inoutvec: *mut c_void,
-    len: *mut c_int,
-    datatype: *mut ffi::MPI_Datatype,
-) where
-    F: Fn(DynBuffer, DynBufferMut),
-{
-    let len = *len;
-    let datatype = DatatypeRef::from_raw(*datatype);
-    if len == 0 {
-        // precautionary measure: ensure pointers are not null
-        invec = [].as_mut_ptr();
-        inoutvec = [].as_mut_ptr();
-    }
-    function(
-        DynBuffer::from_raw(invec, len, datatype),
-        DynBufferMut::from_raw(inoutvec, len, datatype),
-    );
 }
 
 /// An unsafe user-defined operation.
@@ -1786,15 +1802,15 @@ unsafe impl AsRaw for UnsafeUserOperation {
 impl<'a> Operation for &'a UnsafeUserOperation {}
 
 /// A raw pointer to a function that can be used to define an `UnsafeUserOperation`.
-#[cfg(not(msmpi))]
+#[cfg(not(all(msmpi, target_arch = "x86")))]
 pub type UnsafeUserFunction =
     unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
 
 /// A raw pointer to a function that can be used to define an `UnsafeUserOperation`.
 ///
-/// MS-MPI uses "stdcall" rather than "C" calling convention. These are actually equivalent on
-/// 64-bit Windows, but diverge on 32-bit Windows.
-#[cfg(msmpi)]
+/// MS-MPI uses "stdcall" rather than "C" calling convention. "stdcall" is ignored on x86_64
+/// Windows and the default calling convention is used instead.
+#[cfg(all(msmpi, target_arch = "x86"))]
 pub type UnsafeUserFunction =
     unsafe extern "stdcall" fn(*mut c_void, *mut c_void, *mut c_int, *mut ffi::MPI_Datatype);
 
@@ -1831,15 +1847,6 @@ impl UnsafeUserOperation {
     ///
     /// 5.9.5
     pub unsafe fn new(commute: bool, function: UnsafeUserFunction) -> Self {
-        // NOTE 10/31/2018: bindgen, on both the currently used version of 0.31.3, and the most
-        // recent version, 0.43.0, does not generate correct function signatures for functions
-        // with __stdcall calling conventions. So here we cast the function pointer to the
-        // degenerate function signature that the bindgen'd MPI_Op_create function expects.
-        //
-        // See: https://github.com/rust-lang-nursery/rust-bindgen/issues/1433
-        #[cfg(msmpi)]
-        let function = mem::transmute(function);
-
         UnsafeUserOperation {
             op: with_uninitialized(|op| ffi::MPI_Op_create(Some(function), commute as _, op)).1,
         }
