@@ -11,9 +11,10 @@ fn main() {
     let count = world.size() as usize;
 
     let mut a = vec![mpi::Bool::default(); count];
+    // Sending bool is OK, but receiving requires mpi::Bool for safety
     world.all_gather_into(&(rank % 2 == 0), &mut a[..]);
 
-    let answer: Vec<mpi::Bool> = (0..count).map(|i| (i % 2 == 0).into()).collect();
+    let answer: Vec<_> = (0..count).map(|i| i % 2 == 0).collect();
 
     assert_eq!(answer, a);
 }
