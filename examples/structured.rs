@@ -22,10 +22,8 @@ unsafe impl Equivalence for MyInts {
     }
 }
 
-// No padding
-unsafe impl ToBytes for MyInts {}
 // All bit patterns valid
-unsafe impl FromAnyBytes for MyInts {}
+unsafe impl EquivalenceFromAnyBytes for MyInts {}
 
 fn main() {
     let universe = mpi::initialize().unwrap();

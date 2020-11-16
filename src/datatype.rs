@@ -68,7 +68,7 @@
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 use std::os::raw::c_void;
-use std::{mem, slice};
+use std::{mem, num, slice};
 
 use conv::ConvUtil;
 
@@ -177,7 +177,7 @@ pub unsafe trait Equivalence {
     fn equivalent_datatype() -> Self::Out;
 }
 
-macro_rules! equivalent_system_datatype {
+macro_rules! equivalent_system_datatype_unsafe_transmute {
     ($rstype:path, $mpitype:path) => {
         unsafe impl Equivalence for $rstype {
             type Out = SystemDatatype;
@@ -188,7 +188,15 @@ macro_rules! equivalent_system_datatype {
     };
 }
 
-equivalent_system_datatype!(bool, ffi::RSMPI_C_BOOL);
+macro_rules! equivalent_system_datatype {
+    ($rstype:path, $mpitype:path) => {
+        equivalent_system_datatype_unsafe_transmute!($rstype, $mpitype);
+
+        unsafe impl EquivalenceFromAnyBytes for $rstype {}
+    };
+}
+
+equivalent_system_datatype_unsafe_transmute!(bool, ffi::RSMPI_C_BOOL);
 
 equivalent_system_datatype!(f32, ffi::RSMPI_FLOAT);
 equivalent_system_datatype!(f64, ffi::RSMPI_DOUBLE);
@@ -197,21 +205,63 @@ equivalent_system_datatype!(i8, ffi::RSMPI_INT8_T);
 equivalent_system_datatype!(i16, ffi::RSMPI_INT16_T);
 equivalent_system_datatype!(i32, ffi::RSMPI_INT32_T);
 equivalent_system_datatype!(i64, ffi::RSMPI_INT64_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroI8, ffi::RSMPI_INT8_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroI16, ffi::RSMPI_INT16_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroI32, ffi::RSMPI_INT32_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroI64, ffi::RSMPI_INT64_T);
+equivalent_system_datatype!(Option<num::NonZeroI8>, ffi::RSMPI_INT8_T);
+equivalent_system_datatype!(Option<num::NonZeroI16>, ffi::RSMPI_INT16_T);
+equivalent_system_datatype!(Option<num::NonZeroI32>, ffi::RSMPI_INT32_T);
+equivalent_system_datatype!(Option<num::NonZeroI64>, ffi::RSMPI_INT64_T);
 
 equivalent_system_datatype!(u8, ffi::RSMPI_UINT8_T);
 equivalent_system_datatype!(u16, ffi::RSMPI_UINT16_T);
 equivalent_system_datatype!(u32, ffi::RSMPI_UINT32_T);
 equivalent_system_datatype!(u64, ffi::RSMPI_UINT64_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroU8, ffi::RSMPI_UINT8_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroU16, ffi::RSMPI_UINT16_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroU32, ffi::RSMPI_UINT32_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroU64, ffi::RSMPI_UINT64_T);
+equivalent_system_datatype!(Option<num::NonZeroU8>, ffi::RSMPI_UINT8_T);
+equivalent_system_datatype!(Option<num::NonZeroU16>, ffi::RSMPI_UINT16_T);
+equivalent_system_datatype!(Option<num::NonZeroU32>, ffi::RSMPI_UINT32_T);
+equivalent_system_datatype!(Option<num::NonZeroU64>, ffi::RSMPI_UINT64_T);
 
 #[cfg(target_pointer_width = "32")]
-equivalent_system_datatype!(usize, ffi::RSMPI_UINT32_T);
-#[cfg(target_pointer_width = "32")]
-equivalent_system_datatype!(isize, ffi::RSMPI_INT32_T);
+mod ptr32_equivalences {
+    use super::*;
+
+    equivalent_system_datatype!(isize, ffi::RSMPI_INT32_T);
+    equivalent_system_datatype_unsafe_transmute!(num::NonZeroIsize, ffi::RSMPI_INT32_T);
+    equivalent_system_datatype!(Option<num::NonZeroIsize>, ffi::RSMPI_INT32_T);
+    equivalent_system_datatype!(usize, ffi::RSMPI_UINT32_T);
+    equivalent_system_datatype_unsafe_transmute!(num::NonZeroUsize, ffi::RSMPI_UINT32_T);
+    equivalent_system_datatype!(Option<num::NonZeroUsize>, ffi::RSMPI_UINT32_T);
+}
 
 #[cfg(target_pointer_width = "64")]
-equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
-#[cfg(target_pointer_width = "64")]
-equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
+mod ptr64_equivalences {
+    use super::*;
+
+    equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
+    equivalent_system_datatype_unsafe_transmute!(num::NonZeroIsize, ffi::RSMPI_INT64_T);
+    equivalent_system_datatype!(Option<num::NonZeroIsize>, ffi::RSMPI_INT64_T);
+    equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
+    equivalent_system_datatype_unsafe_transmute!(num::NonZeroUsize, ffi::RSMPI_UINT64_T);
+    equivalent_system_datatype!(Option<num::NonZeroUsize>, ffi::RSMPI_UINT64_T);
+}
+
+/// Allow datatypes with Equivalence to be used in buffer packing functions
+unsafe impl<T> Equivalence for mem::MaybeUninit<T>
+where
+    T: Equivalence,
+{
+    type Out = T::Out;
+
+    fn equivalent_datatype() -> Self::Out {
+        T::equivalent_datatype()
+    }
+}
 
 /// A user defined MPI datatype
 ///
@@ -922,14 +972,14 @@ where
 /// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
 /// `as_datatype()`.
 pub unsafe trait Buffer: Pointer + Collection + AsDatatype {}
-unsafe impl<T> Buffer for T where T: Equivalence + ToBytes {}
-unsafe impl<T> Buffer for [T] where T: Equivalence + ToBytes {}
+unsafe impl<T> Buffer for T where T: Equivalence {}
+unsafe impl<T> Buffer for [T] where T: Equivalence {}
 
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
 /// copies of `as_datatype()`.
 pub unsafe trait BufferMut: PointerMut + Collection + AsDatatype {}
-unsafe impl<T> BufferMut for T where T: Equivalence + FromAnyBytes {}
-unsafe impl<T> BufferMut for [T] where T: Equivalence + FromAnyBytes {}
+unsafe impl<T> BufferMut for T where T: Equivalence + EquivalenceFromAnyBytes {}
+unsafe impl<T> BufferMut for [T] where T: Equivalence + EquivalenceFromAnyBytes {}
 
 /// An immutable dynamically-typed buffer.
 ///

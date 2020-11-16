@@ -20,10 +20,8 @@ struct TupleType(
     u16, // unused
 );
 
-// no padding
-unsafe impl ToBytes for TupleType {}
 // All subfields are `FromAnyBytes`.
-unsafe impl FromAnyBytes for TupleType {}
+unsafe impl EquivalenceFromAnyBytes for TupleType {}
 
 #[derive(Default, Copy, Clone)]
 #[repr(C)]
@@ -62,10 +60,8 @@ unsafe impl Equivalence for ComplexDatatype {
     }
 }
 
-// no padding
-unsafe impl ToBytes for ComplexDatatype {}
 // All subfields are `FromAnyBytes`.
-unsafe impl FromAnyBytes for ComplexDatatype {}
+unsafe impl EquivalenceFromAnyBytes for ComplexDatatype {}
 
 fn main() {
     let universe = mpi::initialize().unwrap();

@@ -174,18 +174,23 @@ comm.all_reduce_into(
 );
 ```
 
-`derive` enables the `Equivalence` derive macro, which makes it easy to send structs
-over-the-wire without worrying about safety around padding, and allowing arbitrary datatype
-matching between structs with the same field order but different layout.
+`derive` enables the `Equivalence` and `EquivalenceFromAnyBytes` derive macros, which makes it easy 
+to send structs over-the-wire without worrying about safety around padding, and allowing arbitrary 
+datatype matching between structs with the same field order but different layout.
 
 ```rust
-#[derive(Equivalence)]
+#[derive(Equivalence, EquivalenceFromAnyBytes)]
 struct MyProgramOpts {
     name: [u8; 100],
     num_cycles: u32,
     material_properties: [f64; 20],
 }
 ```
+
+NOTE: `#[derive(EquivalenceFromAnyBytes)]` should be used in almost all circumstances. 
+This derive is required to receive into values of the designated type. Alternatively, you can wrap 
+your type in `MaybeUninit` to avoid the additional derive, but you'll need to verify the validity
+of your type before calling `assume_init`.
 
 ## Documentation
 

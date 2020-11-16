@@ -247,7 +247,7 @@ pub unsafe trait Source: AsCommunicator {
     /// 3.2.4
     fn receive_vec_with_tag<Msg>(&self, tag: Tag) -> (Vec<Msg>, Status)
     where
-        Msg: Equivalence + FromAnyBytes,
+        Msg: Equivalence + EquivalenceFromAnyBytes,
     {
         self.matched_probe_with_tag(tag).matched_receive_vec()
     }
@@ -265,7 +265,7 @@ pub unsafe trait Source: AsCommunicator {
     /// 3.2.4
     fn receive_vec<Msg>(&self) -> (Vec<Msg>, Status)
     where
-        Msg: Equivalence + FromAnyBytes,
+        Msg: Equivalence + EquivalenceFromAnyBytes,
     {
         self.receive_vec_with_tag(unsafe { ffi::RSMPI_ANY_TAG })
     }
@@ -1071,13 +1071,13 @@ pub trait MatchedReceiveVec {
     /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`.
     fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status)
     where
-        Msg: Equivalence + FromAnyBytes;
+        Msg: Equivalence + EquivalenceFromAnyBytes;
 }
 
 impl MatchedReceiveVec for (Message, Status) {
     fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status)
     where
-        Msg: Equivalence + FromAnyBytes,
+        Msg: Equivalence + EquivalenceFromAnyBytes,
     {
         let (message, status) = self;
         let count = status
@@ -1085,22 +1085,9 @@ impl MatchedReceiveVec for (Message, Status) {
             .value_as()
             .expect("Message element count cannot be expressed as a usize.");
 
-        #[repr(transparent)]
-        struct UninitMsg<M>(MaybeUninit<M>);
-
-        unsafe impl<M: Equivalence> Equivalence for UninitMsg<M> {
-            type Out = M::Out;
-
-            fn equivalent_datatype() -> Self::Out {
-                M::equivalent_datatype()
-            }
-        }
-
-        unsafe impl<M: Equivalence> FromAnyBytes for UninitMsg<M> {}
-
         let mut res = (0..count)
-            .map(|_| UninitMsg::<Msg>(MaybeUninit::uninit()))
-            .collect::<Vec<_>>();
+            .map(|_| MaybeUninit::uninit())
+            .collect::<Vec<MaybeUninit<Msg>>>();
 
         let status = message.matched_receive_into(&mut res[..]);
 

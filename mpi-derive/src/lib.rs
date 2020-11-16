@@ -17,6 +17,32 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
     result.into()
 }
 
+#[proc_macro_derive(EquivalenceFromAnyBytes)]
+pub fn check_equivalence_from_any_bytes(input: TokenStream1) -> TokenStream1 {
+    let ast: syn::DeriveInput = syn::parse(input).expect("Couldn't parse struct");
+    let fields = match ast.data {
+        syn::Data::Enum(_) => panic!("#[derive(Equivalence)] is not compatible with enums"),
+        syn::Data::Union(_) => panic!("#[derive(Equivalence)] is not compatible with unions"),
+        syn::Data::Struct(ref s) => &s.fields,
+    };
+
+    let mut field_types = fields
+        .iter()
+        .flat_map(|field| -> Box<dyn Iterator<Item = Type>> {
+            Box::new(all_component_types(&field.ty))
+        })
+        .collect::<Vec<syn::Type>>();
+    field_types.dedup();
+
+    let ident = &ast.ident;
+    let tokens = quote! {
+        unsafe impl ::mpi::traits::EquivalenceFromAnyBytes for #ident
+        where #(#field_types: ::mpi::traits::EquivalenceFromAnyBytes),* {}
+    };
+
+    tokens.into()
+}
+
 fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
     let field_blocklengths = type_tuple.elems.iter().map(|_| 1);
 
@@ -52,6 +78,20 @@ fn equivalence_for_type(ty: &syn::Type) -> TokenStream2 {
                 <#type_path as ::mpi::datatype::Equivalence>::equivalent_datatype()),
         Type::Tuple(ref type_tuple) => equivalence_for_tuple_field(&type_tuple),
         Type::Array(ref type_array) => equivalence_for_array_field(&type_array),
+        _ => panic!("Unsupported type!"),
+    }
+}
+
+fn all_component_types(ty: &Type) -> Box<dyn Iterator<Item = Type>> {
+    match ty {
+        ty @ Type::Path(_) => Box::new(std::iter::once(ty.clone())),
+        Type::Array(arr) => all_component_types(&arr.elem),
+        Type::Tuple(tup) => Box::new(
+            tup.elems
+                .clone()
+                .into_iter()
+                .flat_map(|ty| all_component_types(&ty)),
+        ),
         _ => panic!("Unsupported type!"),
     }
 }
