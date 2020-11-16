@@ -26,7 +26,7 @@ unsafe impl EquivalenceFromAnyBytes for TupleType {}
 #[derive(Default, Copy, Clone)]
 #[repr(C)]
 struct ComplexDatatype {
-    b: u8,
+    b: mpi::Bool,
     _unused1: u8,
     _unused2: u16,
     ints: [i32; 4],
@@ -75,7 +75,7 @@ fn main() {
 
     let mut data = if world.rank() == 0 {
         ComplexDatatype {
-            b: 1,
+            b: true.into(),
             _unused1: 0,
             _unused2: 0,
             ints: [1, -2, 3, -4],
@@ -92,7 +92,7 @@ fn main() {
 
     root_process.broadcast_into(&mut data);
 
-    assert_eq!(1, data.b);
+    assert!(data.b.unwrap());
     assert_eq!([1, -2, 3, -4], data.ints);
     assert_eq!([-0.1, 0.1], data.tuple.0);
     assert_eq!(7, data.tuple.1);

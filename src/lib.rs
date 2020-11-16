@@ -132,6 +132,7 @@ pub mod ffi {
     pub use mpi_sys::*;
 }
 
+mod checked_bool;
 pub mod collective;
 pub mod datatype;
 pub mod environment;
@@ -140,6 +141,9 @@ pub mod raw;
 pub mod request;
 pub mod topology;
 pub mod transmute;
+
+// Export Bool at root of crate
+pub use checked_bool::{Bool, BoolError};
 
 /// Re-exports all traits.
 pub mod traits {
