@@ -1303,15 +1303,6 @@ pub trait Partitioned {
     fn counts(&self) -> &[Count];
     /// The displacement from the start of the buffer for each partition.
     fn displs(&self) -> &[Count];
-
-    /// A pointer to `counts()`
-    unsafe fn counts_ptr(&self) -> *const Count {
-        self.counts().as_ptr()
-    }
-    /// A pointer to `displs()`
-    unsafe fn displs_ptr(&self) -> *const Count {
-        self.displs().as_ptr()
-    }
 }
 
 /// A buffer that is `Partitioned`
