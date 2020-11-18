@@ -1756,6 +1756,9 @@ impl<'a> UserOperation<'a> {
     ///
     /// Here, `anchor` is an arbitrary object that is stored alongside the `MPI_Op`.
     /// This can be used to attach finalizers to the object.
+    ///
+    /// # Safety
+    /// MPI_Op must not be MPI_OP_NULL
     pub unsafe fn from_raw<T: 'a>(op: MPI_Op, anchor: Box<T>) -> Self {
         Self {
             op,
