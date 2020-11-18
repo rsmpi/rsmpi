@@ -5,6 +5,9 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
+#![allow(clippy::unknown_clippy_lints)]
+#![allow(renamed_and_removed_lints)]
+#![allow(clippy::needless_doctest_main)]
 #![warn(clippy::cast_possible_truncation)]
 #![warn(clippy::cast_possible_wrap)]
 #![warn(clippy::cast_precision_loss)]
@@ -21,7 +24,6 @@
 #![warn(clippy::string_add_assign)]
 #![warn(clippy::unicode_not_nfc)]
 #![warn(clippy::wrong_pub_self_convention)]
-#![allow(clippy::needless_doctest_main)]
 
 //! Message Passing Interface bindings for Rust
 //!

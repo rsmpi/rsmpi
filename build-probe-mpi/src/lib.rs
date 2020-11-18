@@ -5,6 +5,7 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
+#![allow(clippy::unknown_clippy_lints)]
 
 //! Probe an environment for an installed MPI library
 //!
@@ -32,6 +33,7 @@ pub use os::probe;
 use std::path::PathBuf;
 
 /// Result of a successfull probe
+#[allow(clippy::manual_non_exhaustive)]
 #[derive(Clone, Debug)]
 pub struct Library {
     /// Names of the native MPI libraries that need to be linked
