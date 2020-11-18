@@ -872,14 +872,14 @@ where
 /// Provides a pointer to the starting address in memory.
 pub unsafe trait Pointer {
     /// A pointer to the starting address in memory
-    unsafe fn pointer(&self) -> *const c_void;
+    fn pointer(&self) -> *const c_void;
 }
 
 unsafe impl<T> Pointer for T
 where
     T: Equivalence,
 {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         let p: *const T = self;
         p as *const c_void
     }
@@ -889,7 +889,7 @@ unsafe impl<T> Pointer for [T]
 where
     T: Equivalence,
 {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.as_ptr() as _
     }
 }
@@ -897,14 +897,14 @@ where
 /// Provides a mutable pointer to the starting address in memory.
 pub unsafe trait PointerMut {
     /// A mutable pointer to the starting address in memory
-    unsafe fn pointer_mut(&mut self) -> *mut c_void;
+    fn pointer_mut(&mut self) -> *mut c_void;
 }
 
 unsafe impl<T> PointerMut for T
 where
     T: Equivalence,
 {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         let p: *mut T = self;
         p as *mut c_void
     }
@@ -914,7 +914,7 @@ unsafe impl<T> PointerMut for [T]
 where
     T: Equivalence,
 {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         self.as_mut_ptr() as _
     }
 }
@@ -954,7 +954,7 @@ unsafe impl<'a> Collection for DynBuffer<'a> {
 }
 
 unsafe impl<'a> Pointer for DynBuffer<'a> {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.ptr
     }
 }
@@ -1043,13 +1043,13 @@ unsafe impl<'a> Collection for DynBufferMut<'a> {
 }
 
 unsafe impl<'a> Pointer for DynBufferMut<'a> {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.ptr
     }
 }
 
 unsafe impl<'a> PointerMut for DynBufferMut<'a> {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         self.ptr
     }
 }
@@ -1207,7 +1207,7 @@ where
     D: 'd + Datatype,
     B: 'b + Pointer,
 {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.buffer.pointer()
     }
 }
@@ -1284,7 +1284,7 @@ where
     D: 'd + Datatype,
     B: 'b + PointerMut,
 {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         self.buffer.pointer_mut()
     }
 }
@@ -1364,7 +1364,7 @@ unsafe impl<'b, B: ?Sized, C, D> Pointer for Partition<'b, B, C, D>
 where
     B: 'b + Pointer,
 {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.buf.pointer()
     }
 }
@@ -1435,7 +1435,7 @@ unsafe impl<'b, B: ?Sized, C, D> PointerMut for PartitionMut<'b, B, C, D>
 where
     B: 'b + PointerMut,
 {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         self.buf.pointer_mut()
     }
 }
