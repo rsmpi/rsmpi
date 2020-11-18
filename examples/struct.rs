@@ -13,9 +13,7 @@ where
     let packed = comm.pack(a);
 
     let mut new_b = B::default();
-    unsafe {
-        comm.unpack_into(&packed, &mut new_b, 0);
-    }
+    comm.unpack_into(&packed, &mut new_b, 0);
 
     assert_eq!(b, &new_b);
 }
@@ -170,26 +168,21 @@ fn main() {
     #[derive(Equivalence, Debug)]
     struct ComplexComplexComplex((i8, bool, i8), (i8, bool, i8), (i8, bool, i8));
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Debug)]
-    struct ThreeComplex([(i8, MaybeUninit<bool>, i8); 3]);
+    #[derive(Equivalence, Debug, PartialEq)]
+    struct ThreeComplex([(i8, bool, i8); 3]);
 
     let a = ComplexComplexComplex((1, true, 1), (2, false, 2), (3, true, 3));
 
     let packed = world.pack(&a);
 
-    let mut b = ThreeComplex([(0, MaybeUninit::zeroed(), 0); 3]);
+    let mut b: MaybeUninit<ThreeComplex> = MaybeUninit::uninit();
+    world.unpack_into(&packed, &mut b, 0);
 
-    unsafe {
-        world.unpack_into(&packed, &mut b, 0);
-    }
+    // This is safe since we know that `ComplexComplexComplex` has a matching type-map to
+    // `ThreeComplex`. In most HPC applications and environments, the risk of hitting UB related to
+    // mis-matched types and the resulting type confusion is low, both in a practical and security
+    // sense.
+    let b = unsafe { b.assume_init() };
 
-    fn check(a: (i8, bool, i8), b: (i8, MaybeUninit<bool>, i8)) {
-        assert_eq!(a.0, b.0);
-        assert_eq!(a.1 as u8, unsafe { std::mem::transmute_copy(&b.1) });
-        assert_eq!(a.2, b.2);
-    }
-
-    check(a.0, b.0[0]);
-    check(a.1, b.0[1]);
-    check(a.2, b.0[2]);
+    assert_eq!(ThreeComplex([(1, true, 1), (2, false, 2), (3, true, 3)]), b);
 }

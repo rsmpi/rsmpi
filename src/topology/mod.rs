@@ -705,22 +705,24 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard Sections
     ///
     /// 4.2, see MPI_Unpack
-    unsafe fn unpack_into<Buf>(&self, inbuf: &[u8], outbuf: &mut Buf, position: Count) -> Count
+    fn unpack_into<Buf>(&self, inbuf: &[u8], outbuf: &mut Buf, position: Count) -> Count
     where
         Buf: ?Sized + BufferMut,
     {
         let outbuf_dt = outbuf.as_datatype();
 
         let mut position: Count = position;
-        ffi::MPI_Unpack(
-            inbuf.as_ptr() as *const _,
-            inbuf.count(),
-            &mut position,
-            outbuf.pointer_mut(),
-            outbuf.count(),
-            outbuf_dt.as_raw(),
-            self.as_raw(),
-        );
+        unsafe {
+            ffi::MPI_Unpack(
+                inbuf.as_ptr() as *const _,
+                inbuf.count(),
+                &mut position,
+                outbuf.pointer_mut(),
+                outbuf.count(),
+                outbuf_dt.as_raw(),
+                self.as_raw(),
+            );
+        }
         position
     }
 }
