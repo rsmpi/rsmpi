@@ -138,12 +138,11 @@ pub enum Threading {
 impl Threading {
     /// The raw value understood by the MPI C API
     fn as_raw(self) -> c_int {
-        use self::Threading::*;
         match self {
-            Single => unsafe { ffi::RSMPI_THREAD_SINGLE },
-            Funneled => unsafe { ffi::RSMPI_THREAD_FUNNELED },
-            Serialized => unsafe { ffi::RSMPI_THREAD_SERIALIZED },
-            Multiple => unsafe { ffi::RSMPI_THREAD_MULTIPLE },
+            Threading::Single => unsafe { ffi::RSMPI_THREAD_SINGLE },
+            Threading::Funneled => unsafe { ffi::RSMPI_THREAD_FUNNELED },
+            Threading::Serialized => unsafe { ffi::RSMPI_THREAD_SERIALIZED },
+            Threading::Multiple => unsafe { ffi::RSMPI_THREAD_MULTIPLE },
         }
     }
 }
@@ -162,15 +161,14 @@ impl Ord for Threading {
 
 impl From<c_int> for Threading {
     fn from(i: c_int) -> Threading {
-        use self::Threading::*;
         if i == unsafe { ffi::RSMPI_THREAD_SINGLE } {
-            return Single;
+            return Threading::Single;
         } else if i == unsafe { ffi::RSMPI_THREAD_FUNNELED } {
-            return Funneled;
+            return Threading::Funneled;
         } else if i == unsafe { ffi::RSMPI_THREAD_SERIALIZED } {
-            return Serialized;
+            return Threading::Serialized;
         } else if i == unsafe { ffi::RSMPI_THREAD_MULTIPLE } {
-            return Multiple;
+            return Threading::Multiple;
         }
         panic!("Unknown threading level: {}", i)
     }

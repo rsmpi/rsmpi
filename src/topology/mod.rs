@@ -744,16 +744,14 @@ pub enum CommunicatorRelation {
 
 impl From<c_int> for CommunicatorRelation {
     fn from(i: c_int) -> CommunicatorRelation {
-        use self::CommunicatorRelation::*;
-        // FIXME: Yuck! These should be made const.
         if i == unsafe { ffi::RSMPI_IDENT } {
-            return Identical;
+            return CommunicatorRelation::Identical;
         } else if i == unsafe { ffi::RSMPI_CONGRUENT } {
-            return Congruent;
+            return CommunicatorRelation::Congruent;
         } else if i == unsafe { ffi::RSMPI_SIMILAR } {
-            return Similar;
+            return CommunicatorRelation::Similar;
         } else if i == unsafe { ffi::RSMPI_UNEQUAL } {
-            return Unequal;
+            return CommunicatorRelation::Unequal;
         }
         panic!("Unknown communicator relation: {}", i)
     }
@@ -1074,14 +1072,12 @@ pub enum GroupRelation {
 
 impl From<c_int> for GroupRelation {
     fn from(i: c_int) -> GroupRelation {
-        use self::GroupRelation::*;
-        // FIXME: Yuck! These should be made const.
         if i == unsafe { ffi::RSMPI_IDENT } {
-            return Identical;
+            return GroupRelation::Identical;
         } else if i == unsafe { ffi::RSMPI_SIMILAR } {
-            return Similar;
+            return GroupRelation::Similar;
         } else if i == unsafe { ffi::RSMPI_UNEQUAL } {
-            return Unequal;
+            return GroupRelation::Unequal;
         }
         panic!("Unknown group relation: {}", i)
     }
