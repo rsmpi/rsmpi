@@ -143,6 +143,10 @@ pub struct UserCommunicator(MPI_Comm);
 
 impl UserCommunicator {
     /// If the raw value is the null handle returns `None`
+    ///
+    /// # Safety
+    /// - `raw` must be a live MPI_Comm object.
+    /// - `raw` must not be used after calling `from_raw`.
     pub unsafe fn from_raw(raw: MPI_Comm) -> Option<UserCommunicator> {
         if raw == ffi::RSMPI_COMM_NULL {
             None
@@ -152,6 +156,11 @@ impl UserCommunicator {
     }
 
     /// Wraps the raw value without checking for null handle
+    ///
+    /// # Safety
+    /// - `raw` must be a live MPI_Comm object.
+    /// - `raw` must not be used after calling `from_raw_unchecked`.
+    /// - `raw` must not be `MPI_COMM_NULL`.
     unsafe fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         UserCommunicator(raw)

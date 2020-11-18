@@ -45,10 +45,12 @@ impl CartesianCommunicator {
     ///
     /// Otherwise returns None.
     ///
-    /// Behavior is undefined if `raw` is not a valid `MPI_Comm` handle.
-    ///
     /// # Parameters
     /// * `raw` - Handle to a valid `MPI_Comm` object
+    ///
+    /// # Safety
+    /// - `raw` must be a live MPI_Comm object.
+    /// - `raw` must not be used after calling `from_raw`.
     pub unsafe fn from_raw(raw: MPI_Comm) -> Option<CartesianCommunicator> {
         UserCommunicator::from_raw(raw).and_then(|comm| match comm.into_topology() {
             IntoTopology::Cartesian(c) => Some(c),
@@ -63,13 +65,13 @@ impl CartesianCommunicator {
 
     /// Creates a `CartesianCommunicator` from `raw`.
     ///
-    /// Behavior is undefined if `raw`:
-    /// * Is not a valid `MPI_Comm` value
-    /// * Is equal to `MPI_COMM_NULL`
-    /// * Does not have the `MPI_CART` topology
-    ///
     /// # Parameters
     /// * `raw` - Handle to a valid `MPI_CART` `MPI_Comm` object
+    ///
+    /// # Safety
+    /// - `raw` must be a live MPI_Comm object.
+    /// - `raw` must not be used after calling `from_raw_unchecked`.
+    /// - `raw` must not be `MPI_COMM_NULL`.
     pub unsafe fn from_raw_unchecked(raw: MPI_Comm) -> CartesianCommunicator {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         CartesianCommunicator(UserCommunicator::from_raw_unchecked(raw))
@@ -85,9 +87,6 @@ impl CartesianCommunicator {
 
     /// Returns the topological structure of the Cartesian communicator
     ///
-    /// Behavior is undefined if `dims`, `periods`, and `coords` are not of length
-    /// [`num_dimensions`](#method.num_dimensions).
-    ///
     /// Prefer [`get_layout_into`](#method.get_layout_into)
     ///
     /// # Parameters
@@ -99,6 +98,10 @@ impl CartesianCommunicator {
     ///
     /// # Standard section(s)
     /// 7.5.5 (MPI_Cart_get)
+    ///
+    /// # Safety
+    /// Behavior is undefined if `dims`, `periods`, and `coords` are not of length
+    /// [`num_dimensions`](#method.num_dimensions).
     pub unsafe fn get_layout_into_unchecked(
         &self,
         dims: &mut [Count],
@@ -189,14 +192,8 @@ impl CartesianCommunicator {
 
     /// Converts a set of cartesian coordinates to its rank in the CartesianCommunicator.
     ///
-    /// Behavior is undefined if `coords` is not of length
-    /// [`num_dimensions`](#method.num_dimensions).
-    ///
     /// Coordinates in periodic axes that are out of range are shifted back into the dimensions of
     /// the communiactor.
-    ///
-    /// Behavior is undefined if any coordinates in non-periodic axes are outside the dimensions of
-    /// the communicator.
     ///
     /// Prefer [`coordinates_to_rank`](#method.coordinates_to_rank)
     ///
@@ -205,6 +202,12 @@ impl CartesianCommunicator {
     ///
     /// # Standard section(s)
     /// 7.5.5 (MPI_Cart_rank)
+    ///
+    /// # Safety
+    /// - Behavior is undefined if `coords` is not of length
+    ///   [`num_dimensions`](#method.num_dimensions).
+    /// - Behavior is undefined if any coordinates in non-periodic axes are outside the dimensions
+    //    of the communicator.
     pub unsafe fn coordinates_to_rank_unchecked(&self, coords: &[Count]) -> Rank {
         with_uninitialized(|rank| ffi::MPI_Cart_rank(self.as_raw(), coords.as_ptr(), rank)).1
     }
@@ -264,9 +267,6 @@ impl CartesianCommunicator {
 
     /// Receives into `coords` the cartesian coordinates of `rank`.
     ///
-    /// Behavior is undefined if `rank` is not a non-negative value less than
-    /// [`size`](trait.Communicator.html#method.size).
-    ///
     /// Prefer [`rank_to_coordinates_into`](#method.rank_to_coordinates_into)
     ///
     /// # Parameters
@@ -275,6 +275,10 @@ impl CartesianCommunicator {
     ///
     /// # Standard section(s)
     /// 7.5.5 (MPI_Cart_coords)
+    ///
+    /// # Safety
+    /// Behavior is undefined if `rank` is not a non-negative value less than
+    /// [`size`](trait.Communicator.html#method.size).
     pub unsafe fn rank_to_coordinates_into_unchecked(&self, rank: Rank, coords: &mut [Count]) {
         ffi::MPI_Cart_coords(self.as_raw(), rank, coords.count(), coords.as_mut_ptr());
     }
@@ -329,9 +333,6 @@ impl CartesianCommunicator {
     /// direction by `displacement` units for the first returned rank and in the positive direction
     /// for the second returned rank.
     ///
-    /// Behavior is undefined if `dimension` is not of length
-    /// [`num_dimensions`](#method.num_dimensions).
-    ///
     /// Prefer [`shift`](#method.shift)
     ///
     /// # Parameters
@@ -340,6 +341,10 @@ impl CartesianCommunicator {
     ///
     /// # Standard section(s)
     /// 7.5.6 (MPI_Cart_shift)
+    ///
+    /// # Safety
+    /// Behavior is undefined if `dimension` is not of length
+    /// [`num_dimensions`](#method.num_dimensions).
     pub unsafe fn shift_unchecked(
         &self,
         dimension: Count,
@@ -403,9 +408,6 @@ impl CartesianCommunicator {
     /// Partitions an existing Cartesian communicator into a new Cartesian communicator in a lower
     /// dimension.
     ///
-    /// Behavior is undefined if `retain` is not of length
-    /// [`num_dimensions`](#method.num_dimensions).
-    ///
     /// Prefer [`subgroup`](#method.subgroup)
     ///
     /// # Parameters
@@ -413,6 +415,10 @@ impl CartesianCommunicator {
     ///
     /// # Standard section(s)
     /// 7.5.7 (MPI_Cart_sub)
+    ///
+    /// # Safety
+    /// Behavior is undefined if `retain` is not of length
+    /// [`num_dimensions`](#method.num_dimensions).
     pub unsafe fn subgroup_unchecked(&self, retain: &[bool]) -> CartesianCommunicator {
         let retain_int: IntArray = retain.iter().map(|b| *b as _).collect();
 

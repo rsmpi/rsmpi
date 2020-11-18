@@ -993,6 +993,11 @@ impl<'a> DynBuffer<'a> {
 
     /// Creates a buffer from its raw components.  The buffer must remain valid for `'a` and the
     /// pointer must not be null.
+    ///
+    /// # Safety
+    /// - Buffer pointed to by `ptr` must live as long as `'a`
+    /// - `ptr` must point to an object that holds `len` elements of the type described by
+    ///   `datatype`.
     pub unsafe fn from_raw<T>(ptr: *const T, len: Count, datatype: DatatypeRef<'a>) -> Self {
         debug_assert!(!ptr.is_null());
         Self {
@@ -1095,6 +1100,12 @@ impl<'a> DynBufferMut<'a> {
 
     /// Creates a buffer from its raw components.  The buffer must remain valid for `'a` and the
     /// pointer must not be null.
+    ///
+    /// # Safety
+    /// - Buffer pointed to by `ptr` must live as long as `'a`. There must be no other
+    ///   live reference to the buffer in Rust.
+    /// - `ptr` must point to an object that holds `len` elements of the type described by
+    ///   `datatype`.
     pub unsafe fn from_raw<T>(ptr: *mut T, len: Count, datatype: DatatypeRef<'a>) -> Self {
         debug_assert!(!ptr.is_null());
         Self {
@@ -1168,6 +1179,10 @@ where
     ///
     /// # Examples
     /// See `examples/contiguous.rs`, `examples/vector.rs`
+    ///
+    /// # Safety
+    /// - `datatype` must map an element of `buffer` without exposing any padding bytes or
+    ///   exceeding the bounds of the object.
     pub unsafe fn with_count_and_datatype(
         buffer: &'b B,
         count: Count,
@@ -1245,6 +1260,10 @@ where
     ///
     /// # Examples
     /// See `examples/contiguous.rs`, `examples/vector.rs`
+    ///
+    /// # Safety
+    /// - `datatype` must map an element of `buffer` without exposing any padding bytes or
+    ///   exceeding the bounds of the object.
     pub unsafe fn with_count_and_datatype(
         buffer: &'b mut B,
         count: Count,
