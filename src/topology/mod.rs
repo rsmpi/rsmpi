@@ -73,7 +73,7 @@ impl SystemCommunicator {
     /// # Examples
     /// See `examples/simple.rs`
     pub fn world() -> SystemCommunicator {
-        SystemCommunicator::from_raw_unchecked(unsafe { ffi::RSMPI_COMM_WORLD })
+        unsafe { SystemCommunicator::from_raw_unchecked(ffi::RSMPI_COMM_WORLD) }
     }
 
     /// If the raw value is the null handle returns `None`
@@ -87,8 +87,8 @@ impl SystemCommunicator {
     }
 
     /// Wraps the raw value without checking for null handle
-    fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicator {
-        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
+    unsafe fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicator {
+        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         SystemCommunicator(raw)
     }
 }
@@ -152,8 +152,8 @@ impl UserCommunicator {
     }
 
     /// Wraps the raw value without checking for null handle
-    fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
-        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
+    unsafe fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
+        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         UserCommunicator(raw)
     }
 
