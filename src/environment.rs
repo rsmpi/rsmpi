@@ -101,7 +101,9 @@ impl Drop for Universe {
         // Universe per application run.
         //
         // NOTE: The write lock is taken to prevent racing with `#[derive(Equivalence)]`
-        let mut _universe_state = UNIVERSE_STATE.write().unwrap();
+        let mut _universe_state = UNIVERSE_STATE
+            .write()
+            .expect("rsmpi internal error: UNIVERSE_STATE lock poisoned");
 
         self.detach_buffer();
         unsafe {
@@ -223,7 +225,9 @@ pub fn initialize_with_threading(threading: Threading) -> Option<(Universe, Thre
     //
     // NOTE: This is necessary even without the derive feature - we use this `Mutex` to ensure
     // no race in initializing MPI.
-    let mut universe_state = UNIVERSE_STATE.write().unwrap();
+    let mut universe_state = UNIVERSE_STATE
+        .write()
+        .expect("rsmpi internal error: UNIVERSE_STATE lock poisoned");
 
     if is_initialized() {
         return None;
