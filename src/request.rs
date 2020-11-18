@@ -317,9 +317,9 @@ impl<'a, S: Scope<'a>> Drop for CancelGuard<'a, S> {
 }
 
 impl<'a, S: Scope<'a>> From<CancelGuard<'a, S>> for WaitGuard<'a, S> {
-    fn from(mut guard: CancelGuard<'a, S>) -> Self {
+    fn from(guard: CancelGuard<'a, S>) -> Self {
         unsafe {
-            let inner = ptr::read(&mut guard.0);
+            let inner = ptr::read(&guard.0);
             mem::forget(guard);
             inner
         }
