@@ -1822,6 +1822,10 @@ impl UnsafeUserOperation {
     ///
     /// This is a more readable shorthand for the `new` method.  Refer to [`new`](#method.new) for
     /// more information.
+    ///
+    /// # Safety
+    /// The construction of an `UnsafeUserOperation` asserts that `function` is safe to be called
+    /// in all reductions that this `UnsafeUserOperation` is used in.
     pub unsafe fn associative(function: UnsafeUserFunction) -> Self {
         Self::new(false, function)
     }
@@ -1831,6 +1835,10 @@ impl UnsafeUserOperation {
     ///
     /// This is a more readable shorthand for the `new` method.  Refer to [`new`](#method.new) for
     /// more information.
+    ///
+    /// # Safety
+    /// The construction of an `UnsafeUserOperation` asserts that `function` is safe to be called
+    /// in all reductions that this `UnsafeUserOperation` is used in.
     pub unsafe fn commutative(function: UnsafeUserFunction) -> Self {
         Self::new(true, function)
     }
@@ -1849,6 +1857,10 @@ impl UnsafeUserOperation {
     /// # Standard section(s)
     ///
     /// 5.9.5
+    ///
+    /// # Safety
+    /// The construction of an `UnsafeUserOperation` asserts that `function` is safe to be called
+    /// in all reductions that this `UnsafeUserOperation` is used in.
     pub unsafe fn new(commute: bool, function: UnsafeUserFunction) -> Self {
         UnsafeUserOperation {
             op: with_uninitialized(|op| ffi::MPI_Op_create(Some(function), commute as _, op)).1,
