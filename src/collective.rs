@@ -114,8 +114,8 @@ pub trait CommunicatorCollectives: Communicator {
                 sendbuf.count(),
                 sendbuf.as_datatype().as_raw(),
                 recvbuf.pointer_mut(),
-                recvbuf.counts_ptr(),
-                recvbuf.displs_ptr(),
+                recvbuf.counts().as_ptr(),
+                recvbuf.displs().as_ptr(),
                 recvbuf.as_datatype().as_raw(),
                 self.as_raw(),
             );
@@ -168,12 +168,12 @@ pub trait CommunicatorCollectives: Communicator {
         unsafe {
             ffi::MPI_Alltoallv(
                 sendbuf.pointer(),
-                sendbuf.counts_ptr(),
-                sendbuf.displs_ptr(),
+                sendbuf.counts().as_ptr(),
+                sendbuf.displs().as_ptr(),
                 sendbuf.as_datatype().as_raw(),
                 recvbuf.pointer_mut(),
-                recvbuf.counts_ptr(),
-                recvbuf.displs_ptr(),
+                recvbuf.counts().as_ptr(),
+                recvbuf.displs().as_ptr(),
                 recvbuf.as_datatype().as_raw(),
                 self.as_raw(),
             );
@@ -390,8 +390,8 @@ pub trait CommunicatorCollectives: Communicator {
                         sendbuf.count(),
                         sendbuf.as_datatype().as_raw(),
                         recvbuf.pointer_mut(),
-                        recvbuf.counts_ptr(),
-                        recvbuf.displs_ptr(),
+                        recvbuf.counts().as_ptr(),
+                        recvbuf.displs().as_ptr(),
                         recvbuf.as_datatype().as_raw(),
                         self.as_raw(),
                         request,
@@ -465,12 +465,12 @@ pub trait CommunicatorCollectives: Communicator {
                 with_uninitialized(|request| {
                     ffi::MPI_Ialltoallv(
                         sendbuf.pointer(),
-                        sendbuf.counts_ptr(),
-                        sendbuf.displs_ptr(),
+                        sendbuf.counts().as_ptr(),
+                        sendbuf.displs().as_ptr(),
                         sendbuf.as_datatype().as_raw(),
                         recvbuf.pointer_mut(),
-                        recvbuf.counts_ptr(),
-                        recvbuf.displs_ptr(),
+                        recvbuf.counts().as_ptr(),
+                        recvbuf.displs().as_ptr(),
                         recvbuf.as_datatype().as_raw(),
                         self.as_raw(),
                         request,
@@ -828,8 +828,8 @@ pub trait Root: AsCommunicator {
                 sendbuf.count(),
                 sendbuf.as_datatype().as_raw(),
                 recvbuf.pointer_mut(),
-                recvbuf.counts_ptr(),
-                recvbuf.displs_ptr(),
+                recvbuf.counts().as_ptr(),
+                recvbuf.displs().as_ptr(),
                 recvbuf.as_datatype().as_raw(),
                 self.root_rank(),
                 self.as_communicator().as_raw(),
@@ -972,8 +972,8 @@ pub trait Root: AsCommunicator {
         unsafe {
             ffi::MPI_Scatterv(
                 sendbuf.pointer(),
-                sendbuf.counts_ptr(),
-                sendbuf.displs_ptr(),
+                sendbuf.counts().as_ptr(),
+                sendbuf.displs().as_ptr(),
                 sendbuf.as_datatype().as_raw(),
                 recvbuf.pointer_mut(),
                 recvbuf.count(),
@@ -1240,8 +1240,8 @@ pub trait Root: AsCommunicator {
                         sendbuf.count(),
                         sendbuf.as_datatype().as_raw(),
                         recvbuf.pointer_mut(),
-                        recvbuf.counts_ptr(),
-                        recvbuf.displs_ptr(),
+                        recvbuf.counts().as_ptr(),
+                        recvbuf.displs().as_ptr(),
                         recvbuf.as_datatype().as_raw(),
                         self.root_rank(),
                         self.as_communicator().as_raw(),
@@ -1412,8 +1412,8 @@ pub trait Root: AsCommunicator {
                 with_uninitialized(|request| {
                     ffi::MPI_Iscatterv(
                         sendbuf.pointer(),
-                        sendbuf.counts_ptr(),
-                        sendbuf.displs_ptr(),
+                        sendbuf.counts().as_ptr(),
+                        sendbuf.displs().as_ptr(),
                         sendbuf.as_datatype().as_raw(),
                         recvbuf.pointer_mut(),
                         recvbuf.count(),
@@ -1756,6 +1756,9 @@ impl<'a> UserOperation<'a> {
     ///
     /// Here, `anchor` is an arbitrary object that is stored alongside the `MPI_Op`.
     /// This can be used to attach finalizers to the object.
+    ///
+    /// # Safety
+    /// MPI_Op must not be MPI_OP_NULL
     pub unsafe fn from_raw<T: 'a>(op: MPI_Op, anchor: Box<T>) -> Self {
         Self {
             op,
@@ -1819,6 +1822,10 @@ impl UnsafeUserOperation {
     ///
     /// This is a more readable shorthand for the `new` method.  Refer to [`new`](#method.new) for
     /// more information.
+    ///
+    /// # Safety
+    /// The construction of an `UnsafeUserOperation` asserts that `function` is safe to be called
+    /// in all reductions that this `UnsafeUserOperation` is used in.
     pub unsafe fn associative(function: UnsafeUserFunction) -> Self {
         Self::new(false, function)
     }
@@ -1828,6 +1835,10 @@ impl UnsafeUserOperation {
     ///
     /// This is a more readable shorthand for the `new` method.  Refer to [`new`](#method.new) for
     /// more information.
+    ///
+    /// # Safety
+    /// The construction of an `UnsafeUserOperation` asserts that `function` is safe to be called
+    /// in all reductions that this `UnsafeUserOperation` is used in.
     pub unsafe fn commutative(function: UnsafeUserFunction) -> Self {
         Self::new(true, function)
     }
@@ -1846,6 +1857,10 @@ impl UnsafeUserOperation {
     /// # Standard section(s)
     ///
     /// 5.9.5
+    ///
+    /// # Safety
+    /// The construction of an `UnsafeUserOperation` asserts that `function` is safe to be called
+    /// in all reductions that this `UnsafeUserOperation` is used in.
     pub unsafe fn new(commute: bool, function: UnsafeUserFunction) -> Self {
         UnsafeUserOperation {
             op: with_uninitialized(|op| ffi::MPI_Op_create(Some(function), commute as _, op)).1,

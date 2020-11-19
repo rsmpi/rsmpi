@@ -872,14 +872,14 @@ where
 /// Provides a pointer to the starting address in memory.
 pub unsafe trait Pointer {
     /// A pointer to the starting address in memory
-    unsafe fn pointer(&self) -> *const c_void;
+    fn pointer(&self) -> *const c_void;
 }
 
 unsafe impl<T> Pointer for T
 where
     T: Equivalence,
 {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         let p: *const T = self;
         p as *const c_void
     }
@@ -889,7 +889,7 @@ unsafe impl<T> Pointer for [T]
 where
     T: Equivalence,
 {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.as_ptr() as _
     }
 }
@@ -897,14 +897,14 @@ where
 /// Provides a mutable pointer to the starting address in memory.
 pub unsafe trait PointerMut {
     /// A mutable pointer to the starting address in memory
-    unsafe fn pointer_mut(&mut self) -> *mut c_void;
+    fn pointer_mut(&mut self) -> *mut c_void;
 }
 
 unsafe impl<T> PointerMut for T
 where
     T: Equivalence,
 {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         let p: *mut T = self;
         p as *mut c_void
     }
@@ -914,7 +914,7 @@ unsafe impl<T> PointerMut for [T]
 where
     T: Equivalence,
 {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         self.as_mut_ptr() as _
     }
 }
@@ -954,7 +954,7 @@ unsafe impl<'a> Collection for DynBuffer<'a> {
 }
 
 unsafe impl<'a> Pointer for DynBuffer<'a> {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.ptr
     }
 }
@@ -993,6 +993,11 @@ impl<'a> DynBuffer<'a> {
 
     /// Creates a buffer from its raw components.  The buffer must remain valid for `'a` and the
     /// pointer must not be null.
+    ///
+    /// # Safety
+    /// - Buffer pointed to by `ptr` must live as long as `'a`
+    /// - `ptr` must point to an object that holds `len` elements of the type described by
+    ///   `datatype`.
     pub unsafe fn from_raw<T>(ptr: *const T, len: Count, datatype: DatatypeRef<'a>) -> Self {
         debug_assert!(!ptr.is_null());
         Self {
@@ -1043,13 +1048,13 @@ unsafe impl<'a> Collection for DynBufferMut<'a> {
 }
 
 unsafe impl<'a> Pointer for DynBufferMut<'a> {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.ptr
     }
 }
 
 unsafe impl<'a> PointerMut for DynBufferMut<'a> {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         self.ptr
     }
 }
@@ -1095,6 +1100,12 @@ impl<'a> DynBufferMut<'a> {
 
     /// Creates a buffer from its raw components.  The buffer must remain valid for `'a` and the
     /// pointer must not be null.
+    ///
+    /// # Safety
+    /// - Buffer pointed to by `ptr` must live as long as `'a`. There must be no other
+    ///   live reference to the buffer in Rust.
+    /// - `ptr` must point to an object that holds `len` elements of the type described by
+    ///   `datatype`.
     pub unsafe fn from_raw<T>(ptr: *mut T, len: Count, datatype: DatatypeRef<'a>) -> Self {
         debug_assert!(!ptr.is_null());
         Self {
@@ -1168,6 +1179,10 @@ where
     ///
     /// # Examples
     /// See `examples/contiguous.rs`, `examples/vector.rs`
+    ///
+    /// # Safety
+    /// - `datatype` must map an element of `buffer` without exposing any padding bytes or
+    ///   exceeding the bounds of the object.
     pub unsafe fn with_count_and_datatype(
         buffer: &'b B,
         count: Count,
@@ -1207,7 +1222,7 @@ where
     D: 'd + Datatype,
     B: 'b + Pointer,
 {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.buffer.pointer()
     }
 }
@@ -1245,6 +1260,10 @@ where
     ///
     /// # Examples
     /// See `examples/contiguous.rs`, `examples/vector.rs`
+    ///
+    /// # Safety
+    /// - `datatype` must map an element of `buffer` without exposing any padding bytes or
+    ///   exceeding the bounds of the object.
     pub unsafe fn with_count_and_datatype(
         buffer: &'b mut B,
         count: Count,
@@ -1284,7 +1303,7 @@ where
     D: 'd + Datatype,
     B: 'b + PointerMut,
 {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         self.buffer.pointer_mut()
     }
 }
@@ -1303,15 +1322,6 @@ pub trait Partitioned {
     fn counts(&self) -> &[Count];
     /// The displacement from the start of the buffer for each partition.
     fn displs(&self) -> &[Count];
-
-    /// A pointer to `counts()`
-    unsafe fn counts_ptr(&self) -> *const Count {
-        self.counts().as_ptr()
-    }
-    /// A pointer to `displs()`
-    unsafe fn displs_ptr(&self) -> *const Count {
-        self.displs().as_ptr()
-    }
 }
 
 /// A buffer that is `Partitioned`
@@ -1364,7 +1374,7 @@ unsafe impl<'b, B: ?Sized, C, D> Pointer for Partition<'b, B, C, D>
 where
     B: 'b + Pointer,
 {
-    unsafe fn pointer(&self) -> *const c_void {
+    fn pointer(&self) -> *const c_void {
         self.buf.pointer()
     }
 }
@@ -1435,7 +1445,7 @@ unsafe impl<'b, B: ?Sized, C, D> PointerMut for PartitionMut<'b, B, C, D>
 where
     B: 'b + PointerMut,
 {
-    unsafe fn pointer_mut(&mut self) -> *mut c_void {
+    fn pointer_mut(&mut self) -> *mut c_void {
         self.buf.pointer_mut()
     }
 }

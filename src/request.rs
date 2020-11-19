@@ -133,6 +133,10 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     /// - All buffers associated with the request must outlive `'a`.
     /// - The request must not be registered with the given scope.
     ///
+    /// # Safety
+    /// - `request` must be a live MPI object.
+    /// - `request` must not be used after calling `from_raw`.
+    /// - Any buffers owned by `request` must live longer than `scope`.
     pub unsafe fn from_raw(request: MPI_Request, scope: S) -> Self {
         debug_assert!(!is_null(request));
         scope.register();
@@ -146,6 +150,9 @@ impl<'a, S: Scope<'a>> Request<'a, S> {
     /// Unregister the request object from its scope and deconstruct it into its raw parts.
     ///
     /// This is unsafe because the request may outlive its associated buffers.
+    ///
+    /// # Safety
+    /// - The returned `MPI_Request` must be completed within the lifetime of the returned scope.
     pub unsafe fn into_raw(self) -> (MPI_Request, S) {
         let request = ptr::read(&self.request);
         let scope = ptr::read(&self.scope);
@@ -317,9 +324,9 @@ impl<'a, S: Scope<'a>> Drop for CancelGuard<'a, S> {
 }
 
 impl<'a, S: Scope<'a>> From<CancelGuard<'a, S>> for WaitGuard<'a, S> {
-    fn from(mut guard: CancelGuard<'a, S>) -> Self {
+    fn from(guard: CancelGuard<'a, S>) -> Self {
         unsafe {
-            let inner = ptr::read(&mut guard.0);
+            let inner = ptr::read(&guard.0);
             mem::forget(guard);
             inner
         }
@@ -347,6 +354,9 @@ pub unsafe trait Scope<'a> {
     fn register(&self);
 
     /// Unregisters a request from the scope.
+    ///
+    /// # Safety
+    /// DO NOT IMPLEMENT
     unsafe fn unregister(&self);
 }
 

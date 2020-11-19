@@ -73,7 +73,7 @@ impl SystemCommunicator {
     /// # Examples
     /// See `examples/simple.rs`
     pub fn world() -> SystemCommunicator {
-        SystemCommunicator::from_raw_unchecked(unsafe { ffi::RSMPI_COMM_WORLD })
+        unsafe { SystemCommunicator::from_raw_unchecked(ffi::RSMPI_COMM_WORLD) }
     }
 
     /// If the raw value is the null handle returns `None`
@@ -87,8 +87,8 @@ impl SystemCommunicator {
     }
 
     /// Wraps the raw value without checking for null handle
-    fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicator {
-        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
+    unsafe fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicator {
+        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         SystemCommunicator(raw)
     }
 }
@@ -143,6 +143,10 @@ pub struct UserCommunicator(MPI_Comm);
 
 impl UserCommunicator {
     /// If the raw value is the null handle returns `None`
+    ///
+    /// # Safety
+    /// - `raw` must be a live MPI_Comm object.
+    /// - `raw` must not be used after calling `from_raw`.
     pub unsafe fn from_raw(raw: MPI_Comm) -> Option<UserCommunicator> {
         if raw == ffi::RSMPI_COMM_NULL {
             None
@@ -152,8 +156,13 @@ impl UserCommunicator {
     }
 
     /// Wraps the raw value without checking for null handle
-    fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
-        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
+    ///
+    /// # Safety
+    /// - `raw` must be a live MPI_Comm object.
+    /// - `raw` must not be used after calling `from_raw_unchecked`.
+    /// - `raw` must not be `MPI_COMM_NULL`.
+    unsafe fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
+        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         UserCommunicator(raw)
     }
 
@@ -744,16 +753,14 @@ pub enum CommunicatorRelation {
 
 impl From<c_int> for CommunicatorRelation {
     fn from(i: c_int) -> CommunicatorRelation {
-        use self::CommunicatorRelation::*;
-        // FIXME: Yuck! These should be made const.
         if i == unsafe { ffi::RSMPI_IDENT } {
-            return Identical;
+            return CommunicatorRelation::Identical;
         } else if i == unsafe { ffi::RSMPI_CONGRUENT } {
-            return Congruent;
+            return CommunicatorRelation::Congruent;
         } else if i == unsafe { ffi::RSMPI_SIMILAR } {
-            return Similar;
+            return CommunicatorRelation::Similar;
         } else if i == unsafe { ffi::RSMPI_UNEQUAL } {
-            return Unequal;
+            return CommunicatorRelation::Unequal;
         }
         panic!("Unknown communicator relation: {}", i)
     }
@@ -1074,14 +1081,12 @@ pub enum GroupRelation {
 
 impl From<c_int> for GroupRelation {
     fn from(i: c_int) -> GroupRelation {
-        use self::GroupRelation::*;
-        // FIXME: Yuck! These should be made const.
         if i == unsafe { ffi::RSMPI_IDENT } {
-            return Identical;
+            return GroupRelation::Identical;
         } else if i == unsafe { ffi::RSMPI_SIMILAR } {
-            return Similar;
+            return GroupRelation::Similar;
         } else if i == unsafe { ffi::RSMPI_UNEQUAL } {
-            return Unequal;
+            return GroupRelation::Unequal;
         }
         panic!("Unknown group relation: {}", i)
     }

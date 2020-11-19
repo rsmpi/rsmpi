@@ -32,6 +32,9 @@ pub unsafe trait AsRawMut: AsRaw {
 /// Conversion for the Rust type from the raw MPI handle type.
 pub trait FromRaw: AsRaw {
     /// Constructs the Rust type, with all its semantics, from the raw MPI type.
+    ///
+    /// # Safety
+    /// `handle` may be assumed to be a live MPI object.
     unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self;
 }
 

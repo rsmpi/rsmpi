@@ -62,7 +62,7 @@ fn main() {
         if let Some((_, include_paths)) = include_env {
             if let Some(include_paths) = include_paths.to_str() {
                 // Add include paths via -I
-                builder = builder.clang_args(include_paths.split(";").map(|i| format!("-I{}", i)));
+                builder = builder.clang_args(include_paths.split(';').map(|i| format!("-I{}", i)));
             }
         }
     }

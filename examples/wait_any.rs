@@ -29,7 +29,7 @@ fn main() {
             }
             println!("All requests completed");
         } else {
-            let secs = time::Duration::from_secs((1 * world.rank()) as u64);
+            let secs = time::Duration::from_secs(world.rank() as u64);
 
             thread::sleep(secs);
 
