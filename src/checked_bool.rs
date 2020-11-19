@@ -50,17 +50,6 @@ impl Bool {
             Bool(x) => Err(BoolError(*x)),
         }
     }
-
-    /// Coerce `Bool` to `bool`.
-    #[cfg_attr(track_caller_supported, track_caller)]
-    pub fn unwrap(&self) -> bool {
-        self.valid().unwrap()
-    }
-
-    /// Unwraps `Bool` if valid, else returns `default`.
-    pub fn unwrap_or(&self, default: bool) -> bool {
-        self.valid().unwrap_or(default)
-    }
 }
 
 unsafe impl Equivalence for Bool {
@@ -210,14 +199,14 @@ mod tests {
 
     #[test]
     fn unwrap_or() {
-        assert!(Bool::new(true).unwrap_or(false));
-        assert!(!Bool::new(false).unwrap_or(true));
+        assert!(Bool::new(true).valid().unwrap_or(false));
+        assert!(!Bool::new(false).valid().unwrap_or(true));
 
         // It is safe to transmute `Bool` from a `u8`.
         let bad: Bool = unsafe { std::mem::transmute(0xFFu8) };
 
-        assert!(bad.unwrap_or(true));
-        assert!(!bad.unwrap_or(false));
+        assert!(bad.valid().unwrap_or(true));
+        assert!(!bad.valid().unwrap_or(false));
     }
 
     #[test]
@@ -225,6 +214,6 @@ mod tests {
     fn unwrap_invalid() {
         // It is safe to transmute `Bool` from a `u8`.
         let x: Bool = unsafe { std::mem::transmute(0xFFu8) };
-        x.unwrap();
+        x.valid().unwrap();
     }
 }

@@ -92,7 +92,7 @@ fn main() {
 
     root_process.broadcast_into(&mut data);
 
-    assert!(data.b.unwrap());
+    assert!(data.b.valid().unwrap());
     assert_eq!([1, -2, 3, -4], data.ints);
     assert_eq!([-0.1, 0.1], data.tuple.0);
     assert_eq!(7, data.tuple.1);

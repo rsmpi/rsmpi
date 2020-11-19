@@ -37,7 +37,6 @@ smallvec = "1.0.0"
 
 [build-dependencies]
 build-probe-mpi = { path = "build-probe-mpi", version = "0.1" }
-rustc_version = "0.2"
 
 # The following tests depend on specific features
 [[example]]
