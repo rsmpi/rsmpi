@@ -6,7 +6,7 @@ type TokenStream2 = proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Fields, Type};
 
-#[proc_macro_derive(Equivalence)]
+#[proc_macro_derive(EquivalenceUnsafe)]
 pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
     let ast: syn::DeriveInput = syn::parse(input).expect("Couldn't parse struct");
     let result = match ast.data {
@@ -17,7 +17,7 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
     result.into()
 }
 
-#[proc_macro_derive(EquivalenceFromAnyBytes)]
+#[proc_macro_derive(Equivalence)]
 pub fn check_equivalence_from_any_bytes(input: TokenStream1) -> TokenStream1 {
     let ast: syn::DeriveInput = syn::parse(input).expect("Couldn't parse struct");
     let fields = match ast.data {
@@ -25,6 +25,8 @@ pub fn check_equivalence_from_any_bytes(input: TokenStream1) -> TokenStream1 {
         syn::Data::Union(_) => panic!("#[derive(Equivalence)] is not compatible with unions"),
         syn::Data::Struct(ref s) => &s.fields,
     };
+
+    let equivalence = equivalence_for_struct(&ast, fields);
 
     let mut field_types = fields
         .iter()
@@ -36,6 +38,8 @@ pub fn check_equivalence_from_any_bytes(input: TokenStream1) -> TokenStream1 {
 
     let ident = &ast.ident;
     let tokens = quote! {
+        #equivalence
+
         unsafe impl ::mpi::traits::EquivalenceFromAnyBytes for #ident
         where #(#field_types: ::mpi::traits::EquivalenceFromAnyBytes),* {}
     };

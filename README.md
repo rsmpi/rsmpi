@@ -174,12 +174,12 @@ comm.all_reduce_into(
 );
 ```
 
-`derive` enables the `Equivalence` and `EquivalenceFromAnyBytes` derive macros, which makes it easy
+`derive` enables the `Equivalence` and `EquivalenceUnsafe` derive macros, which makes it easy
 to send structs over-the-wire without worrying about safety around padding, and allowing arbitrary
 datatype matching between structs with the same field order but different layout.
 
 ```rust
-#[derive(Equivalence, EquivalenceFromAnyBytes)]
+#[derive(Equivalence)]
 struct MyProgramOpts {
     name: [u8; 100],
     num_cycles: u32,
@@ -187,16 +187,16 @@ struct MyProgramOpts {
 }
 ```
 
-NOTE on safety: `#[derive(EquivalenceFromAnyBytes)]` should be used in almost all circumstances.
+NOTE on safety: `#[derive(Equivalence)]` should be used in almost all circumstances.
 This derive is required to safely receive directly into values of the designated type. If any
 fields of your struct are not safely transmutable from any arbitrary bytes (for example, `bool` or
-an enum), then you will be unable to derive `EquivalenceFromAnyBytes`. This is because the MPI
+an enum), then you will be unable to derive `Equivalence`. This is because the MPI
 standard does not require type checking, so there is no protection against mis-matched messages. In
-this case, you can wrap your receive buffer with `MaybeUninit`. In most HPC applications and
-environments, you should consider it low-risk to do this and just call `assume_init` on the receive
-buffer. If you're exposing your MPI application to, say, the Internet, then it is recommended you
-only use types in your struct that implement `EquivalenceFromAnyBytes` (e.g. `u8` instead of
-`bool`).
+this case, you should instead use `#[derive(EquivalenceUnsafe)]`. Then you can simply wrap your 
+receive buffer with `MaybeUninit`. In most HPC applications and environments, you should consider 
+it low-risk to do this and just call `assume_init` on the receive buffer. If you're exposing your 
+MPI application to, say, the Internet, then it is recommended you only use types in your struct 
+that implement `EquivalenceFromAnyBytes` (e.g. use `mpi::Bool` instead of `bool`).
 
 ## Documentation
 

@@ -157,7 +157,7 @@ pub mod traits {
 
     // Re-export derives
     #[cfg(feature = "derive")]
-    pub use mpi_derive::{Equivalence, EquivalenceFromAnyBytes};
+    pub use mpi_derive::{Equivalence, EquivalenceUnsafe};
 }
 
 /// These crates are used by mpi-derive, and so must be public, but shouldn't be used by dependent

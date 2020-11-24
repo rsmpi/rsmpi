@@ -23,14 +23,14 @@ fn main() {
 
     let world = universe.world();
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes)]
+    #[derive(Equivalence)]
     struct MyProgramOpts {
         name: [u8; 100],
         num_cycles: u32,
         material_properties: [f64; 20],
     }
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataRust {
         b: mpi::Bool,
         f: f64,
@@ -51,7 +51,7 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     #[repr(C)]
     struct MyDataC {
         b: mpi::Bool,
@@ -73,7 +73,7 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataOrdered {
         bf: (mpi::Bool, f64),
         i: u16,
@@ -92,7 +92,7 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataNestedTuple {
         bfi: (mpi::Bool, (f64, u16)),
     };
@@ -109,7 +109,7 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataUnnamed(mpi::Bool, f64, u16);
 
     assert_equivalence(
@@ -123,10 +123,10 @@ fn main() {
     );
 
     // `bool` is allowed here because we never receive into a value of type `BoolBoolBool`.
-    #[derive(Equivalence, PartialEq, Debug)]
+    #[derive(EquivalenceUnsafe, PartialEq, Debug)]
     struct BoolBoolBool(bool, bool, bool);
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct ThreeBool([mpi::Bool; 3]);
 
     assert_equivalence(
@@ -135,21 +135,21 @@ fn main() {
         &ThreeBool([true.into(), false.into(), true.into()]),
     );
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct Empty;
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, PartialEq, Debug)]
+    #[derive(Equivalence, PartialEq, Debug)]
     struct ZeroArray([i32; 0]);
 
     assert_equivalence(&world, &ZeroArray([]), &Empty);
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct Parent {
         b: mpi::Bool,
         child: Child,
     }
 
-    #[derive(Equivalence, EquivalenceFromAnyBytes, Default, PartialEq, Debug)]
+    #[derive(Equivalence, Default, PartialEq, Debug)]
     struct Child(f64, u16);
 
     assert_equivalence(
@@ -165,10 +165,10 @@ fn main() {
         },
     );
 
-    #[derive(Equivalence, Debug)]
+    #[derive(EquivalenceUnsafe, Debug)]
     struct ComplexComplexComplex((i8, bool, i8), (i8, bool, i8), (i8, bool, i8));
 
-    #[derive(Equivalence, Debug, PartialEq)]
+    #[derive(EquivalenceUnsafe, Debug, PartialEq)]
     struct ThreeComplex([(i8, bool, i8); 3]);
 
     let a = ComplexComplexComplex((1, true, 1), (2, false, 2), (3, true, 3));
