@@ -169,7 +169,10 @@ impl<'a> UncommittedDatatype for UncommittedDatatypeRef<'a> {
 /// 3.2.2
 pub type SystemDatatype = DatatypeRef<'static>;
 
-/// A direct equivalence exists between the implementing type and an MPI datatype
+/// A direct equivalence exists between the implementing type and an MPI datatype.
+///
+/// You can automatically implement this trait using `#[derive(Equivalence)]` or
+/// `#[derive(EquivalenceUnsafe)]`. These derives require `#[cfg(feature = "derive")]`
 ///
 /// # Standard section(s)
 ///
@@ -182,10 +185,10 @@ pub unsafe trait Equivalence {
 }
 
 /// Indicates a type's `Equivalence` implementation can fully initialize a value of the type from a
-/// correctly sized MPI message. This can be safely derived using
-/// `#[derive(EquivalenceFromAnyBytes)]` for any type where all component fields are themselves
-/// `EquivalenceFromAnyBytes`. You can manually derive this trait only as long as all possible bit
-/// patterns of the type's component fields are allowed.
+/// correctly sized MPI message. This can be safely derived using `#[derive(Equivalence)]` for any
+/// type where all component fields are themselves `EquivalenceFromAnyBytes`. You can manually
+/// derive this trait only as long as all possible bit patterns of the type's component fields are
+/// allowed, and the `Equivalence` implementation maps all fields of the type.
 ///
 /// `bool` is an example of a type that does not implement `EquivalenceFromAnyBytes`.
 pub unsafe trait EquivalenceFromAnyBytes {}
