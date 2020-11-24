@@ -65,27 +65,31 @@
 //! - **4.3**: Canonical pack and unpack, `MPI_Pack_external()`, `MPI_Unpack_external()`,
 //! `MPI_Pack_external_size()`
 
-use std::borrow::Borrow;
-use std::marker::PhantomData;
-use std::os::raw::c_void;
-use std::{mem, num, slice};
+use std::{
+    borrow::Borrow,
+    marker::PhantomData,
+    mem::{self, MaybeUninit},
+    num,
+    os::raw::c_void,
+    slice,
+};
 
 use conv::ConvUtil;
 
 use super::{Address, Count};
 
-use crate::ffi;
-use crate::ffi::MPI_Datatype;
-use crate::raw::traits::*;
-use crate::transmute::traits::*;
-
-use crate::with_uninitialized;
+use crate::{
+    ffi::{self, MPI_Datatype},
+    raw::traits::*,
+    with_uninitialized,
+};
 
 /// Datatype traits
 pub mod traits {
     pub use super::{
-        AsDatatype, Buffer, BufferMut, Collection, Datatype, Equivalence, Partitioned,
-        PartitionedBuffer, PartitionedBufferMut, Pointer, PointerMut, UncommittedDatatype,
+        AsDatatype, Buffer, BufferMut, Collection, Datatype, Equivalence, EquivalenceFromAnyBytes,
+        Partitioned, PartitionedBuffer, PartitionedBufferMut, Pointer, PointerMut,
+        UncommittedDatatype,
     };
 }
 
@@ -177,6 +181,17 @@ pub unsafe trait Equivalence {
     fn equivalent_datatype() -> Self::Out;
 }
 
+/// Indicates a type's `Equivalence` implementation can fully initialize a value of the type from a
+/// correctly sized MPI message. This can be safely derived using
+/// `#[derive(EquivalenceFromAnyBytes)]` for any type where all component fields are themselves
+/// `EquivalenceFromAnyBytes`. You can manually derive this trait only as long as all possible bit
+/// patterns of the type's component fields are allowed.
+///
+/// `bool` is an example of a type that does not implement `EquivalenceFromAnyBytes`.
+pub unsafe trait EquivalenceFromAnyBytes {}
+
+unsafe impl<T> EquivalenceFromAnyBytes for MaybeUninit<T> where T: Equivalence {}
+
 macro_rules! equivalent_system_datatype_unsafe_transmute {
     ($rstype:path, $mpitype:path) => {
         unsafe impl Equivalence for $rstype {
@@ -252,7 +267,7 @@ mod ptr64_equivalences {
 }
 
 /// Allow datatypes with Equivalence to be used in buffer packing functions
-unsafe impl<T> Equivalence for mem::MaybeUninit<T>
+unsafe impl<T> Equivalence for MaybeUninit<T>
 where
     T: Equivalence,
 {

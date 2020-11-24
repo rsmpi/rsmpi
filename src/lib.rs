@@ -143,7 +143,6 @@ pub mod point_to_point;
 pub mod raw;
 pub mod request;
 pub mod topology;
-pub mod transmute;
 
 // Export Bool at root of crate
 pub use checked_bool::{Bool, BoolError};
@@ -155,7 +154,6 @@ pub mod traits {
     pub use crate::point_to_point::traits::*;
     pub use crate::raw::traits::*;
     pub use crate::topology::traits::*;
-    pub use crate::transmute::traits::*;
 
     // Re-export derives
     #[cfg(feature = "derive")]
