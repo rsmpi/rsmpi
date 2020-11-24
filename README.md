@@ -156,8 +156,8 @@ Not supported (yet):
 These optional features can be enabled in your cargo manifest. See the [Usage](#usage) section
 above.
 
-`user-operations` enables capturing lambdas and safe creation in `UserOperation`. This feature
-requires the `libffi` system library, which is not available on all systems out-of-the-box.
+`user-operations` enables capturing lambdas and safe creation in `UserOperation`. It is enabled by
+default.
 
 ```rust
 let mut h = 0;
@@ -174,9 +174,9 @@ comm.all_reduce_into(
 );
 ```
 
-`derive` enables the `Equivalence` derive macro, which makes it easy to send structs
-over-the-wire without worrying about safety around padding, and allowing arbitrary datatype
-matching between structs with the same field order but different layout.
+`derive` enables the `Equivalence` and `EquivalenceUnsafe` derive macros, which makes it easy
+to send structs over-the-wire without worrying about safety around padding, and allowing arbitrary
+datatype matching between structs with the same field order but different layout.
 
 ```rust
 #[derive(Equivalence)]
@@ -186,6 +186,17 @@ struct MyProgramOpts {
     material_properties: [f64; 20],
 }
 ```
+
+NOTE on safety: `#[derive(Equivalence)]` should be used in almost all circumstances.
+This derive is required to safely receive directly into values of the designated type. If any
+fields of your struct are not safely transmutable from any arbitrary bytes (for example, `bool` or
+an enum), then you will be unable to derive `Equivalence`. This is because the MPI
+standard does not require type checking, so there is no protection against mis-matched messages. In
+this case, you should instead use `#[derive(EquivalenceUnsafe)]`. Then you can simply wrap your 
+receive buffer with `MaybeUninit`. In most HPC applications and environments, you should consider 
+it low-risk to do this and just call `assume_init` on the receive buffer. If you're exposing your 
+MPI application to, say, the Internet, then it is recommended you only use types in your struct 
+that implement `EquivalenceFromAnyBytes` (e.g. use `mpi::Bool` instead of `bool`).
 
 ## Documentation
 

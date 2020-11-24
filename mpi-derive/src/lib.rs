@@ -6,7 +6,7 @@ type TokenStream2 = proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Fields, Type};
 
-#[proc_macro_derive(Equivalence)]
+#[proc_macro_derive(EquivalenceUnsafe)]
 pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
     let ast: syn::DeriveInput = syn::parse(input).expect("Couldn't parse struct");
     let result = match ast.data {
@@ -15,6 +15,36 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
         syn::Data::Struct(ref s) => equivalence_for_struct(&ast, &s.fields),
     };
     result.into()
+}
+
+#[proc_macro_derive(Equivalence)]
+pub fn check_equivalence_from_any_bytes(input: TokenStream1) -> TokenStream1 {
+    let ast: syn::DeriveInput = syn::parse(input).expect("Couldn't parse struct");
+    let fields = match ast.data {
+        syn::Data::Enum(_) => panic!("#[derive(Equivalence)] is not compatible with enums"),
+        syn::Data::Union(_) => panic!("#[derive(Equivalence)] is not compatible with unions"),
+        syn::Data::Struct(ref s) => &s.fields,
+    };
+
+    let equivalence = equivalence_for_struct(&ast, fields);
+
+    let mut field_types = fields
+        .iter()
+        .flat_map(|field| -> Box<dyn Iterator<Item = Type>> {
+            Box::new(all_component_types(&field.ty))
+        })
+        .collect::<Vec<syn::Type>>();
+    field_types.dedup();
+
+    let ident = &ast.ident;
+    let tokens = quote! {
+        #equivalence
+
+        unsafe impl ::mpi::traits::EquivalenceFromAnyBytes for #ident
+        where #(#field_types: ::mpi::traits::EquivalenceFromAnyBytes),* {}
+    };
+
+    tokens.into()
 }
 
 fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
@@ -52,6 +82,20 @@ fn equivalence_for_type(ty: &syn::Type) -> TokenStream2 {
                 <#type_path as ::mpi::datatype::Equivalence>::equivalent_datatype()),
         Type::Tuple(ref type_tuple) => equivalence_for_tuple_field(&type_tuple),
         Type::Array(ref type_array) => equivalence_for_array_field(&type_array),
+        _ => panic!("Unsupported type!"),
+    }
+}
+
+fn all_component_types(ty: &Type) -> Box<dyn Iterator<Item = Type>> {
+    match ty {
+        ty @ Type::Path(_) => Box::new(std::iter::once(ty.clone())),
+        Type::Array(arr) => all_component_types(&arr.elem),
+        Type::Tuple(tup) => Box::new(
+            tup.elems
+                .clone()
+                .into_iter()
+                .flat_map(|ty| all_component_types(&ty)),
+        ),
         _ => panic!("Unsupported type!"),
     }
 }

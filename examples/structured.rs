@@ -4,6 +4,7 @@ extern crate mpi;
 use mpi::{datatype::UserDatatype, traits::*};
 use std::mem::size_of;
 
+#[derive(Copy, Clone)]
 struct MyInts([i32; 3]);
 
 unsafe impl Equivalence for MyInts {
@@ -20,6 +21,9 @@ unsafe impl Equivalence for MyInts {
         )
     }
 }
+
+// All bit patterns valid
+unsafe impl EquivalenceFromAnyBytes for MyInts {}
 
 fn main() {
     let universe = mpi::initialize().unwrap();

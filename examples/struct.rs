@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, mem::MaybeUninit};
 
 use mpi::{
     topology::{Communicator, SystemCommunicator},
@@ -13,9 +13,7 @@ where
     let packed = comm.pack(a);
 
     let mut new_b = B::default();
-    unsafe {
-        comm.unpack_into(&packed, &mut new_b, 0);
-    }
+    comm.unpack_into(&packed, &mut new_b, 0);
 
     assert_eq!(b, &new_b);
 }
@@ -34,7 +32,7 @@ fn main() {
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataRust {
-        b: bool,
+        b: mpi::Bool,
         f: f64,
         i: u16,
     }
@@ -42,12 +40,12 @@ fn main() {
     assert_equivalence(
         &world,
         &MyDataRust {
-            b: true,
+            b: true.into(),
             f: 3.4,
             i: 7,
         },
         &MyDataRust {
-            b: true,
+            b: true.into(),
             f: 3.4,
             i: 7,
         },
@@ -56,7 +54,7 @@ fn main() {
     #[derive(Equivalence, Default, PartialEq, Debug)]
     #[repr(C)]
     struct MyDataC {
-        b: bool,
+        b: mpi::Bool,
         f: f64,
         i: u16,
     }
@@ -64,12 +62,12 @@ fn main() {
     assert_equivalence(
         &world,
         &MyDataRust {
-            b: true,
+            b: true.into(),
             f: 3.4,
             i: 7,
         },
         &MyDataC {
-            b: true,
+            b: true.into(),
             f: 3.4,
             i: 7,
         },
@@ -77,75 +75,64 @@ fn main() {
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataOrdered {
-        bf: (bool, f64),
+        bf: (mpi::Bool, f64),
         i: u16,
     };
 
     assert_equivalence(
         &world,
         &MyDataRust {
-            b: true,
+            b: true.into(),
             f: 3.4,
             i: 7,
         },
         &MyDataOrdered {
-            bf: (true, 3.4),
+            bf: (true.into(), 3.4),
             i: 7,
         },
     );
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataNestedTuple {
-        bfi: (bool, (f64, u16)),
+        bfi: (mpi::Bool, (f64, u16)),
     };
 
     assert_equivalence(
         &world,
         &MyDataRust {
-            b: true,
+            b: true.into(),
             f: 3.4,
             i: 7,
         },
         &MyDataNestedTuple {
-            bfi: (true, (3.4, 7)),
+            bfi: (true.into(), (3.4, 7)),
         },
     );
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
-    struct MyDataUnnamed(bool, f64, u16);
+    struct MyDataUnnamed(mpi::Bool, f64, u16);
 
     assert_equivalence(
         &world,
         &MyDataRust {
-            b: true,
+            b: true.into(),
             f: 3.4,
             i: 7,
         },
-        &MyDataUnnamed(true, 3.4, 7),
+        &MyDataUnnamed(true.into(), 3.4, 7),
     );
 
-    #[derive(Equivalence, PartialEq, Debug)]
+    // `bool` is allowed here because we never receive into a value of type `BoolBoolBool`.
+    #[derive(EquivalenceUnsafe, PartialEq, Debug)]
     struct BoolBoolBool(bool, bool, bool);
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
-    struct ThreeBool([bool; 3]);
+    struct ThreeBool([mpi::Bool; 3]);
 
     assert_equivalence(
         &world,
         &BoolBoolBool(true, false, true),
-        &ThreeBool([true, false, true]),
-    );
-
-    #[derive(Equivalence, PartialEq, Debug)]
-    struct ComplexComplexComplex((i8, bool, i8), (i8, bool, i8), (i8, bool, i8));
-
-    #[derive(Equivalence, Default, PartialEq, Debug)]
-    struct ThreeComplex([(i8, bool, i8); 3]);
-
-    assert_equivalence(
-        &world,
-        &ComplexComplexComplex((1, true, 1), (2, false, 2), (3, true, 3)),
-        &ThreeComplex([(1, true, 1), (2, false, 2), (3, true, 3)]),
+        &ThreeBool([true.into(), false.into(), true.into()]),
     );
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
@@ -158,7 +145,7 @@ fn main() {
 
     #[derive(Equivalence, Default, PartialEq, Debug)]
     struct Parent {
-        b: bool,
+        b: mpi::Bool,
         child: Child,
     }
 
@@ -168,13 +155,34 @@ fn main() {
     assert_equivalence(
         &world,
         &MyDataRust {
-            b: true,
+            b: true.into(),
             f: 3.4,
             i: 7,
         },
         &Parent {
-            b: true,
+            b: true.into(),
             child: Child(3.4, 7),
         },
     );
+
+    #[derive(EquivalenceUnsafe, Debug)]
+    struct ComplexComplexComplex((i8, bool, i8), (i8, bool, i8), (i8, bool, i8));
+
+    #[derive(EquivalenceUnsafe, Debug, PartialEq)]
+    struct ThreeComplex([(i8, bool, i8); 3]);
+
+    let a = ComplexComplexComplex((1, true, 1), (2, false, 2), (3, true, 3));
+
+    let packed = world.pack(&a);
+
+    let mut b: MaybeUninit<ThreeComplex> = MaybeUninit::uninit();
+    world.unpack_into(&packed, &mut b, 0);
+
+    // This is safe since we know that `ComplexComplexComplex` has a matching type-map to
+    // `ThreeComplex`. In most HPC applications and environments, the risk of hitting UB related to
+    // mis-matched types and the resulting type confusion is low, both in a practical and security
+    // sense.
+    let b = unsafe { b.assume_init() };
+
+    assert_eq!(ThreeComplex([(1, true, 1), (2, false, 2), (3, true, 3)]), b);
 }

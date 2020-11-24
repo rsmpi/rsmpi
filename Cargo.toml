@@ -39,7 +39,6 @@ smallvec = "1.0.0"
 build-probe-mpi = { path = "build-probe-mpi", version = "0.1" }
 
 # The following tests depend on specific features
-
 [[example]]
 name = "struct"
 required-features = ["derive"]

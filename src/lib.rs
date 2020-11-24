@@ -135,6 +135,7 @@ pub mod ffi {
     pub use mpi_sys::*;
 }
 
+mod checked_bool;
 pub mod collective;
 pub mod datatype;
 pub mod environment;
@@ -142,6 +143,9 @@ pub mod point_to_point;
 pub mod raw;
 pub mod request;
 pub mod topology;
+
+// Export Bool at root of crate
+pub use checked_bool::{Bool, BoolError};
 
 /// Re-exports all traits.
 pub mod traits {
@@ -153,7 +157,7 @@ pub mod traits {
 
     // Re-export derives
     #[cfg(feature = "derive")]
-    pub use mpi_derive::Equivalence;
+    pub use mpi_derive::{Equivalence, EquivalenceUnsafe};
 }
 
 /// These crates are used by mpi-derive, and so must be public, but shouldn't be used by dependent

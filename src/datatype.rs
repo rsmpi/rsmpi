@@ -65,27 +65,31 @@
 //! - **4.3**: Canonical pack and unpack, `MPI_Pack_external()`, `MPI_Unpack_external()`,
 //! `MPI_Pack_external_size()`
 
-use std::borrow::Borrow;
-use std::marker::PhantomData;
-use std::os::raw::c_void;
-use std::{mem, slice};
+use std::{
+    borrow::Borrow,
+    marker::PhantomData,
+    mem::{self, MaybeUninit},
+    num,
+    os::raw::c_void,
+    slice,
+};
 
 use conv::ConvUtil;
 
 use super::{Address, Count};
 
-use crate::ffi;
-use crate::ffi::MPI_Datatype;
-
-use crate::raw::traits::*;
-
-use crate::with_uninitialized;
+use crate::{
+    ffi::{self, MPI_Datatype},
+    raw::traits::*,
+    with_uninitialized,
+};
 
 /// Datatype traits
 pub mod traits {
     pub use super::{
-        AsDatatype, Buffer, BufferMut, Collection, Datatype, Equivalence, Partitioned,
-        PartitionedBuffer, PartitionedBufferMut, Pointer, PointerMut, UncommittedDatatype,
+        AsDatatype, Buffer, BufferMut, Collection, Datatype, Equivalence, EquivalenceFromAnyBytes,
+        Partitioned, PartitionedBuffer, PartitionedBufferMut, Pointer, PointerMut,
+        UncommittedDatatype,
     };
 }
 
@@ -165,7 +169,10 @@ impl<'a> UncommittedDatatype for UncommittedDatatypeRef<'a> {
 /// 3.2.2
 pub type SystemDatatype = DatatypeRef<'static>;
 
-/// A direct equivalence exists between the implementing type and an MPI datatype
+/// A direct equivalence exists between the implementing type and an MPI datatype.
+///
+/// You can automatically implement this trait using `#[derive(Equivalence)]` or
+/// `#[derive(EquivalenceUnsafe)]`. These derives require `#[cfg(feature = "derive")]`
 ///
 /// # Standard section(s)
 ///
@@ -177,7 +184,18 @@ pub unsafe trait Equivalence {
     fn equivalent_datatype() -> Self::Out;
 }
 
-macro_rules! equivalent_system_datatype {
+/// Indicates a type's `Equivalence` implementation can fully initialize a value of the type from a
+/// correctly sized MPI message. This can be safely derived using `#[derive(Equivalence)]` for any
+/// type where all component fields are themselves `EquivalenceFromAnyBytes`. You can manually
+/// derive this trait only as long as all possible bit patterns of the type's component fields are
+/// allowed, and the `Equivalence` implementation maps all fields of the type.
+///
+/// `bool` is an example of a type that does not implement `EquivalenceFromAnyBytes`.
+pub unsafe trait EquivalenceFromAnyBytes {}
+
+unsafe impl<T> EquivalenceFromAnyBytes for MaybeUninit<T> where T: Equivalence {}
+
+macro_rules! equivalent_system_datatype_unsafe_transmute {
     ($rstype:path, $mpitype:path) => {
         unsafe impl Equivalence for $rstype {
             type Out = SystemDatatype;
@@ -188,7 +206,15 @@ macro_rules! equivalent_system_datatype {
     };
 }
 
-equivalent_system_datatype!(bool, ffi::RSMPI_C_BOOL);
+macro_rules! equivalent_system_datatype {
+    ($rstype:path, $mpitype:path) => {
+        equivalent_system_datatype_unsafe_transmute!($rstype, $mpitype);
+
+        unsafe impl EquivalenceFromAnyBytes for $rstype {}
+    };
+}
+
+equivalent_system_datatype_unsafe_transmute!(bool, ffi::RSMPI_C_BOOL);
 
 equivalent_system_datatype!(f32, ffi::RSMPI_FLOAT);
 equivalent_system_datatype!(f64, ffi::RSMPI_DOUBLE);
@@ -197,21 +223,63 @@ equivalent_system_datatype!(i8, ffi::RSMPI_INT8_T);
 equivalent_system_datatype!(i16, ffi::RSMPI_INT16_T);
 equivalent_system_datatype!(i32, ffi::RSMPI_INT32_T);
 equivalent_system_datatype!(i64, ffi::RSMPI_INT64_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroI8, ffi::RSMPI_INT8_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroI16, ffi::RSMPI_INT16_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroI32, ffi::RSMPI_INT32_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroI64, ffi::RSMPI_INT64_T);
+equivalent_system_datatype!(Option<num::NonZeroI8>, ffi::RSMPI_INT8_T);
+equivalent_system_datatype!(Option<num::NonZeroI16>, ffi::RSMPI_INT16_T);
+equivalent_system_datatype!(Option<num::NonZeroI32>, ffi::RSMPI_INT32_T);
+equivalent_system_datatype!(Option<num::NonZeroI64>, ffi::RSMPI_INT64_T);
 
 equivalent_system_datatype!(u8, ffi::RSMPI_UINT8_T);
 equivalent_system_datatype!(u16, ffi::RSMPI_UINT16_T);
 equivalent_system_datatype!(u32, ffi::RSMPI_UINT32_T);
 equivalent_system_datatype!(u64, ffi::RSMPI_UINT64_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroU8, ffi::RSMPI_UINT8_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroU16, ffi::RSMPI_UINT16_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroU32, ffi::RSMPI_UINT32_T);
+equivalent_system_datatype_unsafe_transmute!(num::NonZeroU64, ffi::RSMPI_UINT64_T);
+equivalent_system_datatype!(Option<num::NonZeroU8>, ffi::RSMPI_UINT8_T);
+equivalent_system_datatype!(Option<num::NonZeroU16>, ffi::RSMPI_UINT16_T);
+equivalent_system_datatype!(Option<num::NonZeroU32>, ffi::RSMPI_UINT32_T);
+equivalent_system_datatype!(Option<num::NonZeroU64>, ffi::RSMPI_UINT64_T);
 
 #[cfg(target_pointer_width = "32")]
-equivalent_system_datatype!(usize, ffi::RSMPI_UINT32_T);
-#[cfg(target_pointer_width = "32")]
-equivalent_system_datatype!(isize, ffi::RSMPI_INT32_T);
+mod ptr32_equivalences {
+    use super::*;
+
+    equivalent_system_datatype!(isize, ffi::RSMPI_INT32_T);
+    equivalent_system_datatype_unsafe_transmute!(num::NonZeroIsize, ffi::RSMPI_INT32_T);
+    equivalent_system_datatype!(Option<num::NonZeroIsize>, ffi::RSMPI_INT32_T);
+    equivalent_system_datatype!(usize, ffi::RSMPI_UINT32_T);
+    equivalent_system_datatype_unsafe_transmute!(num::NonZeroUsize, ffi::RSMPI_UINT32_T);
+    equivalent_system_datatype!(Option<num::NonZeroUsize>, ffi::RSMPI_UINT32_T);
+}
 
 #[cfg(target_pointer_width = "64")]
-equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
-#[cfg(target_pointer_width = "64")]
-equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
+mod ptr64_equivalences {
+    use super::*;
+
+    equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
+    equivalent_system_datatype_unsafe_transmute!(num::NonZeroIsize, ffi::RSMPI_INT64_T);
+    equivalent_system_datatype!(Option<num::NonZeroIsize>, ffi::RSMPI_INT64_T);
+    equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
+    equivalent_system_datatype_unsafe_transmute!(num::NonZeroUsize, ffi::RSMPI_UINT64_T);
+    equivalent_system_datatype!(Option<num::NonZeroUsize>, ffi::RSMPI_UINT64_T);
+}
+
+/// Allow datatypes with Equivalence to be used in buffer packing functions
+unsafe impl<T> Equivalence for MaybeUninit<T>
+where
+    T: Equivalence,
+{
+    type Out = T::Out;
+
+    fn equivalent_datatype() -> Self::Out {
+        T::equivalent_datatype()
+    }
+}
 
 /// A user defined MPI datatype
 ///
@@ -928,8 +996,8 @@ unsafe impl<T> Buffer for [T] where T: Equivalence {}
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
 /// copies of `as_datatype()`.
 pub unsafe trait BufferMut: PointerMut + Collection + AsDatatype {}
-unsafe impl<T> BufferMut for T where T: Equivalence {}
-unsafe impl<T> BufferMut for [T] where T: Equivalence {}
+unsafe impl<T> BufferMut for T where T: Equivalence + EquivalenceFromAnyBytes {}
+unsafe impl<T> BufferMut for [T] where T: Equivalence + EquivalenceFromAnyBytes {}
 
 /// An immutable dynamically-typed buffer.
 ///
