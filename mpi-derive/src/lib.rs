@@ -43,7 +43,12 @@ fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
 fn equivalence_for_array_field(type_array: &syn::TypeArray) -> TokenStream2 {
     let ty = equivalence_for_type(&type_array.elem);
     let len = &type_array.len;
-    quote! { &::mpi::datatype::UncommittedUserDatatype::contiguous(#len as i32, &#ty) }
+    // We use the len block to ensure that len is of type `usize` and not type
+    // {integer}. We know that `#len` should be of type `usize` because it is an
+    // array size.
+    quote! { &::mpi::datatype::UncommittedUserDatatype::contiguous(
+        {let len: usize = #len; len}.try_into().expect("rsmpi derive: Array size is to large for MPI_Datatype i32"), &#ty)
+    }
 }
 
 fn equivalence_for_type(ty: &syn::Type) -> TokenStream2 {
@@ -86,6 +91,7 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
             type Out = ::mpi::datatype::DatatypeRef<'static>;
             fn equivalent_datatype() -> Self::Out {
                 use ::mpi::internal::once_cell::sync::Lazy;
+                use ::std::convert::TryInto;
 
                 static DATATYPE: Lazy<::mpi::datatype::UserDatatype> = Lazy::new(|| {
                     ::mpi::datatype::internal::check_derive_equivalence_universe_state(#ident_str);
