@@ -79,7 +79,7 @@ fn main() {
     struct MyDataOrdered {
         bf: (bool, f64),
         i: u16,
-    };
+    }
 
     assert_equivalence(
         &world,
@@ -97,7 +97,7 @@ fn main() {
     #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataNestedTuple {
         bfi: (bool, (f64, u16)),
-    };
+    }
 
     assert_equivalence(
         &world,
