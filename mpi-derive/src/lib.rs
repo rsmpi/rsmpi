@@ -43,7 +43,7 @@ fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
 fn equivalence_for_array_field(type_array: &syn::TypeArray) -> TokenStream2 {
     let ty = equivalence_for_type(&type_array.elem);
     let len = &type_array.len;
-    quote! { &::mpi::datatype::UncommittedUserDatatype::contiguous(#len, &#ty) }
+    quote! { &::mpi::datatype::UncommittedUserDatatype::contiguous(#len as i32, &#ty) }
 }
 
 fn equivalence_for_type(ty: &syn::Type) -> TokenStream2 {

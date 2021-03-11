@@ -1687,13 +1687,13 @@ impl<'a> UserOperation<'a> {
     {
         struct ClosureAnchor<F> {
             rust_closure: F,
-            ffi_closure: Option<Closure<'static>>,
+            _ffi_closure: Option<Closure<'static>>,
         }
 
         // must box it to prevent moves
         let mut anchor = Box::new(ClosureAnchor {
             rust_closure: function,
-            ffi_closure: None,
+            _ffi_closure: None,
         });
 
         let args = [
@@ -1738,7 +1738,7 @@ impl<'a> UserOperation<'a> {
         }
 
         let op;
-        anchor.ffi_closure = Some(unsafe {
+        anchor._ffi_closure = Some(unsafe {
             let ffi_closure = Closure::new(cif, trampoline, &anchor.rust_closure);
             op = with_uninitialized(|op| {
                 ffi::MPI_Op_create(Some(*ffi_closure.instantiate_code_ptr()), commute as _, op)
