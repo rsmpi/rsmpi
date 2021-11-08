@@ -33,7 +33,7 @@ fn main() {
         println!("cargo:rustc-cfg=msmpi");
     } else {
         // Use `mpicc` wrapper on Unix rather than the system C compiler.
-        builder.compiler("cc");
+        builder.compiler("CC");
     }
 
     let compiler = builder.try_get_compiler();
