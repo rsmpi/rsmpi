@@ -32,8 +32,14 @@ fn main() {
         // Adds a cfg to identify MS-MPI
         println!("cargo:rustc-cfg=msmpi");
     } else {
-        // Use `mpicc` wrapper on Unix rather than the system C compiler.
-        builder.compiler("cc");
+        // Use `mpicc` wrapper on Unix rather than the system C compiler if it exists
+        // Unless on a cray system.
+        let cray = env::var("CRAY").is_ok();
+        if cray {
+            builder.compiler("cc");
+        } else {
+            builder.compiler("mpicc");
+        }
     }
 
     let compiler = builder.try_get_compiler();
