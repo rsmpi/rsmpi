@@ -7,8 +7,14 @@ extern crate build_probe_mpi;
 
 use std::env;
 use std::path::Path;
+use std::collections::HashMap;
 
 fn main() {
+    // Mapper for CL args
+    let mut args = HashMap::new();
+    args.insert("1", true);
+    args.insert("0", false);
+
     // Try to find an MPI library
     let lib = match build_probe_mpi::probe() {
         Ok(lib) => lib,
@@ -34,8 +40,16 @@ fn main() {
     } else {
         // Use `mpicc` wrapper on Unix rather than the system C compiler if it exists
         // Unless on a cray system.
-        let cray = env::var("CRAY").is_ok();
-        if cray {
+
+        let cray = match env::var_os("CRAY") {
+            Some(v) => v.into_string().unwrap(),
+            None => panic!("$CRAY is not set")
+        };
+
+        let cray = args.get(&*cray).unwrap();
+        println!("HERE {:?}", cray);
+
+        if *cray == true {
             builder.compiler("cc");
         } else {
             builder.compiler("mpicc");
@@ -44,7 +58,7 @@ fn main() {
 
     let compiler = builder.try_get_compiler();
 
-    // Build the `rsmpi` C shim library.
+    // Build the `rsmpi` C shim library.\
     builder.compile("rsmpi");
 
     // Let `rustc` know about the library search directories.

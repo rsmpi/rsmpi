@@ -54,6 +54,14 @@ Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` 
 [bindgen]: https://github.com/servo/rust-bindgen
 [libffi]: https://github.com/tov/libffi-rs
 
+## Build
+
+If building on a Cray system, use the `cc` wrapper rather than `mpicc`, and need to set.
+
+```bash
+export CRAY=1 # set to 0 if not on a cray system.
+```
+
 ## Usage
 
 Add the `mpi` crate as a dependency in your `Cargo.toml`:
