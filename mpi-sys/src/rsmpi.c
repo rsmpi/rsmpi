@@ -5,6 +5,9 @@ const MPI_Datatype RSMPI_C_BOOL = MPI_C_BOOL;
 const MPI_Datatype RSMPI_FLOAT = MPI_FLOAT;
 const MPI_Datatype RSMPI_DOUBLE = MPI_DOUBLE;
 
+const MPI_Datatype RSMPI_COMPLEX = MPI_COMPLEX;
+const MPI_Datatype RSMPI_DOUBLE_COMPLEX = MPI_DOUBLE_COMPLEX;
+
 const MPI_Datatype RSMPI_INT8_T = MPI_INT8_T;
 const MPI_Datatype RSMPI_INT16_T = MPI_INT16_T;
 const MPI_Datatype RSMPI_INT32_T = MPI_INT32_T;

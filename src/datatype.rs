@@ -70,6 +70,8 @@ use std::marker::PhantomData;
 use std::os::raw::c_void;
 use std::{mem, slice};
 
+use num_complex::Complex;
+
 use conv::ConvUtil;
 
 use super::{Address, Count};
@@ -192,6 +194,9 @@ equivalent_system_datatype!(bool, ffi::RSMPI_C_BOOL);
 
 equivalent_system_datatype!(f32, ffi::RSMPI_FLOAT);
 equivalent_system_datatype!(f64, ffi::RSMPI_DOUBLE);
+
+equivalent_system_datatype!(Complex<f32>, ffi::RSMPI_COMPLEX);
+equivalent_system_datatype!(Complex<f64>, ffi::RSMPI_DOUBLE_COMPLEX);
 
 equivalent_system_datatype!(i8, ffi::RSMPI_INT8_T);
 equivalent_system_datatype!(i16, ffi::RSMPI_INT16_T);
