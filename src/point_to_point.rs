@@ -934,6 +934,13 @@ impl fmt::Debug for Status {
     }
 }
 
+unsafe impl AsRaw for Status {
+    type Raw = MPI_Status;
+    fn as_raw(&self) -> Self::Raw {
+        self.0
+    }
+}
+
 /// Describes a pending incoming message, probed by a `matched_probe()`.
 ///
 /// # Standard section(s)

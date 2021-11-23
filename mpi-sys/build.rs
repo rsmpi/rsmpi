@@ -47,7 +47,6 @@ fn main() {
         };
 
         let cray = args.get(&*cray).unwrap();
-        println!("HERE {:?}", cray);
 
         if *cray == true {
             builder.compiler("cc");

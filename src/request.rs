@@ -123,8 +123,10 @@ pub fn wait_any<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<
     }
 }
 
-/// Wait for completion of all requests
-pub fn wait_all<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<(usize, Vec<Status>)> {
+
+/// Wait for completion of all requests, hacky and doesn't fulfill protocol as I couldn't figure out
+/// how to assign an uninitialized pointer based array to keep the vector of statuses.
+pub fn wait_all<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<(Vec<Status>)> {
     let mut mpi_requests: Vec<_> = requests.iter().map(|r| r.as_raw()).collect();
 
     let size: i32 = mpi_requests
@@ -132,19 +134,27 @@ pub fn wait_all<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<
         .try_into()
         .expect("Error while casting usize to i32");
 
-    let statuses;
-
+    let mut statuses = MaybeUninit::<MPI_Status>::uninit();
+    let status;
     unsafe {
-        let raw = with_uninitialized(|s| {
-            ffi::MPI_Waitall(size, mpi_requests.as_mut_ptr(), s);
-            s
-        }).0;
-
-        statuses = raw.as_ref().iter().map(|&&s| Status::from_raw(s)).collect();
+        ffi::MPI_Waitall(size, mpi_requests.as_mut_ptr(), statuses.as_mut_ptr());
+        // statuses =.assume_init()
+        status = statuses.assume_init();
     }
 
-    // Some((size as usize, statuses))
-    None
+    while !requests.is_empty() {
+        let r = requests.remove(0);
+        unsafe {
+            r.into_raw();
+        }
+    }
+
+    if status.MPI_ERROR == 0 {
+        Some(vec![Status::from_raw(status)])
+    } else {
+        None
+    }
+
 }
 
 impl<'a, S: Scope<'a>> Request<'a, S> {

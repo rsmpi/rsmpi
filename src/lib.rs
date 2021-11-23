@@ -184,6 +184,7 @@ pub type Address = MPI_Aint;
 /// without incurring allocation in the common case.
 type IntArray = smallvec::SmallVec<[c_int; 8]>;
 
+
 unsafe fn with_uninitialized<F, U, R>(f: F) -> (R, U)
 where
     F: FnOnce(*mut U) -> R,
