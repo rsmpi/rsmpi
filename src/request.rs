@@ -123,6 +123,29 @@ pub fn wait_any<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<
     }
 }
 
+/// Wait for completion of all requests
+pub fn wait_all<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<(usize, Vec<Status>)> {
+    let mut mpi_requests: Vec<_> = requests.iter().map(|r| r.as_raw()).collect();
+
+    let size: i32 = mpi_requests
+        .len()
+        .try_into()
+        .expect("Error while casting usize to i32");
+
+    let statuses;
+
+    unsafe {
+        let raw = with_uninitialized(|s| {
+            ffi::MPI_Waitall(size, mpi_requests.as_mut_ptr(), s);
+            s
+        }).0;
+
+        statuses = raw.as_ref().iter().map(|&&s| Status::from_raw(s)).collect();
+    }
+
+    Some((size as usize, statuses))
+}
+
 impl<'a, S: Scope<'a>> Request<'a, S> {
     /// Construct a request object from the raw MPI type.
     ///
