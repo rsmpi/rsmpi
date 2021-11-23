@@ -143,7 +143,8 @@ pub fn wait_all<'a, S: Scope<'a>>(requests: &mut Vec<Request<'a, S>>) -> Option<
         statuses = raw.as_ref().iter().map(|&&s| Status::from_raw(s)).collect();
     }
 
-    Some((size as usize, statuses))
+    // Some((size as usize, statuses))
+    None
 }
 
 impl<'a, S: Scope<'a>> Request<'a, S> {
