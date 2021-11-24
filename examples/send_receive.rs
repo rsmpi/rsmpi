@@ -25,8 +25,8 @@ fn main() {
     assert_eq!(msg, next_rank);
 
     if rank > 0 {
-        let msg = vec![rank, rank + 1, rank - 1];
-        world.process_at_rank(0).send(&msg[..]);
+        let msg: [Rank; 3] = [rank, rank + 1, rank - 1];
+        world.process_at_rank(0).send(&msg);
     } else {
         for _ in 1..size {
             let (msg, status) = world.any_process().receive_vec::<Rank>();
