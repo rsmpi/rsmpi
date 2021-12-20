@@ -24,7 +24,7 @@ fn main() {
             }
 
             println!("World size {}", world.size());
-            mpi::request::wait_all(&mut requests)
+            mpi::request::wait_all(&mut requests);
             println!("All requests completed");
         } else {
             let secs = time::Duration::from_secs(world.rank() as u64);

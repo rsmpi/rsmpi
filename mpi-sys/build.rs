@@ -7,53 +7,33 @@ extern crate build_probe_mpi;
 
 use std::env;
 use std::path::Path;
+use std::path::PathBuf;
 use std::collections::HashMap;
 
 fn main() {
-    // Mapper for CL args
-    let mut args = HashMap::new();
-    args.insert("1", true);
-    args.insert("0", false);
-
-    // Try to find an MPI library
-    let lib = match build_probe_mpi::probe() {
-        Ok(lib) => lib,
-        Err(errs) => {
-            println!("Could not find MPI library for various reasons:\n");
-            for (i, err) in errs.iter().enumerate() {
-                println!("Reason #{}:\n{}\n", i, err);
-            }
-            panic!();
-        }
-    };
 
     let mut builder = cc::Build::new();
     builder.file("src/rsmpi.c");
 
-    if cfg!(windows) {
-        for inc in &lib.include_paths {
-            builder.include(inc);
-        }
+    let include_paths = vec![
+        PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"),
+        PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/include"),
+    ];
 
-        // Adds a cfg to identify MS-MPI
-        println!("cargo:rustc-cfg=msmpi");
-    } else {
-        // Use `mpicc` wrapper on Unix rather than the system C compiler if it exists
-        // Unless on a cray system.
+    let lib_paths = vec![
+        PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/lib")
+    ];
 
-        let cray = match env::var_os("CRAY") {
-            Some(v) => v.into_string().unwrap(),
-            None => panic!("$CRAY is not set")
-        };
+    let libs = vec![
+        "mpi"
+    ];
 
-        let cray = args.get(&*cray).unwrap();
-
-        if *cray == true {
-            builder.compiler("cc");
-        } else {
-            builder.compiler("mpicc");
-        }
+    for inc in &include_paths {
+        builder.include(inc);
     }
+
+    // builder.compiler("cc");
+    builder.compiler("mpicc");
 
     let compiler = builder.try_get_compiler();
 
@@ -61,16 +41,16 @@ fn main() {
     builder.compile("rsmpi");
 
     // Let `rustc` know about the library search directories.
-    for dir in &lib.lib_paths {
+    for dir in &lib_paths {
         println!("cargo:rustc-link-search=native={}", dir.display());
     }
-    for lib in &lib.libs {
+    for lib in &libs {
         println!("cargo:rustc-link-lib={}", lib);
     }
 
     let mut builder = bindgen::builder();
     // Let `bindgen` know about header search directories.
-    for dir in &lib.include_paths {
+    for dir in &include_paths {
         builder = builder.clang_arg(format!("-I{}", dir.display()));
     }
 
