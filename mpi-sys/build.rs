@@ -10,25 +10,57 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::collections::HashMap;
 
+
+/// Result of a successfull probe
+#[allow(clippy::manual_non_exhaustive)]
+#[derive(Clone, Debug)]
+pub struct Library {
+    /// Names of the native MPI libraries that need to be linked
+    pub libs: Vec<String>,
+    /// Search path for native MPI libraries
+    pub lib_paths: Vec<PathBuf>,
+    /// Search path for C header files
+    pub include_paths: Vec<PathBuf>,
+    /// The version of the MPI library
+    pub version: String,
+}
+
+
 fn main() {
+
+    let unix_x86_64_ompi = Library {
+        libs: vec![
+            "mpi".to_string()
+        ],
+        lib_paths: vec![
+            PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/lib")
+        ],
+        include_paths: vec![
+            PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"),
+            PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/include"),
+        ],
+        version: "unknown".to_string()
+    };
+
+    let archer2_x86_64_cray_mpich = Library {
+        libs: vec![
+            "mpi".to_string()
+        ],
+        lib_paths: vec![
+            PathBuf::from("/opt/cray/pe/mpich/8.1.4/ofi/aocc/2.2/lib/")
+        ],
+        include_paths: vec![
+            PathBuf::from("/opt/cray/pe/mpich/8.1.4/ofi/aocc/2.2/include/"),
+        ],
+        version: "unknown".to_string()
+    };
 
     let mut builder = cc::Build::new();
     builder.file("src/rsmpi.c");
 
-    let include_paths = vec![
-        PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"),
-        PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/include"),
-    ];
+    let lib = unix_x86_64_ompi;
 
-    let lib_paths = vec![
-        PathBuf::from("/usr/lib/x86_64-linux-gnu/openmpi/lib")
-    ];
-
-    let libs = vec![
-        "mpi"
-    ];
-
-    for inc in &include_paths {
+    for inc in &lib.include_paths {
         builder.include(inc);
     }
 
@@ -41,16 +73,16 @@ fn main() {
     builder.compile("rsmpi");
 
     // Let `rustc` know about the library search directories.
-    for dir in &lib_paths {
+    for dir in &lib.lib_paths {
         println!("cargo:rustc-link-search=native={}", dir.display());
     }
-    for lib in &libs {
+    for lib in &lib.libs {
         println!("cargo:rustc-link-lib={}", lib);
     }
 
     let mut builder = bindgen::builder();
     // Let `bindgen` know about header search directories.
-    for dir in &include_paths {
+    for dir in &lib.include_paths {
         builder = builder.clang_arg(format!("-I{}", dir.display()));
     }
 
