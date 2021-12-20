@@ -3,7 +3,6 @@ extern crate cc;
 // Generates the Rust header for the C API.
 extern crate bindgen;
 // Finds out information about the MPI library
-extern crate build_probe_mpi;
 
 use std::env;
 use std::path::Path;
@@ -58,6 +57,7 @@ fn main() {
     let mut builder = cc::Build::new();
     builder.file("src/rsmpi.c");
 
+    // let lib = unix_x86_64_ompi
     let lib = archer2_x86_64_cray_mpich;
 
     for inc in &lib.include_paths {
