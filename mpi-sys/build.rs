@@ -47,6 +47,7 @@ fn main() {
         ],
         lib_paths: vec![
             PathBuf::from("/opt/cray/pe/mpich/8.1.4/ofi/AOCC/2.2/lib/"),
+            PathBuf::from("/opt/cray/pe/mpich/8.1.4/ofi/AOCC/2.2/lib-abi-mpich/")
             PathBuf::from("/opt/AMD/aocc-compiler-2.2.0/lib/")
         ],
         include_paths: vec![
