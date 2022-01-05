@@ -24,8 +24,27 @@ pub struct Library {
     pub version: String,
 }
 
+impl Default for Library {
+    fn default() -> Self {
+        Library {
+            libs: vec!["mpi".to_string()],
+            lib_paths: vec![
+                PathBuf::from("/foo/bar")
+            ],
+            include_paths: vec![
+                PathBuf::from("/foo/bar")
+            ],
+            version: "foo".to_string()
+        }
+    }
+}
 
 fn main() {
+
+    //  Map for parsing Environment Configuration
+    let mut args = HashMap::new();
+    args.insert("1", true);
+    args.insert("0", false);
 
     let unix_x86_64_ompi = Library {
         libs: vec![
@@ -47,7 +66,7 @@ fn main() {
         ],
         lib_paths: vec![
             PathBuf::from("/opt/cray/pe/mpich/8.1.4/ofi/AOCC/2.2/lib/"),
-            PathBuf::from("/opt/cray/pe/mpich/8.1.4/ofi/AOCC/2.2/lib-abi-mpich/")
+            PathBuf::from("/opt/cray/pe/mpich/8.1.4/ofi/AOCC/2.2/lib-abi-mpich/"),
             PathBuf::from("/opt/AMD/aocc-compiler-2.2.0/lib/")
         ],
         include_paths: vec![
@@ -58,21 +77,34 @@ fn main() {
     };
 
     let mut builder = cc::Build::new();
-    builder.file("src/rsmpi.c");
+    let mut lib = Library::default();
 
-    // let lib = unix_x86_64_ompi
-    let lib = archer2_x86_64_cray_mpich;
+    let cray = match env::var_os("CRAY") {
+        Some(v) => v.into_string().unwrap(),
+        None => panic!("$CRAY is not set")
+    };
+
+    let cray = args.get(&*cray).unwrap();
+
+    if *cray == true {
+        // Archer2 MPICH compiler wrapper
+        builder.compiler("cc");
+        lib = archer2_x86_64_cray_mpich;
+    } else {
+        // Available on most OpenMPI compatible systems
+        builder.compiler("mpicc");
+        lib = unix_x86_64_ompi;
+    }
+
+    builder.file("src/rsmpi.c");
 
     for inc in &lib.include_paths {
         builder.include(inc);
     }
 
-    builder.compiler("cc");
-    // builder.compiler("mpicc");
-
     let compiler = builder.try_get_compiler();
 
-    // Build the `rsmpi` C shim library.\
+    // Build the `rsmpi` C shim library
     builder.compile("rsmpi");
 
     // Let `rustc` know about the library search directories.

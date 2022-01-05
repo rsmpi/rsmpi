@@ -1,40 +1,10 @@
 # MPI bindings for Rust
 
-[![Travis build status][travis-shield]][travis] [![Documentation: hosted][doc-shield]][doc] [![License: Apache License 2.0 or MIT][license-shield]][license] [![latest GitHub release][release-shield]][release] [![crate on crates.io][crate-shield]][crate]
-
-The [Message Passing Interface][MPI] (MPI) is a specification for a
-message-passing style concurrency library. Implementations of MPI are often used to structure
-parallel computation on High Performance Computing systems. The MPI specification describes
-bindings for the C programming language (and through it C++) as well as for the Fortran
-programming language. This library tries to bridge the gap into a more rustic world.
-
-[travis-shield]: https://img.shields.io/travis/rsmpi/rsmpi/master.svg?style=flat-square
-[travis]: https://travis-ci.org/rsmpi/rsmpi
-[doc-shield]: https://img.shields.io/badge/documentation-hosted-blue.svg?style=flat-square
-[doc]: http://rsmpi.github.io/rsmpi/
-[license-shield]: https://img.shields.io/badge/license-Apache_License_2.0_or_MIT-blue.svg?style=flat-square
-[license]: https://github.com/rsmpi/rsmpi#license
-[release-shield]: https://img.shields.io/github/release/rsmpi/rsmpi.svg?style=flat-square
-[release]: https://github.com/rsmpi/rsmpi/releases/latest
-[crate-shield]: https://img.shields.io/crates/v/mpi.svg?style=flat-square
-[crate]: https://crates.io/crates/mpi
-[MPI]: http://www.mpi-forum.org
-
 ## Requirements
 
 An implementation of the C language interface that conforms to MPI-3.1. `rsmpi` is currently tested with these implementations:
-- [OpenMPI][OpenMPI] 3.0.4, 3.1.4, 4.0.1
-- [MPICH][MPICH] 3.3, 3.2.1
-- [MS-MPI (Windows)][MS-MPI] 10.0.0
-
-Users have also had success with these MPI implementations, but they are not tested in CI:
-- [Spectrum MPI][Spectrum-MPI] 10.3.0.1
-
-For a reasonable chance of success with `rsmpi` any MPI implementation that you want to use with it should satisfy the following assumptions that `rsmpi` currently makes:
-
-- The implementation should provide a C compiler wrapper `mpicc`.
-- `mpicc -show` should print the full command line that is used to invoke the wrapped C compiler.
-- The result of `mpicc -show` contains the libraries, library search paths, and header search paths in a format understood by GCC (e.g. `-lmpi`, `-I/usr/local/include`, ...).
+- [OpenMPI][OpenMPI] 3.1.4, 4.0.1
+- [MPICH][MPICH] 3.1.4
 
 Since the MPI standard leaves some details of the C API unspecified (e.g. whether to implement certain constants and even functions using preprocessor macros or native C constructs, the details of most types, ...) `rsmpi` takes a two step approach to generating functional low-level bindings.
 
@@ -46,8 +16,6 @@ Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` 
 
 [OpenMPI]: https://www.open-mpi.org
 [MPICH]: https://www.mpich.org
-[MS-MPI]: https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi
-[Spectrum-MPI]: https://www.ibm.com/us-en/marketplace/spectrum-mpi
 [rsmpih]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/src/rsmpi.h
 [rsmpic]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/src/rsmpi.c
 [buildrs]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/build.rs
@@ -69,7 +37,7 @@ Add the `mpi` crate as a dependency in your `Cargo.toml`:
 ```toml
 # "features" is optional
 [dependencies]
-mpi = { version = "0.5", features = ["user-operations", "derive"] }
+mpi = { git = "https://github.com/skailasa/rsmpi, branch = "main"}
 ```
 
 Then use it in your program like this:
@@ -219,10 +187,3 @@ Licensed under either of
  * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
-
-### Contribution
-
-Unless you explicitly state otherwise, any contribution intentionally
-submitted for inclusion in the work by you, as defined in the Apache-2.0
-license, shall be dual licensed as above, without any additional terms or
-conditions.
