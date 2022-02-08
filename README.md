@@ -1,6 +1,6 @@
 # MPI bindings for Rust
 
-[![Travis build status][travis-shield]][travis] [![Documentation: hosted][doc-shield]][doc] [![License: Apache License 2.0 or MIT][license-shield]][license] [![latest GitHub release][release-shield]][release] [![crate on crates.io][crate-shield]][crate]
+[![GitHub Actions][actions-shield]][actions] [![Documentation: hosted][doc-shield]][doc] [![License: Apache License 2.0 or MIT][license-shield]][license] [![latest GitHub release][release-shield]][release] [![crate on crates.io][crate-shield]][crate]
 
 The [Message Passing Interface][MPI] (MPI) is a specification for a
 message-passing style concurrency library. Implementations of MPI are often used to structure
@@ -8,8 +8,8 @@ parallel computation on High Performance Computing systems. The MPI specificatio
 bindings for the C programming language (and through it C++) as well as for the Fortran
 programming language. This library tries to bridge the gap into a more rustic world.
 
-[travis-shield]: https://img.shields.io/travis/rsmpi/rsmpi/master.svg?style=flat-square
-[travis]: https://travis-ci.org/rsmpi/rsmpi
+[actions-shield]: https://github.com/rsmpi/rsmpi/workflows/Test/badge.svg
+[actions]: https://github.com/rsmpi/rsmpi/actions
 [doc-shield]: https://img.shields.io/badge/documentation-hosted-blue.svg?style=flat-square
 [doc]: http://rsmpi.github.io/rsmpi/
 [license-shield]: https://img.shields.io/badge/license-Apache_License_2.0_or_MIT-blue.svg?style=flat-square
@@ -23,9 +23,9 @@ programming language. This library tries to bridge the gap into a more rustic wo
 ## Requirements
 
 An implementation of the C language interface that conforms to MPI-3.1. `rsmpi` is currently tested with these implementations:
-- [OpenMPI][OpenMPI] 3.0.4, 3.1.4, 4.0.1
-- [MPICH][MPICH] 3.3, 3.2.1
-- [MS-MPI (Windows)][MS-MPI] 10.0.0
+- [OpenMPI][OpenMPI] 4.0.3 on Ubuntu-20.04, 4.1.2 on macOS
+- [MPICH][MPICH] 3.3.2 on Ubuntu 20.04
+- [MS-MPI (Windows)][MS-MPI] 10.1.1 on Windows 2022
 
 Users have also had success with these MPI implementations, but they are not tested in CI:
 - [Spectrum MPI][Spectrum-MPI] 10.3.0.1
@@ -199,7 +199,7 @@ Documentation for the latest version of the crate released to crates.io is [host
 
 ## Examples
 
-See files in [examples/][examples]. These examples also act as [integration tests][travis].
+See files in [examples/][examples]. These examples also act as [integration tests][actions].
 
 [examples]: https://github.com/rsmpi/rsmpi/tree/master/examples
 
