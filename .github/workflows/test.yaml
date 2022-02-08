@@ -1,4 +1,4 @@
-name: rsmpi Testing
+name: Test
 on:
   push:
     branches:
@@ -11,11 +11,11 @@ defaults:
     shell: bash
 jobs:
   test:
-    name: Test rsmpi
+    name: rsmpi
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - os: ubuntu-latest
