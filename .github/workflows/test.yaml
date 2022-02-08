@@ -2,7 +2,7 @@ name: rsmpi Testing
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
       - '*'
@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: 
-          - windows-latest
+          - windows-2022
           - ubuntu-latest
           - macos-latest
         rust:
@@ -34,20 +34,20 @@ jobs:
       - name: Install LLVM (Mac)
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          brew install llvm@10
-          echo "::set-env name=PATH::$(brew --prefix)/bin:$PATH"
+          brew install llvm@13
+          env
       - name: Install LLVM (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-2022' }}
         run: |
-          choco install llvm --version 10.0.0 -y
-          echo "::set-env name=PATH::/c/Program Files/LLVM/bin:$PATH"
-      - name: List Clangs
-        run: which -a clang
+          choco install llvm --version 13.0.0 -y
+          env
       - name: Clang Version
         run: clang --version
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{matrix.rust}}
-      - name: Rust Version
-        run: rustc +${{matrix.rust}} --version
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features
