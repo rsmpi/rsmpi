@@ -17,16 +17,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-        rust:
-          - stable
-          - nightly
-        mpi_package:
-          - libmpich-dev
-        cargo_flags:
-          - --all-features
         include:
+          - os: ubuntu-latest
+            rust: nightly
+            mpi_package: libmpich-dev
+            cargo_flags: --all-features
+          - os: ubuntu-latest
+            rust: stable
+            mpi_package: libmpich-dev
+            cargo_flags: --all-features
           - os: ubuntu-latest
             rust: 1.36.0 # First version with MaybeUninit
             mpi_package: libmpich-dev
@@ -44,28 +43,25 @@ jobs:
             cargo_flags: --features derive
     steps:
       - uses: actions/checkout@v2
-      - name: Install (Ubuntu)
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+      - name: Install (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm-dev libclang-dev pkgconf ${{ matrix.mpi_package }}
-      - name: Install (Mac)
-        if: ${{ matrix.os == 'macos-latest' }}
+      - name: Install (MacOS)
+        if: runner.os == 'macOS'
         run: |
           brew install llvm@13 ${{ matrix.mpi_package }}
           env
       - name: Install (Windows)
-        if: ${{ matrix.os == 'windows-2022' }}
+        if: runner.os == 'Windows'
         run: |
           choco install llvm --version 13.0.0 -y
           sh ci/install-mpi-windows.sh
-          echo 'MSMPI_INC="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\\"' >> $GITHUB_ENV
-          echo 'MSMPI_LIB32="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x86\\"' >> $GITHUB_ENV
-          echo 'MSMPI_LIB64="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x64\\"' >> $GITHUB_ENV
-          echo 'PATH="${HOME}/.cargo/bin:C:\\Program Files\\Microsoft MPI\\Bin${PATH:+":${PATH}"}"' >> $GITHUB_ENV
+          echo MSMPI_INC="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\\" | tee -a $GITHUB_ENV
+          echo MSMPI_LIB32="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x86\\" | tee -a $GITHUB_ENV
+          echo MSMPI_LIB64="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x64\\" | tee -a $GITHUB_ENV
           env
-      - name: Clang Version
-        run: clang --version
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{matrix.rust}}
@@ -77,4 +73,5 @@ jobs:
       - name: Parallel Examples
         run: |
           cargo install --force cargo-mpirun
+          export PATH="/c/Program Files/Microsoft MPI/Bin:${PATH}"
           ci/run-examples.sh ${{ matrix.cargo_flags }}
