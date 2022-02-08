@@ -7,17 +7,41 @@
 #![warn(unused_qualifications)]
 
 use super::super::Library;
-use std::{env, error::Error, path::PathBuf};
+use std::{env, error::Error, fmt, path::PathBuf};
+
+#[derive(Debug)]
+struct VarError {
+    key: String,
+    origin: env::VarError,
+}
+
+impl fmt::Display for VarError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.key, self.origin)
+    }
+}
+
+impl Error for VarError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.origin)
+    }
+}
+
+fn var(key: &str) -> Result<String, VarError> {
+    env::var(key).map_err(|e| VarError {
+        key: key.to_owned(),
+        origin: e,
+    })
+}
 
 /// Probe the environment for MS-MPI
 pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
-    let mut errs = vec![];
+    let mut errs: Vec<Box<dyn Error>> = vec![];
 
-    let include_path = match env::var("MSMPI_INC") {
+    let include_path = match var("MSMPI_INC") {
         Ok(include_path) => Some(include_path),
         Err(err) => {
-            let err: Box<dyn Error> = Box::new(err);
-            errs.push(err);
+            errs.push(Box::new(err));
             None
         }
     };
@@ -30,11 +54,10 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
         panic!("rsmpi does not support your windows architecture!");
     };
 
-    let lib_path = match env::var(lib_env) {
+    let lib_path = match var(lib_env) {
         Ok(lib_path) => Some(lib_path),
         Err(err) => {
-            let err: Box<dyn Error> = Box::new(err);
-            errs.push(err);
+            errs.push(Box::new(err));
             None
         }
     };
