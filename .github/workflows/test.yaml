@@ -17,26 +17,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: 
-          - windows-2022
+        os:
           - ubuntu-latest
-          - macos-latest
         rust:
-          - 1.36.0 # First version with MaybeUninit
           - stable
           - nightly
+        mpi_package:
+          - libmpich-dev
+        include:
+          - os: ubuntu-latest
+            rust: 1.36.0 # First version with MaybeUninit
+            mpi_package: libmpich-dev
+          - os: macos-latest
+            rust: stable
+            mpi_package: open-mpi
+          - os: ubuntu-latest
+            rust: stable
+            mpi_package: libopenmpi-dev
     steps:
-      - name: Install LLVM (Ubuntu)
+      - name: Install (Ubuntu)
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-10-dev
-      - name: Install LLVM (Mac)
+          sudo apt-get install -y llvm-dev libclang-dev pkgconf ${{ matrix.mpi_package }}
+      - name: Install (Mac)
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          brew install llvm@13
+          brew install llvm@13 ${{ matrix.mpi_package }}
           env
-      - name: Install LLVM (Windows)
+      - name: Install (Windows)
         if: ${{ matrix.os == 'windows-2022' }}
         run: |
           choco install llvm --version 13.0.0 -y
@@ -47,7 +56,8 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{matrix.rust}}
-      - uses: actions-rs/cargo@v1
+      - name: Cargo Test all-features
+        uses: actions-rs/cargo@v1
         with:
           command: test
           args: --all-features
