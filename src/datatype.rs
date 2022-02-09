@@ -788,6 +788,26 @@ where
     }
 }
 
+unsafe impl<T> AsDatatype for Vec<T>
+where
+    T: Equivalence,
+{
+    type Out = <T as Equivalence>::Out;
+    fn as_datatype(&self) -> Self::Out {
+        <T as Equivalence>::equivalent_datatype()
+    }
+}
+
+unsafe impl<T, const D: usize> AsDatatype for [T; D]
+where
+    T: Equivalence,
+{
+    type Out = <T as Equivalence>::Out;
+    fn as_datatype(&self) -> Self::Out {
+        <T as Equivalence>::equivalent_datatype()
+    }
+}
+
 #[doc(hidden)]
 pub mod internal {
     #[cfg(feature = "derive")]
@@ -869,6 +889,28 @@ where
     }
 }
 
+unsafe impl<T> Collection for Vec<T>
+where
+    T: Equivalence,
+{
+    fn count(&self) -> Count {
+        self.len()
+            .value_as()
+            .expect("Length of slice cannot be expressed as an MPI Count.")
+    }
+}
+
+unsafe impl<T, const D: usize> Collection for [T; D]
+where
+    T: Equivalence,
+{
+    fn count(&self) -> Count {
+        // TODO const generic bound
+        D.value_as()
+            .expect("Length of slice cannot be expressed as an MPI Count.")
+    }
+}
+
 /// Provides a pointer to the starting address in memory.
 pub unsafe trait Pointer {
     /// A pointer to the starting address in memory
@@ -886,6 +928,24 @@ where
 }
 
 unsafe impl<T> Pointer for [T]
+where
+    T: Equivalence,
+{
+    fn pointer(&self) -> *const c_void {
+        self.as_ptr() as _
+    }
+}
+
+unsafe impl<T> Pointer for Vec<T>
+where
+    T: Equivalence,
+{
+    fn pointer(&self) -> *const c_void {
+        self.as_ptr() as _
+    }
+}
+
+unsafe impl<T, const D: usize> Pointer for [T; D]
 where
     T: Equivalence,
 {
@@ -919,17 +979,39 @@ where
     }
 }
 
+unsafe impl<T> PointerMut for Vec<T>
+where
+    T: Equivalence,
+{
+    fn pointer_mut(&mut self) -> *mut c_void {
+        self.as_mut_ptr() as _
+    }
+}
+
+unsafe impl<T, const D: usize> PointerMut for [T; D]
+where
+    T: Equivalence,
+{
+    fn pointer_mut(&mut self) -> *mut c_void {
+        self.as_mut_ptr() as _
+    }
+}
+
 /// A buffer is a region in memory that starts at `pointer()` and contains `count()` copies of
 /// `as_datatype()`.
 pub unsafe trait Buffer: Pointer + Collection + AsDatatype {}
 unsafe impl<T> Buffer for T where T: Equivalence {}
 unsafe impl<T> Buffer for [T] where T: Equivalence {}
+unsafe impl<T> Buffer for Vec<T> where T: Equivalence {}
+unsafe impl<T, const D: usize> Buffer for [T; D] where T: Equivalence {}
 
 /// A mutable buffer is a region in memory that starts at `pointer_mut()` and contains `count()`
 /// copies of `as_datatype()`.
 pub unsafe trait BufferMut: PointerMut + Collection + AsDatatype {}
 unsafe impl<T> BufferMut for T where T: Equivalence {}
 unsafe impl<T> BufferMut for [T] where T: Equivalence {}
+unsafe impl<T> BufferMut for Vec<T> where T: Equivalence {}
+unsafe impl<T, const D: usize> BufferMut for [T; D] where T: Equivalence {}
 
 /// An immutable dynamically-typed buffer.
 ///

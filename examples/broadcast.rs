@@ -29,7 +29,7 @@ fn main() {
     } else {
         a = std::iter::repeat(0_u64).take(n).collect::<Vec<_>>();
     }
-    root_process.broadcast_into(&mut a[..]);
+    root_process.broadcast_into(&mut a);
     println!("Rank {} received value: {:?}.", world.rank(), &a[..]);
     assert_eq!(&a[..], &[2, 4, 8, 16]);
 }
