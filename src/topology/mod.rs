@@ -337,6 +337,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn compare<C: ?Sized>(&self, other: &C) -> CommunicatorRelation
     where
         C: Communicator,
+        Self: Sized,
     {
         unsafe {
             with_uninitialized(|cmp| ffi::MPI_Comm_compare(self.as_raw(), other.as_raw(), cmp))
@@ -445,6 +446,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn split_by_subgroup_collective<G: ?Sized>(&self, group: &G) -> Option<UserCommunicator>
     where
         G: Group,
+        Self: Sized,
     {
         unsafe {
             UserCommunicator::from_raw(
@@ -471,6 +473,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn split_by_subgroup<G: ?Sized>(&self, group: &G) -> Option<UserCommunicator>
     where
         G: Group,
+        Self: Sized,
     {
         self.split_by_subgroup_with_tag(group, Tag::default())
     }
@@ -487,6 +490,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn split_by_subgroup_with_tag<G: ?Sized>(&self, group: &G, tag: Tag) -> Option<UserCommunicator>
     where
         G: Group,
+        Self: Sized,
     {
         unsafe {
             UserCommunicator::from_raw(
@@ -641,6 +645,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn pack_size<Dt>(&self, incount: Count, datatype: &Dt) -> Count
     where
         Dt: Datatype,
+        Self: Sized,
     {
         unsafe {
             with_uninitialized(|size| {
@@ -659,6 +664,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn pack<Buf>(&self, inbuf: &Buf) -> Vec<u8>
     where
         Buf: ?Sized + Buffer,
+        Self: Sized,
     {
         let inbuf_dt = inbuf.as_datatype();
 
@@ -690,6 +696,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     fn pack_into<Buf>(&self, inbuf: &Buf, outbuf: &mut [u8], position: Count) -> Count
     where
         Buf: ?Sized + Buffer,
+        Self: Sized,
     {
         let inbuf_dt = inbuf.as_datatype();
 
@@ -717,6 +724,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     unsafe fn unpack_into<Buf>(&self, inbuf: &[u8], outbuf: &mut Buf, position: Count) -> Count
     where
         Buf: ?Sized + BufferMut,
+        Self: Sized,
     {
         let outbuf_dt = outbuf.as_datatype();
 
@@ -887,6 +895,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     fn union<G>(&self, other: &G) -> UserGroup
     where
         G: Group,
+        Self: Sized,
     {
         unsafe {
             UserGroup(
@@ -909,6 +918,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     fn intersection<G>(&self, other: &G) -> UserGroup
     where
         G: Group,
+        Self: Sized,
     {
         unsafe {
             UserGroup(
@@ -931,6 +941,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     fn difference<G>(&self, other: &G) -> UserGroup
     where
         G: Group,
+        Self: Sized,
     {
         unsafe {
             UserGroup(
@@ -1015,6 +1026,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     fn translate_rank<G>(&self, rank: Rank, other: &G) -> Option<Rank>
     where
         G: Group,
+        Self: Sized,
     {
         unsafe {
             let (_, translated) = with_uninitialized(|translated| {
@@ -1038,6 +1050,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     fn translate_ranks<G>(&self, ranks: &[Rank], other: &G) -> Vec<Option<Rank>>
     where
         G: Group,
+        Self: Sized,
     {
         ranks
             .iter()
@@ -1053,6 +1066,7 @@ pub trait Group: AsRaw<Raw = MPI_Group> {
     fn compare<G>(&self, other: &G) -> GroupRelation
     where
         G: Group,
+        Self: Sized,
     {
         unsafe {
             with_uninitialized(|relation| {
