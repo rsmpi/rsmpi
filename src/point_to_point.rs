@@ -281,7 +281,7 @@ pub unsafe trait Source: AsCommunicator {
         scope: Sc,
         buf: &'a mut Buf,
         tag: Tag,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + BufferMut,
         Sc: Scope<'a>,
@@ -300,6 +300,7 @@ pub unsafe trait Source: AsCommunicator {
                     )
                 })
                 .1,
+                buf,
                 scope,
             )
         }
@@ -319,7 +320,7 @@ pub unsafe trait Source: AsCommunicator {
         &self,
         scope: Sc,
         buf: &'a mut Buf,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + BufferMut,
         Sc: Scope<'a>,
@@ -351,7 +352,7 @@ pub unsafe trait Source: AsCommunicator {
             });
             ReceiveFuture {
                 val,
-                req: Request::from_raw(request, StaticScope),
+                req: Request::from_raw(request, &(), StaticScope),
             }
         }
     }
@@ -676,7 +677,7 @@ pub trait Destination: AsCommunicator {
         scope: Sc,
         buf: &'a Buf,
         tag: Tag,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -695,6 +696,7 @@ pub trait Destination: AsCommunicator {
                     )
                 })
                 .1,
+                buf,
                 scope,
             )
         }
@@ -710,7 +712,11 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Sc>
+    fn immediate_send<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -730,7 +736,7 @@ pub trait Destination: AsCommunicator {
         scope: Sc,
         buf: &'a Buf,
         tag: Tag,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -749,6 +755,7 @@ pub trait Destination: AsCommunicator {
                     )
                 })
                 .1,
+                buf,
                 scope,
             )
         }
@@ -765,7 +772,7 @@ pub trait Destination: AsCommunicator {
         &self,
         scope: Sc,
         buf: &'a Buf,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -785,7 +792,7 @@ pub trait Destination: AsCommunicator {
         scope: Sc,
         buf: &'a Buf,
         tag: Tag,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -804,6 +811,7 @@ pub trait Destination: AsCommunicator {
                     )
                 })
                 .1,
+                buf,
                 scope,
             )
         }
@@ -820,7 +828,7 @@ pub trait Destination: AsCommunicator {
         &self,
         scope: Sc,
         buf: &'a Buf,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -840,7 +848,7 @@ pub trait Destination: AsCommunicator {
         scope: Sc,
         buf: &'a Buf,
         tag: Tag,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -859,6 +867,7 @@ pub trait Destination: AsCommunicator {
                     )
                 })
                 .1,
+                buf,
                 scope,
             )
         }
@@ -875,7 +884,11 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_ready_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Sc>
+    fn immediate_ready_send<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -1016,7 +1029,7 @@ impl Message {
         mut self,
         scope: Sc,
         buf: &'a mut Buf,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: BufferMut,
         Sc: Scope<'a>,
@@ -1033,7 +1046,7 @@ impl Message {
             })
             .1;
             assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
-            Request::from_raw(request, scope)
+            Request::from_raw(request, buf, scope)
         }
     }
 }
@@ -1320,7 +1333,7 @@ where
 #[must_use]
 pub struct ReceiveFuture<T> {
     val: *mut T,
-    req: Request<'static>,
+    req: Request<'static, ()>,
 }
 
 impl<T> ReceiveFuture<T>
