@@ -110,7 +110,7 @@ impl AsCommunicator for SystemCommunicator {
 }
 
 /// An enum describing the topology of a communicator
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Topology {
     /// Graph topology type
     Graph,

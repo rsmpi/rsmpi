@@ -5,7 +5,7 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
-#![allow(clippy::unknown_clippy_lints)]
+#![allow(unknown_lints)]
 #![allow(renamed_and_removed_lints)]
 #![allow(clippy::needless_doctest_main)]
 #![warn(clippy::cast_possible_truncation)]
