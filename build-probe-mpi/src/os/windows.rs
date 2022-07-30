@@ -67,6 +67,7 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
     }
 
     Ok(Library {
+        mpicc: None,
         libs: vec!["msmpi".to_owned()],
         lib_paths: vec![lib_path.map(PathBuf::from).unwrap()],
         include_paths: vec![include_path.map(PathBuf::from).unwrap()],
