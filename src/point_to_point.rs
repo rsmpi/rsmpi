@@ -712,11 +712,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_send<'a, Sc, Buf: ?Sized>(
-        &self,
-        scope: Sc,
-        buf: &'a Buf,
-    ) -> Request<'a, Buf, Sc>
+    fn immediate_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,

@@ -5,7 +5,7 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
-#![allow(clippy::unknown_clippy_lints)]
+#![allow(unknown_lints)]
 #![allow(renamed_and_removed_lints)]
 #![allow(clippy::needless_doctest_main)]
 #![warn(clippy::cast_possible_truncation)]
@@ -179,8 +179,8 @@ pub type Count = c_int;
 pub type Tag = c_int;
 /// An address in memory
 pub type Address = MPI_Aint;
-/// Rank of each process.
-pub type Rank = c_int;
+/// Reexport the Rank type
+pub use crate::topology::Rank;
 
 /// IntArray is used to translate Rust bool values to and from the int-bool types preferred by MPI
 /// without incurring allocation in the common case.

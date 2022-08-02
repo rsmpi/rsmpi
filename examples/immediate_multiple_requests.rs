@@ -24,9 +24,9 @@ fn main() {
 
     // Test wait_any()
     let mut result: Vec<i32> = vec![0; COUNT];
+    let prev_proc = (rank - 1 + size) % size;
+    let next_proc = (rank + 1) % size;
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
-        let prev_proc = if rank > 0 { rank - 1 } else { size - 1 };
-        let next_proc = (rank + 1) % size;
         for _ in 0..result.len() {
             let sreq = world
                 .process_at_rank(next_proc)
@@ -56,8 +56,6 @@ fn main() {
     let mut result: Vec<i32> = vec![0; COUNT];
     // Test wait_some()
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
-        let prev_proc = if rank > 0 { rank - 1 } else { size - 1 };
-        let next_proc = (rank + 1) % size;
         for _ in 0..result.len() {
             let sreq = world
                 .process_at_rank(next_proc)
@@ -72,18 +70,18 @@ fn main() {
         }
         let mut send_count = 0;
         let mut recv_count = 0;
-        let mut some_buf: Vec<Option<(usize, Status, &i32)>> = vec![None; 2 * COUNT];
+        let mut some_buf = vec![];
+        let mut finished = 0;
         while coll.incomplete() > 0 {
-            let count = coll.wait_some(&mut some_buf);
-            println!("wait_some(): {} request(s) completed", count);
-            assert!(some_buf.iter().any(|elm| elm.is_some()));
-            for elm in some_buf.iter() {
-                if let Some((_, _, result)) = elm {
-                    if **result == rank {
-                        send_count += 1;
-                    } else {
-                        recv_count += 1;
-                    }
+            coll.wait_some(&mut some_buf);
+            println!("wait_some(): {} request(s) completed", some_buf.len());
+            finished += some_buf.len();
+            assert_eq!(coll.incomplete(), 2 * COUNT - finished);
+            for &(_, _, result) in some_buf.iter() {
+                if *result == rank {
+                    send_count += 1;
+                } else {
+                    recv_count += 1;
                 }
             }
         }
@@ -94,8 +92,6 @@ fn main() {
     let mut result: Vec<i32> = vec![0; COUNT];
     // Test wait_all()
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
-        let prev_proc = if rank > 0 { rank - 1 } else { size - 1 };
-        let next_proc = (rank + 1) % size;
         for _ in 0..result.len() {
             let sreq = world
                 .process_at_rank(next_proc)
@@ -108,12 +104,13 @@ fn main() {
                 .immediate_receive_into(scope, val);
             coll.add(rreq);
         }
-        let mut out: Vec<Option<(usize, Status, &i32)>> = vec![None; 2 * COUNT];
+
+        let mut out = vec![];
         coll.wait_all(&mut out);
+        assert_eq!(out.len(), 2 * COUNT);
         let mut send_count = 0;
         let mut recv_count = 0;
-        for elm in out {
-            let (_, _, result) = elm.unwrap();
+        for (_, _, result) in out {
             if *result == rank {
                 send_count += 1;
             } else {
@@ -127,13 +124,9 @@ fn main() {
     // Check wait_*() with a buffer of increasing values
     let x: Vec<i32> = (0..COUNT as i32).collect();
     let mut result: Vec<i32> = vec![0; COUNT];
-    mpi::request::multiple_scope(COUNT, |scope, coll| {
-        let prev_proc = if rank > 0 { rank - 1 } else { size - 1 };
-        let next_proc = (rank + 1) % size;
+    mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
         for elm in &x {
-            let sreq = world
-                .process_at_rank(next_proc)
-                .immediate_send(scope, elm);
+            let sreq = world.process_at_rank(next_proc).immediate_send(scope, elm);
             coll.add(sreq);
         }
         for val in result.iter_mut() {
@@ -142,9 +135,9 @@ fn main() {
                 .immediate_receive_into(scope, val);
             coll.add(rreq);
         }
-        let mut out: Vec<Option<(usize, Status, &i32)>> = vec![None; 2 * COUNT];
+        let mut out: Vec<(usize, Status, &i32)> = vec![];
         coll.wait_all(&mut out);
-        assert!(out.iter().all(|elm| elm.is_some()));
+        assert_eq!(out.len(), 2 * COUNT);
     });
     // Ensure the result and x are an incrementing array of integers
     result.sort();

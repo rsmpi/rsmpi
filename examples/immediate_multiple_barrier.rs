@@ -3,8 +3,7 @@ use mpi;
 use mpi::traits::*;
 
 #[cfg(msmpi)]
-fn main() {
-}
+fn main() {}
 
 const COUNT: usize = 128;
 
@@ -19,8 +18,11 @@ fn main() {
             let req = world.immediate_barrier();
             coll.add(req);
         }
+        let mut finished = 0;
         while coll.incomplete() > 0 {
             coll.wait_any().unwrap();
+            finished += 1;
+            assert_eq!(coll.incomplete(), COUNT - finished);
         }
     });
 
@@ -30,16 +32,12 @@ fn main() {
             let req = world.immediate_barrier();
             coll.add(req);
         }
-        let mut result = vec![None; COUNT];
+        let mut result = vec![];
+        let mut finished = 0;
         while coll.incomplete() > 0 {
-            let count = coll.wait_some(&mut result);
-            let mut i = 0;
-            for elm in result.iter() {
-                if let Some(_) = elm {
-                    i += 1;
-                }
-            }
-            assert_eq!(i, count);
+            coll.wait_some(&mut result);
+            finished += result.len();
+            assert_eq!(coll.incomplete(), COUNT - finished);
         }
     });
 
@@ -49,9 +47,9 @@ fn main() {
             let req = world.immediate_barrier();
             coll.add(req);
         }
-        let mut result = vec![None; COUNT ];
+        let mut result = vec![];
         coll.wait_all(&mut result);
-        assert!(result.iter().all(|elm| elm.is_some()));
+        assert_eq!(result.len(), COUNT);
     });
 
     // Try test_any()
@@ -76,20 +74,11 @@ fn main() {
             let req = world.immediate_barrier();
             coll.add(req);
         }
-        let mut result = vec![None; COUNT];
+        let mut result = vec![];
         let mut finished = 0;
         while coll.incomplete() > 0 {
-            let count = coll.test_some(&mut result);
-            finished += count;
-            if count > 0 {
-                let mut i = 0;
-                for elm in result.iter() {
-                    if let Some(_) = elm {
-                        i += 1;
-                    }
-                }
-                assert_eq!(i, count);
-            }
+            coll.test_some(&mut result);
+            finished += result.len();
             assert_eq!(coll.incomplete(), COUNT - finished);
         }
         assert_eq!(finished, COUNT);
@@ -101,12 +90,12 @@ fn main() {
             let req = world.immediate_barrier();
             coll.add(req);
         }
-        let mut result = vec![None; COUNT];
+        let mut result = vec![];
         while coll.incomplete() > 0 {
             if coll.test_all(&mut result) {
                 assert_eq!(coll.incomplete(), 0);
             }
         }
-        assert!(result.iter().all(|elm| elm.is_some()));
+        assert_eq!(result.len(), COUNT);
     });
 }

@@ -1,8 +1,8 @@
 /// Example showing usage of test_any(), test_some() and test_all().
 use mpi;
-use mpi::Rank;
+use mpi::request::{RequestCollection, Scope};
 use mpi::traits::*;
-use mpi::request::{Scope, RequestCollection};
+use mpi::Rank;
 
 const COUNT: usize = 128;
 
@@ -17,9 +17,7 @@ fn send_recv<'a, C: Communicator, S: Scope<'a> + Copy>(
     recv: &'a mut [[i32; 4]],
 ) {
     for elm in x {
-        let sreq = world
-            .process_at_rank(next_proc)
-            .immediate_send(scope, elm);
+        let sreq = world.process_at_rank(next_proc).immediate_send(scope, elm);
         coll.add(sreq);
     }
     for elm in recv.iter_mut() {
@@ -51,9 +49,11 @@ fn main() {
     let next_proc = (rank + 1) % size;
     let prev_proc = if rank > 0 { rank - 1 } else { size - 1 };
 
-    let x: Vec<[i32; 4]> = (0..COUNT as i32).map(|i| [i, i + 1, i + 2, i + 3]).collect();
+    let x: Vec<[i32; 4]> = (0..COUNT as i32)
+        .map(|i| [i, i + 1, i + 2, i + 3])
+        .collect();
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
-    mpi::request::multiple_scope(COUNT, |scope, coll| {
+    mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
         send_recv(world, scope, coll, next_proc, prev_proc, &x, &mut recv);
 
         let mut buf = vec![];
@@ -66,32 +66,29 @@ fn main() {
     });
 
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
-    mpi::request::multiple_scope(COUNT, |scope, coll| {
+    mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
         send_recv(world, scope, coll, next_proc, prev_proc, &x, &mut recv);
 
-        let mut complete = vec![None; 2 * COUNT];
+        let mut complete = vec![];
         let mut buf = vec![];
         while coll.incomplete() > 0 {
-            let count = coll.test_some(&mut complete);
-            if count > 0 {
-                println!("test_some(): {} request(s) completed", count);
-                for elm in complete.iter() {
-                    if let Some((_, _, data)) = elm {
-                        buf.push(**data);
-                    }
-                }
+            coll.test_some(&mut complete);
+            println!("test_some(): {} request(s) completed", complete.len());
+            for &(_, _, data) in complete.iter() {
+                buf.push(*data);
             }
         }
         check_result_buffer(&x, buf);
     });
 
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
-    mpi::request::multiple_scope(COUNT, |scope, coll| {
+    mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
         send_recv(world, scope, coll, next_proc, prev_proc, &x, &mut recv);
 
-        let mut complete = vec![None; 2 * COUNT];
-        while !coll.test_all(&mut complete) { }
-        let buf: Vec<[i32; 4]> = complete.iter().map(|elm| *elm.unwrap().2).collect();
+        let mut complete = vec![];
+        while !coll.test_all(&mut complete) {}
+        assert_eq!(complete.len(), 2 * COUNT);
+        let buf: Vec<[i32; 4]> = complete.iter().map(|elm| *elm.2).collect();
         check_result_buffer(&x, buf);
     });
 }

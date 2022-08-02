@@ -32,8 +32,8 @@ use std::convert::TryInto;
 use std::fmt;
 use std::marker::PhantomData;
 use std::mem::{self, MaybeUninit};
-use std::ptr;
 use std::os::raw::c_int;
+use std::ptr;
 
 use crate::ffi;
 use crate::ffi::{MPI_Request, MPI_Status};
@@ -77,7 +77,8 @@ where
     D: fmt::Debug,
 {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.debug_struct("Request")
+        formatter
+            .debug_struct("Request")
             .field("request", &self.request)
             .field("data", &self.data)
             .finish()
@@ -153,11 +154,7 @@ impl<'a, D: ?Sized, S: Scope<'a>> Request<'a, D, S> {
     /// - `request` must be a live MPI object.
     /// - `request` must not be used after calling `from_raw`.
     /// - Any buffers owned by `request` must live longer than `scope`.
-    pub unsafe fn from_raw(
-        request: MPI_Request,
-        data: &'a D,
-        scope: S,
-    ) -> Self {
+    pub unsafe fn from_raw(request: MPI_Request, data: &'a D, scope: S) -> Self {
         debug_assert!(!is_null(request));
         scope.register();
         Self {
@@ -578,10 +575,12 @@ impl<'a, D: ?Sized> RequestCollection<'a, D> {
         }
     }
 
-
     /// Return the total number of requests that are incomplete.
     pub fn incomplete(&self) -> usize {
-        self.data.iter().map(|data| if data.is_some() { 1 } else { 0 }).sum()
+        self.data
+            .iter()
+            .map(|data| if data.is_some() { 1 } else { 0 })
+            .sum()
     }
 
     /// Add the request to the collection. This unregisters the request from the
@@ -602,28 +601,25 @@ impl<'a, D: ?Sized> RequestCollection<'a, D> {
     /// Wait for any request to complete, and return an option containing
     /// (request_index, status, saved_data).
     pub fn wait_any(&mut self) -> Option<(usize, Status, &'a D)> {
-         let mut i: c_int = 0;
-         let (_res, status) = unsafe {
-             let count = self.requests.len() as c_int;
-             with_uninitialized(|status| {
-                 ffi::MPI_Waitany(count, self.requests.as_mut_ptr(), &mut i, status)
-             })
-         };
+        let mut i: c_int = 0;
+        let (_res, status) = unsafe {
+            let count = self.requests.len() as c_int;
+            with_uninitialized(|status| {
+                ffi::MPI_Waitany(count, self.requests.as_mut_ptr(), &mut i, status)
+            })
+        };
 
-         let i = i as usize;
-         assert!(is_null(self.requests[i]));
-         if let Some(data) = self.data[i].take() {
-             Some((i, Status::from_raw(status), data))
-         } else {
-             None
-         }
+        let i: usize = i.try_into().expect("could not cast c_int to usize");
+        self.data[i]
+            .take()
+            .map(|data| (i, Status::from_raw(status), data))
     }
 
     /// Wait for some of the requests to complete, fill result with references
     /// to the (request_index, status, saved_data) for each completed request
     /// and return the total number of completed requests.
-    pub fn wait_some(&mut self, result: &mut [Option<(usize, Status, &'a D)>]) -> usize {
-        assert_eq!(result.len(), self.requests.len());
+    pub fn wait_some(&mut self, result: &mut Vec<(usize, Status, &'a D)>) {
+        result.clear();
         let mut count = 0;
         unsafe {
             let n = self.requests.len() as c_int;
@@ -636,42 +632,44 @@ impl<'a, D: ?Sized> RequestCollection<'a, D> {
                 self.statuses.as_mut_ptr() as *mut MPI_Status,
             );
         };
-        let count = count as usize;
-        for (i, elm) in result.iter_mut().enumerate() {
-            elm.take();
-            if i < count {
-                let idx = self.indices[i] as usize;
-                // Persistent requests check
-                assert!(is_null(self.requests[idx]));
-                if let Some(data) = self.data[idx].take() {
-                    let status = unsafe { self.statuses[idx].assume_init() };
-                    let status = Status::from_raw(status);
-                    let _ = elm.insert((idx, status, data));
-                }
+
+        let count: usize = count.try_into().expect("could not cast c_int to usize");
+        result.reserve(count);
+        for i in 0..count {
+            let idx: usize = self.indices[i]
+                .try_into()
+                .expect("could not cast c_int to usize");
+            // Persistent requests check
+            assert!(is_null(self.requests[idx]));
+            if let Some(data) = self.data[idx].take() {
+                let status = unsafe { self.statuses[idx].assume_init() };
+                let status = Status::from_raw(status);
+                result.push((idx, status, data));
             }
         }
-        count
     }
 
     /// Wait for all requests to complete, putting (request_index, status, saved_data)
     /// into result for every completed request.
-    pub fn wait_all(&mut self, result: &mut [Option<(usize, Status, &'a D)>]) {
-        assert_eq!(result.len(), self.requests.len());
+    pub fn wait_all(&mut self, result: &mut Vec<(usize, Status, &'a D)>) {
         let _res = unsafe {
             ffi::MPI_Waitall(
-                self.requests.len().try_into().unwrap(),
+                self.requests
+                    .len()
+                    .try_into()
+                    .expect("could not cast usize to c_int"),
                 self.requests.as_mut_ptr(),
                 self.statuses.as_mut_ptr() as *mut MPI_Status,
             )
         };
-        for (i, elm) in result.iter_mut().enumerate() {
-            // Ensure there are no persistent requests
-            assert!(is_null(self.requests[i]));
-            elm.take();
+
+        result.clear();
+        result.reserve(self.requests.len());
+        for i in 0..self.requests.len() {
             if let Some(data) = self.data[i].take() {
                 let status = unsafe { self.statuses[i].assume_init() };
                 let status = Status::from_raw(status);
-                let _ = elm.insert((i, status, data));
+                result.push((i, status, data));
             }
         }
     }
@@ -684,24 +682,16 @@ impl<'a, D: ?Sized> RequestCollection<'a, D> {
         let mut flag = 0;
         let (_, status) = unsafe {
             with_uninitialized(|status| {
-                ffi::MPI_Testany(
-                    n,
-                    self.requests.as_mut_ptr(),
-                    &mut i,
-                    &mut flag,
-                    status,
-                )
+                ffi::MPI_Testany(n, self.requests.as_mut_ptr(), &mut i, &mut flag, status)
             })
         };
 
         if flag != 0 {
-            let i = i as usize;
+            let i: usize = i.try_into().expect("could not cast c_int to usize");
             assert!(is_null(self.requests[i]));
-            if let Some(data) = self.data[i].take() {
-                Some((i, Status::from_raw(status), data))
-            } else {
-                None
-            }
+            self.data[i]
+                .take()
+                .map(|data| (i, Status::from_raw(status), data))
         } else {
             None
         }
@@ -709,13 +699,8 @@ impl<'a, D: ?Sized> RequestCollection<'a, D> {
 
     /// Test for the completion of some requests. Completed request data will be
     /// stored in the result buffer in a tuple (request_index, status, saved_data).
-    /// None values can be ignored. The result buffer must have a length equal to
-    /// the number of requests added to this collection (the number of times `add()`
-    /// was called.
-    ///
-    /// Returns the number of requests completed.
-    pub fn test_some(&mut self, result: &mut [Option<(usize, Status, &'a D)>]) -> usize {
-        assert_eq!(result.len(), self.requests.len());
+    pub fn test_some(&mut self, result: &mut Vec<(usize, Status, &'a D)>) {
+        result.clear();
         let n = self.requests.len() as c_int;
         let mut count = 0;
         unsafe {
@@ -727,27 +712,24 @@ impl<'a, D: ?Sized> RequestCollection<'a, D> {
                 self.statuses.as_mut_ptr() as *mut MPI_Status,
             );
         }
-        let count = count as usize;
-        for (i, elm) in result.iter_mut().enumerate() {
-            elm.take();
-            if i < count {
-                let idx = self.indices[i] as usize;
-                assert!(is_null(self.requests[i]));
-                let status = unsafe { self.statuses[i].assume_init() };
-                if let Some(data) = self.data[idx].take() {
-                    let _ = elm.insert((idx, Status::from_raw(status), data));
-                }
+
+        let count: usize = count.try_into().expect("could not cast c_int to usize");
+        result.reserve(count);
+        for i in 0..count {
+            let idx: usize = self.indices[i]
+                .try_into()
+                .expect("could not cast c_int to usize");
+            assert!(is_null(self.requests[idx]));
+            let status = unsafe { self.statuses[idx].assume_init() };
+            if let Some(data) = self.data[idx].take() {
+                result.push((idx, Status::from_raw(status), data));
             }
         }
-        count
     }
 
     /// Test for the completion of all requests. Saved data used by the
-    /// completed requests is stored in the result buffer. The result buffer
-    /// must have a length equivalent to the number of stored requests,
-    /// including those that have previously completed.
-    pub fn test_all(&mut self, result: &mut [Option<(usize, Status, &'a D)>]) -> bool {
-        assert_eq!(result.len(), self.requests.len());
+    /// completed requests is stored in the result buffer.
+    pub fn test_all(&mut self, result: &mut Vec<(usize, Status, &'a D)>) -> bool {
         let n = self.requests.len() as c_int;
         let mut flag = 0;
         unsafe {
@@ -758,15 +740,15 @@ impl<'a, D: ?Sized> RequestCollection<'a, D> {
                 self.statuses.as_mut_ptr() as *mut MPI_Status,
             );
         }
+
+        result.clear();
+        result.reserve(self.requests.len());
         if flag != 0 {
-            for (i, elm) in result.iter_mut().enumerate() {
-                assert!(is_null(self.requests[i]));
-                elm.take();
-                let status = unsafe { self.statuses[i].assume_init() };
+            for i in 0..self.requests.len() {
                 if let Some(data) = self.data[i].take() {
-                    let _ = elm.insert((i, Status::from_raw(status), data));
+                    let status = unsafe { self.statuses[i].assume_init() };
+                    result.push((i, Status::from_raw(status), data));
                 }
-                // self.finish_request(i);
             }
             true
         } else {
