@@ -17,6 +17,7 @@ use pkg_config::Config;
 impl From<pkg_config::Library> for Library {
     fn from(lib: pkg_config::Library) -> Self {
         Library {
+            mpicc: None,
             libs: lib.libs,
             lib_paths: lib.link_paths,
             include_paths: lib.include_paths,
@@ -45,6 +46,7 @@ fn probe_via_mpicc(mpicc: &str) -> std::io::Result<Library> {
             .collect();
 
         Library {
+            mpicc: Some(mpicc.to_string()),
             libs,
             lib_paths: libdirs,
             include_paths: headerdirs,
@@ -70,6 +72,22 @@ fn collect_args_with_prefix(cmd: &str, prefix: &str) -> Vec<String> {
 /// Probe the environment for an installed MPI library
 pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
     let mut errs = vec![];
+
+    if let Ok(cray_mpich_dir) = env::var("CRAY_MPICH_DIR") {
+        let pkg_config_mpich: PathBuf = [&cray_mpich_dir, "lib", "pkgconfig", "mpich.pc"]
+            .iter()
+            .collect();
+        match Config::new()
+            .cargo_metadata(false)
+            .probe(&pkg_config_mpich.to_string_lossy())
+        {
+            Ok(lib) => return Ok(Library::from(lib)),
+            Err(err) => {
+                let err: Box<dyn Error> = Box::new(err);
+                errs.push(err)
+            }
+        }
+    }
 
     match probe_via_mpicc(&env::var("MPICC").unwrap_or_else(|_| String::from("mpicc"))) {
         Ok(lib) => return Ok(lib),

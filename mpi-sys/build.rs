@@ -25,15 +25,17 @@ fn main() {
     builder.file("src/rsmpi.c");
 
     if cfg!(windows) {
+        // Adds a cfg to identify MS-MPI
+        println!("cargo:rustc-cfg=msmpi");
+    }
+    if let Some(mpicc) = lib.mpicc {
+        // Use `mpicc` wrapper when it exists rather than the system C compiler.
+        builder.compiler(mpicc);
+    } else {
+        // Specify paths (e.g., from pkg-config) when we don't have mpicc
         for inc in &lib.include_paths {
             builder.include(inc);
         }
-
-        // Adds a cfg to identify MS-MPI
-        println!("cargo:rustc-cfg=msmpi");
-    } else {
-        // Use `mpicc` wrapper on Unix rather than the system C compiler.
-        builder.compiler("mpicc");
     }
 
     let compiler = builder.try_get_compiler();

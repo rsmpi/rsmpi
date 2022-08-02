@@ -36,6 +36,8 @@ use std::path::PathBuf;
 #[allow(clippy::manual_non_exhaustive)]
 #[derive(Clone, Debug)]
 pub struct Library {
+    /// Path to compiler capable of building MPI programs
+    pub mpicc: Option<String>,
     /// Names of the native MPI libraries that need to be linked
     pub libs: Vec<String>,
     /// Search path for native MPI libraries
