@@ -12,10 +12,11 @@ documentation = "https://rsmpi.github.io/rsmpi/"
 keywords = [ "message-passing", "parallel" ]
 categories = [ "external-ffi-bindings" ]
 license = "MIT/Apache-2.0"
+rust-version = "1.54"
 
 [dependencies]
 
 [build-dependencies]
-cc = "1.0.25"
-bindgen = "0.55"
+cc = "1.0.73"
+bindgen = "0.60"
 build-probe-mpi = { path = "../build-probe-mpi", version = "0.1" }

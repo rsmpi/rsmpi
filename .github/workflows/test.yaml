@@ -27,7 +27,7 @@ jobs:
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: ubuntu-latest
-            rust: 1.36.0 # First version with MaybeUninit
+            rust: 1.54.0
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: macos-latest
