@@ -310,10 +310,11 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.1
-    fn immediate_barrier(&self) -> Request<'static> {
+    fn immediate_barrier(&self) -> Request<'static, ()> {
         unsafe {
             Request::from_raw(
                 with_uninitialized(|request| ffi::MPI_Ibarrier(self.as_raw(), request)).1,
+                &(),
                 StaticScope,
             )
         }
@@ -329,12 +330,12 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.5
-    fn immediate_all_gather_into<'a, Sc, S: ?Sized, R: ?Sized>(
+    fn immediate_all_gather_into<'a, S: ?Sized, R: ?Sized, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -356,6 +357,7 @@ pub trait CommunicatorCollectives: Communicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -371,12 +373,12 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.5
-    fn immediate_all_gather_varcount_into<'a, Sc, S: ?Sized, R: ?Sized>(
+    fn immediate_all_gather_varcount_into<'a, S: ?Sized, R: ?Sized, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + PartitionedBufferMut,
@@ -398,6 +400,7 @@ pub trait CommunicatorCollectives: Communicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -412,12 +415,12 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.6
-    fn immediate_all_to_all_into<'a, Sc, S: ?Sized, R: ?Sized>(
+    fn immediate_all_to_all_into<'a, S: ?Sized, R: ?Sized, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -439,6 +442,7 @@ pub trait CommunicatorCollectives: Communicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -449,12 +453,12 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.6
-    fn immediate_all_to_all_varcount_into<'a, Sc, S: ?Sized, R: ?Sized>(
+    fn immediate_all_to_all_varcount_into<'a, S: ?Sized, R: ?Sized, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + PartitionedBuffer,
         R: 'a + PartitionedBufferMut,
@@ -477,6 +481,7 @@ pub trait CommunicatorCollectives: Communicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -492,13 +497,13 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.8
-    fn immediate_all_reduce_into<'a, Sc, S: ?Sized, R: ?Sized, O>(
+    fn immediate_all_reduce_into<'a, S: ?Sized, R: ?Sized, O, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
         op: O,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -519,6 +524,7 @@ pub trait CommunicatorCollectives: Communicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -535,13 +541,13 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.9
-    fn immediate_reduce_scatter_block_into<'a, Sc, S: ?Sized, R: ?Sized, O>(
+    fn immediate_reduce_scatter_block_into<'a, S: ?Sized, R: ?Sized, O, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
         op: O,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -563,6 +569,7 @@ pub trait CommunicatorCollectives: Communicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -578,13 +585,13 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.11
-    fn immediate_scan_into<'a, Sc, S: ?Sized, R: ?Sized, O>(
+    fn immediate_scan_into<'a, S: ?Sized, R: ?Sized, O, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
         op: O,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -605,6 +612,7 @@ pub trait CommunicatorCollectives: Communicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -620,13 +628,13 @@ pub trait CommunicatorCollectives: Communicator {
     /// # Standard section(s)
     ///
     /// 5.12.12
-    fn immediate_exclusive_scan_into<'a, Sc, S: ?Sized, R: ?Sized, O>(
+    fn immediate_exclusive_scan_into<'a, S: ?Sized, R: ?Sized, O, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
         op: O,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -647,6 +655,7 @@ pub trait CommunicatorCollectives: Communicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -1056,11 +1065,11 @@ pub trait Root: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 5.12.2
-    fn immediate_broadcast_into<'a, Sc, Buf: ?Sized>(
+    fn immediate_broadcast_into<'a, Buf: ?Sized, Sc>(
         &self,
         scope: Sc,
         buf: &'a mut Buf,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, Buf, Sc>
     where
         Buf: 'a + BufferMut,
         Sc: Scope<'a>,
@@ -1078,6 +1087,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                buf,
                 scope,
             )
         }
@@ -1094,7 +1104,11 @@ pub trait Root: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 5.12.3
-    fn immediate_gather_into<'a, Sc, S: ?Sized>(&self, scope: Sc, sendbuf: &'a S) -> Request<'a, Sc>
+    fn immediate_gather_into<'a, S: ?Sized, Sc>(
+        &self,
+        scope: Sc,
+        sendbuf: &'a S,
+    ) -> Request<'a, S, Sc>
     where
         S: 'a + Buffer,
         Sc: Scope<'a>,
@@ -1116,6 +1130,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                sendbuf,
                 scope,
             )
         }
@@ -1132,12 +1147,12 @@ pub trait Root: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 5.12.3
-    fn immediate_gather_into_root<'a, Sc, S: ?Sized, R: ?Sized>(
+    fn immediate_gather_into_root<'a, S: ?Sized, R: ?Sized, Sc>(
         &self,
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -1161,6 +1176,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -1181,7 +1197,7 @@ pub trait Root: AsCommunicator {
         &self,
         scope: Sc,
         sendbuf: &'a S,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, S, Sc>
     where
         S: 'a + Buffer,
         Sc: Scope<'a>,
@@ -1204,6 +1220,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                sendbuf,
                 scope,
             )
         }
@@ -1225,7 +1242,7 @@ pub trait Root: AsCommunicator {
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + PartitionedBufferMut,
@@ -1249,6 +1266,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -1269,7 +1287,7 @@ pub trait Root: AsCommunicator {
         &self,
         scope: Sc,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         R: 'a + BufferMut,
         Sc: Scope<'a>,
@@ -1291,6 +1309,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -1312,7 +1331,7 @@ pub trait Root: AsCommunicator {
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -1336,6 +1355,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -1356,7 +1376,7 @@ pub trait Root: AsCommunicator {
         &self,
         scope: Sc,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         R: 'a + BufferMut,
         Sc: Scope<'a>,
@@ -1379,6 +1399,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -1400,7 +1421,7 @@ pub trait Root: AsCommunicator {
         scope: Sc,
         sendbuf: &'a S,
         recvbuf: &'a mut R,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + PartitionedBuffer,
         R: 'a + BufferMut,
@@ -1424,6 +1445,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }
@@ -1446,7 +1468,7 @@ pub trait Root: AsCommunicator {
         scope: Sc,
         sendbuf: &'a S,
         op: O,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, S, Sc>
     where
         S: 'a + Buffer,
         O: 'a + Operation,
@@ -1468,6 +1490,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                sendbuf,
                 scope,
             )
         }
@@ -1491,7 +1514,7 @@ pub trait Root: AsCommunicator {
         sendbuf: &'a S,
         recvbuf: &'a mut R,
         op: O,
-    ) -> Request<'a, Sc>
+    ) -> Request<'a, R, Sc>
     where
         S: 'a + Buffer,
         R: 'a + BufferMut,
@@ -1514,6 +1537,7 @@ pub trait Root: AsCommunicator {
                     )
                 })
                 .1,
+                recvbuf,
                 scope,
             )
         }

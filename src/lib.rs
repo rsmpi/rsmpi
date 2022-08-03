@@ -179,6 +179,8 @@ pub type Count = c_int;
 pub type Tag = c_int;
 /// An address in memory
 pub type Address = MPI_Aint;
+/// Reexport the Rank type
+pub use crate::topology::Rank;
 
 /// IntArray is used to translate Rust bool values to and from the int-bool types preferred by MPI
 /// without incurring allocation in the common case.
