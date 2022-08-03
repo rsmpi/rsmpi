@@ -50,8 +50,10 @@ jobs:
           sudo apt-get install -y llvm-dev libclang-dev pkgconf ${{ matrix.mpi_package }}
       - name: Install (MacOS)
         if: runner.os == 'macOS'
+        # Workaround for intermittent failures with OMPI https://github.com/open-mpi/ompi/issues/7393
         run: |
           brew install llvm@13 ${{ matrix.mpi_package }}
+          echo TMPDIR=/tmp | tee -a $GITHUB_ENV
           env
       - name: Install (Windows)
         if: runner.os == 'Windows'
