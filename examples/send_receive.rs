@@ -11,9 +11,9 @@ fn main() {
     let size = world.size();
     let rank = world.rank();
 
-    let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
+    let next_rank = (rank + 1) % size;
     let next_process = world.process_at_rank(next_rank);
-    let previous_rank = if rank > 0 { rank - 1 } else { size - 1 };
+    let previous_rank = (rank - 1 + size) % size;
     let previous_process = world.process_at_rank(previous_rank);
 
     let (msg, status): (Rank, _) = p2p::send_receive(&rank, &previous_process, &next_process);

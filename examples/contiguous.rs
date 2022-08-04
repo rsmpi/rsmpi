@@ -12,9 +12,9 @@ fn main() {
     let rank = world.rank();
     let size = world.size();
 
-    let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
+    let next_rank = (rank + 1) % size;
     let next_process = world.process_at_rank(next_rank);
-    let previous_rank = if rank > 0 { rank - 1 } else { size - 1 };
+    let previous_rank = (rank - 1 + size) % size;
     let previous_process = world.process_at_rank(previous_rank);
 
     let b1 = (1..).map(|x| rank * x).take(3).collect::<Vec<_>>();
