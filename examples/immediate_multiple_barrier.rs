@@ -1,14 +1,14 @@
 /// Example using different types of requests with a request collection.
-use mpi;
-use mpi::traits::*;
 
 #[cfg(msmpi)]
 fn main() {}
 
-const COUNT: usize = 128;
-
 #[cfg(not(msmpi))]
 fn main() {
+    use mpi::traits::*;
+
+    const COUNT: usize = 128;
+
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
 
