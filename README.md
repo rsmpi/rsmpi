@@ -25,7 +25,7 @@ programming language. This library tries to bridge the gap into a more rustic wo
 An implementation of the C language interface that conforms to MPI-3.1. `rsmpi` is currently tested with these implementations:
 - [OpenMPI][OpenMPI] 4.0.3 on Ubuntu-20.04, 4.1.2 on macOS
 - [MPICH][MPICH] 3.3.2 on Ubuntu 20.04
-- [MS-MPI (Windows)][MS-MPI] 10.1.1 on Windows 2022
+- [MS-MPI (Windows)][MS-MPI] 10.1.2 on Windows 2022
 
 Users have also had success with these MPI implementations, but they are not tested in CI:
 - [Spectrum MPI][Spectrum-MPI] 10.3.0.1
