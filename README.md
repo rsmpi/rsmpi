@@ -25,18 +25,26 @@ programming language. This library tries to bridge the gap into a more rustic wo
 An implementation of the C language interface that conforms to MPI-3.1. `rsmpi` is currently tested with these implementations:
 - [OpenMPI][OpenMPI] 4.0.3 on Ubuntu-20.04, 4.1.2 on macOS
 - [MPICH][MPICH] 3.3.2 on Ubuntu 20.04
-- [MS-MPI (Windows)][MS-MPI] 10.1.1 on Windows 2022
+- [MS-MPI (Windows)][MS-MPI] 10.1.2 on Windows 2022
 
 Users have also had success with these MPI implementations, but they are not tested in CI:
 - [Spectrum MPI][Spectrum-MPI] 10.3.0.1
+- [Cray MPI][Cray-MPI] 8.1.16 with `PrgEnv-amd/8.3.3`
 
-For a reasonable chance of success with `rsmpi` any MPI implementation that you want to use with it should satisfy the following assumptions that `rsmpi` currently makes:
+For a reasonable chance of success with `rsmpi` with any MPI implementation, you must have one of:
 
-- The implementation should provide a C compiler wrapper `mpicc`.
-- `mpicc -show` should print the full command line that is used to invoke the wrapped C compiler.
-- The result of `mpicc -show` contains the libraries, library search paths, and header search paths in a format understood by GCC (e.g. `-lmpi`, `-I/usr/local/include`, ...).
+- export `MPI_PKG_CONFIG` to be the name or path for pkg-config for your implementation
+  - `rsmpi` automatically uses `CRAY_MPICH_DIR` on Cray environments so the above need not be set
+  - `mpich` and `ompi` are tried by default as a last resort
+  - Tip: test with a command like `pkg-config --cflags --libs mpich`
+- The implementation provides a C compiler wrapper `mpicc`
+  - export `MPICC=/path/to/mpicc` to specify fully
+  - otherwise tries `mpicc` in `$PATH`
+  - `mpicc -show` should print the full command line that is used to invoke the wrapped C compiler in gcc-compatible syntax (e.g., `-lmpi`, `-I/usr/local/include`, ...)
+- On Windows, the variables `MSMPI_INC` and either `MSMPI_LIB32` or `MSMPI_LIB64` should be set
+  - see example in [GitHub Actions](.github/workflows/test.yaml)
 
-Since the MPI standard leaves some details of the C API unspecified (e.g. whether to implement certain constants and even functions using preprocessor macros or native C constructs, the details of most types, ...) `rsmpi` takes a two step approach to generating functional low-level bindings.
+Since the MPI standard leaves some details of the C API unspecified (whether to implement certain constants and even functions using preprocessor macros or native C constructs, the details of most types, etc.) `rsmpi` takes a two step approach to generating functional low-level bindings.
 
 First, it uses a thin static library written in C (see [rsmpi.h][rsmpih] and [rsmpi.c][rsmpic]) that tries to capture the underspecified identifiers and re-exports them with a fixed C API. This library is built from [build.rs][buildrs] using the `gcc` crate.
 
@@ -48,6 +56,7 @@ Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` 
 [MPICH]: https://www.mpich.org
 [MS-MPI]: https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi
 [Spectrum-MPI]: https://www.ibm.com/us-en/marketplace/spectrum-mpi
+[Cray-MPI]: https://docs.nersc.gov/development/programming-models/mpi/cray-mpich/
 [rsmpih]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/src/rsmpi.h
 [rsmpic]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/src/rsmpi.c
 [buildrs]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/build.rs
@@ -78,8 +87,8 @@ fn main() {
     let size = world.size();
     let rank = world.rank();
 
-    let next_rank = if rank + 1 < size { rank + 1 } else { 0 };
-    let previous_rank = if rank > 0 { rank - 1 } else { size - 1 };
+    let next_rank = (rank + 1) % size;
+    let previous_rank = (rank - 1 + size) % size;
 
     let msg = vec![rank, 2 * rank, 4 * rank];
     mpi::request::scope(|scope| {

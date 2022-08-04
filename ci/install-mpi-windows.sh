@@ -1,6 +1,6 @@
 echo "Installing MS-MPI SDK..."
 
-curl -o "msmpisdk.msi" -L "https://github.com/Microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisdk.msi"
+curl -O "https://download.microsoft.com/download/a/5/2/a5207ca5-1203-491a-8fb8-906fd68ae623/msmpisdk.msi"
 
 msiexec.exe //i msmpisdk.msi //quiet //qn //log ./install.log
 
@@ -8,7 +8,7 @@ echo "Installed MS-MPI SDK!"
 
 echo "Installing MS-MPI Redist..."
 
-curl -o "msmpisetup.exe" -L "https://github.com/Microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe"
+curl -O "https://download.microsoft.com/download/a/5/2/a5207ca5-1203-491a-8fb8-906fd68ae623/msmpisetup.exe"
 
 ./msmpisetup.exe -unattend -full
 

@@ -47,7 +47,7 @@ fn main() {
     let size = world.size();
 
     let next_proc = (rank + 1) % size;
-    let prev_proc = if rank > 0 { rank - 1 } else { size - 1 };
+    let prev_proc = (rank - 1 + size) % size;
 
     let x: Vec<[i32; 4]> = (0..COUNT as i32)
         .map(|i| [i, i + 1, i + 2, i + 3])

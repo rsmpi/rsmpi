@@ -73,6 +73,16 @@ fn collect_args_with_prefix(cmd: &str, prefix: &str) -> Vec<String> {
 pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
     let mut errs = vec![];
 
+    if let Ok(mpi_pkg_config) = env::var("MPI_PKG_CONFIG") {
+        match Config::new().cargo_metadata(false).probe(&mpi_pkg_config) {
+            Ok(lib) => return Ok(Library::from(lib)),
+            Err(err) => {
+                let err: Box<dyn Error> = Box::new(err);
+                errs.push(err)
+            }
+        }
+    }
+
     if let Ok(cray_mpich_dir) = env::var("CRAY_MPICH_DIR") {
         let pkg_config_mpich: PathBuf = [&cray_mpich_dir, "lib", "pkgconfig", "mpich.pc"]
             .iter()
@@ -105,7 +115,7 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
         }
     }
 
-    match Config::new().cargo_metadata(false).probe("openmpi") {
+    match Config::new().cargo_metadata(false).probe("ompi") {
         Ok(lib) => return Ok(Library::from(lib)),
         Err(err) => {
             let err: Box<dyn Error> = Box::new(err);
