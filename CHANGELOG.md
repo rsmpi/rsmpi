@@ -2,7 +2,7 @@
 
 TODO: With release of 0.6.0, delete this comment and add a section devoted to v0.6.0
 
-## Main Branch
+## `main` branch
 
 **MSRV:** 1.54.0
 

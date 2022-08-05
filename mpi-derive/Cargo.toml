@@ -16,3 +16,6 @@ proc-macro = true
 proc-macro2 = "1"
 quote = "1"
 syn = "1"
+
+[package.metadata.release]
+tag-name = "{{crate_name}}-{{version}}"

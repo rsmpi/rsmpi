@@ -15,3 +15,6 @@ license = "MIT/Apache-2.0"
 
 [target.'cfg(unix)'.dependencies]
 pkg-config = "0.3"
+
+[package.metadata.release]
+tag-name = "{{crate_name}}-{{version}}"

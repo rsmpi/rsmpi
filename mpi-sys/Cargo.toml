@@ -20,3 +20,6 @@ rust-version = "1.54"
 cc = "1.0.73"
 bindgen = "0.60"
 build-probe-mpi = { path = "../build-probe-mpi", version = "0.1" }
+
+[package.metadata.release]
+tag-name = "{{crate_name}}-{{version}}"
