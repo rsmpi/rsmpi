@@ -1,8 +1,6 @@
 # RSMPI Release Notes
 
-TODO: With release of 0.6.0, delete this comment and add a section devoted to v0.6.0
-
-## `main` branch
+## 0.6.0 (2022-08-05)
 
 **MSRV:** 1.54.0
 

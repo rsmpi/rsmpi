@@ -41,7 +41,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mpi = "0.5"
+//! mpi = "0.6"
 //! ```
 //!
 //! Then use it in your program like this:
