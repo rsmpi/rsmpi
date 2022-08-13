@@ -215,7 +215,7 @@ See files in [examples/][examples]. These examples also act as [integration test
 
 ## Python integration
 
-It is possible to use `rsmpi` with a communicator provided by mpi4py. An example project demonstrating this is available at
+It is possible to use `rsmpi` with a communicator provided by `mpi4py`. An example project demonstrating this is available at
 
 [https://github.com/betckegroup/mpi4py_with_rsmpi](https://github.com/betckegroup/mpi4py_with_rsmpi).
 
