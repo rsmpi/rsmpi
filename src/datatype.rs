@@ -213,6 +213,14 @@ equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
 #[cfg(target_pointer_width = "64")]
 equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
 
+unsafe impl<T: Equivalence> Equivalence for mem::MaybeUninit<T> {
+    type Out = T::SystemDatatype;
+
+    fn equivalent_datatype() -> Self::Out {
+        T::equivalent_datatype()
+    }
+}
+
 /// A user defined MPI datatype
 ///
 /// # Standard section(s)
