@@ -213,6 +213,10 @@ See files in [examples/][examples]. These examples also act as [integration test
 
 [examples]: https://github.com/rsmpi/rsmpi/tree/master/examples
 
+## Python integration
+
+It is possible to use `rsmpi` with a communicator provided by [mpi4py](https://mpi4py.readthedocs.io/en/stable/). An example project demonstrating this is [mpi4py_with_rsmpi](https://github.com/betckegroup/mpi4py_with_rsmpi).
+
 ## License
 
 Licensed under either of
