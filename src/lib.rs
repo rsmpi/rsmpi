@@ -53,7 +53,7 @@
 //!
 //! fn main() {
 //!     let universe = mpi::initialize().unwrap();
-//!     let world = universe.world();
+//!     let world = universe.world().unwrap();
 //!     let size = world.size();
 //!     let rank = world.rank();
 //!
@@ -64,10 +64,10 @@
 //!     match rank {
 //!         0 => {
 //!             let msg = vec![4.0f64, 8.0, 15.0];
-//!             world.process_at_rank(rank + 1).send(&msg[..]);
+//!             world.process_at_rank(rank + 1).send(&msg[..]).unwrap();
 //!         }
 //!         1 => {
-//!             let (msg, status) = world.any_process().receive_vec::<f64>();
+//!             let (msg, status) = world.any_process().receive_vec::<f64>().unwrap();
 //!             println!("Process {} got message {:?}.\nStatus is: {:?}", rank, msg, status);
 //!         }
 //!         _ => unreachable!()
@@ -138,6 +138,7 @@ pub mod ffi {
 pub mod collective;
 pub mod datatype;
 pub mod environment;
+pub mod error;
 pub mod point_to_point;
 pub mod raw;
 pub mod request;

@@ -2,19 +2,20 @@
 #![allow(clippy::float_cmp)]
 extern crate mpi;
 
+use mpi::error::ErrorKind;
 use mpi::request::{CancelGuard, WaitGuard};
 use mpi::traits::*;
 
-fn main() {
+fn main() -> Result<(), ErrorKind> {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
 
     let x = std::f32::consts::PI;
     let mut y: f32 = 0.0;
 
     mpi::request::scope(|scope| {
-        let mut sreq = world.this_process().immediate_send(scope, &x);
-        let rreq = world.any_process().immediate_receive_into(scope, &mut y);
+        let mut sreq = world.this_process().immediate_send(scope, &x)?;
+        let rreq = world.any_process().immediate_receive_into(scope, &mut y)?;
         rreq.wait();
         loop {
             match sreq.test() {
@@ -26,42 +27,46 @@ fn main() {
                 }
             }
         }
-    });
+
+        Ok(())
+    })?;
     assert_eq!(x, y);
 
     y = 0.0;
     mpi::request::scope(|scope| {
-        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(scope, &mut y));
-        let _sreq = WaitGuard::from(world.this_process().immediate_ready_send(scope, &x));
-    });
+        let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(scope, &mut y)?);
+        let _sreq = WaitGuard::from(world.this_process().immediate_ready_send(scope, &x)?);
+        Ok(())
+    })?;
     assert_eq!(x, y);
 
-    assert!(world.any_process().immediate_probe().is_none());
-    assert!(world.any_process().immediate_matched_probe().is_none());
+    assert!(world.any_process().immediate_probe()?.is_none());
+    assert!(world.any_process().immediate_matched_probe()?.is_none());
 
     y = 0.0;
     mpi::request::scope(|scope| {
         let _sreq: WaitGuard<_, _> = world
             .this_process()
-            .immediate_synchronous_send(scope, &x)
+            .immediate_synchronous_send(scope, &x)?
             .into();
-        let preq = world.any_process().immediate_matched_probe();
+        let preq = world.any_process().immediate_matched_probe()?;
         assert!(preq.is_some());
         let (msg, _) = preq.unwrap();
-        let _rreq: WaitGuard<_, _> = msg.immediate_matched_receive_into(scope, &mut y).into();
-    });
+        let _rreq: WaitGuard<_, _> = msg.immediate_matched_receive_into(scope, &mut y)?.into();
+        Ok(())
+    })?;
     assert_eq!(x, y);
 
-    let future = world.any_process().immediate_receive();
-    world.this_process().send(&x);
+    let future = world.any_process().immediate_receive()?;
+    world.this_process().send(&x)?;
     let (msg, _) = future.get();
     assert_eq!(x, msg);
 
-    let future = world.any_process().immediate_receive();
+    let future = world.any_process().immediate_receive()?;
     let res = future.r#try();
     assert!(res.is_err());
     let mut future = res.err().unwrap();
-    world.this_process().send(&x);
+    world.this_process().send(&x)?;
     loop {
         match future.r#try() {
             Ok((msg, _)) => {
@@ -75,10 +80,14 @@ fn main() {
     }
 
     mpi::request::scope(|scope| {
-        let sreq = world.this_process().immediate_send(scope, &x);
+        let sreq = world.this_process().immediate_send(scope, &x)?;
         sreq.cancel();
         sreq.wait();
 
-        let _sreq = CancelGuard::from(world.this_process().immediate_receive_into(scope, &mut y));
-    });
+        let _sreq = CancelGuard::from(world.this_process().immediate_receive_into(scope, &mut y)?);
+
+        Ok(())
+    })?;
+
+    Ok(())
 }

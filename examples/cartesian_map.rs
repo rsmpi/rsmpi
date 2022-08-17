@@ -7,7 +7,7 @@ use mpi::traits::*;
 fn main() {
     let universe = mpi::initialize().unwrap();
 
-    let comm = universe.world();
+    let comm = universe.world().unwrap();
 
     let new_rank = comm.cartesian_map(&[2, comm.size() / 4], &[false, false]);
 

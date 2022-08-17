@@ -1,19 +1,20 @@
 #![deny(warnings)]
 extern crate mpi;
 
+use mpi::error::ErrorKind;
 use mpi::topology::Rank;
 use mpi::traits::*;
 
-fn main() {
+fn main() -> Result<(), ErrorKind> {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let size = world.size();
     let rank = world.rank();
 
     if rank > 0 {
         let msg = rank as u8;
         world.barrier();
-        world.process_at_rank(0).ready_send(&msg);
+        world.process_at_rank(0).ready_send(&msg)?;
     } else {
         let mut v = vec![0u8; (size - 1) as usize];
         mpi::request::scope(|scope| {
@@ -25,13 +26,16 @@ fn main() {
                         .process_at_rank(i as Rank)
                         .immediate_receive_into(scope, x)
                 })
-                .collect::<Vec<_>>();
+                .collect::<Result<Vec<_>, _>>()?;
             world.barrier();
             for req in reqs {
                 req.wait();
             }
-        });
+            Ok(())
+        })?;
         println!("Got message: {:?}", v);
         assert!(v.iter().zip(1..).all(|(x, i)| i == *x as usize));
     }
+
+    Ok(())
 }

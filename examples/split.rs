@@ -6,7 +6,7 @@ use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
 
     let odd = (0..world.size()).filter(|x| x % 2 != 0).collect::<Vec<_>>();
     let odd_group = world.group().include(&odd[..]);

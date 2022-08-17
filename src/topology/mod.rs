@@ -31,6 +31,7 @@ use crate::Tag;
 use crate::{Count, IntArray};
 
 use crate::datatype::traits::*;
+use crate::error::{error_kind, ErrorKind, MPI_SUCCESS};
 use crate::ffi;
 use crate::ffi::{MPI_Comm, MPI_Group};
 use crate::raw::traits::*;
@@ -72,8 +73,17 @@ impl SystemCommunicator {
     ///
     /// # Examples
     /// See `examples/simple.rs`
-    pub fn world() -> SystemCommunicator {
-        unsafe { SystemCommunicator::from_raw_unchecked(ffi::RSMPI_COMM_WORLD) }
+    pub fn world() -> Result<SystemCommunicator, ErrorKind> {
+        unsafe {
+            let res = ffi::MPI_Comm_set_errhandler(ffi::RSMPI_COMM_WORLD, ffi::RSMPI_ERRORS_RETURN);
+            if res == MPI_SUCCESS {
+                Ok(SystemCommunicator::from_raw_unchecked(
+                    ffi::RSMPI_COMM_WORLD,
+                ))
+            } else {
+                Err(error_kind(res))
+            }
+        }
     }
 
     /// If the raw value is the null handle returns `None`

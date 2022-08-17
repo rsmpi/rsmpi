@@ -2,12 +2,13 @@
 #![allow(clippy::float_cmp)]
 extern crate mpi;
 
+use mpi::error::ErrorKind;
 use mpi::traits::*;
 use std::{thread, time};
 
-fn main() {
+fn main() -> Result<(), ErrorKind> {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
 
     let x = std::f32::consts::PI;
     let mut y: f32 = 0.0;
@@ -19,7 +20,7 @@ fn main() {
                 requests.push(
                     world
                         .process_at_rank(i)
-                        .immediate_synchronous_send(scope, &x),
+                        .immediate_synchronous_send(scope, &x)?,
                 );
             }
 
@@ -33,9 +34,13 @@ fn main() {
 
             thread::sleep(secs);
 
-            let rreq = world.any_process().immediate_receive_into(scope, &mut y);
+            let rreq = world.any_process().immediate_receive_into(scope, &mut y)?;
             rreq.wait();
             println!("Process {} received data", world.rank());
         }
-    });
+
+        Ok(())
+    })?;
+
+    Ok(())
 }

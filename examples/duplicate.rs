@@ -6,7 +6,7 @@ use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let moon = world.duplicate();
 
     world.barrier();
