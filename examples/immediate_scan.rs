@@ -11,7 +11,7 @@ fn fac(n: Rank) -> Rank {
 
 fn main() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let rank = world.rank();
 
     let mut x = 0;

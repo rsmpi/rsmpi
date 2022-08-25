@@ -5,7 +5,7 @@ use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
 
     let ints = [3i32, 2, 1];
     let packed = world.pack(&ints[..]);

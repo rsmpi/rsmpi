@@ -20,6 +20,7 @@ use std::{
 use conv::ConvUtil;
 use once_cell::sync::Lazy;
 
+use crate::error::ErrorKind;
 use crate::ffi;
 use crate::topology::SystemCommunicator;
 use crate::{with_uninitialized, with_uninitialized2};
@@ -46,7 +47,7 @@ impl Universe {
     ///
     /// # Examples
     /// See `examples/simple.rs`
-    pub fn world(&self) -> SystemCommunicator {
+    pub fn world(&self) -> Result<SystemCommunicator, ErrorKind> {
         SystemCommunicator::world()
     }
 

@@ -6,7 +6,7 @@ use mpi::traits::*;
 #[test]
 fn object_safety_test() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let gp = world.group();
     foo(&world, &world.get_name());
     bar(&gp, gp.size())

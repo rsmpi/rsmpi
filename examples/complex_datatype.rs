@@ -50,7 +50,7 @@ unsafe impl Equivalence for ComplexDatatype {
 
 fn main() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
 
     let root_process = world.process_at_rank(0);
 

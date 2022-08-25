@@ -1,6 +1,8 @@
 #![deny(warnings)]
 extern crate mpi;
 
+use mpi::error::ErrorKind;
+
 #[cfg(msmpi)]
 fn main() {
     // There appears to be a bug with MPI_Ibarrier on MS-MPI. Its state machine is not advanced
@@ -8,10 +10,10 @@ fn main() {
 }
 
 #[cfg(not(msmpi))]
-fn main() {
+fn main() -> Result<(), ErrorKind> {
     use mpi::traits::*;
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let size = world.size();
     let receiver_rank = 0;
 
@@ -21,13 +23,13 @@ fn main() {
         let mut buf = vec![0u64; 3 * n];
         // receive first 2 * n messages
         for x in buf[0..2 * n].iter_mut() {
-            world.any_process().receive_into(x);
+            world.any_process().receive_into(x)?;
         }
         // signal the waiting senders that 2 * n messages have been received
         let breq = world.immediate_barrier();
         // receive remaining n messages
         for x in buf[2 * n..3 * n].iter_mut() {
-            world.any_process().receive_into(x);
+            world.any_process().receive_into(x)?;
         }
         println!("{:?}", buf);
         // messages "1" and "2" may be interleaved, but all have to be contained within the first
@@ -41,14 +43,16 @@ fn main() {
     } else {
         // sender processes
         // send message "1"
-        world.process_at_rank(0).send(&1u64);
+        world.process_at_rank(0).send(&1u64)?;
         // join barrier, but do not block
         let breq = world.immediate_barrier();
         // send message "2"
-        world.process_at_rank(0).send(&2u64);
+        world.process_at_rank(0).send(&2u64)?;
         // wait for receiver process to receive the first 2 * n messages
         breq.wait();
         // send message "3"
-        world.process_at_rank(0).send(&3u64);
+        world.process_at_rank(0).send(&3u64)?;
     }
+
+    Ok(())
 }

@@ -1,12 +1,13 @@
 #![deny(warnings)]
 extern crate mpi;
 
+use mpi::error::ErrorKind;
 use mpi::request::WaitGuard;
 use mpi::traits::*;
 
 const BUFFER_SIZE: usize = 10 * 1024 * 1024;
 
-fn main() {
+fn main() -> Result<(), ErrorKind> {
     let mut universe = mpi::initialize().unwrap();
     // Try to attach a buffer.
     universe.set_buffer_size(BUFFER_SIZE);
@@ -17,7 +18,7 @@ fn main() {
     // Attach another buffer.
     universe.set_buffer_size(BUFFER_SIZE);
 
-    let world = universe.world();
+    let world = universe.world().unwrap();
 
     let x = vec![std::f32::consts::PI; 1024];
     let mut y = vec![0.0; 1024];
@@ -25,9 +26,12 @@ fn main() {
         let _rreq = WaitGuard::from(
             world
                 .any_process()
-                .immediate_receive_into(scope, &mut y[..]),
+                .immediate_receive_into(scope, &mut y[..])?,
         );
-        world.this_process().buffered_send(&x[..]);
-    });
+        world.this_process().buffered_send(&x[..])?;
+        Ok(())
+    })?;
     assert_eq!(x, y);
+
+    Ok(())
 }

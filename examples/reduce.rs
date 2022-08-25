@@ -68,7 +68,7 @@ unsafe extern "stdcall" fn unsafe_add(
 
 fn main() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let rank = world.rank();
     let size = world.size();
     let root_rank = 0;
@@ -111,7 +111,7 @@ fn main() {
     world.reduce_scatter_block_into(&f[..], &mut g, SystemOperation::product());
     assert_eq!(g, rank.wrapping_pow(size as u32));
 
-    test_user_operations(universe.world());
+    test_user_operations(universe.world().unwrap());
 
     let mut i = 0;
     let op = unsafe { UnsafeUserOperation::commutative(unsafe_add) };

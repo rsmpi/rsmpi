@@ -7,7 +7,7 @@ use mpi::Count;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let root_rank = 0;
     let root_process = world.process_at_rank(root_rank);
 

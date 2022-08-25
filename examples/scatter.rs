@@ -6,7 +6,7 @@ use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let rank = world.rank();
     let size = world.size();
     let root_rank = 0;

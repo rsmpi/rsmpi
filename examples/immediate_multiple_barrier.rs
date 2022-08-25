@@ -10,7 +10,7 @@ fn main() {
     const COUNT: usize = 128;
 
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
 
     // Try wait_any()
     mpi::request::multiple_scope(COUNT, |_, coll| {

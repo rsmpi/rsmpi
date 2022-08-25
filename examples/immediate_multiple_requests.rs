@@ -1,13 +1,14 @@
 //! Example using request handlers.
 use mpi;
+use mpi::error::ErrorKind;
 use mpi::point_to_point::Status;
 use mpi::traits::*;
 
 const COUNT: usize = 256;
 
-fn main() {
+fn main() -> Result<(), ErrorKind> {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let size = world.size();
     let rank = world.rank();
 
@@ -15,12 +16,13 @@ fn main() {
     let mut y: i32 = 0;
 
     mpi::request::scope(|scope| {
-        let sreq = world.this_process().immediate_send(scope, &x);
-        let rreq = world.any_process().immediate_receive_into(scope, &mut y);
+        let sreq = world.this_process().immediate_send(scope, &x)?;
+        let rreq = world.any_process().immediate_receive_into(scope, &mut y)?;
         let result = rreq.wait_for_data();
         assert_eq!(*result, x);
         sreq.wait();
-    });
+        Ok(())
+    })?;
 
     // Test wait_any()
     let mut result: Vec<i32> = vec![0; COUNT];
@@ -30,13 +32,13 @@ fn main() {
         for _ in 0..result.len() {
             let sreq = world
                 .process_at_rank(next_proc)
-                .immediate_send(scope, &rank);
+                .immediate_send(scope, &rank)?;
             coll.add(sreq);
         }
         for val in result.iter_mut() {
             let rreq = world
                 .process_at_rank(prev_proc)
-                .immediate_receive_into(scope, val);
+                .immediate_receive_into(scope, val)?;
             coll.add(rreq);
         }
         let mut send_count = 0;
@@ -51,7 +53,8 @@ fn main() {
         }
         assert_eq!(send_count, COUNT);
         assert_eq!(recv_count, COUNT);
-    });
+        Ok(())
+    })?;
 
     let mut result: Vec<i32> = vec![0; COUNT];
     // Test wait_some()
@@ -59,13 +62,13 @@ fn main() {
         for _ in 0..result.len() {
             let sreq = world
                 .process_at_rank(next_proc)
-                .immediate_send(scope, &rank);
+                .immediate_send(scope, &rank)?;
             coll.add(sreq);
         }
         for val in result.iter_mut() {
             let rreq = world
                 .process_at_rank(prev_proc)
-                .immediate_receive_into(scope, val);
+                .immediate_receive_into(scope, val)?;
             coll.add(rreq);
         }
         let mut send_count = 0;
@@ -87,7 +90,8 @@ fn main() {
         }
         assert_eq!(send_count, COUNT);
         assert_eq!(recv_count, COUNT);
-    });
+        Ok(())
+    })?;
 
     let mut result: Vec<i32> = vec![0; COUNT];
     // Test wait_all()
@@ -95,13 +99,13 @@ fn main() {
         for _ in 0..result.len() {
             let sreq = world
                 .process_at_rank(next_proc)
-                .immediate_send(scope, &rank);
+                .immediate_send(scope, &rank)?;
             coll.add(sreq);
         }
         for val in result.iter_mut() {
             let rreq = world
                 .process_at_rank(prev_proc)
-                .immediate_receive_into(scope, val);
+                .immediate_receive_into(scope, val)?;
             coll.add(rreq);
         }
 
@@ -119,27 +123,33 @@ fn main() {
         }
         assert_eq!(send_count, COUNT);
         assert_eq!(recv_count, COUNT);
-    });
+        Ok(())
+    })?;
 
     // Check wait_*() with a buffer of increasing values
     let x: Vec<i32> = (0..COUNT as i32).collect();
     let mut result: Vec<i32> = vec![0; COUNT];
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
         for elm in &x {
-            let sreq = world.process_at_rank(next_proc).immediate_send(scope, elm);
+            let sreq = world
+                .process_at_rank(next_proc)
+                .immediate_send(scope, elm)?;
             coll.add(sreq);
         }
         for val in result.iter_mut() {
             let rreq = world
                 .process_at_rank(prev_proc)
-                .immediate_receive_into(scope, val);
+                .immediate_receive_into(scope, val)?;
             coll.add(rreq);
         }
         let mut out: Vec<(usize, Status, &i32)> = vec![];
         coll.wait_all(&mut out);
         assert_eq!(out.len(), 2 * COUNT);
-    });
+        Ok(())
+    })?;
     // Ensure the result and x are an incrementing array of integers
     result.sort();
     assert_eq!(result, x);
+
+    Ok(())
 }

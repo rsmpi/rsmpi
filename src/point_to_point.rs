@@ -23,6 +23,7 @@ use crate::ffi;
 use crate::ffi::{MPI_Message, MPI_Status};
 
 use crate::datatype::traits::*;
+use crate::error::{error_kind, ErrorKind, MPI_SUCCESS};
 use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
 use crate::topology::traits::*;
@@ -63,19 +64,21 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.8.1
-    fn probe_with_tag(&self, tag: Tag) -> Status {
+    fn probe_with_tag(&self, tag: Tag) -> Result<Status, ErrorKind> {
         unsafe {
-            Status(
-                with_uninitialized(|status| {
-                    ffi::MPI_Probe(
-                        self.source_rank(),
-                        tag,
-                        self.as_communicator().as_raw(),
-                        status,
-                    )
-                })
-                .1,
-            )
+            let (res, s) = with_uninitialized(|status| {
+                ffi::MPI_Probe(
+                    self.source_rank(),
+                    tag,
+                    self.as_communicator().as_raw(),
+                    status,
+                )
+            });
+            if res == MPI_SUCCESS {
+                Ok(Status(s))
+            } else {
+                Err(error_kind(res))
+            }
         }
     }
 
@@ -91,7 +94,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.8.1
-    fn probe(&self) -> Status {
+    fn probe(&self) -> Result<Status, ErrorKind> {
         self.probe_with_tag(unsafe { ffi::RSMPI_ANY_TAG })
     }
 
@@ -106,8 +109,8 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.8.2
-    fn matched_probe_with_tag(&self, tag: Tag) -> (Message, Status) {
-        let (_, message, status) = unsafe {
+    fn matched_probe_with_tag(&self, tag: Tag) -> Result<(Message, Status), ErrorKind> {
+        let (res, message, status) = unsafe {
             with_uninitialized2(|message, status| {
                 ffi::MPI_Mprobe(
                     self.source_rank(),
@@ -118,7 +121,11 @@ pub unsafe trait Source: AsCommunicator {
                 )
             })
         };
-        (Message(message), Status(status))
+        if res == MPI_SUCCESS {
+            Ok((Message(message), Status(status)))
+        } else {
+            Err(error_kind(res))
+        }
     }
 
     /// Probe a source for incoming messages with guaranteed reception.
@@ -132,7 +139,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.8.2
-    fn matched_probe(&self) -> (Message, Status) {
+    fn matched_probe(&self) -> Result<(Message, Status), ErrorKind> {
         self.matched_probe_with_tag(unsafe { ffi::RSMPI_ANY_TAG })
     }
 
@@ -144,12 +151,12 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.2.4
-    fn receive_with_tag<Msg>(&self, tag: Tag) -> (Msg, Status)
+    fn receive_with_tag<Msg>(&self, tag: Tag) -> Result<(Msg, Status), ErrorKind>
     where
         Msg: Equivalence,
     {
         unsafe {
-            let (_, msg, status) = with_uninitialized2(|msg, status| {
+            let (res, msg, status) = with_uninitialized2(|msg, status| {
                 ffi::MPI_Recv(
                     msg as _,
                     1,
@@ -160,11 +167,15 @@ pub unsafe trait Source: AsCommunicator {
                     status,
                 )
             });
-            let status = Status(status);
-            if status.count(Msg::equivalent_datatype()) == 0 {
-                panic!("Received an empty message.");
+            if res == MPI_SUCCESS {
+                let status = Status(status);
+                if status.count(Msg::equivalent_datatype()) == 0 {
+                    panic!("Received an empty message.");
+                }
+                Ok((msg, status))
+            } else {
+                Err(error_kind(res))
             }
-            (msg, status)
         }
     }
 
@@ -178,7 +189,7 @@ pub unsafe trait Source: AsCommunicator {
     /// use mpi::traits::*;
     ///
     /// let universe = mpi::initialize().unwrap();
-    /// let world = universe.world();
+    /// let world = universe.world().unwrap();
     ///
     /// let x = world.any_process().receive::<f64>();
     /// ```
@@ -186,7 +197,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.2.4
-    fn receive<Msg>(&self) -> (Msg, Status)
+    fn receive<Msg>(&self) -> Result<(Msg, Status), ErrorKind>
     where
         Msg: Equivalence,
     {
@@ -200,25 +211,31 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.2.4
-    fn receive_into_with_tag<Buf: ?Sized>(&self, buf: &mut Buf, tag: Tag) -> Status
+    fn receive_into_with_tag<Buf: ?Sized>(
+        &self,
+        buf: &mut Buf,
+        tag: Tag,
+    ) -> Result<Status, ErrorKind>
     where
         Buf: BufferMut,
     {
         unsafe {
-            Status(
-                with_uninitialized(|status| {
-                    ffi::MPI_Recv(
-                        buf.pointer_mut(),
-                        buf.count(),
-                        buf.as_datatype().as_raw(),
-                        self.source_rank(),
-                        tag,
-                        self.as_communicator().as_raw(),
-                        status,
-                    )
-                })
-                .1,
-            )
+            let (res, status) = with_uninitialized(|status| {
+                ffi::MPI_Recv(
+                    buf.pointer_mut(),
+                    buf.count(),
+                    buf.as_datatype().as_raw(),
+                    self.source_rank(),
+                    tag,
+                    self.as_communicator().as_raw(),
+                    status,
+                )
+            });
+            if res == MPI_SUCCESS {
+                Ok(Status(status))
+            } else {
+                Err(error_kind(res))
+            }
         }
     }
 
@@ -229,7 +246,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.2.4
-    fn receive_into<Buf: ?Sized>(&self, buf: &mut Buf) -> Status
+    fn receive_into<Buf: ?Sized>(&self, buf: &mut Buf) -> Result<Status, ErrorKind>
     where
         Buf: BufferMut,
     {
@@ -244,11 +261,11 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.2.4
-    fn receive_vec_with_tag<Msg>(&self, tag: Tag) -> (Vec<Msg>, Status)
+    fn receive_vec_with_tag<Msg>(&self, tag: Tag) -> Result<(Vec<Msg>, Status), ErrorKind>
     where
         Msg: Equivalence,
     {
-        self.matched_probe_with_tag(tag).matched_receive_vec()
+        self.matched_probe_with_tag(tag)?.matched_receive_vec()
     }
 
     /// Receive a message containing multiple instances of type `Msg` into a `Vec`.
@@ -262,7 +279,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.2.4
-    fn receive_vec<Msg>(&self) -> (Vec<Msg>, Status)
+    fn receive_vec<Msg>(&self) -> Result<(Vec<Msg>, Status), ErrorKind>
     where
         Msg: Equivalence,
     {
@@ -281,28 +298,28 @@ pub unsafe trait Source: AsCommunicator {
         scope: Sc,
         buf: &'a mut Buf,
         tag: Tag,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + BufferMut,
         Sc: Scope<'a>,
     {
         unsafe {
-            Request::from_raw(
-                with_uninitialized(|request| {
-                    ffi::MPI_Irecv(
-                        buf.pointer_mut(),
-                        buf.count(),
-                        buf.as_datatype().as_raw(),
-                        self.source_rank(),
-                        tag,
-                        self.as_communicator().as_raw(),
-                        request,
-                    )
-                })
-                .1,
-                buf,
-                scope,
-            )
+            let (res, req) = with_uninitialized(|request| {
+                ffi::MPI_Irecv(
+                    buf.pointer_mut(),
+                    buf.count(),
+                    buf.as_datatype().as_raw(),
+                    self.source_rank(),
+                    tag,
+                    self.as_communicator().as_raw(),
+                    request,
+                )
+            });
+            if res == MPI_SUCCESS {
+                Ok(Request::from_raw(req, buf, scope))
+            } else {
+                Err(error_kind(res))
+            }
         }
     }
 
@@ -320,7 +337,7 @@ pub unsafe trait Source: AsCommunicator {
         &self,
         scope: Sc,
         buf: &'a mut Buf,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + BufferMut,
         Sc: Scope<'a>,
@@ -333,13 +350,13 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_receive_with_tag<Msg>(&self, tag: Tag) -> ReceiveFuture<Msg>
+    fn immediate_receive_with_tag<Msg>(&self, tag: Tag) -> Result<ReceiveFuture<Msg>, ErrorKind>
     where
         Msg: Equivalence,
     {
         unsafe {
             let val = alloc::alloc(Layout::new::<Msg>()) as *mut Msg;
-            let (_, request) = with_uninitialized(|request| {
+            let (res, request) = with_uninitialized(|request| {
                 ffi::MPI_Irecv(
                     val as _,
                     1,
@@ -350,9 +367,13 @@ pub unsafe trait Source: AsCommunicator {
                     request,
                 )
             });
-            ReceiveFuture {
-                val,
-                req: Request::from_raw(request, &(), StaticScope),
+            if res == MPI_SUCCESS {
+                Ok(ReceiveFuture {
+                    val,
+                    req: Request::from_raw(request, &(), StaticScope),
+                })
+            } else {
+                Err(error_kind(res))
             }
         }
     }
@@ -365,7 +386,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_receive<Msg>(&self) -> ReceiveFuture<Msg>
+    fn immediate_receive<Msg>(&self) -> Result<ReceiveFuture<Msg>, ErrorKind>
     where
         Msg: Equivalence,
     {
@@ -381,11 +402,11 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.8.1
-    fn immediate_probe_with_tag(&self, tag: Tag) -> Option<Status> {
+    fn immediate_probe_with_tag(&self, tag: Tag) -> Result<Option<Status>, ErrorKind> {
         unsafe {
             let mut status = MaybeUninit::uninit();
 
-            let (_, flag) = with_uninitialized(|flag| {
+            let (res, flag) = with_uninitialized(|flag| {
                 ffi::MPI_Iprobe(
                     self.source_rank(),
                     tag,
@@ -395,10 +416,14 @@ pub unsafe trait Source: AsCommunicator {
                 )
             });
 
-            if flag != 0 {
-                Some(Status(status.assume_init()))
+            if res == MPI_SUCCESS {
+                Ok(if flag != 0 {
+                    Some(Status(status.assume_init()))
+                } else {
+                    None
+                })
             } else {
-                None
+                Err(error_kind(res))
             }
         }
     }
@@ -412,7 +437,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.8.1
-    fn immediate_probe(&self) -> Option<Status> {
+    fn immediate_probe(&self) -> Result<Option<Status>, ErrorKind> {
         self.immediate_probe_with_tag(unsafe { ffi::RSMPI_ANY_TAG })
     }
 
@@ -426,12 +451,15 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.8.2
-    fn immediate_matched_probe_with_tag(&self, tag: Tag) -> Option<(Message, Status)> {
+    fn immediate_matched_probe_with_tag(
+        &self,
+        tag: Tag,
+    ) -> Result<Option<(Message, Status)>, ErrorKind> {
         unsafe {
             let mut message = MaybeUninit::uninit();
             let mut status = MaybeUninit::uninit();
 
-            let (_, flag) = with_uninitialized(|flag| {
+            let (res, flag) = with_uninitialized(|flag| {
                 ffi::MPI_Improbe(
                     self.source_rank(),
                     tag,
@@ -442,10 +470,14 @@ pub unsafe trait Source: AsCommunicator {
                 )
             });
 
-            if flag != 0 {
-                Some((Message(message.assume_init()), Status(status.assume_init())))
+            if res == MPI_SUCCESS {
+                Ok(if flag != 0 {
+                    Some((Message(message.assume_init()), Status(status.assume_init())))
+                } else {
+                    None
+                })
             } else {
-                None
+                Err(error_kind(res))
             }
         }
     }
@@ -460,7 +492,7 @@ pub unsafe trait Source: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.8.2
-    fn immediate_matched_probe(&self) -> Option<(Message, Status)> {
+    fn immediate_matched_probe(&self) -> Result<Option<(Message, Status)>, ErrorKind> {
         self.immediate_matched_probe_with_tag(unsafe { ffi::RSMPI_ANY_TAG })
     }
 }
@@ -502,11 +534,11 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.2.1
-    fn send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
+    fn send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag) -> Result<(), ErrorKind>
     where
         Buf: Buffer,
     {
-        unsafe {
+        let res = unsafe {
             ffi::MPI_Send(
                 buf.pointer(),
                 buf.count(),
@@ -514,7 +546,12 @@ pub trait Destination: AsCommunicator {
                 self.destination_rank(),
                 tag,
                 self.as_communicator().as_raw(),
-            );
+            )
+        };
+        if res == MPI_SUCCESS {
+            Ok(())
+        } else {
+            Err(error_kind(res))
         }
     }
 
@@ -528,7 +565,7 @@ pub trait Destination: AsCommunicator {
     /// use mpi::traits::*;
     ///
     /// let universe = mpi::initialize().unwrap();
-    /// let world = universe.world();
+    /// let world = universe.world().unwrap();
     ///
     /// let v = vec![ 1.0f64, 2.0, 3.0 ];
     /// world.process_at_rank(1).send(&v[..]);
@@ -539,7 +576,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.2.1
-    fn send<Buf: ?Sized>(&self, buf: &Buf)
+    fn send<Buf: ?Sized>(&self, buf: &Buf) -> Result<(), ErrorKind>
     where
         Buf: Buffer,
     {
@@ -553,11 +590,11 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4
-    fn buffered_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
+    fn buffered_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag) -> Result<(), ErrorKind>
     where
         Buf: Buffer,
     {
-        unsafe {
+        let res = unsafe {
             ffi::MPI_Bsend(
                 buf.pointer(),
                 buf.count(),
@@ -565,7 +602,12 @@ pub trait Destination: AsCommunicator {
                 self.destination_rank(),
                 tag,
                 self.as_communicator().as_raw(),
-            );
+            )
+        };
+        if res == MPI_SUCCESS {
+            Ok(())
+        } else {
+            Err(error_kind(res))
         }
     }
 
@@ -576,7 +618,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4
-    fn buffered_send<Buf: ?Sized>(&self, buf: &Buf)
+    fn buffered_send<Buf: ?Sized>(&self, buf: &Buf) -> Result<(), ErrorKind>
     where
         Buf: Buffer,
     {
@@ -592,11 +634,11 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4
-    fn synchronous_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
+    fn synchronous_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag) -> Result<(), ErrorKind>
     where
         Buf: Buffer,
     {
-        unsafe {
+        let res = unsafe {
             ffi::MPI_Ssend(
                 buf.pointer(),
                 buf.count(),
@@ -604,7 +646,12 @@ pub trait Destination: AsCommunicator {
                 self.destination_rank(),
                 tag,
                 self.as_communicator().as_raw(),
-            );
+            )
+        };
+        if res == MPI_SUCCESS {
+            Ok(())
+        } else {
+            Err(error_kind(res))
         }
     }
 
@@ -617,7 +664,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4
-    fn synchronous_send<Buf: ?Sized>(&self, buf: &Buf)
+    fn synchronous_send<Buf: ?Sized>(&self, buf: &Buf) -> Result<(), ErrorKind>
     where
         Buf: Buffer,
     {
@@ -633,11 +680,11 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4
-    fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
+    fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag) -> Result<(), ErrorKind>
     where
         Buf: Buffer,
     {
-        unsafe {
+        let res = unsafe {
             ffi::MPI_Rsend(
                 buf.pointer(),
                 buf.count(),
@@ -645,7 +692,12 @@ pub trait Destination: AsCommunicator {
                 self.destination_rank(),
                 tag,
                 self.as_communicator().as_raw(),
-            );
+            )
+        };
+        if res == MPI_SUCCESS {
+            Ok(())
+        } else {
+            Err(error_kind(res))
         }
     }
 
@@ -658,7 +710,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4
-    fn ready_send<Buf: ?Sized>(&self, buf: &Buf)
+    fn ready_send<Buf: ?Sized>(&self, buf: &Buf) -> Result<(), ErrorKind>
     where
         Buf: Buffer,
     {
@@ -677,28 +729,28 @@ pub trait Destination: AsCommunicator {
         scope: Sc,
         buf: &'a Buf,
         tag: Tag,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
     {
         unsafe {
-            Request::from_raw(
-                with_uninitialized(|request| {
-                    ffi::MPI_Isend(
-                        buf.pointer(),
-                        buf.count(),
-                        buf.as_datatype().as_raw(),
-                        self.destination_rank(),
-                        tag,
-                        self.as_communicator().as_raw(),
-                        request,
-                    )
-                })
-                .1,
-                buf,
-                scope,
-            )
+            let (res, req) = with_uninitialized(|request| {
+                ffi::MPI_Isend(
+                    buf.pointer(),
+                    buf.count(),
+                    buf.as_datatype().as_raw(),
+                    self.destination_rank(),
+                    tag,
+                    self.as_communicator().as_raw(),
+                    request,
+                )
+            });
+            if res == MPI_SUCCESS {
+                Ok(Request::from_raw(req, buf, scope))
+            } else {
+                Err(error_kind(res))
+            }
         }
     }
 
@@ -712,7 +764,11 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.7.2
-    fn immediate_send<'a, Sc, Buf: ?Sized>(&self, scope: Sc, buf: &'a Buf) -> Request<'a, Buf, Sc>
+    fn immediate_send<'a, Sc, Buf: ?Sized>(
+        &self,
+        scope: Sc,
+        buf: &'a Buf,
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -732,28 +788,28 @@ pub trait Destination: AsCommunicator {
         scope: Sc,
         buf: &'a Buf,
         tag: Tag,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
     {
         unsafe {
-            Request::from_raw(
-                with_uninitialized(|request| {
-                    ffi::MPI_Ibsend(
-                        buf.pointer(),
-                        buf.count(),
-                        buf.as_datatype().as_raw(),
-                        self.destination_rank(),
-                        tag,
-                        self.as_communicator().as_raw(),
-                        request,
-                    )
-                })
-                .1,
-                buf,
-                scope,
-            )
+            let (res, req) = with_uninitialized(|req| {
+                ffi::MPI_Ibsend(
+                    buf.pointer(),
+                    buf.count(),
+                    buf.as_datatype().as_raw(),
+                    self.destination_rank(),
+                    tag,
+                    self.as_communicator().as_raw(),
+                    req,
+                )
+            });
+            if res == MPI_SUCCESS {
+                Ok(Request::from_raw(req, buf, scope))
+            } else {
+                Err(error_kind(res))
+            }
         }
     }
 
@@ -768,7 +824,7 @@ pub trait Destination: AsCommunicator {
         &self,
         scope: Sc,
         buf: &'a Buf,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -788,28 +844,28 @@ pub trait Destination: AsCommunicator {
         scope: Sc,
         buf: &'a Buf,
         tag: Tag,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
     {
         unsafe {
-            Request::from_raw(
-                with_uninitialized(|request| {
-                    ffi::MPI_Issend(
-                        buf.pointer(),
-                        buf.count(),
-                        buf.as_datatype().as_raw(),
-                        self.destination_rank(),
-                        tag,
-                        self.as_communicator().as_raw(),
-                        request,
-                    )
-                })
-                .1,
-                buf,
-                scope,
-            )
+            let (res, req) = with_uninitialized(|req| {
+                ffi::MPI_Issend(
+                    buf.pointer(),
+                    buf.count(),
+                    buf.as_datatype().as_raw(),
+                    self.destination_rank(),
+                    tag,
+                    self.as_communicator().as_raw(),
+                    req,
+                )
+            });
+            if res == MPI_SUCCESS {
+                Ok(Request::from_raw(req, buf, scope))
+            } else {
+                Err(error_kind(res))
+            }
         }
     }
 
@@ -824,7 +880,7 @@ pub trait Destination: AsCommunicator {
         &self,
         scope: Sc,
         buf: &'a Buf,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -844,28 +900,28 @@ pub trait Destination: AsCommunicator {
         scope: Sc,
         buf: &'a Buf,
         tag: Tag,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
     {
         unsafe {
-            Request::from_raw(
-                with_uninitialized(|request| {
-                    ffi::MPI_Irsend(
-                        buf.pointer(),
-                        buf.count(),
-                        buf.as_datatype().as_raw(),
-                        self.destination_rank(),
-                        tag,
-                        self.as_communicator().as_raw(),
-                        request,
-                    )
-                })
-                .1,
-                buf,
-                scope,
-            )
+            let (res, req) = with_uninitialized(|req| {
+                ffi::MPI_Irsend(
+                    buf.pointer(),
+                    buf.count(),
+                    buf.as_datatype().as_raw(),
+                    self.destination_rank(),
+                    tag,
+                    self.as_communicator().as_raw(),
+                    req,
+                )
+            });
+            if res == MPI_SUCCESS {
+                Ok(Request::from_raw(req, buf, scope))
+            } else {
+                Err(error_kind(res))
+            }
         }
     }
 
@@ -884,7 +940,7 @@ pub trait Destination: AsCommunicator {
         &self,
         scope: Sc,
         buf: &'a Buf,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: 'a + Buffer,
         Sc: Scope<'a>,
@@ -964,25 +1020,29 @@ impl Message {
     /// # Standard section(s)
     ///
     /// 3.8.3
-    pub fn matched_receive<Msg>(mut self) -> (Msg, Status)
+    pub fn matched_receive<Msg>(mut self) -> Result<(Msg, Status), ErrorKind>
     where
         Msg: Equivalence,
     {
         unsafe {
-            let (_, res, status) = with_uninitialized2(|res, status| {
+            let (res, msg, status) = with_uninitialized2(|msg, status| {
                 ffi::MPI_Mrecv(
-                    res as _,
+                    msg as _,
                     1,
                     Msg::equivalent_datatype().as_raw(),
                     self.as_raw_mut(),
                     status,
                 )
             });
-            let status = Status(status);
-            if status.count(Msg::equivalent_datatype()) == 0 {
-                panic!("Received an empty message.");
+            if res == MPI_SUCCESS {
+                let status = Status(status);
+                if status.count(Msg::equivalent_datatype()) == 0 {
+                    panic!("Received an empty message.");
+                }
+                Ok((msg, status))
+            } else {
+                Err(error_kind(res))
             }
-            (res, status)
         }
     }
 
@@ -993,13 +1053,12 @@ impl Message {
     /// # Standard section(s)
     ///
     /// 3.8.3
-    pub fn matched_receive_into<Buf: ?Sized>(mut self, buf: &mut Buf) -> Status
+    pub fn matched_receive_into<Buf: ?Sized>(mut self, buf: &mut Buf) -> Result<Status, ErrorKind>
     where
         Buf: BufferMut,
     {
-        let status;
         unsafe {
-            status = with_uninitialized(|status| {
+            let (res, status) = with_uninitialized(|status| {
                 ffi::MPI_Mrecv(
                     buf.pointer_mut(),
                     buf.count(),
@@ -1007,11 +1066,14 @@ impl Message {
                     self.as_raw_mut(),
                     status,
                 )
-            })
-            .1;
-            assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
-        };
-        Status(status)
+            });
+            if res == MPI_SUCCESS {
+                assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
+                Ok(Status(status))
+            } else {
+                Err(error_kind(res))
+            }
+        }
     }
 
     /// Asynchronously receive a previously probed message into a `Buffer`.
@@ -1025,24 +1087,27 @@ impl Message {
         mut self,
         scope: Sc,
         buf: &'a mut Buf,
-    ) -> Request<'a, Buf, Sc>
+    ) -> Result<Request<'a, Buf, Sc>, ErrorKind>
     where
         Buf: BufferMut,
         Sc: Scope<'a>,
     {
         unsafe {
-            let request = with_uninitialized(|request| {
+            let (res, req) = with_uninitialized(|req| {
                 ffi::MPI_Imrecv(
                     buf.pointer_mut(),
                     buf.count(),
                     buf.as_datatype().as_raw(),
                     self.as_raw_mut(),
-                    request,
+                    req,
                 )
-            })
-            .1;
-            assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
-            Request::from_raw(request, buf, scope)
+            });
+            if res == MPI_SUCCESS {
+                assert_eq!(self.as_raw(), ffi::RSMPI_MESSAGE_NULL);
+                Ok(Request::from_raw(req, buf, scope))
+            } else {
+                Err(error_kind(res))
+            }
         }
     }
 }
@@ -1077,13 +1142,13 @@ impl Drop for Message {
 /// 3.8.3
 pub trait MatchedReceiveVec {
     /// Receives the message `&self` which contains multiple instances of type `Msg` into a `Vec`.
-    fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status)
+    fn matched_receive_vec<Msg>(self) -> Result<(Vec<Msg>, Status), ErrorKind>
     where
         Msg: Equivalence;
 }
 
 impl MatchedReceiveVec for (Message, Status) {
-    fn matched_receive_vec<Msg>(self) -> (Vec<Msg>, Status)
+    fn matched_receive_vec<Msg>(self) -> Result<(Vec<Msg>, Status), ErrorKind>
     where
         Msg: Equivalence,
     {
@@ -1108,11 +1173,11 @@ impl MatchedReceiveVec for (Message, Status) {
             .map(|_| UninitMsg::<Msg>(MaybeUninit::uninit()))
             .collect::<Vec<_>>();
 
-        let status = message.matched_receive_into(&mut res[..]);
+        let status = message.matched_receive_into(&mut res[..])?;
 
         let res = unsafe { transmute(res) };
 
-        (res, status)
+        Ok((res, status))
     }
 }
 
@@ -1128,7 +1193,7 @@ pub fn send_receive_with_tags<M, D, R, S>(
     sendtag: Tag,
     source: &S,
     receivetag: Tag,
-) -> (R, Status)
+) -> Result<(R, Status), ErrorKind>
 where
     M: Equivalence,
     D: Destination,
@@ -1142,7 +1207,7 @@ where
         CommunicatorRelation::Identical
     );
     unsafe {
-        let (_, res, status) = with_uninitialized2(|res, status| {
+        let (ret, res, status) = with_uninitialized2(|res, status| {
             ffi::MPI_Sendrecv(
                 msg.pointer(),
                 msg.count(),
@@ -1158,8 +1223,12 @@ where
                 status,
             )
         });
-        let status = Status(status);
-        (res, status)
+        if ret == MPI_SUCCESS {
+            let status = Status(status);
+            Ok((res, status))
+        } else {
+            Err(error_kind(ret))
+        }
     }
 }
 
@@ -1172,7 +1241,11 @@ where
 /// # Standard section(s)
 ///
 /// 3.10
-pub fn send_receive<R, M, D, S>(msg: &M, destination: &D, source: &S) -> (R, Status)
+pub fn send_receive<R, M, D, S>(
+    msg: &M,
+    destination: &D,
+    source: &S,
+) -> Result<(R, Status), ErrorKind>
 where
     M: Equivalence,
     D: Destination,
@@ -1198,7 +1271,7 @@ pub fn send_receive_into_with_tags<M: ?Sized, D, B: ?Sized, S>(
     buf: &mut B,
     source: &S,
     receivetag: Tag,
-) -> Status
+) -> Result<Status, ErrorKind>
 where
     M: Buffer,
     D: Destination,
@@ -1212,25 +1285,28 @@ where
         CommunicatorRelation::Identical
     );
     unsafe {
-        Status(
-            with_uninitialized(|status| {
-                ffi::MPI_Sendrecv(
-                    msg.pointer(),
-                    msg.count(),
-                    msg.as_datatype().as_raw(),
-                    destination.destination_rank(),
-                    sendtag,
-                    buf.pointer_mut(),
-                    buf.count(),
-                    buf.as_datatype().as_raw(),
-                    source.source_rank(),
-                    receivetag,
-                    source.as_communicator().as_raw(),
-                    status,
-                )
-            })
-            .1,
-        )
+        let (res, status) = with_uninitialized(|status| {
+            ffi::MPI_Sendrecv(
+                msg.pointer(),
+                msg.count(),
+                msg.as_datatype().as_raw(),
+                destination.destination_rank(),
+                sendtag,
+                buf.pointer_mut(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                source.source_rank(),
+                receivetag,
+                source.as_communicator().as_raw(),
+                status,
+            )
+        });
+        if res == MPI_SUCCESS {
+            Ok(Status(status))
+        } else {
+            println!("res: {}", res);
+            Err(error_kind(res))
+        }
     }
 }
 
@@ -1246,7 +1322,7 @@ pub fn send_receive_into<M: ?Sized, D, B: ?Sized, S>(
     destination: &D,
     buf: &mut B,
     source: &S,
-) -> Status
+) -> Result<Status, ErrorKind>
 where
     M: Buffer,
     D: Destination,
@@ -1271,7 +1347,7 @@ pub fn send_receive_replace_into_with_tags<B: ?Sized, D, S>(
     sendtag: Tag,
     source: &S,
     receivetag: Tag,
-) -> Status
+) -> Result<Status, ErrorKind>
 where
     B: BufferMut,
     D: Destination,
@@ -1284,22 +1360,24 @@ where
         CommunicatorRelation::Identical
     );
     unsafe {
-        Status(
-            with_uninitialized(|status| {
-                ffi::MPI_Sendrecv_replace(
-                    buf.pointer_mut(),
-                    buf.count(),
-                    buf.as_datatype().as_raw(),
-                    destination.destination_rank(),
-                    sendtag,
-                    source.source_rank(),
-                    receivetag,
-                    source.as_communicator().as_raw(),
-                    status,
-                )
-            })
-            .1,
-        )
+        let (res, status) = with_uninitialized(|status| {
+            ffi::MPI_Sendrecv_replace(
+                buf.pointer_mut(),
+                buf.count(),
+                buf.as_datatype().as_raw(),
+                destination.destination_rank(),
+                sendtag,
+                source.source_rank(),
+                receivetag,
+                source.as_communicator().as_raw(),
+                status,
+            )
+        });
+        if res == MPI_SUCCESS {
+            Ok(Status(status))
+        } else {
+            Err(error_kind(res))
+        }
     }
 }
 
@@ -1314,7 +1392,7 @@ pub fn send_receive_replace_into<B: ?Sized, D, S>(
     buf: &mut B,
     destination: &D,
     source: &S,
-) -> Status
+) -> Result<Status, ErrorKind>
 where
     B: BufferMut,
     D: Destination,

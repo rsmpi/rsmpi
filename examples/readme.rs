@@ -1,12 +1,13 @@
 #![deny(warnings)]
 extern crate mpi;
 
+use mpi::error::ErrorKind;
 use mpi::request::WaitGuard;
 use mpi::traits::*;
 
-fn main() {
+fn main() -> Result<(), ErrorKind> {
     let universe = mpi::initialize().unwrap();
-    let world = universe.world();
+    let world = universe.world().unwrap();
     let size = world.size();
     let rank = world.rank();
 
@@ -18,10 +19,10 @@ fn main() {
         let _sreq = WaitGuard::from(
             world
                 .process_at_rank(next_rank)
-                .immediate_send(scope, &msg[..]),
+                .immediate_send(scope, &msg[..])?,
         );
 
-        let (msg, status) = world.any_process().receive_vec();
+        let (msg, status) = world.any_process().receive_vec()?;
 
         println!(
             "Process {} got message {:?}.\nStatus is: {:?}",
@@ -44,5 +45,8 @@ fn main() {
         root_process.broadcast_into(&mut a[..]);
         println!("Rank {} received value: {:?}.", world.rank(), &a[..]);
         assert_eq!(&a[..], &[2, 4, 8, 16]);
-    });
+        Ok(())
+    })?;
+
+    Ok(())
 }

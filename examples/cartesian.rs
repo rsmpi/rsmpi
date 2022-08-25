@@ -7,7 +7,7 @@ use mpi::traits::*;
 fn main() {
     let universe = mpi::initialize().unwrap();
 
-    let comm = universe.world();
+    let comm = universe.world().unwrap();
 
     if comm.size() < 4 {
         return;

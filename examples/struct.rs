@@ -23,7 +23,7 @@ where
 fn main() {
     let universe = mpi::initialize().unwrap();
 
-    let world = universe.world();
+    let world = universe.world().unwrap();
 
     #[derive(Equivalence)]
     struct MyProgramOpts {
