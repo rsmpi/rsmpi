@@ -213,14 +213,6 @@ equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
 #[cfg(target_pointer_width = "64")]
 equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
 
-unsafe impl<T: Equivalence> Equivalence for mem::MaybeUninit<T> {
-    type Out = T::SystemDatatype;
-
-    fn equivalent_datatype() -> Self::Out {
-        T::equivalent_datatype()
-    }
-}
-
 /// A user defined MPI datatype
 ///
 /// # Standard section(s)
@@ -796,6 +788,16 @@ where
     }
 }
 
+unsafe impl<T> AsDatatype for [mem::MaybeUninit<T>]
+where
+    T: Equivalence,
+{
+    type Out = <T as Equivalence>::Out;
+    fn as_datatype(&self) -> Self::Out {
+        <T as Equivalence>::equivalent_datatype()
+    }
+}
+
 unsafe impl<T> AsDatatype for Vec<T>
 where
     T: Equivalence,
@@ -897,6 +899,17 @@ where
     }
 }
 
+unsafe impl<T> Collection for [mem::MaybeUninit<T>]
+where
+    T: Equivalence,
+{
+    fn count(&self) -> Count {
+        self.len()
+            .value_as()
+            .expect("Length of slice cannot be expressed as an MPI Count.")
+    }
+}
+
 unsafe impl<T> Collection for Vec<T>
 where
     T: Equivalence,
@@ -987,6 +1000,15 @@ where
     }
 }
 
+unsafe impl<T> PointerMut for [mem::MaybeUninit<T>]
+where
+    T: Equivalence,
+{
+    fn pointer_mut(&mut self) -> *mut c_void {
+        self.as_mut_ptr() as _
+    }
+}
+
 unsafe impl<T> PointerMut for Vec<T>
 where
     T: Equivalence,
@@ -1020,6 +1042,8 @@ unsafe impl<T> BufferMut for T where T: Equivalence {}
 unsafe impl<T> BufferMut for [T] where T: Equivalence {}
 unsafe impl<T> BufferMut for Vec<T> where T: Equivalence {}
 unsafe impl<T, const D: usize> BufferMut for [T; D] where T: Equivalence {}
+// T, Vec<T>, and [T; D] can all be coerced to [T]
+unsafe impl<T> BufferMut for [mem::MaybeUninit<T>] where T: Equivalence {}
 
 /// An immutable dynamically-typed buffer.
 ///
