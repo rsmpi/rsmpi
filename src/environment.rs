@@ -20,8 +20,8 @@ use std::{
 use conv::ConvUtil;
 use once_cell::sync::Lazy;
 
-use crate::ffi;
-use crate::topology::SystemCommunicator;
+use crate::topology::{Communicator, SystemCommunicator};
+use crate::{ffi, topology::SystemAttribute};
 use crate::{with_uninitialized, with_uninitialized2};
 
 /// Internal data structure used to uphold certain MPI invariants.
@@ -48,6 +48,23 @@ impl Universe {
     /// See `examples/simple.rs`
     pub fn world(&self) -> SystemCommunicator {
         SystemCommunicator::world()
+    }
+
+    /// Total number of "slots" that can reasonably be filled in the environment
+    ///
+    /// This can be larger or smaller than the world (e.g., when
+    /// oversubscribed). The universe size is generally not a hard limit. A
+    /// universe size need not be set. To specify universe size, MPICH mpiexec
+    /// supports the command line option `-usize 123` and Open MPI supports the
+    /// environment variable `OMPI_UNIVERSE_SIZE=123`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 11.10.1
+    pub fn size(&self) -> Option<usize> {
+        // self.world().get_attr()
+        let attr = unsafe { SystemAttribute::from_raw_unchecked(ffi::MPI_UNIVERSE_SIZE as i32) };
+        self.world().get_attr(attr).map(|s| *s as usize)
     }
 
     /// The size in bytes of the buffer used for buffered communication.

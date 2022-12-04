@@ -21,7 +21,7 @@
 //! - **Parts of sections**: 8, 10, 12
 use std::ffi::{CStr, CString};
 use std::mem::MaybeUninit;
-use std::os::raw::{c_char, c_int};
+use std::os::raw::{c_char, c_int, c_void};
 use std::process;
 
 use conv::ConvUtil;
@@ -40,7 +40,7 @@ mod cartesian;
 
 /// Topology traits
 pub mod traits {
-    pub use super::{AsCommunicator, Communicator, Group};
+    pub use super::{AsCommunicator, Attribute, Communicator, Group};
 }
 
 // Re-export cartesian functions and types from topology modules.
@@ -295,6 +295,30 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// 6.4.1
     fn rank(&self) -> Rank {
         unsafe { with_uninitialized(|rank| ffi::MPI_Comm_rank(self.as_raw(), rank)).1 }
+    }
+
+    /// Get `Attribute`
+    fn get_attr<A: Attribute>(&self, key: A) -> Option<&<A as Attribute>::Target>
+    where
+        Self: Sized,
+    {
+        let (val, flag) = unsafe {
+            let mut ptr: MaybeUninit<*mut <A as Attribute>::Target> = MaybeUninit::uninit();
+            let (_, flag) = with_uninitialized(|flag| {
+                ffi::MPI_Comm_get_attr(
+                    self.as_raw(),
+                    key.as_raw(),
+                    ptr.as_mut_ptr() as *mut c_void,
+                    flag,
+                )
+            });
+            (ptr.assume_init(), flag)
+        };
+        if flag == 0 {
+            None
+        } else {
+            unsafe { val.as_ref() }
+        }
     }
 
     /// Bundles a reference to this communicator with a specific `Rank` into a `Process`.
@@ -1104,4 +1128,39 @@ impl From<c_int> for GroupRelation {
         }
         panic!("Unknown group relation: {}", i)
     }
+}
+
+/// Attributes are keys to user data that can be owned by communicators and
+/// accessed by users. They are useful when libraries pass communicators to a
+/// different library and get it back in a callback.
+///
+/// # Standard section(s)
+///
+/// 7.7.1
+pub trait Attribute: AsRaw<Raw = c_int> {
+    /// The type an attribute carries.
+    type Target;
+}
+
+/// Predefined attributes
+#[derive(Copy, Clone)]
+pub struct SystemAttribute(c_int);
+
+impl SystemAttribute {
+    /// Wraps the raw value without checking for null handle
+    /// Convert raw integer attribute key into SystemAttribute
+    pub unsafe fn from_raw_unchecked(val: c_int) -> Self {
+        Self(val)
+    }
+}
+
+unsafe impl AsRaw for SystemAttribute {
+    type Raw = c_int;
+    fn as_raw(&self) -> Self::Raw {
+        self.0
+    }
+}
+
+impl Attribute for SystemAttribute {
+    type Target = c_int;
 }
