@@ -1,13 +1,14 @@
 use std::env;
 use std::process::Command;
 
+use mpi::topology::MergeOrder;
 use mpi::traits::*;
 
 fn main() -> Result<(), mpi::MpiError> {
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
 
-    if let Some(parent) = world.parent() {
+    let merged = if let Some(parent) = world.parent() {
         assert_eq!("from_parent", env::args().skip(1).next().unwrap());
 
         parent.process_at_rank(0).send(&7i32);
@@ -18,6 +19,7 @@ fn main() -> Result<(), mpi::MpiError> {
             world.size(),
             universe.size()
         );
+        parent.merge(MergeOrder::High)
     } else {
         let child_size = 1;
         let mut exe = Command::new(env::current_exe().unwrap());
@@ -36,6 +38,14 @@ fn main() -> Result<(), mpi::MpiError> {
             world.size(),
             universe.size(),
         );
+        child.merge(MergeOrder::Low)
     };
+    println!(
+        "[{}/{}] Merged is World {}/{}",
+        merged.rank(),
+        merged.size(),
+        world.rank(),
+        world.size()
+    );
     Ok(())
 }

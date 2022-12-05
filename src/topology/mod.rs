@@ -375,6 +375,26 @@ impl<C: CommunicatorHandle> InterCommunicator<C> {
             UserGroup(g)
         }
     }
+
+    /// Merge an InterCommunicator into a single UserCommunicator
+    ///
+    /// To specify the ordering of merged ranks, every member of the one group
+    /// should call with `MergeOrder::Low` and every member of the other group
+    /// should use `MergeOrder::High`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 7.6.2
+    pub fn merge(&self, merge_order: MergeOrder) -> UserCommunicator {
+        unsafe {
+            UserCommunicator::from_raw(
+                with_uninitialized(|raw| {
+                    ffi::MPI_Intercomm_merge(self.as_raw(), merge_order.as_raw(), raw)
+                })
+                .1,
+            )
+        }.expect("rspmi internal error: MPI implementation return MPI_COMM_NULL from MPI_Intercomm_merge()")
+    }
 }
 
 impl Drop for UserCommunicatorHandle {
@@ -1004,6 +1024,27 @@ impl From<c_int> for CommunicatorRelation {
             return CommunicatorRelation::Unequal;
         }
         panic!("Unknown communicator relation: {}", i)
+    }
+}
+
+/// When an intercommunicator is merged, the caller chooses how to order the two
+/// groups. If every rank in one group uses `Low` and every rank in the other
+/// use `High`, then they will be ordered accordingly. If both groups use the
+/// same value, the order in the merged communicator is arbitrary.
+#[derive(Copy, Clone)]
+pub enum MergeOrder {
+    /// Ranks in this group will be ordered first in the merged communicator
+    Low,
+    /// Ranks in this group will be ordered last in the merged communicator
+    High,
+}
+
+impl MergeOrder {
+    fn as_raw(&self) -> c_int {
+        match self {
+            MergeOrder::Low => 0,
+            MergeOrder::High => 1,
+        }
     }
 }
 
