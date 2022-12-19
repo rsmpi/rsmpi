@@ -16,7 +16,7 @@ fn main() {
 
     mpi::request::scope(|scope| {
         let sreq = world.this_process().immediate_send(scope, &x);
-        let rreq = world.any_process().immediate_receive_into(scope, &mut y);
+        let rreq = world.this_process().immediate_receive_into(scope, &mut y);
         let result = rreq.wait_for_data();
         assert_eq!(*result, x);
         sreq.wait();
