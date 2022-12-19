@@ -45,9 +45,15 @@ fn main() {
             .this_process()
             .immediate_synchronous_send(scope, &x)
             .into();
-        let preq = world.any_process().immediate_matched_probe();
-        assert!(preq.is_some());
-        let (msg, _) = preq.unwrap();
+        let (msg, _) = loop {
+            // Spin for message availability. There is no guarantee that
+            // immediate sends, even to the same process, will be immediately
+            // visible to an immediate probe.
+            let preq = world.any_process().immediate_matched_probe();
+            if let Some(p) = preq {
+                break p;
+            }
+        };
         let _rreq: WaitGuard<_, _> = msg.immediate_matched_receive_into(scope, &mut y).into();
     });
     assert_eq!(x, y);
