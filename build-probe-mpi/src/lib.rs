@@ -23,9 +23,6 @@
 //! The result of the first successful step is returned. If no step is successful, a list of errors
 //! encountered while executing the steps is returned.
 
-#[cfg(unix)]
-extern crate pkg_config;
-
 mod os;
 
 pub use os::probe;

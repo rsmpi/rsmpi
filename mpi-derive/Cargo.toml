@@ -6,8 +6,8 @@ description = "MPI derive support for user types"
 homepage = "https://github.com/rsmpi/rsmpi"
 repository = "https://github.com/rsmpi/rsmpi"
 license = "MIT/Apache-2.0"
-edition = "2018"
-rust-version = "1.54"
+edition = "2021"
+rust-version = "1.56"
 
 [lib]
 proc-macro = true
