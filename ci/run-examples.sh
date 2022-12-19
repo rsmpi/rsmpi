@@ -19,9 +19,16 @@ result="ok"
 
 for example in ${examples}
 do
-  printf "example ${example} on 2...${maxnp} processes"
+  if [ "port" = "${example}" ]; then
+    range_min=1
+    range_max=1
+  else
+    range_min=2
+    range_max=${maxnp}
+  fi
+  printf "example ${example} on ${range_min}...${range_max} processes"
   output_file="/tmp/${example}_output"
-  for num_proc in $(seq 2 ${maxnp})
+  for num_proc in $(seq ${range_min} ${range_max})
   do
     if (cargo mpirun "$@" --verbose -n ${num_proc} --example "${example}" > "${output_file}" 2>&1)
     then

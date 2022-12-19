@@ -230,4 +230,7 @@ pub enum MpiError {
     /// CString::new fails if a Rust string contains interior 0 bytes
     #[error("An interior 0 byte was found in string")]
     StringNul(#[from] std::ffi::NulError),
+    /// Port failed to parse
+    #[error("Port string did not parse")]
+    PortParseError,
 }
