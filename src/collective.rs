@@ -9,23 +9,28 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
+use std::ffi::{CString, NulError};
 #[cfg(feature = "user-operations")]
 use std::mem;
-use std::os::raw::{c_int, c_void};
+use std::os::raw::{c_char, c_int, c_void};
+use std::process::Command;
 use std::{fmt, ptr};
 
+use conv::ConvUtil;
 #[cfg(feature = "user-operations")]
 use libffi::middle::{Cif, Closure, Type};
 
-use crate::ffi;
 use crate::ffi::MPI_Op;
+use crate::{ffi, MpiError};
 
 use crate::datatype::traits::*;
 #[cfg(feature = "user-operations")]
 use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
-use crate::topology::traits::*;
+use crate::topology::{
+    traits::*, InterCommunicator, UserCommunicatorHandle, UserInterCommunicator,
+};
 use crate::topology::{Process, Rank};
 use crate::with_uninitialized;
 
@@ -81,7 +86,7 @@ pub trait CommunicatorCollectives: Communicator {
                 sendbuf.count(),
                 sendbuf.as_datatype().as_raw(),
                 recvbuf.pointer_mut(),
-                recvbuf.count() / self.size(),
+                recvbuf.count() / self.target_size(),
                 recvbuf.as_datatype().as_raw(),
                 self.as_raw(),
             );
@@ -138,7 +143,7 @@ pub trait CommunicatorCollectives: Communicator {
         S: Buffer,
         R: BufferMut,
     {
-        let c_size = self.size();
+        let c_size = self.target_size();
         unsafe {
             ffi::MPI_Alltoall(
                 sendbuf.pointer(),
@@ -229,7 +234,7 @@ pub trait CommunicatorCollectives: Communicator {
         R: BufferMut,
         O: Operation,
     {
-        assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
+        assert_eq!(recvbuf.count() * self.target_size(), sendbuf.count());
         unsafe {
             ffi::MPI_Reduce_scatter_block(
                 sendbuf.pointer(),
@@ -342,7 +347,7 @@ pub trait CommunicatorCollectives: Communicator {
         Sc: Scope<'a>,
     {
         unsafe {
-            let recvcount = recvbuf.count() / self.size();
+            let recvcount = recvbuf.count() / self.target_size();
             Request::from_raw(
                 with_uninitialized(|request| {
                     ffi::MPI_Iallgather(
@@ -426,7 +431,7 @@ pub trait CommunicatorCollectives: Communicator {
         R: 'a + BufferMut,
         Sc: Scope<'a>,
     {
-        let c_size = self.size();
+        let c_size = self.target_size();
         unsafe {
             Request::from_raw(
                 with_uninitialized(|request| {
@@ -554,7 +559,7 @@ pub trait CommunicatorCollectives: Communicator {
         O: 'a + Operation,
         Sc: Scope<'a>,
     {
-        assert_eq!(recvbuf.count() * self.size(), sendbuf.count());
+        assert_eq!(recvbuf.count() * self.target_size(), sendbuf.count());
         unsafe {
             Request::from_raw(
                 with_uninitialized(|request| {
@@ -757,7 +762,7 @@ pub trait Root: AsCommunicator {
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
-            let recvcount = recvbuf.count() / self.as_communicator().size();
+            let recvcount = recvbuf.count() / self.as_communicator().target_size();
             ffi::MPI_Gather(
                 sendbuf.pointer(),
                 sendbuf.count(),
@@ -903,7 +908,7 @@ pub trait Root: AsCommunicator {
         R: BufferMut,
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
-        let sendcount = sendbuf.count() / self.as_communicator().size();
+        let sendcount = sendbuf.count() / self.as_communicator().target_size();
         unsafe {
             ffi::MPI_Scatter(
                 sendbuf.pointer(),
@@ -1160,7 +1165,7 @@ pub trait Root: AsCommunicator {
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
-            let recvcount = recvbuf.count() / self.as_communicator().size();
+            let recvcount = recvbuf.count() / self.as_communicator().target_size();
             Request::from_raw(
                 with_uninitialized(|request| {
                     ffi::MPI_Igather(
@@ -1339,7 +1344,7 @@ pub trait Root: AsCommunicator {
     {
         assert_eq!(self.as_communicator().rank(), self.root_rank());
         unsafe {
-            let sendcount = sendbuf.count() / self.as_communicator().size();
+            let sendcount = sendbuf.count() / self.as_communicator().target_size();
             Request::from_raw(
                 with_uninitialized(|request| {
                     ffi::MPI_Iscatter(
@@ -1540,6 +1545,149 @@ pub trait Root: AsCommunicator {
                 recvbuf,
                 scope,
             )
+        }
+    }
+
+    /// Spawns child processes
+    ///
+    /// # Standard sections
+    /// 10.3.2, see MPI_Comm_spawn
+    fn spawn(&self, command: &Command, maxprocs: Rank) -> Result<UserInterCommunicator, MpiError> {
+        // Environment variables can be handled using the info key
+        assert_eq!(
+            command.get_envs().len(),
+            0,
+            "Support for environment variables not yet implemented"
+        );
+
+        // The Microsoft-MPI implementation treats the char* arguments as being
+        // encoded in utf8, and are internally converted to Windows wide
+        // characters. See ConvertArgs() using
+        // [`MultiByteToWideChar`](https://learn.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-multibytetowidechar)
+        // with `CP_UTF8` when called from MPIDI_Comm_spawn_multiple().
+        // https://github.com/microsoft/Microsoft-MPI/blob/7ff6bdcdb1d5dc7b791e47457ee2686cd6b3d355/src/mpi/msmpi/mpid/dynamic.cpp#L2074
+        //
+        // Since Windows wide-char strings are allowed to contain invalid
+        // UTF-16, such characters cannot be preserved. We'll choose lossy
+        // conversion, but returning an error is an option to consider.
+        let prog = CString::new(command.get_program().to_string_lossy().as_bytes())?;
+        let mut args: Vec<CString> = command
+            .get_args()
+            .map(|os| CString::new(os.to_string_lossy().as_bytes()))
+            .collect::<Result<Vec<CString>, NulError>>()?;
+        // We must retain args above so that the strings are not dropped while
+        // being used. An alternative that seems to be recommended any time the
+        // function takes mutable C strings is to use CString::into_raw to give
+        // ownership to the *mut c_char for the function call, then reclaim
+        // using CString::from_raw.
+        let mut argv: Vec<*mut c_char> = args
+            .iter_mut()
+            .map(|s| s.as_ptr() as *mut c_char)
+            .chain(std::iter::once(std::ptr::null_mut()))
+            .collect();
+
+        let mut result = unsafe { ffi::RSMPI_COMM_NULL };
+        let mut errcodes: Vec<c_int> = Vec::new();
+        errcodes.resize(maxprocs.value_as().unwrap(), 0);
+
+        unsafe {
+            ffi::MPI_Comm_spawn(
+                prog.as_ptr(),
+                argv.as_mut_ptr(),
+                maxprocs,
+                ffi::RSMPI_INFO_NULL,
+                self.root_rank(),
+                self.as_communicator().as_raw(),
+                &mut result,
+                errcodes.as_mut_ptr(),
+            );
+        }
+        let fails = errcodes
+            .into_iter()
+            .filter(|&c| c != ffi::MPI_SUCCESS as i32)
+            .count();
+        if fails > 0 {
+            Err(MpiError::Spawn(fails as Rank, maxprocs))
+        } else {
+            Ok(unsafe {
+                InterCommunicator::from_handle_unchecked(
+                    UserCommunicatorHandle::from_raw(result).unwrap(),
+                )
+            })
+        }
+    }
+
+    /// Spawns child processes
+    ///
+    /// # Standard sections
+    /// 10.3.3, see MPI_Comm_spawn_multiple
+    fn spawn_multiple(
+        &self,
+        commands: &[Command],
+        maxprocs: &[Rank],
+    ) -> Result<UserInterCommunicator, MpiError> {
+        assert_eq!(commands.len(), maxprocs.len());
+
+        let progs = commands
+            .iter()
+            .map(|c| CString::new(c.get_program().to_string_lossy().as_bytes()))
+            .collect::<Result<Vec<CString>, NulError>>()?;
+        let mut progp: Vec<*mut c_char> = progs.iter().map(|p| p.as_ptr() as *mut c_char).collect();
+        let mut argss = commands
+            .iter()
+            .map(|c| {
+                c.get_args()
+                    .map(|os| CString::new(os.to_string_lossy().as_bytes()))
+                    .collect::<Result<Vec<CString>, NulError>>()
+            })
+            .collect::<Result<Vec<Vec<CString>>, NulError>>()?;
+        let mut argvs: Vec<Vec<*mut c_char>> = argss
+            .iter_mut()
+            .map(|args| {
+                args.iter_mut()
+                    .map(|a| a.as_ptr() as *mut c_char)
+                    .chain(std::iter::once(std::ptr::null_mut()))
+                    .collect()
+            })
+            .collect();
+
+        let mut argvv: Vec<*mut *mut c_char> =
+            argvs.iter_mut().map(|argv| argv.as_mut_ptr()).collect();
+
+        let infos: Vec<_> = (0..commands.len())
+            .map(|_| unsafe { ffi::RSMPI_INFO_NULL })
+            .collect();
+
+        let mut result = unsafe { ffi::RSMPI_COMM_NULL };
+        let mut errcodes: Vec<_> = Vec::new();
+        let sum_maxprocs: Rank = maxprocs.iter().sum();
+        errcodes.resize(sum_maxprocs as usize, 0);
+
+        unsafe {
+            ffi::MPI_Comm_spawn_multiple(
+                progs.len().value_as().unwrap(),
+                progp.as_mut_ptr(),
+                argvv.as_mut_ptr(),
+                maxprocs.as_ptr(),
+                infos.as_ptr(),
+                self.root_rank(),
+                self.as_communicator().as_raw(),
+                &mut result,
+                errcodes.as_mut_ptr(),
+            );
+        }
+        let fails = errcodes
+            .into_iter()
+            .filter(|&c| c != ffi::MPI_SUCCESS as i32)
+            .count();
+        if fails > 0 {
+            Err(MpiError::Spawn(fails as Rank, sum_maxprocs))
+        } else {
+            Ok(unsafe {
+                InterCommunicator::from_handle_unchecked(
+                    UserCommunicatorHandle::from_raw(result).unwrap(),
+                )
+            })
         }
     }
 }

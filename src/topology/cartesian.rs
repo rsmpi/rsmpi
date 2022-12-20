@@ -451,7 +451,11 @@ impl CartesianCommunicator {
     }
 }
 
-impl Communicator for CartesianCommunicator {}
+impl Communicator for CartesianCommunicator {
+    fn target_size(&self) -> Rank {
+        self.size()
+    }
+}
 
 impl AsCommunicator for CartesianCommunicator {
     type Out = CartesianCommunicator;

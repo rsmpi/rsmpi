@@ -6,8 +6,6 @@
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 
-extern crate pkg_config;
-
 use std::{self, env, error::Error, path::PathBuf, process::Command};
 
 use super::super::Library;

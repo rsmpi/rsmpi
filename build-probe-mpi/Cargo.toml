@@ -10,11 +10,13 @@ homepage = "https://github.com/rsmpi/rsmpi"
 repository = "https://github.com/rsmpi/rsmpi"
 categories = [ "development-tools::build-utils" ]
 license = "MIT/Apache-2.0"
+rust-version = "1.57"
+edition = "2021"
 
 [dependencies]
 
 [target.'cfg(unix)'.dependencies]
-pkg-config = "0.3"
+pkg-config = "0.3.26"
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-{{version}}"

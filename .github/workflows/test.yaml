@@ -27,7 +27,7 @@ jobs:
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: ubuntu-latest
-            rust: 1.54.0
+            rust: 1.57
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: macos-latest
@@ -42,7 +42,7 @@ jobs:
             rust: stable
             cargo_flags: --features derive
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -64,14 +64,11 @@ jobs:
           echo MSMPI_LIB32="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x86\\" | tee -a $GITHUB_ENV
           echo MSMPI_LIB64="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x64\\" | tee -a $GITHUB_ENV
           env
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{matrix.rust}}
       - name: Cargo Test ${{ matrix.cargo_flags }}
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: ${{ matrix.cargo_flags }}
+        run: cargo test ${{ matrix.cargo_flags }}
       - name: Parallel Examples
         run: |
           cargo install --force cargo-mpirun

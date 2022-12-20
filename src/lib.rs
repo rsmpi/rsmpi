@@ -208,3 +208,26 @@ where
         uninitialized2.assume_init(),
     )
 }
+
+/// Errors
+///
+/// RSMPI is currently configured with MPI_ERRORS_ARE_FATAL, but:
+///
+/// 1. we intend to remove this restriction at some point
+///
+/// 2. we need to be able to return parse errors and it seems better to make a
+/// stable error type than to propagate raw types like ``std::ffi::NulError` in
+/// our public interface.
+///
+/// # Standard section(s)
+///
+/// 9.3
+#[derive(thiserror::Error, Debug)]
+pub enum MpiError {
+    /// Failed to spawn some processes
+    #[error("Failed to spawn {0} of {1} processes")]
+    Spawn(Rank, Rank),
+    /// CString::new fails if a Rust string contains interior 0 bytes
+    #[error("An interior 0 byte was found in string")]
+    StringNul(#[from] std::ffi::NulError),
+}
