@@ -7,7 +7,9 @@ export OMPI_MCA_rmaps_base_oversubscribe=1
 
 EXAMPLES_DIR="examples"
 
-examples=$(ls ${EXAMPLES_DIR} | sed "s/\\.rs\$//")
+if [ -z "${examples}" ]; then
+  examples=$(ls ${EXAMPLES_DIR} | sed "s/\\.rs\$//")
+fi
 num_examples=$(printf "%d" "$(echo "${examples}" | wc -w)")
 
 maxnp=4
