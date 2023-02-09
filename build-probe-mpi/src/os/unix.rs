@@ -11,6 +11,7 @@ use std::{self, env, error::Error, path::PathBuf, process::Command};
 use super::super::Library;
 
 use pkg_config::Config;
+use enquote::unquote;
 
 impl From<pkg_config::Library> for Library {
     fn from(lib: pkg_config::Library) -> Self {
@@ -35,11 +36,13 @@ fn probe_via_mpicc(mpicc: &str) -> std::io::Result<Library> {
         // ... and the library search directories...
         let libdirs = collect_args_with_prefix(output.as_ref(), "-L")
             .into_iter()
+            .filter_map(|x| unquote(&x).ok())
             .map(PathBuf::from)
             .collect();
         // ... and the header search directories.
         let headerdirs = collect_args_with_prefix(output.as_ref(), "-I")
             .into_iter()
+            .filter_map(|x| unquote(&x).ok())
             .map(PathBuf::from)
             .collect();
 
