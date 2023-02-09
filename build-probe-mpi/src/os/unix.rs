@@ -10,8 +10,8 @@ use std::{self, env, error::Error, path::PathBuf, process::Command};
 
 use super::super::Library;
 
-use pkg_config::Config;
 use enquote::unquote;
+use pkg_config::Config;
 
 impl From<pkg_config::Library> for Library {
     fn from(lib: pkg_config::Library) -> Self {
