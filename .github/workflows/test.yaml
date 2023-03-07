@@ -58,7 +58,7 @@ jobs:
       - name: Install (Windows)
         if: runner.os == 'Windows'
         run: |
-          choco install llvm -y
+          choco install llvm --version 14.0.6 --allow-downgrade -y
           sh ci/install-mpi-windows.sh
           echo MSMPI_INC="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\\" | tee -a $GITHUB_ENV
           echo MSMPI_LIB32="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x86\\" | tee -a $GITHUB_ENV
