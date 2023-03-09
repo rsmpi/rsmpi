@@ -50,42 +50,6 @@ fn unquote(s: &str) -> Result<String, UnquoteError> {
     Ok(String::from(s))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::unquote;
-
-    #[test]
-    fn double_quote() {
-        let s = "\"/usr/lib/my-mpi/include\"";
-        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
-    }
-
-    #[test]
-    fn single_quote() {
-        let s = "'/usr/lib/my-mpi/include'";
-        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
-    }
-
-    #[test]
-    fn backtick_quote() {
-        let s = "`/usr/lib/my-mpi/include`";
-        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
-    }
-
-    #[test]
-    fn no_quote() {
-        let s = "/usr/lib/my-mpi/include";
-        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
-    }
-
-    #[test]
-    fn unclosed_quote() {
-        let s = "'/usr/lib/my-mpi/include";
-        assert_eq!(unquote(s).unwrap_err().quote, '\'');
-        assert!(unquote(s).is_err());
-    }
-}
-
 impl From<pkg_config::Library> for Library {
     fn from(lib: pkg_config::Library) -> Self {
         Library {
@@ -132,7 +96,9 @@ fn probe_via_mpicc(mpicc: &str) -> std::io::Result<Library> {
 
 /// splits a command line by space and collects all arguments that start with `prefix`
 fn collect_args_with_prefix(cmd: &str, prefix: &str) -> Vec<String> {
-    cmd.split_whitespace()
+    shell_words::split(cmd)
+        .unwrap()
+        .iter()
         .filter_map(|arg| {
             if arg.starts_with(prefix) {
                 Some(arg[2..].to_owned())
@@ -198,4 +164,62 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
     }
 
     Err(errs)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::unquote;
+
+    #[test]
+    fn double_quote() {
+        let s = "\"/usr/lib/my-mpi/include\"";
+        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
+    }
+
+    #[test]
+    fn single_quote() {
+        let s = "'/usr/lib/my-mpi/include'";
+        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
+    }
+
+    #[test]
+    fn backtick_quote() {
+        let s = "`/usr/lib/my-mpi/include`";
+        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
+    }
+
+    #[test]
+    fn no_quote() {
+        let s = "/usr/lib/my-mpi/include";
+        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
+    }
+
+    #[test]
+    fn unclosed_quote() {
+        let s = "'/usr/lib/my-mpi/include";
+        assert_eq!(unquote(s).unwrap_err().quote, '\'');
+        assert!(unquote(s).is_err());
+    }
+
+    use super::collect_args_with_prefix;
+
+    #[test]
+    fn flag_parsing_with_space() {
+        let cmd = r#"gcc -I"/opt/intel/My Oneapi/mpi/2021.8.0/include" -L"/opt/intel/My Oneapi/mpi/2021.8.0/lib/release" -L"/opt/intel/My Oneapi/mpi/2021.8.0/lib" -Xlinker --enable-new-dtags -Xlinker -rpath -Xlinker "/opt/intel/My Oneapi/mpi/2021.8.0/lib/release" -Xlinker -rpath -Xlinker "/opt/intel/My Oneapi/mpi/2021.8.0/lib" -lmpifort -lmpi -lrt -lpthread -Wl,-z,now -Wl,-z,relro -Wl,-z,noexecstack -Xlinker --enable-new-dtags -ldl"#;
+        assert_eq!(
+            collect_args_with_prefix(cmd, "-L"),
+            vec![
+                "/opt/intel/My Oneapi/mpi/2021.8.0/lib/release",
+                "/opt/intel/My Oneapi/mpi/2021.8.0/lib"
+            ]
+        );
+    }
+    #[test]
+    fn flag_parsing_without_space() {
+        let cmd = r#"gcc -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -L/usr/lib/x86_64-linux-gnu/openmpi/lib -lmpi"#;
+        assert_eq!(
+            collect_args_with_prefix(cmd, "-L"),
+            vec!["/usr/lib/x86_64-linux-gnu/openmpi/lib"]
+        );
+    }
 }
