@@ -6,12 +6,85 @@
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 
+use core::fmt;
 use std::{self, env, error::Error, path::PathBuf, process::Command};
 
 use super::super::Library;
 
-use enquote::unquote;
 use pkg_config::Config;
+
+#[derive(Debug, PartialEq)]
+struct UnquoteError {
+    quote: char,
+}
+
+impl UnquoteError {
+    fn new(quote: char) -> UnquoteError {
+        UnquoteError { quote }
+    }
+}
+impl Error for UnquoteError {}
+
+impl fmt::Display for UnquoteError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Quotes '{}' not closed.", self.quote)
+    }
+}
+
+fn unquote(s: &str) -> Result<String, UnquoteError> {
+    if s.chars().count() < 2 {
+        return Ok(String::from(s));
+    }
+
+    let quote = s.chars().next().unwrap();
+
+    if quote != '"' && quote != '\'' && quote != '`' {
+        return Ok(String::from(s));
+    }
+
+    if s.chars().last().unwrap() != quote {
+        return Err(UnquoteError::new(quote));
+    }
+
+    let s = &s[1..s.len() - 1];
+    Ok(String::from(s))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::unquote;
+
+    #[test]
+    fn double_quote() {
+        let s = "\"/usr/lib/my-mpi/include\"";
+        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
+    }
+
+    #[test]
+    fn single_quote() {
+        let s = "'/usr/lib/my-mpi/include'";
+        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
+    }
+
+    #[test]
+    fn backtick_quote() {
+        let s = "`/usr/lib/my-mpi/include`";
+        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
+    }
+
+    #[test]
+    fn no_quote() {
+        let s = "/usr/lib/my-mpi/include";
+        assert_eq!(Ok(String::from("/usr/lib/my-mpi/include")), unquote(s));
+    }
+
+    #[test]
+    fn unclosed_quote() {
+        let s = "'/usr/lib/my-mpi/include";
+        assert_eq!(unquote(s).unwrap_err().quote, '\'');
+        assert!(unquote(s).is_err());
+    }
+}
 
 impl From<pkg_config::Library> for Library {
     fn from(lib: pkg_config::Library) -> Self {

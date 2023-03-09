@@ -17,7 +17,6 @@ edition = "2021"
 
 [target.'cfg(unix)'.dependencies]
 pkg-config = "0.3.26"
-enquote = "1.1.0"
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-{{version}}"
