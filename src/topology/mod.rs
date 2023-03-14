@@ -63,12 +63,19 @@ pub type Rank = c_int;
 /// A communicator, either built-in or user-defined, e.g. through split
 #[derive(Clone)]
 pub enum SimpleCommunicator {
-    /// A built-in communicator, e.g. `MPI_COMM_WORLD`
+    /// Built-in communicator `MPI_COMM_WORLD`
     ///
     /// # Standard section(s)
     ///
-    /// 6.4
+    /// 6.2
     WorldCommunicator,
+
+    /// Built-in communicator `MPI_COMM_SELF`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.2
+    SelfCommunicator,
 
     /// A user-defined communicator
     ///
@@ -147,7 +154,8 @@ unsafe impl AsRaw for SimpleCommunicator {
     fn as_raw(&self) -> Self::Raw {
         match self {
             SimpleCommunicator::WorldCommunicator => unsafe { ffi::RSMPI_COMM_WORLD }
-            SimpleCommunicator::UserCommunicator(r) => *r
+            SimpleCommunicator::SelfCommunicator => unsafe { ffi::RSMPI_COMM_SELF }
+            SimpleCommunicator::UserCommunicator(r) => *r,
         }
     }
 }
@@ -229,7 +237,7 @@ pub enum IntoTopology {
 impl Drop for SimpleCommunicator {
     fn drop(&mut self) {
         match self {
-            SimpleCommunicator::WorldCommunicator => {}
+            SimpleCommunicator::WorldCommunicator | SimpleCommunicator::SelfCommunicator => {}
             SimpleCommunicator::UserCommunicator(comm) => unsafe {
                 ffi::MPI_Comm_free(comm);
                 assert_eq!(*comm, ffi::RSMPI_COMM_NULL);
