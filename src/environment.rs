@@ -22,7 +22,7 @@ use once_cell::sync::Lazy;
 
 use crate::{ffi, topology::SystemAttribute};
 use crate::{
-    topology::{Communicator, InterCommunicator, SystemCommunicator, UserCommunicatorHandle},
+    topology::{Communicator, InterCommunicator, SimpleCommunicator, UserCommunicatorHandle},
     traits::AsRaw,
 };
 use crate::{with_uninitialized, with_uninitialized2};
@@ -49,8 +49,8 @@ impl Universe {
     ///
     /// # Examples
     /// See `examples/simple.rs`
-    pub fn world(&self) -> SystemCommunicator {
-        SystemCommunicator::world()
+    pub fn world(&self) -> SimpleCommunicator {
+        SimpleCommunicator::world()
     }
 
     /// Total number of "slots" that can reasonably be filled in the environment

@@ -60,57 +60,106 @@ pub trait CommunicatorHandle: AsRaw<Raw = MPI_Comm> {}
 /// Identifies a certain process within a communicator.
 pub type Rank = c_int;
 
-/// A built-in communicator, e.g. `MPI_COMM_WORLD`
-///
-/// # Standard section(s)
-///
-/// 6.4
-#[derive(Copy, Clone)]
-pub struct SystemCommunicator(MPI_Comm);
+/// A communicator, either built-in or user-defined, e.g. through split
+#[derive(Clone)]
+pub enum SimpleCommunicator {
+    /// A built-in communicator, e.g. `MPI_COMM_WORLD`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4
+    WorldCommunicator,
 
-impl SystemCommunicator {
+    /// A user-defined communicator
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4
+    UserCommunicator(MPI_Comm),
+}
+
+impl SimpleCommunicator {
     /// The 'world communicator'
     ///
     /// Contains all processes initially partaking in the computation.
     ///
     /// # Examples
     /// See `examples/simple.rs`
-    pub fn world() -> SystemCommunicator {
-        unsafe { SystemCommunicator::from_raw_unchecked(ffi::RSMPI_COMM_WORLD) }
+    pub fn world() -> SimpleCommunicator {
+        SimpleCommunicator::WorldCommunicator
     }
 
     /// If the raw value is the null handle returns `None`
     #[allow(dead_code)]
-    fn from_raw(raw: MPI_Comm) -> Option<SystemCommunicator> {
+    fn from_raw(raw: MPI_Comm) -> Option<SimpleCommunicator> {
         if raw == unsafe { ffi::RSMPI_COMM_NULL } {
             None
         } else {
-            Some(SystemCommunicator(raw))
+            Some(SimpleCommunicator::UserCommunicator(raw))
         }
     }
 
     /// Wraps the raw value without checking for null handle
-    unsafe fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicator {
+    unsafe fn from_raw_unchecked(raw: MPI_Comm) -> SimpleCommunicator {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
-        SystemCommunicator(raw)
+        SimpleCommunicator::UserCommunicator(raw)
+    }
+
+    /// Gets the topology of the communicator.
+    ///
+    /// # Standard section(s)
+    /// 7.5.5
+    pub fn topology(&self) -> Topology {
+        unsafe {
+            let (_, topology) =
+                with_uninitialized(|topology| ffi::MPI_Topo_test(self.as_raw(), topology));
+
+            if topology == ffi::RSMPI_GRAPH {
+                Topology::Graph
+            } else if topology == ffi::RSMPI_CART {
+                Topology::Cartesian
+            } else if topology == ffi::RSMPI_DIST_GRAPH {
+                Topology::DistributedGraph
+            } else if topology == ffi::RSMPI_UNDEFINED {
+                Topology::Undefined
+            } else {
+                panic!("Unexpected Topology type!")
+            }
+        }
+    }
+
+    /// Converts the communicator into its precise communicator type.
+    ///
+    /// # Standard section(s)
+    /// 7.5.5
+    pub fn into_topology(self) -> IntoTopology {
+        match self.topology() {
+            Topology::Graph => unimplemented!(),
+            Topology::Cartesian => IntoTopology::Cartesian(CartesianCommunicator(self)),
+            Topology::DistributedGraph => unimplemented!(),
+            Topology::Undefined => IntoTopology::Undefined(self),
+        }
     }
 }
 
-unsafe impl AsRaw for SystemCommunicator {
+unsafe impl AsRaw for SimpleCommunicator {
     type Raw = MPI_Comm;
     fn as_raw(&self) -> Self::Raw {
-        self.0
+        match self {
+            SimpleCommunicator::WorldCommunicator => unsafe { ffi::RSMPI_COMM_WORLD }
+            SimpleCommunicator::UserCommunicator(r) => *r
+        }
     }
 }
 
-impl Communicator for SystemCommunicator {
+impl Communicator for SimpleCommunicator {
     fn target_size(&self) -> Rank {
         self.size()
     }
 }
 
-impl AsCommunicator for SystemCommunicator {
-    type Out = SystemCommunicator;
+impl AsCommunicator for SimpleCommunicator {
+    type Out = SimpleCommunicator;
     fn as_communicator(&self) -> &Self::Out {
         self
     }
@@ -174,110 +223,18 @@ pub enum IntoTopology {
     /// DistributedGraph topology type
     DistributedGraph(DistributedGraphCommunicator),
     /// Undefined topology type
-    Undefined(UserCommunicator),
+    Undefined(SimpleCommunicator),
 }
 
-/// A user-defined communicator
-///
-/// # Standard section(s)
-///
-/// 6.4
-pub struct UserCommunicator(MPI_Comm);
-
-impl UserCommunicator {
-    /// If the raw value is the null handle returns `None`
-    ///
-    /// # Safety
-    /// - `raw` must be a live MPI_Comm object.
-    /// - `raw` must not be used after calling `from_raw`.
-    pub unsafe fn from_raw(raw: MPI_Comm) -> Option<UserCommunicator> {
-        if raw == ffi::RSMPI_COMM_NULL {
-            None
-        } else {
-            Some(UserCommunicator(raw))
-        }
-    }
-
-    /// Wraps the raw value without checking for null handle
-    ///
-    /// # Safety
-    /// - `raw` must be a live MPI_Comm object.
-    /// - `raw` must not be used after calling `from_raw_unchecked`.
-    /// - `raw` must not be `MPI_COMM_NULL`.
-    unsafe fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicator {
-        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
-        UserCommunicator(raw)
-    }
-
-    /// Gets the topology of the communicator.
-    ///
-    /// # Standard section(s)
-    /// 7.5.5
-    pub fn topology(&self) -> Topology {
-        unsafe {
-            let (_, topology) =
-                with_uninitialized(|topology| ffi::MPI_Topo_test(self.as_raw(), topology));
-
-            if topology == ffi::RSMPI_GRAPH {
-                Topology::Graph
-            } else if topology == ffi::RSMPI_CART {
-                Topology::Cartesian
-            } else if topology == ffi::RSMPI_DIST_GRAPH {
-                Topology::DistributedGraph
-            } else if topology == ffi::RSMPI_UNDEFINED {
-                Topology::Undefined
-            } else {
-                panic!("Unexpected Topology type!")
+impl Drop for SimpleCommunicator {
+    fn drop(&mut self) {
+        match self {
+            SimpleCommunicator::WorldCommunicator => {}
+            SimpleCommunicator::UserCommunicator(comm) => unsafe {
+                ffi::MPI_Comm_free(comm);
+                assert_eq!(*comm, ffi::RSMPI_COMM_NULL);
             }
         }
-    }
-
-    /// Converts the communicator into its precise communicator type.
-    ///
-    /// # Standard section(s)
-    /// 7.5.5
-    pub fn into_topology(self) -> IntoTopology {
-        match self.topology() {
-            Topology::Graph => unimplemented!(),
-            Topology::Cartesian => IntoTopology::Cartesian(CartesianCommunicator(self)),
-            Topology::DistributedGraph => unimplemented!(),
-            Topology::Undefined => IntoTopology::Undefined(self),
-        }
-    }
-}
-
-impl AsCommunicator for UserCommunicator {
-    type Out = UserCommunicator;
-    fn as_communicator(&self) -> &Self::Out {
-        self
-    }
-}
-
-unsafe impl AsRaw for UserCommunicator {
-    type Raw = MPI_Comm;
-    fn as_raw(&self) -> Self::Raw {
-        self.0
-    }
-}
-
-impl Communicator for UserCommunicator {
-    fn target_size(&self) -> Rank {
-        self.size()
-    }
-}
-
-impl Drop for UserCommunicator {
-    fn drop(&mut self) {
-        unsafe {
-            ffi::MPI_Comm_free(&mut self.0);
-        }
-        assert_eq!(self.0, unsafe { ffi::RSMPI_COMM_NULL });
-    }
-}
-
-impl From<CartesianCommunicator> for UserCommunicator {
-    fn from(cart_comm: CartesianCommunicator) -> Self {
-        cart_comm.0
     }
 }
 
@@ -385,9 +342,9 @@ impl<C: CommunicatorHandle> InterCommunicator<C> {
     /// # Standard section(s)
     ///
     /// 7.6.2
-    pub fn merge(&self, merge_order: MergeOrder) -> UserCommunicator {
+    pub fn merge(&self, merge_order: MergeOrder) -> SimpleCommunicator {
         unsafe {
-            UserCommunicator::from_raw(
+            SimpleCommunicator::from_raw(
                 with_uninitialized(|raw| {
                     ffi::MPI_Intercomm_merge(self.as_raw(), merge_order.as_raw(), raw)
                 })
@@ -582,9 +539,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn duplicate(&self) -> UserCommunicator {
+    fn duplicate(&self) -> SimpleCommunicator {
         unsafe {
-            UserCommunicator::from_raw_unchecked(
+            SimpleCommunicator::from_raw_unchecked(
                 with_uninitialized(|newcomm| ffi::MPI_Comm_dup(self.as_raw(), newcomm)).1,
             )
         }
@@ -603,7 +560,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_color(&self, color: Color) -> Option<UserCommunicator> {
+    fn split_by_color(&self, color: Color) -> Option<SimpleCommunicator> {
         self.split_by_color_with_key(color, Key::default())
     }
 
@@ -615,9 +572,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<UserCommunicator> {
+    fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<SimpleCommunicator> {
         unsafe {
-            UserCommunicator::from_raw(
+            SimpleCommunicator::from_raw(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_split(self.as_raw(), color.as_raw(), key, newcomm)
                 })
@@ -635,9 +592,9 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.2 (See: `MPI_Comm_split_type`)
-    fn split_shared(&self, key: c_int) -> UserCommunicator {
+    fn split_shared(&self, key: c_int) -> SimpleCommunicator {
         unsafe {
-            UserCommunicator::from_raw(
+            SimpleCommunicator::from_raw(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_split_type(
                         self.as_raw(),
@@ -670,13 +627,13 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_subgroup_collective<G: ?Sized>(&self, group: &G) -> Option<UserCommunicator>
+    fn split_by_subgroup_collective<G: ?Sized>(&self, group: &G) -> Option<SimpleCommunicator>
     where
         G: Group,
         Self: Sized,
     {
         unsafe {
-            UserCommunicator::from_raw(
+            SimpleCommunicator::from_raw(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_create(self.as_raw(), group.as_raw(), newcomm)
                 })

@@ -2,12 +2,13 @@ use std::mem;
 
 use conv::ConvUtil;
 
-use super::{AsCommunicator, Communicator, IntoTopology, Rank, UserCommunicator};
+use super::{AsCommunicator, Communicator, IntoTopology, Rank};
 use crate::ffi::MPI_Comm;
 use crate::{
     datatype::traits::*, ffi, raw::traits::*, with_uninitialized, with_uninitialized2, Count,
     IntArray,
 };
+use crate::topology::SimpleCommunicator;
 
 /// Contains arrays describing the layout of the
 /// [`CartesianCommunicator`](struct.CartesianCommunicator.html).
@@ -35,7 +36,7 @@ pub struct CartesianLayout {
 /// # Standard Section(s)
 ///
 /// 7
-pub struct CartesianCommunicator(pub(crate) UserCommunicator);
+pub struct CartesianCommunicator(pub(crate) SimpleCommunicator);
 
 impl CartesianCommunicator {
     /// Given a valid `MPI_Comm` handle in `raw`, returns a `CartesianCommunicator` value if, and
@@ -52,7 +53,7 @@ impl CartesianCommunicator {
     /// - `raw` must be a live MPI_Comm object.
     /// - `raw` must not be used after calling `from_raw`.
     pub unsafe fn from_raw(raw: MPI_Comm) -> Option<CartesianCommunicator> {
-        UserCommunicator::from_raw(raw).and_then(|comm| match comm.into_topology() {
+        SimpleCommunicator::from_raw(raw).and_then(|comm| match comm.into_topology() {
             IntoTopology::Cartesian(c) => Some(c),
             incorrect => {
                 // Forget the comm object so it's not dropped
@@ -74,7 +75,7 @@ impl CartesianCommunicator {
     /// - `raw` must not be `MPI_COMM_NULL`.
     pub unsafe fn from_raw_unchecked(raw: MPI_Comm) -> CartesianCommunicator {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
-        CartesianCommunicator(UserCommunicator::from_raw_unchecked(raw))
+        CartesianCommunicator(SimpleCommunicator::from_raw_unchecked(raw))
     }
 
     /// Returns the number of dimensions that the Cartesian communicator was established over.
