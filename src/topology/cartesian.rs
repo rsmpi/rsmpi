@@ -4,11 +4,11 @@ use conv::ConvUtil;
 
 use super::{AsCommunicator, Communicator, IntoTopology, Rank};
 use crate::ffi::MPI_Comm;
+use crate::topology::SimpleCommunicator;
 use crate::{
     datatype::traits::*, ffi, raw::traits::*, with_uninitialized, with_uninitialized2, Count,
     IntArray,
 };
-use crate::topology::SimpleCommunicator;
 
 /// Contains arrays describing the layout of the
 /// [`CartesianCommunicator`](struct.CartesianCommunicator.html).

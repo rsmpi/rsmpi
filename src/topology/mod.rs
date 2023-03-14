@@ -153,8 +153,8 @@ unsafe impl AsRaw for SimpleCommunicator {
     type Raw = MPI_Comm;
     fn as_raw(&self) -> Self::Raw {
         match self {
-            SimpleCommunicator::WorldCommunicator => unsafe { ffi::RSMPI_COMM_WORLD }
-            SimpleCommunicator::SelfCommunicator => unsafe { ffi::RSMPI_COMM_SELF }
+            SimpleCommunicator::WorldCommunicator => unsafe { ffi::RSMPI_COMM_WORLD },
+            SimpleCommunicator::SelfCommunicator => unsafe { ffi::RSMPI_COMM_SELF },
             SimpleCommunicator::UserCommunicator(r) => *r,
         }
     }
@@ -241,7 +241,7 @@ impl Drop for SimpleCommunicator {
             SimpleCommunicator::UserCommunicator(comm) => unsafe {
                 ffi::MPI_Comm_free(comm);
                 assert_eq!(*comm, ffi::RSMPI_COMM_NULL);
-            }
+            },
         }
     }
 }
