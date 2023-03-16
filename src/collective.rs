@@ -29,7 +29,7 @@ use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
 use crate::topology::{
-    traits::*, InterCommunicator, UserCommunicatorHandle, UserInterCommunicator,
+    traits::*, InterCommunicator, SimpleCommunicatorHandle, UserInterCommunicator,
 };
 use crate::topology::{Process, Rank};
 use crate::with_uninitialized;
@@ -1611,7 +1611,7 @@ pub trait Root: AsCommunicator {
         } else {
             Ok(unsafe {
                 InterCommunicator::from_handle_unchecked(
-                    UserCommunicatorHandle::from_raw(result).unwrap(),
+                    SimpleCommunicatorHandle::from_raw(result).unwrap(),
                 )
             })
         }
@@ -1685,7 +1685,7 @@ pub trait Root: AsCommunicator {
         } else {
             Ok(unsafe {
                 InterCommunicator::from_handle_unchecked(
-                    UserCommunicatorHandle::from_raw(result).unwrap(),
+                    SimpleCommunicatorHandle::from_raw(result).unwrap(),
                 )
             })
         }

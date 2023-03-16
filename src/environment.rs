@@ -22,7 +22,7 @@ use once_cell::sync::Lazy;
 
 use crate::{ffi, topology::SystemAttribute};
 use crate::{
-    topology::{Communicator, InterCommunicator, SimpleCommunicator, UserCommunicatorHandle},
+    topology::{Communicator, InterCommunicator, SimpleCommunicator, SimpleCommunicatorHandle},
     traits::AsRaw,
 };
 use crate::{with_uninitialized, with_uninitialized2};
@@ -136,7 +136,7 @@ impl Universe {
             // Make it look like a user communicator so it can be dropped
             let _p = unsafe {
                 InterCommunicator::from_handle_unchecked(
-                    UserCommunicatorHandle::from_raw(parent.as_raw()).unwrap(),
+                    SimpleCommunicatorHandle::from_raw(parent.as_raw()).unwrap(),
                 )
             };
         }

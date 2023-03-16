@@ -172,41 +172,62 @@ impl AsCommunicator for SimpleCommunicator {
     }
 }
 
-/// A handle to a built-in communicator, e.g. `MPI_COMM_WORLD`
-///
-/// # Standard section(s)
-///
-/// 6.4
-#[derive(Copy, Clone)]
-pub struct SystemCommunicatorHandle(MPI_Comm);
+/// A handle to a communicator used in InterCommunicators. This type is functionally similar to `SimpleCommunicator`
+/// save for its Drop-semantics.
+pub enum SimpleCommunicatorHandle {
+    /// A handle to a built-in communicator `MPI_COMM_WORLD`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4
+    WorldCommunicatorHandle,
 
-impl SystemCommunicatorHandle {
+    /// A handle to a built-in communicator `MPI_COMM_SELF`
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4
+    SelfCommunicatorHandle,
+
+    /// A handle for a user-created communicator.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 6.4
+    UserCommunicatorHandle(MPI_Comm),
+}
+
+impl SimpleCommunicatorHandle {
     /// If the raw value is the null handle returns `None`
     #[allow(dead_code)]
-    pub(crate) fn from_raw(raw: MPI_Comm) -> Option<SystemCommunicatorHandle> {
+    pub(crate) fn from_raw(raw: MPI_Comm) -> Option<SimpleCommunicatorHandle> {
         if raw == unsafe { ffi::RSMPI_COMM_NULL } {
             None
         } else {
-            Some(SystemCommunicatorHandle(raw))
+            Some(SimpleCommunicatorHandle::UserCommunicatorHandle(raw))
         }
     }
 
     /// Wraps the raw value without checking for null handle
     #[allow(dead_code)]
-    pub(crate) fn from_raw_unchecked(raw: MPI_Comm) -> SystemCommunicatorHandle {
+    pub(crate) fn from_raw_unchecked(raw: MPI_Comm) -> SimpleCommunicatorHandle {
         debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
-        SystemCommunicatorHandle(raw)
+        SimpleCommunicatorHandle::UserCommunicatorHandle(raw)
     }
 }
 
-unsafe impl AsRaw for SystemCommunicatorHandle {
+unsafe impl AsRaw for SimpleCommunicatorHandle {
     type Raw = MPI_Comm;
     fn as_raw(&self) -> Self::Raw {
-        self.0
+        match self {
+            SimpleCommunicatorHandle::WorldCommunicatorHandle => unsafe { ffi::RSMPI_COMM_WORLD },
+            SimpleCommunicatorHandle::SelfCommunicatorHandle => unsafe { ffi::RSMPI_COMM_SELF },
+            SimpleCommunicatorHandle::UserCommunicatorHandle(h) => *h,
+        }
     }
 }
 
-impl CommunicatorHandle for SystemCommunicatorHandle {}
+impl CommunicatorHandle for SimpleCommunicatorHandle {}
 
 /// An enum describing the topology of a communicator
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -244,40 +265,6 @@ impl Drop for SimpleCommunicator {
         }
     }
 }
-
-/// A handle to a user-defined communicator
-///
-/// # Standard section(s)
-///
-/// 6.4
-pub struct UserCommunicatorHandle(MPI_Comm);
-
-impl UserCommunicatorHandle {
-    /// If the raw value is the null handle returns `None`
-    pub unsafe fn from_raw(raw: MPI_Comm) -> Option<UserCommunicatorHandle> {
-        if raw == ffi::RSMPI_COMM_NULL {
-            None
-        } else {
-            Some(UserCommunicatorHandle(raw))
-        }
-    }
-
-    /// Wraps the raw value without checking for null handle
-    #[allow(dead_code)]
-    fn from_raw_unchecked(raw: MPI_Comm) -> UserCommunicatorHandle {
-        debug_assert_ne!(raw, unsafe { ffi::RSMPI_COMM_NULL });
-        UserCommunicatorHandle(raw)
-    }
-}
-
-unsafe impl AsRaw for UserCommunicatorHandle {
-    type Raw = MPI_Comm;
-    fn as_raw(&self) -> Self::Raw {
-        self.0
-    }
-}
-
-impl CommunicatorHandle for UserCommunicatorHandle {}
 
 /// A communicator for inter-communication, which represents a point-to-point communication between
 /// disjoint groups
@@ -361,12 +348,16 @@ impl<C: CommunicatorHandle> InterCommunicator<C> {
     }
 }
 
-impl Drop for UserCommunicatorHandle {
+impl Drop for SimpleCommunicatorHandle {
     fn drop(&mut self) {
-        unsafe {
-            ffi::MPI_Comm_disconnect(&mut self.0);
+        match self {
+            SimpleCommunicatorHandle::WorldCommunicatorHandle => {}
+            SimpleCommunicatorHandle::SelfCommunicatorHandle => {}
+            SimpleCommunicatorHandle::UserCommunicatorHandle(h) => unsafe {
+                ffi::MPI_Comm_disconnect(h);
+                assert_eq!(*h, ffi::RSMPI_COMM_NULL);
+            },
         }
-        assert_eq!(self.0, unsafe { ffi::RSMPI_COMM_NULL });
     }
 }
 
@@ -391,10 +382,10 @@ impl<C: CommunicatorHandle> Communicator for InterCommunicator<C> {
 }
 
 /// A system-defined inter-communicator
-pub type SystemInterCommunicator = InterCommunicator<SystemCommunicatorHandle>;
+pub type SystemInterCommunicator = InterCommunicator<SimpleCommunicatorHandle>;
 
 /// A user-defined inter-communicator
-pub type UserInterCommunicator = InterCommunicator<UserCommunicatorHandle>;
+pub type UserInterCommunicator = InterCommunicator<SimpleCommunicatorHandle>;
 
 /// Unimplemented
 #[allow(missing_copy_implementations)]
@@ -957,7 +948,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         let handle = unsafe {
             let mut comm = ffi::RSMPI_COMM_NULL;
             ffi::MPI_Comm_get_parent(&mut comm);
-            SystemCommunicatorHandle::from_raw(comm)?
+            SimpleCommunicatorHandle::from_raw(comm)?
         };
         InterCommunicator::from_handle(handle)
     }
