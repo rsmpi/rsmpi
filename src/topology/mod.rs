@@ -61,7 +61,6 @@ pub trait CommunicatorHandle: AsRaw<Raw = MPI_Comm> {}
 pub type Rank = c_int;
 
 /// A communicator, either built-in or user-defined, e.g. through split
-#[derive(Clone)]
 pub enum SimpleCommunicator {
     /// Built-in communicator `MPI_COMM_WORLD`
     ///
@@ -679,7 +678,11 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.2
     #[cfg(not(msmpi))]
-    fn split_by_subgroup_with_tag<G: ?Sized>(&self, group: &G, tag: Tag) -> Option<SimpleCommunicator>
+    fn split_by_subgroup_with_tag<G: ?Sized>(
+        &self,
+        group: &G,
+        tag: Tag,
+    ) -> Option<SimpleCommunicator>
     where
         G: Group,
         Self: Sized,
