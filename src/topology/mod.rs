@@ -354,8 +354,7 @@ pub struct InterCommunicator(pub(crate) CommunicatorHandle);
 
 impl InterCommunicator {
     /// Construct an Intercommunicator from a raw handle
-    // TODO this was public, but why?
-    pub(crate) fn from_handle(handle: CommunicatorHandle) -> Option<Self> {
+    pub fn from_handle(handle: CommunicatorHandle) -> Option<Self> {
         if handle.is_inter_comm() {
             Some(InterCommunicator(handle))
         } else {
@@ -364,8 +363,7 @@ impl InterCommunicator {
     }
 
     /// Construct an Intercommunicator from a raw handle without checking if it's an Intercomm
-    // TODO this was public but why?
-    pub(crate) unsafe fn from_handle_unchecked(handle: CommunicatorHandle) -> Self {
+    pub unsafe fn from_handle_unchecked(handle: CommunicatorHandle) -> Self {
         debug_assert!(handle.is_inter_comm());
         InterCommunicator(handle)
     }
