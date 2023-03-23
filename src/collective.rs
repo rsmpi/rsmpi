@@ -1607,7 +1607,7 @@ pub trait Root: AsCommunicator {
         if fails > 0 {
             Err(MpiError::Spawn(fails as Rank, maxprocs))
         } else {
-            Ok(unsafe { InterCommunicator::from_raw_unchecked(result) })
+            Ok(unsafe { InterCommunicator::from_raw(result) })
         }
     }
 

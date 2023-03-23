@@ -53,7 +53,7 @@ impl CartesianCommunicator {
     /// - `raw` must be a live MPI_Comm object.
     /// - `raw` must not be used after calling `from_raw`.
     pub unsafe fn from_raw(raw: MPI_Comm) -> Option<CartesianCommunicator> {
-        SimpleCommunicator::from_raw(raw).and_then(|comm| match comm.into_topology() {
+        SimpleCommunicator::from_raw_checked(raw).and_then(|comm| match comm.into_topology() {
             IntoTopology::Cartesian(c) => Some(c),
             incorrect => {
                 // Forget the comm object so it's not dropped
@@ -75,7 +75,7 @@ impl CartesianCommunicator {
     /// - `raw` must not be `MPI_COMM_NULL`.
     pub unsafe fn from_raw_unchecked(raw: MPI_Comm) -> CartesianCommunicator {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
-        CartesianCommunicator(SimpleCommunicator::from_raw_unchecked(raw))
+        CartesianCommunicator(SimpleCommunicator::from_raw(raw))
     }
 
     /// Returns the number of dimensions that the Cartesian communicator was established over.

@@ -20,6 +20,7 @@ use std::{
 use conv::ConvUtil;
 use once_cell::sync::Lazy;
 
+use crate::traits::FromRaw;
 use crate::{ffi, topology::SystemAttribute};
 use crate::{
     topology::{Communicator, InterCommunicator, SimpleCommunicator},
@@ -135,7 +136,7 @@ impl Universe {
         if let Some(parent) = self.world().parent() {
             // Make it look like a user communicator so it can be dropped
             // TODO why is this implemented like this instead of calling MPI_Comm_disconnect directly?
-            let _p = unsafe { InterCommunicator::from_raw_unchecked(parent.as_raw()) };
+            let _p = unsafe { InterCommunicator::from_raw(parent.as_raw()) };
         }
     }
 }

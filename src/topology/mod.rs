@@ -249,21 +249,9 @@ impl SimpleCommunicator {
     ///
     /// # Safety
     /// Do not call with inter-comm handles and inter-comm parent handles
-    #[allow(dead_code)]
-    unsafe fn from_raw(raw: MPI_Comm) -> Option<SimpleCommunicator> {
+    unsafe fn from_raw_checked(raw: MPI_Comm) -> Option<SimpleCommunicator> {
         let handle = CommunicatorHandle::simple_from_raw(raw)?;
         Some(SimpleCommunicator(handle))
-    }
-
-    /// Wraps the raw value without checking for null handle
-    ///
-    /// # Safety
-    /// Do not call with inter-comm handles and inter-comm parent handles, `MPI_COMM_WORLD`, or
-    /// `MPI_COMM_SELF`
-    unsafe fn from_raw_unchecked(raw: MPI_Comm) -> SimpleCommunicator {
-        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
-        let handle = CommunicatorHandle::simple_from_raw_unchecked(raw);
-        SimpleCommunicator(handle)
     }
 
     /// Gets the topology of the communicator.
@@ -307,6 +295,19 @@ unsafe impl AsRaw for SimpleCommunicator {
     type Raw = MPI_Comm;
     fn as_raw(&self) -> Self::Raw {
         self.0.as_raw()
+    }
+}
+
+impl FromRaw for SimpleCommunicator {
+    /// Wraps the raw value without checking for null handle
+    ///
+    /// # Safety
+    /// Do not call with inter-comm handles and inter-comm parent handles, `MPI_COMM_WORLD`, or
+    /// `MPI_COMM_SELF`
+    unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self {
+        debug_assert_ne!(handle, ffi::RSMPI_COMM_NULL);
+        let handle = CommunicatorHandle::simple_from_raw_unchecked(handle);
+        SimpleCommunicator(handle)
     }
 }
 
@@ -372,15 +373,9 @@ impl InterCommunicator {
     }
 
     /// Construct an `InterCommunicator` from a raw handle
-    pub fn from_raw(raw: MPI_Comm) -> Option<Self> {
+    pub fn from_raw_checked(raw: MPI_Comm) -> Option<Self> {
         CommunicatorHandle::inter_from_raw(raw)
             .map(|handle| unsafe { Self::from_handle_unchecked(handle) })
-    }
-
-    /// Construct an `InterCommunicator` from a raw handle without checking if it's an Intercomm
-    /// handle
-    pub unsafe fn from_raw_unchecked(raw: MPI_Comm) -> Self {
-        Self::from_handle_unchecked(CommunicatorHandle::inter_from_raw_unchecked(raw))
     }
 
     /// The number of processes in the remote group of comm
@@ -420,7 +415,7 @@ impl InterCommunicator {
     /// 7.6.2
     pub fn merge(&self, merge_order: MergeOrder) -> SimpleCommunicator {
         unsafe {
-            SimpleCommunicator::from_raw(
+            SimpleCommunicator::from_raw_checked(
                 with_uninitialized(|raw| {
                     ffi::MPI_Intercomm_merge(self.as_raw(), merge_order.as_raw(), raw)
                 })
@@ -441,6 +436,16 @@ unsafe impl AsRaw for InterCommunicator {
     type Raw = MPI_Comm;
     fn as_raw(&self) -> Self::Raw {
         self.0.as_raw()
+    }
+}
+
+impl FromRaw for InterCommunicator {
+    /// Construct an `InterCommunicator` from a raw handle without checking if it's an Intercomm
+    /// handle
+    /// # Safety
+    /// Do only call with handles that are inter-comms or inter-comm parent
+    unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self {
+        Self::from_handle_unchecked(CommunicatorHandle::inter_from_raw_unchecked(handle))
     }
 }
 
@@ -602,7 +607,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// 6.4.2
     fn duplicate(&self) -> SimpleCommunicator {
         unsafe {
-            SimpleCommunicator::from_raw_unchecked(
+            SimpleCommunicator::from_raw(
                 with_uninitialized(|newcomm| ffi::MPI_Comm_dup(self.as_raw(), newcomm)).1,
             )
         }
@@ -635,7 +640,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// 6.4.2
     fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<SimpleCommunicator> {
         unsafe {
-            SimpleCommunicator::from_raw(
+            SimpleCommunicator::from_raw_checked(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_split(self.as_raw(), color.as_raw(), key, newcomm)
                 })
@@ -655,7 +660,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// 6.4.2 (See: `MPI_Comm_split_type`)
     fn split_shared(&self, key: c_int) -> SimpleCommunicator {
         unsafe {
-            SimpleCommunicator::from_raw(
+            SimpleCommunicator::from_raw_checked(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_split_type(
                         self.as_raw(),
@@ -694,7 +699,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         Self: Sized,
     {
         unsafe {
-            SimpleCommunicator::from_raw(
+            SimpleCommunicator::from_raw_checked(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_create(self.as_raw(), group.as_raw(), newcomm)
                 })
@@ -742,7 +747,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         Self: Sized,
     {
         unsafe {
-            SimpleCommunicator::from_raw(
+            SimpleCommunicator::from_raw_checked(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_create_group(self.as_raw(), group.as_raw(), tag, newcomm)
                 })
