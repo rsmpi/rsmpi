@@ -58,7 +58,7 @@ pub trait AsCommunicator {
 pub type Rank = c_int;
 
 /// A raw communicator handle.
-pub enum CommunicatorHandle {
+pub(crate) enum CommunicatorHandle {
     /// Built-in communicator `MPI_COMM_SELF`, containing only the current process. Exists until
     /// `MPI_Finalize` is called.
     ///
@@ -124,6 +124,9 @@ impl CommunicatorHandle {
 
     /// Create a `CommunicatorHandle::UserCommunicator` rom a raw handle without checking for
     /// null-handle, world-handle or self-handle
+    ///
+    /// # Safety
+    /// Do not use for inter-communicator handles and inter-comm parent handles
     pub unsafe fn simple_from_raw_unchecked(raw: MPI_Comm) -> CommunicatorHandle {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         debug_assert_ne!(raw, ffi::RSMPI_COMM_WORLD);
@@ -353,8 +356,8 @@ pub enum IntoTopology {
 pub struct InterCommunicator(pub(crate) CommunicatorHandle);
 
 impl InterCommunicator {
-    /// Construct an Intercommunicator from a raw handle
-    pub fn from_handle(handle: CommunicatorHandle) -> Option<Self> {
+    /// Construct an Intercommunicator from a handle
+    pub(crate) fn from_handle(handle: CommunicatorHandle) -> Option<Self> {
         if handle.is_inter_comm() {
             Some(InterCommunicator(handle))
         } else {
@@ -362,10 +365,22 @@ impl InterCommunicator {
         }
     }
 
-    /// Construct an Intercommunicator from a raw handle without checking if it's an Intercomm
-    pub unsafe fn from_handle_unchecked(handle: CommunicatorHandle) -> Self {
+    /// Construct an Intercommunicator from a handle without checking if it's an Intercomm
+    pub(crate) unsafe fn from_handle_unchecked(handle: CommunicatorHandle) -> Self {
         debug_assert!(handle.is_inter_comm());
         InterCommunicator(handle)
+    }
+
+    /// Construct an `InterCommunicator` from a raw handle
+    pub fn from_raw(raw: MPI_Comm) -> Option<Self> {
+        CommunicatorHandle::inter_from_raw(raw)
+            .map(|handle| unsafe { Self::from_handle_unchecked(handle) })
+    }
+
+    /// Construct an `InterCommunicator` from a raw handle without checking if it's an Intercomm
+    /// handle
+    pub unsafe fn from_raw_unchecked(raw: MPI_Comm) -> Self {
+        Self::from_handle_unchecked(CommunicatorHandle::inter_from_raw_unchecked(raw))
     }
 
     /// The number of processes in the remote group of comm
