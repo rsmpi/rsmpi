@@ -1,7 +1,6 @@
 /// Example showing usage of test_any(), test_some() and test_all().
 use mpi;
 use mpi::request::{RequestCollection, Scope};
-use mpi::topology::SimpleCommunicator;
 use mpi::traits::*;
 use mpi::Rank;
 
@@ -56,7 +55,7 @@ fn main() {
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
         send_recv(
-            SimpleCommunicator::WorldCommunicator,
+            universe.world(),
             scope,
             coll,
             next_proc,
@@ -77,7 +76,7 @@ fn main() {
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
         send_recv(
-            SimpleCommunicator::WorldCommunicator,
+            universe.world(),
             scope,
             coll,
             next_proc,
@@ -101,7 +100,7 @@ fn main() {
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
         send_recv(
-            SimpleCommunicator::WorldCommunicator,
+            universe.world(),
             scope,
             coll,
             next_proc,

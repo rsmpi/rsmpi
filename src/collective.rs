@@ -28,9 +28,7 @@ use crate::datatype::traits::*;
 use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
-use crate::topology::{
-    traits::*, InterCommunicator, SimpleCommunicatorHandle, UserInterCommunicator,
-};
+use crate::topology::{traits::*, CommunicatorHandle, InterCommunicator};
 use crate::topology::{Process, Rank};
 use crate::with_uninitialized;
 
@@ -1552,7 +1550,7 @@ pub trait Root: AsCommunicator {
     ///
     /// # Standard sections
     /// 10.3.2, see MPI_Comm_spawn
-    fn spawn(&self, command: &Command, maxprocs: Rank) -> Result<UserInterCommunicator, MpiError> {
+    fn spawn(&self, command: &Command, maxprocs: Rank) -> Result<InterCommunicator, MpiError> {
         // Environment variables can be handled using the info key
         assert_eq!(
             command.get_envs().len(),
@@ -1611,7 +1609,7 @@ pub trait Root: AsCommunicator {
         } else {
             Ok(unsafe {
                 InterCommunicator::from_handle_unchecked(
-                    SimpleCommunicatorHandle::from_raw(result).unwrap(),
+                    CommunicatorHandle::inter_from_raw_unchecked(result),
                 )
             })
         }
@@ -1625,7 +1623,7 @@ pub trait Root: AsCommunicator {
         &self,
         commands: &[Command],
         maxprocs: &[Rank],
-    ) -> Result<UserInterCommunicator, MpiError> {
+    ) -> Result<InterCommunicator, MpiError> {
         assert_eq!(commands.len(), maxprocs.len());
 
         let progs = commands
@@ -1685,7 +1683,7 @@ pub trait Root: AsCommunicator {
         } else {
             Ok(unsafe {
                 InterCommunicator::from_handle_unchecked(
-                    SimpleCommunicatorHandle::from_raw(result).unwrap(),
+                    CommunicatorHandle::inter_from_raw_unchecked(result),
                 )
             })
         }
