@@ -52,7 +52,7 @@ impl CartesianCommunicator {
     /// # Safety
     /// - `raw` must be a live MPI_Comm object.
     /// - `raw` must not be used after calling `from_raw`.
-    pub unsafe fn from_raw(raw: MPI_Comm) -> Option<CartesianCommunicator> {
+    pub unsafe fn from_raw_checked(raw: MPI_Comm) -> Option<CartesianCommunicator> {
         SimpleCommunicator::from_raw_checked(raw).and_then(|comm| match comm.into_topology() {
             IntoTopology::Cartesian(c) => Some(c),
             incorrect => {
@@ -62,20 +62,6 @@ impl CartesianCommunicator {
                 None
             }
         })
-    }
-
-    /// Creates a `CartesianCommunicator` from `raw`.
-    ///
-    /// # Parameters
-    /// * `raw` - Handle to a valid `MPI_CART` `MPI_Comm` object
-    ///
-    /// # Safety
-    /// - `raw` must be a live MPI_Comm object.
-    /// - `raw` must not be used after calling `from_raw_unchecked`.
-    /// - `raw` must not be `MPI_COMM_NULL`.
-    pub unsafe fn from_raw_unchecked(raw: MPI_Comm) -> CartesianCommunicator {
-        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
-        CartesianCommunicator(SimpleCommunicator::from_raw(raw))
     }
 
     /// Returns the number of dimensions that the Cartesian communicator was established over.
@@ -423,9 +409,9 @@ impl CartesianCommunicator {
     pub unsafe fn subgroup_unchecked(&self, retain: &[bool]) -> CartesianCommunicator {
         let retain_int: IntArray = retain.iter().map(|b| *b as _).collect();
 
-        CartesianCommunicator::from_raw_unchecked(
-            with_uninitialized(|newcomm| {
-                ffi::MPI_Cart_sub(self.as_raw(), retain_int.as_ptr(), newcomm)
+        CartesianCommunicator::from_raw(
+            with_uninitialized(|new_comm| {
+                ffi::MPI_Cart_sub(self.as_raw(), retain_int.as_ptr(), new_comm)
             })
             .1,
         )
@@ -469,5 +455,22 @@ unsafe impl AsRaw for CartesianCommunicator {
     type Raw = MPI_Comm;
     fn as_raw(&self) -> Self::Raw {
         self.0.as_raw()
+    }
+}
+
+impl FromRaw for CartesianCommunicator {
+    /// Creates a `CartesianCommunicator` from `raw`.
+    ///
+    /// # Parameters
+    /// * `raw` - Handle to a valid `MPI_CART` `MPI_Comm` object
+    ///
+    /// # Safety
+    /// - `handle` must be a live MPI_Comm object
+    /// - `handle` must not be an inter-comm handle or an inter-comm parent handle
+    /// - `handle` must not be used after calling `from_raw_unchecked`.
+    /// - `handle` must not be `MPI_COMM_NULL`.
+    unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self {
+        debug_assert_ne!(handle, ffi::RSMPI_COMM_NULL);
+        CartesianCommunicator(SimpleCommunicator::from_raw(handle))
     }
 }

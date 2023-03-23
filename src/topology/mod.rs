@@ -302,8 +302,10 @@ impl FromRaw for SimpleCommunicator {
     /// Wraps the raw value without checking for null handle
     ///
     /// # Safety
-    /// Do not call with inter-comm handles and inter-comm parent handles, `MPI_COMM_WORLD`, or
-    /// `MPI_COMM_SELF`
+    /// - `handle` must be a live MPI_Comm object.
+    /// - `handle` must not be an inter-comm handle, an inter-comm parent handle, `MPI_COMM_WORLD`,
+    /// or `MPI_COMM_SELF`
+    /// - `handle` must not be used after calling `from_raw`.
     unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self {
         debug_assert_ne!(handle, ffi::RSMPI_COMM_NULL);
         let handle = CommunicatorHandle::simple_from_raw_unchecked(handle);
@@ -443,7 +445,9 @@ impl FromRaw for InterCommunicator {
     /// Construct an `InterCommunicator` from a raw handle without checking if it's an Intercomm
     /// handle
     /// # Safety
-    /// Do only call with handles that are inter-comms or inter-comm parent
+    /// - `handle` must be a live MPI_Comm object.
+    /// - `handle` must be an inter-comms or inter-comm parent handle
+    /// - `handle` must not be used after calling `from_raw`.
     unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self {
         Self::from_handle_unchecked(CommunicatorHandle::inter_from_raw_unchecked(handle))
     }
@@ -860,7 +864,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
                 reorder as Count,
                 &mut comm_cart,
             );
-            CartesianCommunicator::from_raw(comm_cart)
+            CartesianCommunicator::from_raw_checked(comm_cart)
         }
     }
 
