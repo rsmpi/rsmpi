@@ -7,8 +7,8 @@ use mpi::Rank;
 const COUNT: usize = 128;
 
 /// Send and receive COUNT number of immediate requests.
-fn send_recv<'a, C: Communicator, S: Scope<'a> + Copy>(
-    world: C,
+fn send_recv<'a, S: Scope<'a> + Copy>(
+    world: &impl Communicator,
     scope: S,
     coll: &mut RequestCollection<'a, [i32; 4]>,
     next_proc: Rank,
@@ -54,15 +54,7 @@ fn main() {
         .collect();
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
-        send_recv(
-            universe.world(),
-            scope,
-            coll,
-            next_proc,
-            prev_proc,
-            &x,
-            &mut recv,
-        );
+        send_recv(&world, scope, coll, next_proc, prev_proc, &x, &mut recv);
 
         let mut buf = vec![];
         while coll.incomplete() > 0 {
@@ -75,15 +67,7 @@ fn main() {
 
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
-        send_recv(
-            universe.world(),
-            scope,
-            coll,
-            next_proc,
-            prev_proc,
-            &x,
-            &mut recv,
-        );
+        send_recv(&world, scope, coll, next_proc, prev_proc, &x, &mut recv);
 
         let mut complete = vec![];
         let mut buf = vec![];
@@ -99,15 +83,7 @@ fn main() {
 
     let mut recv: Vec<[i32; 4]> = vec![[0, 0, 0, 0]; COUNT];
     mpi::request::multiple_scope(2 * COUNT, |scope, coll| {
-        send_recv(
-            universe.world(),
-            scope,
-            coll,
-            next_proc,
-            prev_proc,
-            &x,
-            &mut recv,
-        );
+        send_recv(&world, scope, coll, next_proc, prev_proc, &x, &mut recv);
 
         let mut complete = vec![];
         while !coll.test_all(&mut complete) {}
