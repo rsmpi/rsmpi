@@ -196,7 +196,7 @@ impl Drop for CommunicatorHandle {
         match self {
             CommunicatorHandle::SelfComm => { /* cannot be dropped */ }
             CommunicatorHandle::World => { /* cannot be dropped */ }
-            CommunicatorHandle::Parent(_) => { /* should be dropped */ }
+            CommunicatorHandle::Parent(_) => { /* not useful to drop (would nullify other references) */ }
             CommunicatorHandle::User(handle) => unsafe {
                 ffi::MPI_Comm_free(handle);
                 assert_eq!(*handle, ffi::RSMPI_COMM_NULL);
