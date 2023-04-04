@@ -667,7 +667,7 @@ pub trait CommunicatorCollectives: Communicator {
     }
 }
 
-impl<C: Communicator> CommunicatorCollectives for C {}
+impl<C: Communicator + ?Sized> CommunicatorCollectives for C {}
 
 /// Something that can take the role of 'root' in a collective operation.
 ///
