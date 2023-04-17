@@ -24,6 +24,7 @@ default = ["user-operations"]
 
 user-operations = ["libffi"]
 derive = ["mpi-derive"]
+complex = ["num-complex"]
 
 [dependencies]
 conv = "0.3.3"
@@ -32,6 +33,7 @@ libffi = { version = "3.0.1", optional = true }
 memoffset = "0.8"
 mpi-derive = { path = "mpi-derive", version = "0.1", optional = true }
 mpi-sys = { path = "mpi-sys", version = "0.2" }
+num-complex = { version = "0.4.3", optional = true}
 # Public dependency ("derive" feature)
 once_cell = "1.16"
 smallvec = "1.10.0"

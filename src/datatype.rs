@@ -213,6 +213,16 @@ equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
 #[cfg(target_pointer_width = "64")]
 equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
 
+
+#[cfg(feature = "complex")]
+/// Implement direct equivalence for complex types
+pub mod complex_datatype {
+    use super::{ffi, DatatypeRef, SystemDatatype, Equivalence, FromRaw};
+    use num_complex::{Complex32, Complex64};
+    equivalent_system_datatype!(Complex32, ffi::RSMPI_FLOAT_COMPLEX);
+    equivalent_system_datatype!(Complex64, ffi::RSMPI_DOUBLE_COMPLEX);
+}
+
 /// A user defined MPI datatype
 ///
 /// # Standard section(s)
