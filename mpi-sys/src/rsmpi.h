@@ -21,6 +21,9 @@ extern const MPI_Datatype RSMPI_UINT16_T;
 extern const MPI_Datatype RSMPI_UINT32_T;
 extern const MPI_Datatype RSMPI_UINT64_T;
 
+extern const MPI_Datatype RSMPI_FLOAT_COMPLEX;
+extern const MPI_Datatype RSMPI_DOUBLE_COMPLEX;
+
 extern const MPI_Datatype RSMPI_DATATYPE_NULL;
 
 extern const MPI_Comm RSMPI_COMM_WORLD;
