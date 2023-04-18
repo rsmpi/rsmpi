@@ -50,10 +50,12 @@ impl CartesianCommunicator {
     /// * `raw` - Handle to a valid `MPI_Comm` object
     ///
     /// # Safety
-    /// - `raw` must be a live MPI_Comm object.
-    /// - `raw` must not be used after calling `from_raw`.
-    pub unsafe fn from_raw_checked(raw: MPI_Comm) -> Option<CartesianCommunicator> {
-        SimpleCommunicator::from_raw_checked(raw).and_then(|comm| match comm.into_topology() {
+    /// - `raw` must be a live MPI_Comm handle.
+    /// - `raw` must not be a system communicator handle.
+    /// - `raw` must not be a inter-communicator handle.
+    /// - `raw` must not be used after calling this function.
+    pub unsafe fn try_from_raw(raw: MPI_Comm) -> Option<CartesianCommunicator> {
+        SimpleCommunicator::try_from_raw(raw).and_then(|comm| match comm.into_topology() {
             IntoTopology::Cartesian(c) => Some(c),
             incorrect => {
                 // Forget the comm object so it's not dropped
@@ -465,12 +467,11 @@ impl FromRaw for CartesianCommunicator {
     /// * `raw` - Handle to a valid `MPI_CART` `MPI_Comm` object
     ///
     /// # Safety
-    /// - `handle` must be a live MPI_Comm object
-    /// - `handle` must not be an inter-comm handle or an inter-comm parent handle
-    /// - `handle` must not be used after calling `from_raw_unchecked`.
-    /// - `handle` must not be `MPI_COMM_NULL`.
-    unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self {
-        debug_assert_ne!(handle, ffi::RSMPI_COMM_NULL);
-        CartesianCommunicator(SimpleCommunicator::from_raw(handle))
+    /// - `raw` must be a live MPI_Comm handle
+    /// - `raw` must not be an inter-comm handle, the parent handle, or a system handle
+    /// - `raw` must not be used after calling this function.
+    unsafe fn from_raw(raw: <Self as AsRaw>::Raw) -> Self {
+        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
+        CartesianCommunicator(SimpleCommunicator::from_raw(raw))
     }
 }

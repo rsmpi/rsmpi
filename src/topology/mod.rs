@@ -106,11 +106,14 @@ impl CommunicatorHandle {
     /// * `None` if the handle is `MPI_COMM_NULL`
     /// * `SelfCommunicator` if the handle is `MPI_COMM_SELF`
     /// * `WorldCommunicator` if the handle is `MPI_COMM_WORLD`
+    /// * `InterCommunicator` if the handle is an inter-communicator
+    /// * `ParentCommunicator` if the handle is the parent communicator
     /// * `UserCommunicator` otherwise.
     ///
     /// # Safety
-    /// Do not use for inter-communicator handles and inter-comm parent handles
-    pub unsafe fn simple_from_raw(raw: MPI_Comm) -> Option<CommunicatorHandle> {
+    /// - `raw` must be a live communicator handle or `MPI_COMM_NULL`
+    /// - `raw` must not be used after calling this function
+    pub unsafe fn try_from_raw(raw: MPI_Comm) -> Option<CommunicatorHandle> {
         if raw == ffi::RSMPI_COMM_NULL {
             None
         } else if raw == ffi::RSMPI_COMM_WORLD {
@@ -118,46 +121,52 @@ impl CommunicatorHandle {
         } else if raw == ffi::RSMPI_COMM_SELF {
             Some(CommunicatorHandle::SelfComm)
         } else {
-            Some(CommunicatorHandle::User(raw))
+            let mut flag = 0;
+            ffi::MPI_Comm_test_inter(raw, &mut flag);
+            if flag == 0 {
+                Some(CommunicatorHandle::User(raw))
+            } else {
+                let mut parent_comm = ffi::RSMPI_COMM_NULL;
+                ffi::MPI_Comm_get_parent(&mut parent_comm);
+                if raw == parent_comm {
+                    Some(CommunicatorHandle::Parent(raw))
+                } else {
+                    Some(CommunicatorHandle::InterComm(raw))
+                }
+            }
         }
     }
 
-    /// Create a `CommunicatorHandle::UserCommunicator` rom a raw handle without checking for
-    /// null-handle, world-handle or self-handle
+    /// Create a `CommunicatorHandle::UserCommunicator` rom a raw handle without checking if it is a
+    /// null-handle, world-handle, self-handle, or an inter-communicator handle.
     ///
     /// # Safety
-    /// Do not use for inter-communicator handles and inter-comm parent handles
-    pub unsafe fn simple_from_raw_unchecked(raw: MPI_Comm) -> CommunicatorHandle {
+    /// - `raw` must be a live communicator handle
+    /// - `raw` must not be an inter-communicator handle
+    /// - `raw` must not be a system handle (i.e. `MPI_COMM_WORLD` or `MPI_COMM_SELF`)
+    /// - `raw` must not be the parent communicator
+    /// - `raw` must not be used after calling this function
+    pub unsafe fn simple_comm_from_raw(raw: MPI_Comm) -> CommunicatorHandle {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         debug_assert_ne!(raw, ffi::RSMPI_COMM_WORLD);
         debug_assert_ne!(raw, ffi::RSMPI_COMM_SELF);
+        debug_assert!({
+            let mut flag = c_int::min_value();
+            ffi::MPI_Comm_test_inter(raw, &mut flag);
+            flag == 0
+        });
         CommunicatorHandle::User(raw)
     }
 
-    /// Create a `CommunicatorHandle::InterCommunicator` from a raw handle. Returns `None` if the
-    /// handle is `MPI_COMM_NULL`.
-    pub fn inter_from_raw(raw: MPI_Comm) -> Option<CommunicatorHandle> {
-        if raw == unsafe { ffi::RSMPI_COMM_NULL } {
-            None
-        } else {
-            let mut flag = c_int::min_value();
-            unsafe {
-                ffi::MPI_Comm_test_inter(raw, &mut flag);
-            }
-
-            let is_inter_comm = flag != 0;
-
-            if is_inter_comm {
-                Some(CommunicatorHandle::InterComm(raw))
-            } else {
-                None
-            }
-        }
-    }
-
     /// Create a `CommunicatorHandle::InterCommunicator` from a raw handle without checking whether
-    /// it is  `MPI_COMM_NULL` or an inter-comm.
-    pub unsafe fn inter_from_raw_unchecked(raw: MPI_Comm) -> CommunicatorHandle {
+    /// it is `MPI_COMM_NULL` or if it is actually an inter-comm.
+    ///
+    /// # Safety
+    /// - `raw` must be a live communicator handle
+    /// - `raw` must be an inter-communicator handle
+    /// - `raw` must not be the parent communicator
+    /// - `raw` must not be used after calling this function
+    pub unsafe fn inter_comm_from_raw(raw: MPI_Comm) -> CommunicatorHandle {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         debug_assert!({
             let mut flag = c_int::min_value();
@@ -167,20 +176,26 @@ impl CommunicatorHandle {
         CommunicatorHandle::InterComm(raw)
     }
 
-    /// Create a `CommunicatorHandle::ParentInterCommunicator` from a raw handle. Returns `None` if
-    /// the handle is `MPI_COMM_NULL`.
+    /// Create a `CommunicatorHandle::ParentCommunicator` from a raw handle without checking whether
+    /// it is `MPI_COMM_NULL` or if it is actually the parent comm.
     ///
     /// # Safety
-    /// Do not call with handles that weren't obtained by `MPI_Comm_get_parent`
-    pub unsafe fn parent_from_raw(raw: MPI_Comm) -> Option<CommunicatorHandle> {
-        if raw == ffi::RSMPI_COMM_NULL {
-            None
-        } else {
-            Some(CommunicatorHandle::Parent(raw))
-        }
+    /// - `raw` must be a live communicator handle
+    /// - `raw` must be the parent communicator
+    /// - `raw` must not be used after calling this function
+    #[allow(dead_code)]
+    pub unsafe fn parent_comm_from_raw(raw: MPI_Comm) -> CommunicatorHandle {
+        debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
+        debug_assert!({
+            let mut parent = ffi::RSMPI_COMM_NULL;
+            ffi::MPI_Comm_get_parent(&mut parent);
+            raw == parent
+        });
+        CommunicatorHandle::Parent(raw)
     }
 
     /// Returns true if the handle is of an inter-comm
+    #[allow(dead_code)]
     pub fn is_inter_comm(&self) -> bool {
         match self {
             CommunicatorHandle::SelfComm
@@ -196,7 +211,8 @@ impl Drop for CommunicatorHandle {
         match self {
             CommunicatorHandle::SelfComm => { /* cannot be dropped */ }
             CommunicatorHandle::World => { /* cannot be dropped */ }
-            CommunicatorHandle::Parent(_) => { /* not useful to drop (would nullify other references) */ }
+            CommunicatorHandle::Parent(_) => { /* not useful to drop (would nullify other references) */
+            }
             CommunicatorHandle::User(handle) => unsafe {
                 ffi::MPI_Comm_free(handle);
                 assert_eq!(*handle, ffi::RSMPI_COMM_NULL);
@@ -245,13 +261,22 @@ impl SimpleCommunicator {
         SimpleCommunicator(CommunicatorHandle::SelfComm)
     }
 
-    /// If the raw value is the null handle returns `None`
+    /// If the raw value is the null handle returns `None`, otherwise it tries to create a
+    /// `SimpleCommunicator` from the raw value. Returns `None` if the raw value is an
+    /// inter-communicator.
     ///
     /// # Safety
-    /// Do not call with inter-comm handles and inter-comm parent handles
-    unsafe fn from_raw_checked(raw: MPI_Comm) -> Option<SimpleCommunicator> {
-        let handle = CommunicatorHandle::simple_from_raw(raw)?;
-        Some(SimpleCommunicator(handle))
+    /// - `raw` must be a live communicator handle
+    /// - `raw` must not be a system handle (i.e. `MPI_COMM_WORLD` or `MPI_COMM_SELF`)
+    /// - `raw` must not be an inter-communicator handle
+    /// - `raw` must not be used after calling this function
+    unsafe fn try_from_raw(raw: MPI_Comm) -> Option<SimpleCommunicator> {
+        let handle = CommunicatorHandle::try_from_raw(raw)?;
+        if let CommunicatorHandle::User(_) = handle {
+            Some(SimpleCommunicator(handle))
+        } else {
+            None
+        }
     }
 
     /// Gets the topology of the communicator.
@@ -305,10 +330,9 @@ impl FromRaw for SimpleCommunicator {
     /// - `handle` must be a live MPI_Comm object.
     /// - `handle` must not be an inter-comm handle, an inter-comm parent handle, `MPI_COMM_WORLD`,
     /// or `MPI_COMM_SELF`
-    /// - `handle` must not be used after calling `from_raw`.
+    /// - `handle` must not be used after calling this function.
     unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self {
-        debug_assert_ne!(handle, ffi::RSMPI_COMM_NULL);
-        let handle = CommunicatorHandle::simple_from_raw_unchecked(handle);
+        let handle = CommunicatorHandle::simple_comm_from_raw(handle);
         SimpleCommunicator(handle)
     }
 }
@@ -359,25 +383,12 @@ pub enum IntoTopology {
 pub struct InterCommunicator(pub(crate) CommunicatorHandle);
 
 impl InterCommunicator {
-    /// Construct an Intercommunicator from a handle
-    pub(crate) fn from_handle(handle: CommunicatorHandle) -> Option<Self> {
-        if handle.is_inter_comm() {
-            Some(InterCommunicator(handle))
-        } else {
-            None
-        }
-    }
-
-    /// Construct an Intercommunicator from a handle without checking if it's an Intercomm
-    pub(crate) unsafe fn from_handle_unchecked(handle: CommunicatorHandle) -> Self {
-        debug_assert!(handle.is_inter_comm());
-        InterCommunicator(handle)
-    }
-
     /// Construct an `InterCommunicator` from a raw handle
-    pub fn from_raw_checked(raw: MPI_Comm) -> Option<Self> {
-        CommunicatorHandle::inter_from_raw(raw)
-            .map(|handle| unsafe { Self::from_handle_unchecked(handle) })
+    pub unsafe fn try_from_raw(raw: MPI_Comm) -> Option<Self> {
+        CommunicatorHandle::try_from_raw(raw).and_then(|handle| match handle {
+            CommunicatorHandle::InterComm(_) => Some(InterCommunicator(handle)),
+            _ => None,
+        })
     }
 
     /// The number of processes in the remote group of comm
@@ -417,7 +428,7 @@ impl InterCommunicator {
     /// 7.6.2
     pub fn merge(&self, merge_order: MergeOrder) -> SimpleCommunicator {
         unsafe {
-            SimpleCommunicator::from_raw_checked(
+            SimpleCommunicator::try_from_raw(
                 with_uninitialized(|raw| {
                     ffi::MPI_Intercomm_merge(self.as_raw(), merge_order.as_raw(), raw)
                 })
@@ -449,7 +460,7 @@ impl FromRaw for InterCommunicator {
     /// - `handle` must be an inter-comms or inter-comm parent handle
     /// - `handle` must not be used after calling `from_raw`.
     unsafe fn from_raw(handle: <Self as AsRaw>::Raw) -> Self {
-        Self::from_handle_unchecked(CommunicatorHandle::inter_from_raw_unchecked(handle))
+        Self(CommunicatorHandle::inter_comm_from_raw(handle))
     }
 }
 
@@ -644,7 +655,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// 6.4.2
     fn split_by_color_with_key(&self, color: Color, key: Key) -> Option<SimpleCommunicator> {
         unsafe {
-            SimpleCommunicator::from_raw_checked(
+            SimpleCommunicator::try_from_raw(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_split(self.as_raw(), color.as_raw(), key, newcomm)
                 })
@@ -664,7 +675,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// 6.4.2 (See: `MPI_Comm_split_type`)
     fn split_shared(&self, key: c_int) -> SimpleCommunicator {
         unsafe {
-            SimpleCommunicator::from_raw_checked(
+            SimpleCommunicator::try_from_raw(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_split_type(
                         self.as_raw(),
@@ -703,7 +714,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         Self: Sized,
     {
         unsafe {
-            SimpleCommunicator::from_raw_checked(
+            SimpleCommunicator::try_from_raw(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_create(self.as_raw(), group.as_raw(), newcomm)
                 })
@@ -751,7 +762,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
         Self: Sized,
     {
         unsafe {
-            SimpleCommunicator::from_raw_checked(
+            SimpleCommunicator::try_from_raw(
                 with_uninitialized(|newcomm| {
                     ffi::MPI_Comm_create_group(self.as_raw(), group.as_raw(), tag, newcomm)
                 })
@@ -864,7 +875,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
                 reorder as Count,
                 &mut comm_cart,
             );
-            CartesianCommunicator::from_raw_checked(comm_cart)
+            CartesianCommunicator::try_from_raw(comm_cart)
         }
     }
 
@@ -1017,12 +1028,14 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard Sections
     /// 10.3.2, see MPI_Comm_get_parent
     fn parent(&self) -> Option<InterCommunicator> {
-        let handle = unsafe {
+        unsafe {
             let mut comm = ffi::RSMPI_COMM_NULL;
             ffi::MPI_Comm_get_parent(&mut comm);
-            CommunicatorHandle::parent_from_raw(comm)?
-        };
-        InterCommunicator::from_handle(handle)
+            if comm == ffi::RSMPI_COMM_NULL {
+                return None;
+            }
+            Some(InterCommunicator::from_raw(comm))
+        }
     }
 }
 
