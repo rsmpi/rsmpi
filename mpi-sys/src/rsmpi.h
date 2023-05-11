@@ -82,7 +82,7 @@ extern const MPI_Info RSMPI_INFO_NULL;
 
 extern const MPI_Win RSMPI_WIN_NULL;
 
-extern const int* RSMPI_UNWEIGHTED;
+int* RSMPI_UNWEIGHTED();
 
 double RSMPI_Wtime();
 double RSMPI_Wtick();
