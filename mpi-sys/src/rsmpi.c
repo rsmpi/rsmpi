@@ -76,7 +76,9 @@ const MPI_Info RSMPI_INFO_NULL = MPI_INFO_NULL;
 
 const MPI_Win RSMPI_WIN_NULL = MPI_WIN_NULL;
 
-int* RSMPI_UNWEIGHTED = MPI_UNWEIGHTED;
+#ifdef MPI_UNWEIGHTED
+const int* RSMPI_UNWEIGHTED = MPI_UNWEIGHTED;
+#endif
 
 double RSMPI_Wtime() {
   return MPI_Wtime();

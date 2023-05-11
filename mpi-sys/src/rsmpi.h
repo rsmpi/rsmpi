@@ -82,10 +82,10 @@ extern const MPI_Info RSMPI_INFO_NULL;
 
 extern const MPI_Win RSMPI_WIN_NULL;
 
+extern const int* RSMPI_UNWEIGHTED;
+
 double RSMPI_Wtime();
 double RSMPI_Wtick();
-
-extern int* RSMPI_UNWEIGHTED;
 
 // MPICH uses macros for c2f - explicitly define them.
 #define RSMPI_c2f_decl_base(type, ctype, argname) \
