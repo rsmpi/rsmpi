@@ -85,7 +85,7 @@ extern const MPI_Win RSMPI_WIN_NULL;
 double RSMPI_Wtime();
 double RSMPI_Wtick();
 
-extern const int* RSMPI_UNCHECKED;
+extern const int* RSMPI_UNWEIGHTED;
 
 // MPICH uses macros for c2f - explicitly define them.
 #define RSMPI_c2f_decl_base(type, ctype, argname) \
