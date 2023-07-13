@@ -105,7 +105,6 @@
 //!
 //! Not supported (yet):
 //!
-//! - Process management
 //! - One-sided communication (RMA)
 //! - MPI parallel I/O
 //! - A million small things
