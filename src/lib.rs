@@ -105,7 +105,6 @@
 //!
 //! Not supported (yet):
 //!
-//! - Process management
 //! - One-sided communication (RMA)
 //! - MPI parallel I/O
 //! - A million small things
@@ -160,6 +159,7 @@ pub mod traits {
 /// crates
 #[doc(hidden)]
 pub mod internal {
+    #[cfg(feature = "derive")]
     pub use memoffset;
     pub use once_cell;
 }

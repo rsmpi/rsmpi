@@ -14,7 +14,7 @@ keywords = [ "message-passing", "parallel" ]
 categories = [ "concurrency" ]
 license = "MIT/Apache-2.0"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.65"
 
 [workspace]
 members = ["mpi-derive"]
@@ -23,22 +23,24 @@ members = ["mpi-derive"]
 default = ["user-operations"]
 
 user-operations = ["libffi"]
-derive = ["mpi-derive"]
+derive = ["mpi-derive", "memoffset"]
 
 [dependencies]
 conv = "0.3.3"
 libffi = { version = "3.2.0", optional = true }
 # Public dependency ("derive" feature)
-memoffset = "0.8"
+memoffset = {version = "0.9", optional = true }
 mpi-derive = { path = "mpi-derive", version = "0.1", optional = true }
 mpi-sys = { path = "mpi-sys", version = "0.2" }
-# Public dependency ("derive" feature)
-once_cell = "1.17"
-smallvec = "1.10.0"
-thiserror = "1.0.40"
+once_cell = "1.18"
+smallvec = "1.11.1"
+thiserror = "1.0.49"
 
 [build-dependencies]
 build-probe-mpi = { path = "build-probe-mpi", version = "0.1.2" }
+
+[dev-dependencies]
+memoffset = "0.9" # used by complex_datatype, which does not use "derive" feature
 
 # The following tests depend on specific features
 
