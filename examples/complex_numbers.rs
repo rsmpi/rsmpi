@@ -1,4 +1,3 @@
-extern crate mpi;
 use mpi::traits::*;
 use num_complex::Complex64;
 

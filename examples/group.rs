@@ -1,6 +1,5 @@
 #![deny(warnings)]
 #![allow(clippy::many_single_char_names)]
-extern crate mpi;
 
 use mpi::topology::{GroupRelation, Rank, SystemGroup};
 use mpi::traits::*;

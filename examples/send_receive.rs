@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 use mpi::point_to_point as p2p;
 use mpi::topology::Rank;

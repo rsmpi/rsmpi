@@ -47,7 +47,6 @@
 //! Then use it in your program like this:
 //!
 //! ```no_run
-//! extern crate mpi;
 //!
 //! use mpi::traits::*;
 //!

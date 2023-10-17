@@ -1,7 +1,5 @@
 #![deny(warnings)]
 
-extern crate mpi;
-
 use mpi::traits::*;
 
 fn main() {

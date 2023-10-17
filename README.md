@@ -77,7 +77,6 @@ mpi = { version = "0.6", features = ["user-operations", "derive"] }
 Then use it in your program like this:
 
 ```rust
-extern crate mpi;
 
 use mpi::request::WaitGuard;
 use mpi::traits::*;
