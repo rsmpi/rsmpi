@@ -159,6 +159,7 @@ pub mod traits {
 /// crates
 #[doc(hidden)]
 pub mod internal {
+    #[cfg(feature = "derive")]
     pub use memoffset;
     pub use once_cell;
 }
