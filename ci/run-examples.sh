@@ -10,7 +10,7 @@ EXAMPLES_DIR="examples"
 examples=$(ls ${EXAMPLES_DIR} | sed "s/\\.rs\$//")
 num_examples=$(printf "%d" "$(echo "${examples}" | wc -w)")
 
-maxnp=4
+maxnp=3
 printf "running %d examples\n" ${num_examples}
 
 num_ok=0
