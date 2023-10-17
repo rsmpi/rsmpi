@@ -24,6 +24,8 @@
 #![warn(clippy::string_add_assign)]
 #![warn(clippy::unicode_not_nfc)]
 #![warn(clippy::wrong_pub_self_convention)]
+//#![allow(clippy::cast_possible_truncation)]
+//#![allow(clippy::missing_safety_doc)]
 
 //! Message Passing Interface bindings for Rust
 //!

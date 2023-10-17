@@ -26,10 +26,7 @@ fn equivalence_for_tuple_field(type_tuple: &syn::TypeTuple) -> TokenStream2 {
         .enumerate()
         .map(|(i, _)| syn::Index::from(i));
 
-    let field_datatypes = type_tuple
-        .elems
-        .iter()
-        .map(|elem| equivalence_for_type(&elem));
+    let field_datatypes = type_tuple.elems.iter().map(equivalence_for_type);
 
     quote! {
         &::mpi::datatype::UncommittedUserDatatype::structured(
@@ -55,8 +52,8 @@ fn equivalence_for_type(ty: &syn::Type) -> TokenStream2 {
     match ty {
         Type::Path(ref type_path) => quote!(
                 <#type_path as ::mpi::datatype::Equivalence>::equivalent_datatype()),
-        Type::Tuple(ref type_tuple) => equivalence_for_tuple_field(&type_tuple),
-        Type::Array(ref type_array) => equivalence_for_array_field(&type_array),
+        Type::Tuple(ref type_tuple) => equivalence_for_tuple_field(type_tuple),
+        Type::Array(ref type_array) => equivalence_for_array_field(type_array),
         _ => panic!("Unsupported type!"),
     }
 }
