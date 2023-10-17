@@ -45,6 +45,11 @@ memoffset = "0.9" # used by complex_datatype, which does not use "derive" featur
 # The following tests depend on specific features
 
 [[example]]
+name = "complex_numbers"
+required-features = ["complex"]
+
+
+[[example]]
 name = "struct"
 required-features = ["derive"]
 

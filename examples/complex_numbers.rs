@@ -1,13 +1,10 @@
 #![deny(warnings)]
 #![allow(forgetting_copy_types)]
 extern crate mpi;
-#[cfg(feature = "complex")]
 use mpi::traits::*;
-#[cfg(feature = "complex")]
 use num_complex::Complex64;
 
 fn main() {
-    #[cfg(feature = "complex")]
     {
         let universe = mpi::initialize().unwrap();
         let world = universe.world();
