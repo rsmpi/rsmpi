@@ -1,5 +1,3 @@
-#![deny(warnings)]
-#![allow(forgetting_copy_types)]
 extern crate mpi;
 use mpi::traits::*;
 use num_complex::Complex64;
@@ -18,11 +16,10 @@ fn main() {
                 Complex64::new(3.0, 4.0),
             ]
         } else {
-            Vec::<Complex64>::with_capacity(3)
+            vec![Complex64::new(0.0, 0.0); 3]
         };
 
         root_process.broadcast_into(&mut data);
-
         assert_eq!(
             vec![
                 Complex64::new(1.0, 2.0),
