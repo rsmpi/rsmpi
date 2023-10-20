@@ -2,7 +2,18 @@
 
 ## `main` branch
 
-**MSRV:** 1.63
+**MSRV:** 1.65
+
+### New Features
+
+* [[PR 140]](https://github.com/rsmpi/rsmpi/pull/140) Support for attributes, inter-communicators, and process management.
+* [[PR 155]](https://github.com/rsmpi/rsmpi/pull/155) Remove type-distinction between system-communicators and user-communicators.
+* [[PR 159]](https://github.com/rsmpi/rsmpi/pull/159) Add `"complex"` feature to support send/receive of complex types from the [`num-complex` crate](https://crates.io/crates/num-complex).
+
+### Maintenance
+
+* More precise optional dependencies for features.
+* `build-probe-mpi`: support for Cray compilers and some quoting fixes
 
 ## 0.6.0 (2022-08-05)
 

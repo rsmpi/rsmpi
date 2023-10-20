@@ -1,6 +1,6 @@
 [package]
 name = "mpi-derive"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Andrew Gaspar <andrew.gaspar@outlook.com>"]
 description = "MPI derive support for user types"
 homepage = "https://github.com/rsmpi/rsmpi"
