@@ -135,7 +135,6 @@ impl Universe {
     pub fn disconnect_parent(&mut self) {
         if let Some(parent) = self.world().parent() {
             // Make it look like a user communicator so it can be dropped
-            // TODO why is this implemented like this instead of calling MPI_Comm_disconnect directly?
             let _p = unsafe { InterCommunicator::from_raw(parent.as_raw()) };
         }
     }

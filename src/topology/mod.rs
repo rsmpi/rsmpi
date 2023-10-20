@@ -121,11 +121,7 @@ impl CommunicatorHandle {
         } else if raw == ffi::RSMPI_COMM_SELF {
             Some(CommunicatorHandle::SelfComm)
         } else {
-            let mut flag = 0;
-            ffi::MPI_Comm_test_inter(raw, &mut flag);
-            if flag == 0 {
-                Some(CommunicatorHandle::User(raw))
-            } else {
+            if comm_is_inter(raw) {
                 let mut parent_comm = ffi::RSMPI_COMM_NULL;
                 ffi::MPI_Comm_get_parent(&mut parent_comm);
                 if raw == parent_comm {
@@ -133,6 +129,8 @@ impl CommunicatorHandle {
                 } else {
                     Some(CommunicatorHandle::InterComm(raw))
                 }
+            } else {
+                Some(CommunicatorHandle::User(raw))
             }
         }
     }
@@ -150,11 +148,7 @@ impl CommunicatorHandle {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
         debug_assert_ne!(raw, ffi::RSMPI_COMM_WORLD);
         debug_assert_ne!(raw, ffi::RSMPI_COMM_SELF);
-        debug_assert!({
-            let mut flag = c_int::min_value();
-            ffi::MPI_Comm_test_inter(raw, &mut flag);
-            flag == 0
-        });
+        debug_assert!(!comm_is_inter(raw));
         CommunicatorHandle::User(raw)
     }
 
@@ -168,11 +162,7 @@ impl CommunicatorHandle {
     /// - `raw` must not be used after calling this function
     pub unsafe fn inter_comm_from_raw(raw: MPI_Comm) -> CommunicatorHandle {
         debug_assert_ne!(raw, ffi::RSMPI_COMM_NULL);
-        debug_assert!({
-            let mut flag = c_int::min_value();
-            ffi::MPI_Comm_test_inter(raw, &mut flag);
-            flag != 0
-        });
+        debug_assert!(comm_is_inter(raw));
         CommunicatorHandle::InterComm(raw)
     }
 
@@ -800,11 +790,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.6.1, See MPI_Comm_test_inter
     fn test_inter(&self) -> bool {
-        let mut flag = c_int::min_value();
-        unsafe {
-            ffi::MPI_Comm_test_inter(self.as_raw(), &mut flag);
-        }
-        flag != 0
+        unsafe { comm_is_inter(self.as_raw()) }
     }
 
     /// Set the communicator name
@@ -1457,4 +1443,12 @@ unsafe impl AsRaw for SystemAttribute {
 
 impl Attribute for SystemAttribute {
     type Target = c_int;
+}
+
+unsafe fn comm_is_inter(raw_comm: MPI_Comm) -> bool {
+    let mut flag = c_int::min_value();
+    unsafe {
+        ffi::MPI_Comm_test_inter(raw_comm, &mut flag);
+    }
+    flag != 0
 }
