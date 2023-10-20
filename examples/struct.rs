@@ -1,11 +1,8 @@
 use std::fmt::Debug;
 
-use mpi::{
-    topology::{Communicator, SystemCommunicator},
-    traits::*,
-};
+use mpi::{topology::Communicator, traits::*};
 
-fn assert_equivalence<A, B>(comm: &SystemCommunicator, a: &A, b: &B)
+fn assert_equivalence<A, B>(comm: &impl Communicator, a: &A, b: &B)
 where
     A: Buffer,
     B: BufferMut + PartialEq + Debug + Default,

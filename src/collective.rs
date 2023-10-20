@@ -28,9 +28,7 @@ use crate::datatype::traits::*;
 use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
 use crate::raw::traits::*;
 use crate::request::{Request, Scope, StaticScope};
-use crate::topology::{
-    traits::*, InterCommunicator, UserCommunicatorHandle, UserInterCommunicator,
-};
+use crate::topology::{traits::*, InterCommunicator};
 use crate::topology::{Process, Rank};
 use crate::with_uninitialized;
 
@@ -1552,7 +1550,7 @@ pub trait Root: AsCommunicator {
     ///
     /// # Standard sections
     /// 10.3.2, see MPI_Comm_spawn
-    fn spawn(&self, command: &Command, maxprocs: Rank) -> Result<UserInterCommunicator, MpiError> {
+    fn spawn(&self, command: &Command, maxprocs: Rank) -> Result<InterCommunicator, MpiError> {
         // Environment variables can be handled using the info key
         assert_eq!(
             command.get_envs().len(),
@@ -1609,11 +1607,7 @@ pub trait Root: AsCommunicator {
         if fails > 0 {
             Err(MpiError::Spawn(fails as Rank, maxprocs))
         } else {
-            Ok(unsafe {
-                InterCommunicator::from_handle_unchecked(
-                    UserCommunicatorHandle::from_raw(result).unwrap(),
-                )
-            })
+            Ok(unsafe { InterCommunicator::from_raw(result) })
         }
     }
 
@@ -1625,7 +1619,7 @@ pub trait Root: AsCommunicator {
         &self,
         commands: &[Command],
         maxprocs: &[Rank],
-    ) -> Result<UserInterCommunicator, MpiError> {
+    ) -> Result<InterCommunicator, MpiError> {
         assert_eq!(commands.len(), maxprocs.len());
 
         let progs = commands
@@ -1683,11 +1677,7 @@ pub trait Root: AsCommunicator {
         if fails > 0 {
             Err(MpiError::Spawn(fails as Rank, sum_maxprocs))
         } else {
-            Ok(unsafe {
-                InterCommunicator::from_handle_unchecked(
-                    UserCommunicatorHandle::from_raw(result).unwrap(),
-                )
-            })
+            Ok(unsafe { InterCommunicator::from_raw(result) })
         }
     }
 }

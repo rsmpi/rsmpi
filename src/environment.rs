@@ -20,9 +20,10 @@ use std::{
 use conv::ConvUtil;
 use once_cell::sync::Lazy;
 
+use crate::traits::FromRaw;
 use crate::{ffi, topology::SystemAttribute};
 use crate::{
-    topology::{Communicator, InterCommunicator, SystemCommunicator, UserCommunicatorHandle},
+    topology::{Communicator, InterCommunicator, SimpleCommunicator},
     traits::AsRaw,
 };
 use crate::{with_uninitialized, with_uninitialized2};
@@ -49,8 +50,8 @@ impl Universe {
     ///
     /// # Examples
     /// See `examples/simple.rs`
-    pub fn world(&self) -> SystemCommunicator {
-        SystemCommunicator::world()
+    pub fn world(&self) -> SimpleCommunicator {
+        SimpleCommunicator::world()
     }
 
     /// Total number of "slots" that can reasonably be filled in the environment
@@ -134,11 +135,7 @@ impl Universe {
     pub fn disconnect_parent(&mut self) {
         if let Some(parent) = self.world().parent() {
             // Make it look like a user communicator so it can be dropped
-            let _p = unsafe {
-                InterCommunicator::from_handle_unchecked(
-                    UserCommunicatorHandle::from_raw(parent.as_raw()).unwrap(),
-                )
-            };
+            let _p = unsafe { InterCommunicator::from_raw(parent.as_raw()) };
         }
     }
 }
