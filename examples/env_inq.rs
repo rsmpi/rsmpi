@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 fn main() {
     let (version, subversion) = mpi::environment::version();

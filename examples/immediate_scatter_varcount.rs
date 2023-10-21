@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 use mpi::datatype::Partition;
 use mpi::traits::*;

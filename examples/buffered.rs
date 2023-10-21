@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 use mpi::request::WaitGuard;
 use mpi::traits::*;

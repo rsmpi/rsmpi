@@ -71,13 +71,12 @@ Add the `mpi` crate as a dependency in your `Cargo.toml`:
 ```toml
 # "features" is optional
 [dependencies]
-mpi = { version = "0.6", features = ["user-operations", "derive"] }
+mpi = { version = "0.7.0", features = ["user-operations", "derive"] }
 ```
 
 Then use it in your program like this:
 
 ```rust
-extern crate mpi;
 
 use mpi::request::WaitGuard;
 use mpi::traits::*;

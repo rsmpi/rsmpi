@@ -68,7 +68,9 @@ impl Universe {
     pub fn size(&self) -> Option<usize> {
         // self.world().get_attr()
         let attr = unsafe { SystemAttribute::from_raw_unchecked(ffi::MPI_UNIVERSE_SIZE as i32) };
-        self.world().get_attr(attr).map(|s| *s as usize)
+        self.world()
+            .get_attr(attr)
+            .map(|s| usize::try_from(*s).expect("universe size must be non-negative"))
     }
 
     /// The size in bytes of the buffer used for buffered communication.
@@ -195,7 +197,7 @@ impl Threading {
 
 impl PartialOrd<Threading> for Threading {
     fn partial_cmp(&self, other: &Threading) -> Option<Ordering> {
-        self.as_raw().partial_cmp(&other.as_raw())
+        Some(self.cmp(other))
     }
 }
 

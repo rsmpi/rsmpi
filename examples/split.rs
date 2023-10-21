@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 use mpi::topology::{Color, GroupRelation, SystemGroup};
 use mpi::traits::*;

@@ -1585,8 +1585,8 @@ pub trait Root: AsCommunicator {
             .collect();
 
         let mut result = unsafe { ffi::RSMPI_COMM_NULL };
-        let mut errcodes: Vec<c_int> = Vec::new();
-        errcodes.resize(maxprocs.value_as().unwrap(), 0);
+        let mut errcodes: Vec<c_int> =
+            vec![0; maxprocs.value_as().expect("maxprocs should be positive")];
 
         unsafe {
             ffi::MPI_Comm_spawn(
@@ -1605,7 +1605,7 @@ pub trait Root: AsCommunicator {
             .filter(|&c| c != ffi::MPI_SUCCESS as i32)
             .count();
         if fails > 0 {
-            Err(MpiError::Spawn(fails as Rank, maxprocs))
+            Err(MpiError::Spawn(Rank::try_from(fails).unwrap(), maxprocs))
         } else {
             Ok(unsafe { InterCommunicator::from_raw(result) })
         }
@@ -1653,9 +1653,8 @@ pub trait Root: AsCommunicator {
             .collect();
 
         let mut result = unsafe { ffi::RSMPI_COMM_NULL };
-        let mut errcodes: Vec<_> = Vec::new();
         let sum_maxprocs: Rank = maxprocs.iter().sum();
-        errcodes.resize(sum_maxprocs as usize, 0);
+        let mut errcodes = vec![0; usize::try_from(sum_maxprocs).unwrap()];
 
         unsafe {
             ffi::MPI_Comm_spawn_multiple(
@@ -1675,7 +1674,10 @@ pub trait Root: AsCommunicator {
             .filter(|&c| c != ffi::MPI_SUCCESS as i32)
             .count();
         if fails > 0 {
-            Err(MpiError::Spawn(fails as Rank, sum_maxprocs))
+            Err(MpiError::Spawn(
+                Rank::try_from(fails).unwrap(),
+                sum_maxprocs,
+            ))
         } else {
             Ok(unsafe { InterCommunicator::from_raw(result) })
         }

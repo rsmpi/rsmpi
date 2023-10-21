@@ -1,6 +1,5 @@
 #![deny(warnings)]
 #![allow(clippy::float_cmp)]
-extern crate mpi;
 
 use mpi::traits::*;
 use std::{thread, time};

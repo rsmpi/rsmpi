@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 use mpi::datatype::{MutView, UserDatatype, View};
 use mpi::point_to_point as p2p;

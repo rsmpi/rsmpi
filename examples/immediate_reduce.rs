@@ -1,6 +1,5 @@
 #![deny(warnings)]
 #![allow(clippy::needless_pass_by_value)]
-extern crate mpi;
 
 use std::os::raw::{c_int, c_void};
 
