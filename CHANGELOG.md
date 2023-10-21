@@ -1,6 +1,6 @@
 # RSMPI Release Notes
 
-## `main` branch
+## 0.7.0 (2023-10-21)
 
 **MSRV:** 1.65
 
