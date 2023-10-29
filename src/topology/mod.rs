@@ -589,11 +589,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.1
-    fn compare<C: ?Sized>(&self, other: &C) -> CommunicatorRelation
-    where
-        C: Communicator,
-        Self: Sized,
-    {
+    fn compare(&self, other: &dyn Communicator) -> CommunicatorRelation {
         unsafe {
             with_uninitialized(|cmp| ffi::MPI_Comm_compare(self.as_raw(), other.as_raw(), cmp))
                 .1
