@@ -698,11 +698,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     /// # Standard section(s)
     ///
     /// 6.4.2
-    fn split_by_subgroup_collective<G: ?Sized>(&self, group: &G) -> Option<SimpleCommunicator>
-    where
-        G: Group,
-        Self: Sized,
-    {
+    fn split_by_subgroup_collective(&self, group: &dyn Group) -> Option<SimpleCommunicator> {
         unsafe {
             SimpleCommunicator::try_from_raw(
                 with_uninitialized(|newcomm| {
@@ -725,11 +721,7 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.2
     #[cfg(not(msmpi))]
-    fn split_by_subgroup<G: ?Sized>(&self, group: &G) -> Option<SimpleCommunicator>
-    where
-        G: Group,
-        Self: Sized,
-    {
+    fn split_by_subgroup(&self, group: &dyn Group) -> Option<SimpleCommunicator> {
         self.split_by_subgroup_with_tag(group, Tag::default())
     }
 
@@ -742,15 +734,11 @@ pub trait Communicator: AsRaw<Raw = MPI_Comm> {
     ///
     /// 6.4.2
     #[cfg(not(msmpi))]
-    fn split_by_subgroup_with_tag<G: ?Sized>(
+    fn split_by_subgroup_with_tag(
         &self,
-        group: &G,
+        group: &dyn Group,
         tag: Tag,
-    ) -> Option<SimpleCommunicator>
-    where
-        G: Group,
-        Self: Sized,
-    {
+    ) -> Option<SimpleCommunicator> {
         unsafe {
             SimpleCommunicator::try_from_raw(
                 with_uninitialized(|newcomm| {
