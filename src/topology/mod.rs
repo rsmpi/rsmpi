@@ -234,6 +234,12 @@ pub(crate) mod sealed {
             }
         }
     }
+
+    /// Get a handle from a communicator. This trait is used internally to treat different
+    /// communicator types uniformly and allow borrowing handles from trait-object communicators.
+    pub trait AsHandle: AsRaw<Raw = MPI_Comm> {
+        fn as_handle(&self) -> &CommunicatorHandle;
+    }
 }
 
 /// A simple communicator, either a system-defined communicator like `MPI_COMM_WORLD` or a
@@ -317,6 +323,12 @@ unsafe impl AsRaw for SimpleCommunicator {
     type Raw = MPI_Comm;
     fn as_raw(&self) -> Self::Raw {
         self.0.as_raw()
+    }
+}
+
+impl sealed::AsHandle for SimpleCommunicator {
+    fn as_handle(&self) -> &sealed::CommunicatorHandle {
+        &self.0
     }
 }
 
@@ -449,6 +461,12 @@ unsafe impl AsRaw for InterCommunicator {
     }
 }
 
+impl sealed::AsHandle for InterCommunicator {
+    fn as_handle(&self) -> &sealed::CommunicatorHandle {
+        &self.0
+    }
+}
+
 impl FromRaw for InterCommunicator {
     /// Construct an `InterCommunicator` from a raw handle without checking if it's an Intercomm
     /// handle
@@ -505,7 +523,7 @@ impl Color {
 pub type Key = c_int;
 
 /// Communicators are contexts for communication
-pub trait Communicator: AsRaw<Raw = MPI_Comm> {
+pub trait Communicator: sealed::AsHandle {
     /// Returns the number of processes available to communicate with in this `Communicator`. For
     /// intra-communicators, this is equivalent to [`size`](#method.size). For inter-communicators,
     /// this is equivalent to [`remote_size`](struct.InterCommunicator.html#method.remote_size).
