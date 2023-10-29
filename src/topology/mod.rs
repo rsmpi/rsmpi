@@ -581,28 +581,19 @@ pub trait Communicator: sealed::AsHandle {
     ///
     /// # Examples
     /// See `examples/broadcast.rs` `examples/gather.rs` `examples/send_receive.rs`
-    fn process_at_rank(&self, r: Rank) -> Process<Self>
-    where
-        Self: Sized,
-    {
+    fn process_at_rank(&self, r: Rank) -> Process {
         assert!(0 <= r && r < self.target_size());
         Process::by_rank_unchecked(self, r)
     }
 
     /// Returns an `AnyProcess` identifier that can be used, e.g. as a `Source` in point to point
     /// communication.
-    fn any_process(&self) -> AnyProcess<Self>
-    where
-        Self: Sized,
-    {
-        AnyProcess(self)
+    fn any_process(&self) -> AnyProcess {
+        AnyProcess(self.as_handle())
     }
 
     /// A `Process` for the calling process
-    fn this_process(&self) -> Process<Self>
-    where
-        Self: Sized,
-    {
+    fn this_process(&self) -> Process {
         let rank = self.rank();
         Process::by_rank_unchecked(self, rank)
     }
@@ -1089,29 +1080,29 @@ impl MergeOrder {
 
 /// Identifies a process by its `Rank` within a certain communicator.
 #[derive(Copy, Clone)]
-pub struct Process<'a, C>
-where
-    C: 'a + Communicator,
-{
-    comm: &'a C,
+pub struct Process<'a> {
+    comm: &'a sealed::CommunicatorHandle,
     rank: Rank,
 }
 
-impl<'a, C> Process<'a, C>
-where
-    C: 'a + Communicator,
-{
+impl<'a> Process<'a> {
     #[allow(dead_code)]
-    fn by_rank(c: &'a C, r: Rank) -> Option<Self> {
+    fn by_rank<C: Communicator + ?Sized>(c: &'a C, r: Rank) -> Option<Self> {
         if r != unsafe { ffi::RSMPI_PROC_NULL } {
-            Some(Process { comm: c, rank: r })
+            Some(Process {
+                comm: c.as_handle(),
+                rank: r,
+            })
         } else {
             None
         }
     }
 
-    fn by_rank_unchecked(c: &'a C, r: Rank) -> Self {
-        Process { comm: c, rank: r }
+    fn by_rank_unchecked<C: Communicator + ?Sized>(c: &'a C, r: Rank) -> Self {
+        Process {
+            comm: c.as_handle(),
+            rank: r,
+        }
     }
 
     /// The process rank
@@ -1120,29 +1111,62 @@ where
     }
 }
 
-impl<'a, C> AsCommunicator for Process<'a, C>
-where
-    C: 'a + Communicator,
-{
-    type Out = C;
-    fn as_communicator(&self) -> &Self::Out {
+unsafe impl<'a> AsRaw for Process<'a> {
+    type Raw = MPI_Comm;
+
+    fn as_raw(&self) -> Self::Raw {
+        return self.comm.as_raw();
+    }
+}
+
+impl<'a> sealed::AsHandle for Process<'a> {
+    fn as_handle(&self) -> &sealed::CommunicatorHandle {
         self.comm
+    }
+}
+
+impl<'a> Communicator for Process<'a> {
+    fn target_size(&self) -> Rank {
+        self.size()
+    }
+}
+
+impl<'a> AsCommunicator for Process<'a> {
+    type Out = Self;
+
+    fn as_communicator(&self) -> &Self::Out {
+        self
     }
 }
 
 /// Identifies an arbitrary process that is a member of a certain communicator, e.g. for use as a
 /// `Source` in point to point communication.
-pub struct AnyProcess<'a, C>(&'a C)
-where
-    C: 'a + Communicator;
+pub struct AnyProcess<'a>(&'a sealed::CommunicatorHandle);
 
-impl<'a, C> AsCommunicator for AnyProcess<'a, C>
-where
-    C: 'a + Communicator,
-{
-    type Out = C;
-    fn as_communicator(&self) -> &Self::Out {
+unsafe impl<'a> AsRaw for AnyProcess<'a> {
+    type Raw = MPI_Comm;
+    fn as_raw(&self) -> Self::Raw {
+        self.0.as_raw()
+    }
+}
+
+impl<'a> sealed::AsHandle for AnyProcess<'a> {
+    fn as_handle(&self) -> &sealed::CommunicatorHandle {
         self.0
+    }
+}
+
+impl<'a> Communicator for AnyProcess<'a> {
+    fn target_size(&self) -> Rank {
+        self.size()
+    }
+}
+
+impl<'a> AsCommunicator for AnyProcess<'a> {
+    type Out = Self;
+
+    fn as_communicator(&self) -> &Self::Out {
+        self
     }
 }
 
