@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 #[cfg(msmpi)]
 fn main() {

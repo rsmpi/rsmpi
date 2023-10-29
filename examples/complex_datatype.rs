@@ -1,6 +1,5 @@
 #![deny(warnings)]
 #![allow(clippy::forget_copy)]
-extern crate mpi;
 
 #[macro_use]
 extern crate memoffset;

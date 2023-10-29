@@ -27,7 +27,7 @@ jobs:
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: ubuntu-latest
-            rust: 1.57
+            rust: 1.65.0
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: macos-latest
@@ -40,7 +40,7 @@ jobs:
             cargo_flags: --all-features
           - os: windows-2022
             rust: stable
-            cargo_flags: --features derive
+            cargo_flags: --features derive,complex
     steps:
       - uses: actions/checkout@v3
       - name: Install (Linux)
@@ -58,7 +58,7 @@ jobs:
       - name: Install (Windows)
         if: runner.os == 'Windows'
         run: |
-          choco install llvm --version 14.0.6 --allow-downgrade -y
+          choco install llvm --version 16.0.6 --allow-downgrade -y
           sh ci/install-mpi-windows.sh
           echo MSMPI_INC="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\\" | tee -a $GITHUB_ENV
           echo MSMPI_LIB32="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x86\\" | tee -a $GITHUB_ENV

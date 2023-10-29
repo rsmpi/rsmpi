@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 use mpi::{datatype::UserDatatype, traits::*};
 use std::mem::size_of;

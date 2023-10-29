@@ -24,6 +24,8 @@
 #![warn(clippy::string_add_assign)]
 #![warn(clippy::unicode_not_nfc)]
 #![warn(clippy::wrong_pub_self_convention)]
+//#![allow(clippy::cast_possible_truncation)]
+//#![allow(clippy::missing_safety_doc)]
 
 //! Message Passing Interface bindings for Rust
 //!
@@ -41,13 +43,12 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mpi = "0.6"
+//! mpi = "0.7.0"
 //! ```
 //!
 //! Then use it in your program like this:
 //!
 //! ```no_run
-//! extern crate mpi;
 //!
 //! use mpi::traits::*;
 //!
@@ -105,7 +106,6 @@
 //!
 //! Not supported (yet):
 //!
-//! - Process management
 //! - One-sided communication (RMA)
 //! - MPI parallel I/O
 //! - A million small things
@@ -160,6 +160,7 @@ pub mod traits {
 /// crates
 #[doc(hidden)]
 pub mod internal {
+    #[cfg(feature = "derive")]
     pub use memoffset;
     pub use once_cell;
 }

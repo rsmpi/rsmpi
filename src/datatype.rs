@@ -213,6 +213,15 @@ equivalent_system_datatype!(usize, ffi::RSMPI_UINT64_T);
 #[cfg(target_pointer_width = "64")]
 equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
 
+#[cfg(feature = "complex")]
+/// Implement direct equivalence for complex types
+pub mod complex_datatype {
+    use super::{ffi, DatatypeRef, Equivalence, FromRaw, SystemDatatype};
+    use num_complex::{Complex32, Complex64};
+    equivalent_system_datatype!(Complex32, ffi::RSMPI_FLOAT_COMPLEX);
+    equivalent_system_datatype!(Complex64, ffi::RSMPI_DOUBLE_COMPLEX);
+}
+
 /// A user defined MPI datatype
 ///
 /// # Standard section(s)
@@ -843,22 +852,22 @@ pub mod internal {
             );
         }
 
-        if crate::environment::threading_support() != crate::Threading::Multiple {
-            if universe_state.main_thread != std::thread::current().id() {
-                panic!(
-                    "\n\
-                     RSMPI PANIC: Invalid threaded datatype initialization\n\
-                     \n\
-                     Application attempted to initialize the datatype of #[derive(Equivalence)]
-                     for `{0}` from a different thread than that which initialized `rsmpi`. This \
-                     is only supported when rsmpi is initialized with \
-                     `mpi::Threading::Multiple`. Please explicitly call \
-                     `{0}::equivalent_datatype()` at least once from the same thread as you call \
-                     `rsmpi::initialize*`, or initialize MPI using \
-                     `mpi::initialize_with_threading(mpi::Threading::Multiple)`.\n",
-                    type_name
-                )
-            }
+        if crate::environment::threading_support() != crate::Threading::Multiple
+            && universe_state.main_thread != std::thread::current().id()
+        {
+            panic!(
+                "\n\
+                 RSMPI PANIC: Invalid threaded datatype initialization\n\
+                 \n\
+                 Application attempted to initialize the datatype of #[derive(Equivalence)]
+                 for `{0}` from a different thread than that which initialized `rsmpi`. This \
+                 is only supported when rsmpi is initialized with \
+                 `mpi::Threading::Multiple`. Please explicitly call \
+                 `{0}::equivalent_datatype()` at least once from the same thread as you call \
+                 `rsmpi::initialize*`, or initialize MPI using \
+                 `mpi::initialize_with_threading(mpi::Threading::Multiple)`.\n",
+                type_name
+            )
         }
     }
 }

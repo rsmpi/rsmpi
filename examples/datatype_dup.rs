@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 use mpi::datatype::DynBufferMut;
 use mpi::traits::*;

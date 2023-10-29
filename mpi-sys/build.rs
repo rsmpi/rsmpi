@@ -1,9 +1,6 @@
 // Compiles the `rsmpi` C shim library.
-extern crate cc;
 // Generates the Rust header for the C API.
-extern crate bindgen;
 // Finds out information about the MPI library
-extern crate build_probe_mpi;
 
 use std::env;
 use std::path::Path;
