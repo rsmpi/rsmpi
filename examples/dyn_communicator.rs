@@ -1,5 +1,4 @@
 #![deny(warnings)]
-extern crate mpi;
 
 use mpi::collective::SystemOperation;
 use mpi::topology::Communicator;
