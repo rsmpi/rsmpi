@@ -665,7 +665,7 @@ pub trait CommunicatorCollectives: Communicator {
     }
 }
 
-impl<C: Communicator> CommunicatorCollectives for C {}
+impl<C: Communicator + ?Sized> CommunicatorCollectives for C {}
 
 /// Something that can take the role of 'root' in a collective operation.
 ///
@@ -1684,7 +1684,7 @@ pub trait Root: AsCommunicator {
     }
 }
 
-impl<'a, C: 'a + Communicator> Root for Process<'a, C> {
+impl<'a> Root for Process<'a> {
     fn root_rank(&self) -> Rank {
         self.rank()
     }

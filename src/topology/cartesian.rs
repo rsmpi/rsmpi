@@ -2,7 +2,7 @@ use std::mem;
 
 use conv::ConvUtil;
 
-use super::{AsCommunicator, Communicator, IntoTopology, Rank};
+use super::{sealed, AsCommunicator, Communicator, IntoTopology, Rank};
 use crate::ffi::MPI_Comm;
 use crate::topology::SimpleCommunicator;
 use crate::{
@@ -443,6 +443,12 @@ impl CartesianCommunicator {
 impl Communicator for CartesianCommunicator {
     fn target_size(&self) -> Rank {
         self.size()
+    }
+}
+
+impl sealed::AsHandle for CartesianCommunicator {
+    fn as_handle(&self) -> &sealed::CommunicatorHandle {
+        self.0.as_handle()
     }
 }
 
