@@ -1,5 +1,11 @@
 # RSMPI Release Notes
 
+## `main` branch
+
+### New Features
+
+* [[PR 171]](https://github.com/rsmpi/rsmpi/pull/171) Refactor attributes to safer approach; add `Communicator::set_attr()`.`
+
 ## 0.7.0 (2023-10-21)
 
 **MSRV:** 1.65

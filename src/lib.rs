@@ -135,6 +135,7 @@ pub mod ffi {
     pub use mpi_sys::*;
 }
 
+pub mod attribute;
 pub mod collective;
 pub mod datatype;
 pub mod environment;
@@ -145,6 +146,7 @@ pub mod topology;
 
 /// Re-exports all traits.
 pub mod traits {
+    pub use crate::attribute::traits::*;
     pub use crate::collective::traits::*;
     pub use crate::datatype::traits::*;
     pub use crate::point_to_point::traits::*;
