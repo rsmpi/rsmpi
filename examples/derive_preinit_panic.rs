@@ -1,3 +1,4 @@
+#![deny(warnings)]
 use mpi::traits::Equivalence;
 
 fn main() {
