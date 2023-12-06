@@ -20,9 +20,10 @@ use std::{
 use conv::ConvUtil;
 use once_cell::sync::Lazy;
 
-use crate::traits::FromRaw;
-use crate::{ffi, topology::SystemAttribute};
+use crate::{attribute::AppNum, ffi};
+use crate::{attribute::UniverseSize, traits::FromRaw};
 use crate::{
+    topology::traits::AnyCommunicator,
     topology::{Communicator, InterCommunicator, SimpleCommunicator},
     traits::AsRaw,
 };
@@ -66,11 +67,19 @@ impl Universe {
     ///
     /// 11.10.1
     pub fn size(&self) -> Option<usize> {
-        // self.world().get_attr()
-        let attr = unsafe { SystemAttribute::from_raw_unchecked(ffi::MPI_UNIVERSE_SIZE as i32) };
         self.world()
-            .get_attr(attr)
-            .map(|s| usize::try_from(*s).expect("universe size must be non-negative"))
+            .get_attr::<UniverseSize>()
+            .map(|s| usize::try_from(s).expect("universe size must be non-negative"))
+    }
+
+    /// The app number is the invocation number of the current app in a call to
+    /// `MPI_Comm_spawn_multiple()` or colon-delimited `mpiexec`.
+    ///
+    /// # Standard section
+    ///
+    /// 11.10.3
+    pub fn appnum(&self) -> Option<isize> {
+        self.world().get_attr::<AppNum>().map(isize::from)
     }
 
     /// The size in bytes of the buffer used for buffered communication.
@@ -140,6 +149,14 @@ impl Universe {
             let _p = unsafe { InterCommunicator::from_raw(parent.as_raw()) };
         }
     }
+
+    fn free_attribute_keys(&mut self) {
+        let mut comm_attrs = crate::attribute::COMM_ATTRS.write().unwrap();
+        for (_, v) in comm_attrs.drain() {
+            let mut k = v.as_raw();
+            unsafe { ffi::MPI_Comm_free_keyval(&mut k) };
+        }
+    }
 }
 
 impl Drop for Universe {
@@ -154,6 +171,7 @@ impl Drop for Universe {
 
         self.detach_buffer();
         self.disconnect_parent();
+        self.free_attribute_keys();
         unsafe {
             ffi::MPI_Finalize();
         }

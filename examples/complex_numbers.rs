@@ -1,3 +1,4 @@
+#![deny(warnings)]
 use mpi::traits::*;
 use num_complex::Complex64;
 

@@ -1,3 +1,4 @@
+#![deny(warnings)]
 use std::env;
 use std::process::Command;
 
@@ -9,11 +10,13 @@ fn main() -> Result<(), mpi::MpiError> {
 
     if let Some(parent) = world.parent() {
         let child_name = env::args().skip(1).next().unwrap();
+        let appnum = universe.appnum().unwrap_or(-1);
         println!(
-            "[{}/{}] {} has parent size {}, universe {:?}",
+            "[{}/{}] {} ({}) has parent size {}, universe {:?}",
             world.rank(),
             world.size(),
             child_name,
+            appnum,
             parent.remote_size(),
             universe.size(),
         );

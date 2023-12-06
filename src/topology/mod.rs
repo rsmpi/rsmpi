@@ -30,6 +30,7 @@ use conv::ConvUtil;
 use crate::Tag;
 use crate::{Count, IntArray};
 
+use crate::attribute::CommAttribute;
 use crate::datatype::traits::*;
 use crate::ffi;
 use crate::ffi::{MPI_Comm, MPI_Group};
@@ -40,7 +41,7 @@ mod cartesian;
 
 /// Topology traits
 pub mod traits {
-    pub use super::{AsCommunicator, Attribute, Communicator, Group};
+    pub use super::{AnyCommunicator, AsCommunicator, Communicator, Group};
 }
 
 // Re-export cartesian functions and types from topology modules.
@@ -369,30 +370,6 @@ pub trait Communicator: sealed::AsHandle {
     /// 6.4.1
     fn rank(&self) -> Rank {
         unsafe { with_uninitialized(|rank| ffi::MPI_Comm_rank(self.as_raw(), rank)).1 }
-    }
-
-    /// Get `Attribute`
-    fn get_attr<A: Attribute>(&self, key: A) -> Option<&<A as Attribute>::Target>
-    where
-        Self: Sized,
-    {
-        let (val, flag) = unsafe {
-            let mut ptr: MaybeUninit<*mut <A as Attribute>::Target> = MaybeUninit::uninit();
-            let (_, flag) = with_uninitialized(|flag| {
-                ffi::MPI_Comm_get_attr(
-                    self.as_raw(),
-                    key.as_raw(),
-                    ptr.as_mut_ptr() as *mut c_void,
-                    flag,
-                )
-            });
-            (ptr.assume_init(), flag)
-        };
-        if flag == 0 {
-            None
-        } else {
-            unsafe { val.as_ref() }
-        }
     }
 
     /// Bundles a reference to this communicator with a specific `Rank` into a `Process`.
@@ -843,6 +820,70 @@ pub trait Communicator: sealed::AsHandle {
     }
 }
 
+/// Methods that would otherwise block object safety.
+pub trait AnyCommunicator: Communicator {
+    /// Get `CommAttribute` an a communicator, or `None` if not set.
+    ///
+    /// # Examples
+    /// See `tests/attribute_test.rs`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 7.7.2
+    fn get_attr<A: CommAttribute>(&self) -> Option<&A>;
+
+    /// Set `CommAttribute` on a communicator
+    ///
+    /// # Examples
+    /// See `tests/attribute_test.rs`.
+    ///
+    /// # Standard section(s)
+    ///
+    /// 7.7.2
+    fn set_attr<A: CommAttribute>(&mut self, val: A);
+}
+
+impl<C: ?Sized + Communicator> AnyCommunicator for C {
+    fn get_attr<A: CommAttribute>(&self) -> Option<&A> {
+        let key = A::get_key();
+        let (val, flag) = unsafe {
+            let mut ptr: MaybeUninit<*mut A> = MaybeUninit::uninit();
+            let (_, flag) = with_uninitialized(|flag| {
+                ffi::MPI_Comm_get_attr(
+                    self.as_raw(),
+                    key.as_raw(),
+                    ptr.as_mut_ptr() as *mut c_void,
+                    flag,
+                )
+            });
+            (ptr.assume_init(), flag)
+        };
+        if flag == 0 {
+            None
+        } else {
+            // For system attributes, we just have a regular pointer. For user
+            // attributes (set from Rust), we actually have a Box<A>, which is
+            // guaranteed to be ABI compatible with a C pointer *mut A, thus we
+            // can have a simple reference to the inner type without
+            // Box::from_raw(), which would then need to be disassembled to
+            // avoid running a destructor.
+            unsafe { val.as_ref() }
+        }
+    }
+
+    fn set_attr<A: CommAttribute>(&mut self, val: A) {
+        let key = A::get_key();
+        let val = Box::new(val);
+        unsafe {
+            ffi::MPI_Comm_set_attr(
+                self.as_raw(),
+                key.as_raw(),
+                Box::into_raw(val) as *mut c_void,
+            )
+        };
+    }
+}
+
 /// The relation between two communicators.
 ///
 /// # Standard section(s)
@@ -933,7 +974,7 @@ unsafe impl<'a> AsRaw for Process<'a> {
     type Raw = MPI_Comm;
 
     fn as_raw(&self) -> Self::Raw {
-        return self.comm.as_raw();
+        self.comm.as_raw()
     }
 }
 
@@ -1259,41 +1300,6 @@ impl From<c_int> for GroupRelation {
         }
         panic!("Unknown group relation: {}", i)
     }
-}
-
-/// Attributes are keys to user data that can be owned by communicators and
-/// accessed by users. They are useful when libraries pass communicators to a
-/// different library and get it back in a callback.
-///
-/// # Standard section(s)
-///
-/// 7.7.1
-pub trait Attribute: AsRaw<Raw = c_int> {
-    /// The type an attribute carries.
-    type Target;
-}
-
-/// Predefined attributes
-#[derive(Copy, Clone)]
-pub struct SystemAttribute(c_int);
-
-impl SystemAttribute {
-    /// Wraps the raw value without checking for null handle
-    /// Convert raw integer attribute key into SystemAttribute
-    pub unsafe fn from_raw_unchecked(val: c_int) -> Self {
-        Self(val)
-    }
-}
-
-unsafe impl AsRaw for SystemAttribute {
-    type Raw = c_int;
-    fn as_raw(&self) -> Self::Raw {
-        self.0
-    }
-}
-
-impl Attribute for SystemAttribute {
-    type Target = c_int;
 }
 
 unsafe fn comm_is_inter(raw_comm: MPI_Comm) -> bool {

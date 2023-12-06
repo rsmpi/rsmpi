@@ -1,3 +1,4 @@
+#![deny(warnings)]
 use std::env;
 use std::process::Command;
 
@@ -33,10 +34,11 @@ fn main() -> Result<(), mpi::MpiError> {
             assert_eq!(7i32, child.process_at_rank(0).receive().0);
         }
         println!(
-            "[{}/{}] Parent universe {:?}",
+            "[{}/{}] Parent universe {:?} appnum {}",
             world.rank(),
             world.size(),
             universe.size(),
+            universe.appnum().unwrap_or(-1),
         );
         child.merge(MergeOrder::Low)
     };
