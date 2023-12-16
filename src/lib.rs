@@ -60,7 +60,7 @@
 //!
 //!     if size != 2 {
 //!         panic!("Size of MPI_COMM_WORLD must be 2, but is {}!", size);
-//!      }
+//!     }
 //!
 //!     match rank {
 //!         0 => {
