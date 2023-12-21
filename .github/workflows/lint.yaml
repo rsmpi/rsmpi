@@ -16,7 +16,7 @@ jobs:
         with:
           toolchain: nightly
           components: rustfmt, clippy
-      - run: cargo fmt --all -- --check
+      - run: cargo fmt --all -- --config format_code_in_doc_comments=true --check
       # - uses: actions-rs/cargo@v1
       #   with:
       #     command: clippy
