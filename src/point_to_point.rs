@@ -524,7 +524,7 @@ pub trait Destination: AsCommunicator {
     /// let universe = mpi::initialize().unwrap();
     /// let world = universe.world();
     ///
-    /// let v = vec![ 1.0f64, 2.0, 3.0 ];
+    /// let v = vec![1.0f64, 2.0, 3.0];
     /// world.process_at_rank(1).send(&v[..]);
     /// ```
     ///
