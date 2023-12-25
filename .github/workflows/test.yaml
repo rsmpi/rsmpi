@@ -22,6 +22,7 @@ jobs:
             rust: nightly
             mpi_package: libmpich-dev
             cargo_flags: --all-features
+            cargo_update: true
           - os: ubuntu-latest
             rust: stable
             mpi_package: libmpich-dev
@@ -42,7 +43,7 @@ jobs:
             rust: stable
             cargo_flags: --features derive,complex
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -67,6 +68,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{matrix.rust}}
+      - name: Cargo update
+        if: ${{ matrix.cargo_update }}
+        run: cargo update --verbose
       - name: Cargo Test ${{ matrix.cargo_flags }}
         run: cargo test ${{ matrix.cargo_flags }}
       - name: Parallel Examples

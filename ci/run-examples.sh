@@ -2,8 +2,10 @@
 
 set -e
 
-# enable oversubscribing when using newer Open MPI
+# enable oversubscribing for Open-MPI 4.x
 export OMPI_MCA_rmaps_base_oversubscribe=1
+# Open-MPI 5.x: https://github.com/open-mpi/ompi/issues/8955#issuecomment-846272943
+export PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe
 
 EXAMPLES_DIR="examples"
 
