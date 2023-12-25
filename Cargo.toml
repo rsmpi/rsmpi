@@ -52,7 +52,7 @@ memoffset = "0.9" # used by complex_datatype, which does not use "derive" featur
 [[example]]
 name = "complex_numbers"
 required-features = ["complex"]
-
+doc-scrape-examples = true # Needed in at least one [[example]] to use dev-dependencies
 
 [[example]]
 name = "struct"
@@ -81,3 +81,7 @@ pre-release-replacements = [
   { file = "src/lib.rs", search = "mpi = \"[0-9.]*\"", replace = "mpi = \"{{version}}\"" },
   { file = "CHANGELOG.md", search = "`main` branch", replace = "{{version}} ({{date}})" },
 ]
+
+# https://doc.rust-lang.org/rustdoc/scraped-examples.html
+[package.metadata.docs.rs]
+cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
