@@ -49,7 +49,6 @@
 //! Then use it in your program like this:
 //!
 //! ```no_run
-//!
 //! use mpi::traits::*;
 //!
 //! fn main() {
@@ -60,7 +59,7 @@
 //!
 //!     if size != 2 {
 //!         panic!("Size of MPI_COMM_WORLD must be 2, but is {}!", size);
-//!      }
+//!     }
 //!
 //!     match rank {
 //!         0 => {
@@ -69,9 +68,12 @@
 //!         }
 //!         1 => {
 //!             let (msg, status) = world.any_process().receive_vec::<f64>();
-//!             println!("Process {} got message {:?}.\nStatus is: {:?}", rank, msg, status);
+//!             println!(
+//!                 "Process {} got message {:?}.\nStatus is: {:?}",
+//!                 rank, msg, status
+//!             );
 //!         }
-//!         _ => unreachable!()
+//!         _ => unreachable!(),
 //!     }
 //! }
 //! ```

@@ -502,9 +502,7 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
 ///
 /// ```
 /// /* declare variables and buffers here ... */
-/// mpi::request::scope(|scope| {
-///     /* perform sends and/or receives using 'scope' */
-/// });
+/// mpi::request::scope(|scope| { /* perform sends and/or receives using 'scope' */ });
 /// /* at end of scope, panic if there are requests that have not yet completed */
 /// ```
 ///
