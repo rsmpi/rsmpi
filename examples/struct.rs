@@ -175,4 +175,10 @@ fn main() {
             child: Child(3.4, 7),
         },
     );
+
+    assert_equivalence(
+        &world,
+        &[true, false, true],
+        &ThreeBool([true, false, true]),
+    );
 }
