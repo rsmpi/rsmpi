@@ -940,7 +940,14 @@ impl MergeOrder {
 /// Identifies a process by its `Rank` within a certain communicator.
 #[derive(Copy, Clone)]
 pub struct Process<'a> {
-    comm: &'a sealed::CommunicatorHandle,
+    // This is a mild abuse of `AnyProcess` so that `as_communicator` can return
+    // a reference to something that doesn't have a method conflict with
+    // `Communicator::rank`, as `Process::rank` does. We don't want to hold a
+    // `SimpleCommunicator` here because `Rank` also make sense with other types
+    // of communicators. An alternate design would be to have an
+    // `AnyCommunicator` that simply holds a handle and implements
+    // `Communicator`. In that model, `AnyProcess` could `Deref` to it.
+    comm: AnyProcess<'a>,
     rank: Rank,
 }
 
@@ -948,10 +955,7 @@ impl<'a> Process<'a> {
     #[allow(dead_code)]
     fn by_rank<C: Communicator + ?Sized>(c: &'a C, r: Rank) -> Option<Self> {
         if r != unsafe { ffi::RSMPI_PROC_NULL } {
-            Some(Process {
-                comm: c.as_handle(),
-                rank: r,
-            })
+            Some(Process::by_rank_unchecked(c, r))
         } else {
             None
         }
@@ -959,7 +963,7 @@ impl<'a> Process<'a> {
 
     fn by_rank_unchecked<C: Communicator + ?Sized>(c: &'a C, r: Rank) -> Self {
         Process {
-            comm: c.as_handle(),
+            comm: AnyProcess(c.as_handle()),
             rank: r,
         }
     }
@@ -967,6 +971,12 @@ impl<'a> Process<'a> {
     /// The process rank
     pub fn rank(&self) -> Rank {
         self.rank
+    }
+
+    /// Does the `Process` rank refer to the rank of this process in the
+    /// associated communicator?
+    pub fn is_self(&self) -> bool {
+        self.as_communicator().rank() == self.rank
     }
 }
 
@@ -980,7 +990,7 @@ unsafe impl<'a> AsRaw for Process<'a> {
 
 impl<'a> sealed::AsHandle for Process<'a> {
     fn as_handle(&self) -> &sealed::CommunicatorHandle {
-        self.comm
+        self.comm.as_handle()
     }
 }
 
@@ -991,15 +1001,16 @@ impl<'a> Communicator for Process<'a> {
 }
 
 impl<'a> AsCommunicator for Process<'a> {
-    type Out = Self;
+    type Out = AnyProcess<'a>;
 
     fn as_communicator(&self) -> &Self::Out {
-        self
+        &self.comm
     }
 }
 
 /// Identifies an arbitrary process that is a member of a certain communicator, e.g. for use as a
 /// `Source` in point to point communication.
+#[derive(Copy, Clone)]
 pub struct AnyProcess<'a>(&'a sealed::CommunicatorHandle);
 
 unsafe impl<'a> AsRaw for AnyProcess<'a> {
