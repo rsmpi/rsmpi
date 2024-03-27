@@ -1,5 +1,4 @@
 //! Example using request handlers.
-use mpi;
 use mpi::point_to_point::Status;
 use mpi::traits::*;
 

@@ -7,7 +7,7 @@
 #![warn(unused_qualifications)]
 
 use core::fmt;
-use std::{self, env, error::Error, path::PathBuf, process::Command};
+use std::{env, error::Error, path::PathBuf, process::Command};
 
 use super::super::Library;
 

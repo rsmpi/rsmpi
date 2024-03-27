@@ -15,14 +15,17 @@ keywords = ["message-passing", "parallel"]
 categories = ["concurrency"]
 license = "MIT/Apache-2.0"
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.70"
 exclude = [
   ".github/",
   "ci/*.sh",
 ]
 
 [workspace]
-members = ["mpi-derive"]
+members = [
+  "mpi-derive",
+  "mpi-sys",
+]
 
 [features]
 default = ["user-operations"]
@@ -36,10 +39,10 @@ libffi = { version = "3.2.0", optional = true }
 memoffset = { version = "0.9", optional = true }
 mpi-derive = { path = "mpi-derive", version = "0.1.1", optional = true }
 mpi-sys = { path = "mpi-sys", version = "0.2.1" }
-num-complex = { version = "0.4.3", optional = true }
-once_cell = "1.18"
-smallvec = "1.11.1"
-thiserror = "1.0.49"
+num-complex = { version = "0.4.5", optional = true }
+once_cell = "1.19"
+smallvec = "1.13.2"
+thiserror = "1.0.58"
 
 [build-dependencies]
 build-probe-mpi = { path = "build-probe-mpi", version = "0.1.3" }

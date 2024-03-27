@@ -18,7 +18,7 @@ rust-version = "1.65"
 shell-words = "1.1.0"
 
 [target.'cfg(unix)'.dependencies]
-pkg-config = "0.3.27"
+pkg-config = "0.3.30"
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-{{version}}"
