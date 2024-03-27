@@ -1581,7 +1581,7 @@ pub trait Root: AsCommunicator {
         let mut argv: Vec<*mut c_char> = args
             .iter_mut()
             .map(|s| s.as_ptr() as *mut c_char)
-            .chain(std::iter::once(std::ptr::null_mut()))
+            .chain(std::iter::once(ptr::null_mut()))
             .collect();
 
         let mut result = unsafe { ffi::RSMPI_COMM_NULL };
@@ -1640,7 +1640,7 @@ pub trait Root: AsCommunicator {
             .map(|args| {
                 args.iter_mut()
                     .map(|a| a.as_ptr() as *mut c_char)
-                    .chain(std::iter::once(std::ptr::null_mut()))
+                    .chain(std::iter::once(ptr::null_mut()))
                     .collect()
             })
             .collect();

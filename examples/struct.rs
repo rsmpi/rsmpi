@@ -1,7 +1,7 @@
 #![deny(warnings)]
 use std::fmt::Debug;
 
-use mpi::{topology::Communicator, traits::*};
+use mpi::traits::*;
 
 fn assert_equivalence<A, B>(comm: &impl Communicator, a: &A, b: &B)
 where

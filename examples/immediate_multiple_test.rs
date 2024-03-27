@@ -1,5 +1,4 @@
 /// Example showing usage of test_any(), test_some() and test_all().
-use mpi;
 use mpi::request::{RequestCollection, Scope};
 use mpi::traits::*;
 use mpi::Rank;

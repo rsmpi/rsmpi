@@ -28,7 +28,6 @@
 //!   - Cancellation, `MPI_Test_cancelled()`
 
 use std::cell::Cell;
-use std::convert::TryInto;
 use std::fmt;
 use std::marker::PhantomData;
 use std::mem::{self, MaybeUninit};

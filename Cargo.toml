@@ -22,7 +22,10 @@ exclude = [
 ]
 
 [workspace]
-members = ["mpi-derive"]
+members = [
+  "mpi-derive",
+  "mpi-sys",
+]
 
 [features]
 default = ["user-operations"]
