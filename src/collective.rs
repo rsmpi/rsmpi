@@ -1752,8 +1752,10 @@ unsafe impl AsRaw for SystemOperation {
 
 impl Operation for SystemOperation {}
 
+#[cfg(feature = "user-operations")]
 trait Erased {}
 
+#[cfg(feature = "user-operations")]
 impl<T> Erased for T {}
 
 /// A user-defined operation.
