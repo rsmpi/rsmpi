@@ -31,6 +31,9 @@ fn main() {
     y = 0.0;
     mpi::request::scope(|scope| {
         let _rreq = WaitGuard::from(world.any_process().immediate_receive_into(scope, &mut y));
+        // WARNING: the *ready* send is *only* permissible here because we're
+        // sending to self. Use of *ready* would be a race condition and thus
+        // erroneous otherwise.
         let _sreq = WaitGuard::from(world.this_process().immediate_ready_send(scope, &x));
     });
     assert_eq!(x, y);
