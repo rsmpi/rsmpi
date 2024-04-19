@@ -644,7 +644,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4
-    fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
+    unsafe fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
     where
         Buf: Buffer,
     {
@@ -686,7 +686,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4
-    fn ready_send<Buf: ?Sized>(&self, buf: &Buf)
+    unsafe fn ready_send<Buf: ?Sized>(&self, buf: &Buf)
     where
         Buf: Buffer,
     {
@@ -886,7 +886,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4, 3.7.2
-    fn immediate_ready_send_with_tag<'a, Sc, Buf: ?Sized>(
+    unsafe fn immediate_ready_send_with_tag<'a, Sc, Buf: ?Sized>(
         &self,
         scope: Sc,
         buf: &'a Buf,
@@ -946,7 +946,7 @@ pub trait Destination: AsCommunicator {
     /// # Standard section(s)
     ///
     /// 3.4, 3.7.2
-    fn immediate_ready_send<'a, Sc, Buf: ?Sized>(
+    unsafe fn immediate_ready_send<'a, Sc, Buf: ?Sized>(
         &self,
         scope: Sc,
         buf: &'a Buf,

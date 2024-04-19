@@ -12,7 +12,7 @@ fn main() {
     if rank > 0 {
         let msg = rank as u8;
         world.barrier();
-        world.process_at_rank(0).ready_send(&msg);
+        unsafe { world.process_at_rank(0).ready_send(&msg) };
     } else {
         let mut v = vec![0u8; (size - 1) as usize];
         mpi::request::scope(|scope| {
