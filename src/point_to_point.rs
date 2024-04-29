@@ -622,12 +622,29 @@ pub trait Destination: AsCommunicator {
     ///
     /// Send the contents of a `Buffer` to the `Destination` `&self` and tag it.
     ///
-    /// Fails if the matching receive operation has not been posted.
+    /// # Safety
+    ///
+    /// Use of this function is erroneous if the matching receive operation has
+    /// not already been started. MPI-4.1 §3.4 Communication Modes:
+    ///
+    /// > A send that uses the *ready* communication mode may be started only if
+    /// > the matching receive is already started. Otherwise, the operation is
+    /// > erroneous and its outcome is undefined. On some systems, this allows the
+    /// > removal of a hand-shake protocol that is otherwise required and results
+    /// > in improved performance.
+    ///
+    /// Moreover, in case such an error is detected, it may not be reported.
+    /// MPI-4.1 §2.8 Error Reporting:
+    ///
+    /// > In a few cases, the error may occur after all calls that relate to the
+    /// > operation have returned, so that no error value can be used to indicate
+    /// > the nature of the error (e.g., an erroneous program on the receiver in a
+    /// > send with the *ready* mode).
     ///
     /// # Standard section(s)
     ///
     /// 3.4
-    fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
+    unsafe fn ready_send_with_tag<Buf: ?Sized>(&self, buf: &Buf, tag: Tag)
     where
         Buf: Buffer,
     {
@@ -647,12 +664,29 @@ pub trait Destination: AsCommunicator {
     ///
     /// Send the contents of a `Buffer` to the `Destination` `&self`.
     ///
-    /// Fails if the matching receive operation has not been posted.
+    /// # Safety
+    ///
+    /// Use of this function is erroneous if the matching receive operation has
+    /// not already been started. MPI-4.1 §3.4 Communication Modes:
+    ///
+    /// > A send that uses the *ready* communication mode may be started only if
+    /// > the matching receive is already started. Otherwise, the operation is
+    /// > erroneous and its outcome is undefined. On some systems, this allows the
+    /// > removal of a hand-shake protocol that is otherwise required and results
+    /// > in improved performance.
+    ///
+    /// Moreover, in case such an error is detected, it may not be reportable.
+    /// MPI-4.1 §2.8 Error Reporting:
+    ///
+    /// > In a few cases, the error may occur after all calls that relate to the
+    /// > operation have returned, so that no error value can be used to indicate
+    /// > the nature of the error (e.g., an erroneous program on the receiver in a
+    /// > send with the *ready* mode).
     ///
     /// # Standard section(s)
     ///
     /// 3.4
-    fn ready_send<Buf: ?Sized>(&self, buf: &Buf)
+    unsafe fn ready_send<Buf: ?Sized>(&self, buf: &Buf)
     where
         Buf: Buffer,
     {
@@ -830,10 +864,29 @@ pub trait Destination: AsCommunicator {
     ///
     /// Initiate sending the data in `buf` in ready mode and tag it.
     ///
+    /// # Safety
+    ///
+    /// Use of this function is erroneous if the matching receive operation has
+    /// not already been started. MPI-4.1 §3.4 Communication Modes:
+    ///
+    /// > A send that uses the *ready* communication mode may be started only if
+    /// > the matching receive is already started. Otherwise, the operation is
+    /// > erroneous and its outcome is undefined. On some systems, this allows the
+    /// > removal of a hand-shake protocol that is otherwise required and results
+    /// > in improved performance.
+    ///
+    /// Moreover, in case such an error is detected, it may not be reportable.
+    /// MPI-4.1 §2.8 Error Reporting:
+    ///
+    /// > In a few cases, the error may occur after all calls that relate to the
+    /// > operation have returned, so that no error value can be used to indicate
+    /// > the nature of the error (e.g., an erroneous program on the receiver in a
+    /// > send with the *ready* mode).
+    ///
     /// # Standard section(s)
     ///
-    /// 3.7.2
-    fn immediate_ready_send_with_tag<'a, Sc, Buf: ?Sized>(
+    /// 3.4, 3.7.2
+    unsafe fn immediate_ready_send_with_tag<'a, Sc, Buf: ?Sized>(
         &self,
         scope: Sc,
         buf: &'a Buf,
@@ -867,14 +920,33 @@ pub trait Destination: AsCommunicator {
     ///
     /// Initiate sending the data in `buf` in ready mode.
     ///
+    /// # Safety
+    ///
+    /// Use of this function is erroneous if the matching receive operation has
+    /// not already been started. MPI-4.1 §3.4 Communication Modes:
+    ///
+    /// > A send that uses the *ready* communication mode may be started only if
+    /// > the matching receive is already started. Otherwise, the operation is
+    /// > erroneous and its outcome is undefined. On some systems, this allows the
+    /// > removal of a hand-shake protocol that is otherwise required and results
+    /// > in improved performance.
+    ///
+    /// Moreover, in case such an error is detected, it may not be reportable.
+    /// MPI-4.1 §2.8 Error Reporting:
+    ///
+    /// > In a few cases, the error may occur after all calls that relate to the
+    /// > operation have returned, so that no error value can be used to indicate
+    /// > the nature of the error (e.g., an erroneous program on the receiver in a
+    /// > send with the *ready* mode).
+    ///
     /// # Examples
     ///
     /// See `examples/immediate.rs`
     ///
     /// # Standard section(s)
     ///
-    /// 3.7.2
-    fn immediate_ready_send<'a, Sc, Buf: ?Sized>(
+    /// 3.4, 3.7.2
+    unsafe fn immediate_ready_send<'a, Sc, Buf: ?Sized>(
         &self,
         scope: Sc,
         buf: &'a Buf,

@@ -5,7 +5,7 @@ authors = ["Andrew Gaspar <andrew.gaspar@outlook.com>"]
 description = "MPI derive support for user types"
 homepage = "https://github.com/rsmpi/rsmpi"
 repository = "https://github.com/rsmpi/rsmpi"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 edition = "2021"
 rust-version = "1.65"
 
