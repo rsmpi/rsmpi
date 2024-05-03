@@ -1,12 +1,18 @@
 # RSMPI Release Notes
 
+## `main` branch
+
+**MSRV:** 1.70
+
+### New Features
+
 ## 0.8.0 (2024-05-03)
 
 **MSRV:** 1.70
 
 ### New Features
 
-* [[PR 184]]((https://github.com/rsmpi/rsmpi/pull/184) Make ready send `unsafe` since improper use is often not detectable at the call site.
+* [[PR 184]](https://github.com/rsmpi/rsmpi/pull/184) Make ready send `unsafe` since improper use is often not detectable at the call site.
 * [[PR 171]](https://github.com/rsmpi/rsmpi/pull/171) Refactor attributes to safer approach; add `Communicator::set_attr()`.
 * [[PR 157]](https://github.com/rsmpi/rsmpi/pull/157) Object safety for `Communicator`
 
