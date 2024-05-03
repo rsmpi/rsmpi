@@ -7,7 +7,7 @@
 ### New Features
 
 * [[PR 184]]((https://github.com/rsmpi/rsmpi/pull/184) Make ready send `unsafe` since improper use is often not detectable at the call site.
-* [[PR 171]](https://github.com/rsmpi/rsmpi/pull/171) Refactor attributes to safer approach; add `Communicator::set_attr()`.`
+* [[PR 171]](https://github.com/rsmpi/rsmpi/pull/171) Refactor attributes to safer approach; add `Communicator::set_attr()`.
 * [[PR 157]](https://github.com/rsmpi/rsmpi/pull/157) Object safety for `Communicator`
 
 ## 0.7.0 (2023-10-21)
