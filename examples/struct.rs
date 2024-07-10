@@ -23,13 +23,6 @@ fn main() {
 
     let world = universe.world();
 
-    #[derive(Equivalence)]
-    struct MyProgramOpts {
-        name: [u8; 100],
-        num_cycles: u32,
-        material_properties: [f64; 20],
-    }
-
     #[derive(Equivalence, Default, PartialEq, Debug)]
     struct MyDataRust {
         b: bool,

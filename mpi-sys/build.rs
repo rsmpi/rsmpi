@@ -21,10 +21,6 @@ fn main() {
     let mut builder = cc::Build::new();
     builder.file("src/rsmpi.c");
 
-    if cfg!(windows) {
-        // Adds a cfg to identify MS-MPI
-        println!("cargo:rustc-cfg=msmpi");
-    }
     if let Some(mpicc) = lib.mpicc {
         // Use `mpicc` wrapper when it exists rather than the system C compiler.
         builder.compiler(mpicc);
