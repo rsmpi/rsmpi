@@ -37,14 +37,13 @@ fn main() {
 
     let mut bx = vec![0.0; n_loc as usize];
     let mut by = vec![0.0; n_loc as usize];
-    if false {
+    if true {
         let r = b_dot_parallel(&world, &x, &mut bx, &y, &mut by, 1.0);
         if root.is_self() {
             println!("global: {}", r);
         }
         println!("[{}] bx: {:?}, by: {:?}", world.rank(), bx, by);
-    }
-    if true {
+    } else {
         let _r = b_dot_local(&x, &mut bx, &y, &mut by, 1.0);
         println!("[{}] bx: {:?}, by: {:?}", world.rank(), bx, by);
     }

@@ -89,3 +89,9 @@ pre-release-replacements = [
 # https://doc.rust-lang.org/rustdoc/scraped-examples.html
 [package.metadata.docs.rs]
 cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
+
+[profile.dev]
+lto = "fat"
+
+[profile.release]
+lto = "fat"
