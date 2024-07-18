@@ -3,6 +3,7 @@
 
 use mpi::{collective::SystemOperation, topology::SimpleCommunicator, traits::*};
 
+#[autodiff(b_dot_local, Reverse, Duplicated, Duplicated, Active)]
 fn dot_local(x: &[f64], y: &[f64]) -> f64 {
     x.iter().zip(y).map(|(x, y)| x * y).sum()
 }
@@ -36,9 +37,15 @@ fn main() {
 
     let mut bx = vec![0.0; n_loc as usize];
     let mut by = vec![0.0; n_loc as usize];
-    let r = b_dot_parallel(&world, &x, &mut bx, &y, &mut by, 1.0);
-    if root.is_self() {
-        println!("global: {}", r);
+    if false {
+        let r = b_dot_parallel(&world, &x, &mut bx, &y, &mut by, 1.0);
+        if root.is_self() {
+            println!("global: {}", r);
+        }
+        println!("[{}] bx: {:?}, by: {:?}", world.rank(), bx, by);
     }
-    println!("[{}] bx: {:?}, by: {:?}", world.rank(), bx, by);
+    if true {
+        let _r = b_dot_local(&x, &mut bx, &y, &mut by, 1.0);
+        println!("[{}] bx: {:?}, by: {:?}", world.rank(), bx, by);
+    }
 }
