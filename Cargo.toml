@@ -95,3 +95,4 @@ lto = "fat"
 
 [profile.release]
 lto = "fat"
+panic = "abort"
