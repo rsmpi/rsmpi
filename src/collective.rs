@@ -211,6 +211,25 @@ pub trait CommunicatorCollectives: Communicator {
         }
     }
 
+    /// Performs a global sum of the input data in `sendbuf` and
+    /// stores the result in `recvbuf` on all processes.
+    fn all_reduce_sum_into<S: ?Sized, R: ?Sized>(&self, sendbuf: &S, recvbuf: &mut R)
+    where
+        S: Buffer,
+        R: BufferMut,
+    {
+        unsafe {
+            ffi::MPI_Allreduce(
+                sendbuf.pointer(),
+                recvbuf.pointer_mut(),
+                sendbuf.count(),
+                sendbuf.as_datatype().as_raw(),
+                ffi::RSMPI_SUM,
+                self.as_raw(),
+            );
+        }
+    }
+
     /// Performs an element-wise global reduction under the operation `op` of the input data in
     /// `sendbuf` and scatters the result into equal sized blocks in the receive buffers on all
     /// processes.

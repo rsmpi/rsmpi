@@ -1,18 +1,19 @@
 #![deny(warnings)]
 #![feature(autodiff)]
 
-use mpi::{collective::SystemOperation, topology::SimpleCommunicator, traits::*};
+use mpi::{topology::SimpleCommunicator, traits::*};
 
 #[autodiff(b_dot_local, Reverse, Duplicated, Duplicated, Active)]
 fn dot_local(x: &[f64], y: &[f64]) -> f64 {
     x.iter().zip(y).map(|(x, y)| x * y).sum()
 }
 
+#[inline(never)]
 #[autodiff(b_dot_parallel, Reverse, Const, Duplicated, Duplicated, Active)]
 fn dot_parallel(comm: &SimpleCommunicator, x: &[f64], y: &[f64]) -> f64 {
     let r_loc = dot_local(x, y);
     let mut r = 0.0_f64;
-    comm.all_reduce_into(&r_loc, &mut r, SystemOperation::sum());
+    comm.all_reduce_sum_into(&r_loc, &mut r);
     r
 }
 
