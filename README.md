@@ -56,11 +56,11 @@ Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` 
 [OpenMPI]: https://www.open-mpi.org
 [MPICH]: https://www.mpich.org
 [MS-MPI]: https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi
-[Spectrum-MPI]: https://www.ibm.com/us-en/marketplace/spectrum-mpi
+[Spectrum-MPI]: https://www.ibm.com/products/spectrum-mpi
 [Cray-MPI]: https://docs.nersc.gov/development/programming-models/mpi/cray-mpich/
-[rsmpih]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/src/rsmpi.h
-[rsmpic]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/src/rsmpi.c
-[buildrs]: https://github.com/rsmpi/rsmpi/blob/master/mpi-sys/build.rs
+[rsmpih]: https://github.com/rsmpi/rsmpi/blob/main/mpi-sys/src/rsmpi.h
+[rsmpic]: https://github.com/rsmpi/rsmpi/blob/main/mpi-sys/src/rsmpi.c
+[buildrs]: https://github.com/rsmpi/rsmpi/blob/main/mpi-sys/build.rs
 [bindgen]: https://github.com/servo/rust-bindgen
 [libffi]: https://github.com/tov/libffi-rs
 
