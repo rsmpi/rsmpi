@@ -9,7 +9,7 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::ffi::{CString, NulError};
+use std::ffi::{CStr, CString, NulError};
 #[cfg(feature = "user-operations")]
 use std::mem;
 use std::os::raw::{c_char, c_int, c_void};
@@ -1682,6 +1682,54 @@ pub trait Root: AsCommunicator {
             Ok(unsafe { InterCommunicator::from_raw(result) })
         }
     }
+
+    /// Accept connections on the specified port.
+    ///
+    /// # Standard sections
+    /// 11.9.2, see MPI_Comm_accept
+    fn accept(&self, port: &Port) -> UserInterCommunicator {
+        unsafe {
+            let (_, newcomm) = with_uninitialized(|result| {
+                ffi::MPI_Comm_accept(
+                    port.as_raw(),
+                    ffi::RSMPI_INFO_NULL,
+                    self.root_rank(),
+                    self.as_communicator().as_raw(),
+                    result,
+                )
+            });
+            InterCommunicator::from_handle_unchecked(
+                UserCommunicatorHandle::from_raw(newcomm).unwrap(),
+            )
+        }
+    }
+
+    /// Connect to a specified port
+    ///
+    /// The Open MPI man page (as of version 4.1.4) incorrectly states that the
+    /// a matching `MPI_Comm_accept` must have been initiated on the server
+    /// before calling `MPI_Comm_connect` when the standard (4.0) states
+
+    ///   If the port exists, but does not have a pending MPI_COMM_ACCEPT, the
+    /// connection attempt will eventually time out after an implementation-defined
+    /// time, or succeed when the server calls MPI_COMM_ACCEPT. In the case of a
+    /// time out, MPI_COMM_CONNECT raises an error of class MPI_ERR_PORT.
+    fn connect(&self, port: &RemotePort) -> UserInterCommunicator {
+        unsafe {
+            let (_, newcomm) = with_uninitialized(|result| {
+                ffi::MPI_Comm_connect(
+                    port.as_raw(),
+                    ffi::RSMPI_INFO_NULL,
+                    self.root_rank(),
+                    self.as_communicator().as_raw(),
+                    result,
+                )
+            });
+            InterCommunicator::from_handle_unchecked(
+                UserCommunicatorHandle::from_raw(newcomm).unwrap(),
+            )
+        }
+    }
 }
 
 impl<'a> Root for Process<'a> {
@@ -2058,5 +2106,106 @@ where
             inbuf.as_datatype().as_raw(),
             op.as_raw(),
         );
+    }
+}
+
+/// Port capable of accepting connections.
+///
+/// # Standard section(s)
+///
+/// 11.9.2
+#[derive(Debug)]
+pub struct RemotePort {
+    port_name: CString,
+}
+
+impl RemotePort {
+    /// Create a new port from a string.
+    pub fn new(name: &str) -> Result<Self, MpiError> {
+        let port_name = CString::new(name)?;
+        Ok(Self { port_name })
+    }
+}
+
+impl fmt::Display for RemotePort {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.port_name.to_string_lossy().fmt(f)
+    }
+}
+
+unsafe impl AsRaw for RemotePort {
+    type Raw = *const c_char;
+    fn as_raw(&self) -> Self::Raw {
+        self.port_name.as_ptr()
+    }
+}
+
+/// Owned port capable of accepting connections; closed on drop.
+///
+/// # Standard section(s)
+///
+/// 11.9.2
+#[derive(Debug)]
+pub struct Port {
+    port_name: CString,
+}
+
+impl Port {
+    /// Open a port capable of accepting connections from other processes.
+    ///
+    /// # Standard section(s)
+    /// 11.9.2, see `MPI_Open_port`
+    pub fn open() -> Self {
+        let mut name = [b'\0'; ffi::MPI_MAX_PORT_NAME as usize];
+        unsafe {
+            ffi::MPI_Open_port(ffi::RSMPI_INFO_NULL, name.as_mut_ptr() as *mut c_char);
+        }
+        let port_name = unsafe { CStr::from_ptr(name.as_ptr() as *const i8) }.to_owned();
+        Self { port_name }
+    }
+
+    #[cfg(test)]
+    pub(crate) unsafe fn from_raw(port_name: CString) -> Self {
+        Self { port_name }
+    }
+}
+
+impl fmt::Display for Port {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.port_name.to_string_lossy().fmt(f)
+    }
+}
+
+impl Drop for Port {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::MPI_Close_port(self.port_name.as_ptr());
+        }
+    }
+}
+
+unsafe impl AsRaw for Port {
+    type Raw = *const c_char;
+    fn as_raw(&self) -> Self::Raw {
+        self.port_name.as_ptr()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn format_port() {
+        let port = unsafe { Port::from_raw(CString::new("xyz://1.2.3.4:012").unwrap()) };
+        assert_eq!(port.to_string(), "xyz://1.2.3.4:012");
+        // This port wasn't actually created by opening it, so we can't close it
+        std::mem::forget(port);
+    }
+
+    #[test]
+    fn parse_port() {
+        let port = RemotePort::new("xyz://1.2.3.4:5678").unwrap();
+        println!("{:?}", port);
     }
 }
