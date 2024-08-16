@@ -17,7 +17,10 @@ pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
     result.into()
 }
 
-fn equivalence_for_tuple_field(mpi_crate_path: &TokenStream2, type_tuple: &syn::TypeTuple) -> TokenStream2 {
+fn equivalence_for_tuple_field(
+    mpi_crate_path: &TokenStream2,
+    type_tuple: &syn::TypeTuple,
+) -> TokenStream2 {
     let field_blocklengths = type_tuple.elems.iter().map(|_| 1);
 
     let fields = type_tuple
@@ -26,7 +29,10 @@ fn equivalence_for_tuple_field(mpi_crate_path: &TokenStream2, type_tuple: &syn::
         .enumerate()
         .map(|(i, _)| syn::Index::from(i));
 
-    let field_datatypes = type_tuple.elems.iter().map(|ty| equivalence_for_type(mpi_crate_path, &ty));
+    let field_datatypes = type_tuple
+        .elems
+        .iter()
+        .map(|ty| equivalence_for_type(mpi_crate_path, ty));
 
     quote! {
         &#mpi_crate_path::datatype::UncommittedUserDatatype::structured(
@@ -37,7 +43,10 @@ fn equivalence_for_tuple_field(mpi_crate_path: &TokenStream2, type_tuple: &syn::
     }
 }
 
-fn equivalence_for_array_field(mpi_crate_path: &TokenStream2, type_array: &syn::TypeArray) -> TokenStream2 {
+fn equivalence_for_array_field(
+    mpi_crate_path: &TokenStream2,
+    type_array: &syn::TypeArray,
+) -> TokenStream2 {
     let ty = equivalence_for_type(mpi_crate_path, &type_array.elem);
     let len = &type_array.len;
     // We use the len block to ensure that len is of type `usize` and not type
@@ -81,7 +90,9 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
 
     match crate_path_res {
         Ok(mpi_crate_path) => {
-            let field_datatypes = fields.iter().map(|field| equivalence_for_type(&mpi_crate_path, &field.ty));
+            let field_datatypes = fields
+                .iter()
+                .map(|field| equivalence_for_type(&mpi_crate_path, &field.ty));
 
             let ident_str = ident.to_string();
 
@@ -112,9 +123,7 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
                 }
             }
         }
-        Err(e) => {
-            e.into_compile_error().into()
-        }
+        Err(e) => e.into_compile_error(),
     }
 }
 
@@ -122,57 +131,84 @@ fn mpi_crate_path(input: &DeriveInput) -> syn::Result<TokenStream2> {
     const MPI_CRATE_PATH_ATTR: &str = "mpi";
     const META_PATH: &str = "crate";
 
-    let crate_path_attrs: Vec<_> = input.attrs.iter()
-        .filter(|input| {
-            input.path().is_ident(MPI_CRATE_PATH_ATTR)
-        }).collect();
+    let crate_path_attrs: Vec<_> = input
+        .attrs
+        .iter()
+        .filter(|input| input.path().is_ident(MPI_CRATE_PATH_ATTR))
+        .collect();
 
-    if crate_path_attrs.len() == 0 {
+    if crate_path_attrs.is_empty() {
         Ok(quote! {::mpi})
     } else if crate_path_attrs.len() > 1 {
-        Err(Error::new_spanned(input, "Only one `mpi` attribute is allowed"))
+        Err(Error::new_spanned(
+            input,
+            "Only one `mpi` attribute is allowed",
+        ))
     } else {
         let crate_path_attr = crate_path_attrs[0];
 
         let mut crate_path = None;
 
-        crate_path_attr.parse_nested_meta(|meta| {
-            if !meta.path.is_ident(META_PATH) {
-                return Err(Error::new_spanned(&meta.path, format!("unexpected attribute `{}`. Expected `crate`", meta.path.to_token_stream().to_string())));
-            }
-
-            let expr: Expr = meta.value()?.parse()?;
-            let mut value = &expr;
-
-            // unpack (unnecessary) parentheses
-            while let Expr::Group(e) = value {
-                value = &e.expr;
-            }
-
-            // expect a string literal that parses to a crate path
-            if let Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(lit), .. }) = value
-            {
-                let suffix = lit.suffix();
-                if !suffix.is_empty() {
-                    return Err(Error::new_spanned(lit, format!("Unexpected suffix `{}` on string literal", suffix)));
+        crate_path_attr
+            .parse_nested_meta(|meta| {
+                if !meta.path.is_ident(META_PATH) {
+                    return Err(Error::new_spanned(
+                        &meta.path,
+                        format!(
+                            "unexpected attribute `{}`. Expected `crate`",
+                            meta.path.to_token_stream()
+                        ),
+                    ));
                 }
 
-                crate_path = match lit.parse() {
-                    Ok(path) => {
-                        if crate_path.is_some() {
-                            return Err(Error::new_spanned(meta.path, "Duplicate `crate` attribute"));
-                        }
-                        Some(path)
-                    }
-                    Err(_) => {
-                        return Err(Error::new_spanned(lit, format!("Failed to parse path: {:?}", lit.value())))
-                    }
-                };
+                let expr: Expr = meta.value()?.parse()?;
+                let mut value = &expr;
 
-                Ok(())
-            } else {
-                Err(Error::new_spanned(value, "Expected string literal containing crate path"))
-            }
-        }).map(|_| crate_path.unwrap())
+                // unpack (unnecessary) parentheses
+                while let Expr::Group(e) = value {
+                    value = &e.expr;
+                }
+
+                // expect a string literal that parses to a crate path
+                if let Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Str(lit),
+                    ..
+                }) = value
+                {
+                    let suffix = lit.suffix();
+                    if !suffix.is_empty() {
+                        return Err(Error::new_spanned(
+                            lit,
+                            format!("Unexpected suffix `{}` on string literal", suffix),
+                        ));
+                    }
+
+                    crate_path = match lit.parse() {
+                        Ok(path) => {
+                            if crate_path.is_some() {
+                                return Err(Error::new_spanned(
+                                    meta.path,
+                                    "Duplicate `crate` attribute",
+                                ));
+                            }
+                            Some(path)
+                        }
+                        Err(_) => {
+                            return Err(Error::new_spanned(
+                                lit,
+                                format!("Failed to parse path: {:?}", lit.value()),
+                            ))
+                        }
+                    };
+
+                    Ok(())
+                } else {
+                    Err(Error::new_spanned(
+                        value,
+                        "Expected string literal containing crate path",
+                    ))
+                }
+            })
+            .map(|_| crate_path.unwrap())
     }
 }
