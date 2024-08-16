@@ -79,39 +79,42 @@ fn equivalence_for_struct(ast: &syn::DeriveInput, fields: &Fields) -> TokenStrea
     // parse crate path. If that fails, convert the parse error into a compile error.
     let crate_path_res = mpi_crate_path(ast);
 
-    if let Ok(mpi_crate_path) = crate_path_res {
-        let field_datatypes = fields.iter().map(|field| equivalence_for_type(&mpi_crate_path, &field.ty));
+    match crate_path_res {
+        Ok(mpi_crate_path) => {
+            let field_datatypes = fields.iter().map(|field| equivalence_for_type(&mpi_crate_path, &field.ty));
 
-        let ident_str = ident.to_string();
+            let ident_str = ident.to_string();
 
-        // TODO and NOTE: Technically this code can race with MPI init and finalize, as can any other
-        // code in rsmpi that interacts with the MPI library without taking a handle to `Universe`.
-        // This requires larger attention, and so currently this is not addressed.
-        quote! {
-            unsafe impl #mpi_crate_path::datatype::Equivalence for #ident {
-                type Out = #mpi_crate_path::datatype::DatatypeRef<'static>;
-                fn equivalent_datatype() -> Self::Out {
-                    use #mpi_crate_path::internal::once_cell::sync::Lazy;
-                    use ::std::convert::TryInto;
+            // TODO and NOTE: Technically this code can race with MPI init and finalize, as can any other
+            // code in rsmpi that interacts with the MPI library without taking a handle to `Universe`.
+            // This requires larger attention, and so currently this is not addressed.
+            quote! {
+                unsafe impl #mpi_crate_path::datatype::Equivalence for #ident {
+                    type Out = #mpi_crate_path::datatype::DatatypeRef<'static>;
+                    fn equivalent_datatype() -> Self::Out {
+                        use #mpi_crate_path::internal::once_cell::sync::Lazy;
+                        use ::std::convert::TryInto;
 
-                    static DATATYPE: Lazy<#mpi_crate_path::datatype::UserDatatype> = Lazy::new(|| {
-                        #mpi_crate_path::datatype::internal::check_derive_equivalence_universe_state(#ident_str);
+                        static DATATYPE: Lazy<#mpi_crate_path::datatype::UserDatatype> = Lazy::new(|| {
+                            #mpi_crate_path::datatype::internal::check_derive_equivalence_universe_state(#ident_str);
 
-                        #mpi_crate_path::datatype::UserDatatype::structured::<
-                            #mpi_crate_path::datatype::UncommittedDatatypeRef,
-                        >(
-                            &[#(#field_blocklengths as #mpi_crate_path::Count),*],
-                            &[#(#mpi_crate_path::internal::memoffset::offset_of!(#ident, #field_names) as #mpi_crate_path::Address),*],
-                            &[#(#mpi_crate_path::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*],
-                        )
-                    });
+                            #mpi_crate_path::datatype::UserDatatype::structured::<
+                                #mpi_crate_path::datatype::UncommittedDatatypeRef,
+                            >(
+                                &[#(#field_blocklengths as #mpi_crate_path::Count),*],
+                                &[#(#mpi_crate_path::internal::memoffset::offset_of!(#ident, #field_names) as #mpi_crate_path::Address),*],
+                                &[#(#mpi_crate_path::datatype::UncommittedDatatypeRef::from(#field_datatypes)),*],
+                            )
+                        });
 
-                    DATATYPE.as_ref()
+                        DATATYPE.as_ref()
+                    }
                 }
             }
         }
-    } else {
-        crate_path_res.expect_err("impossible").into_compile_error().into()
+        Err(e) => {
+            e.into_compile_error().into()
+        }
     }
 }
 
