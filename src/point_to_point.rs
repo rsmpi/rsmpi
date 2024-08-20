@@ -11,23 +11,25 @@
 //! - **3.9**: Persistent requests, `MPI_Send_init()`, `MPI_Bsend_init()`, `MPI_Ssend_init()`,
 //! `MPI_Rsend_init()`, `MPI_Recv_init()`, `MPI_Start()`, `MPI_Startall()`
 
-use std::alloc::{self, Layout};
-use std::mem::{transmute, MaybeUninit};
-use std::{fmt, ptr};
+use std::{
+    alloc::{self, Layout},
+    fmt,
+    mem::{transmute, MaybeUninit},
+    ptr,
+};
 
 use conv::ConvUtil;
 
 use super::{Count, Tag};
-
-use crate::ffi;
-use crate::ffi::{MPI_Message, MPI_Status};
-
-use crate::datatype::traits::*;
-use crate::raw::traits::*;
-use crate::request::{Request, Scope, StaticScope};
-use crate::topology::traits::*;
-use crate::topology::{AnyProcess, CommunicatorRelation, Process, Rank};
-use crate::{with_uninitialized, with_uninitialized2};
+use crate::{
+    datatype::traits::*,
+    ffi,
+    ffi::{MPI_Message, MPI_Status},
+    raw::traits::*,
+    request::{Request, Scope, StaticScope},
+    topology::{traits::*, AnyProcess, CommunicatorRelation, Process, Rank},
+    with_uninitialized, with_uninitialized2,
+};
 
 // TODO: rein in _with_tag ugliness, use optional tags or make tag part of Source and Destination
 

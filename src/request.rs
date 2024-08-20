@@ -27,19 +27,22 @@
 //! - **3.8**:
 //!   - Cancellation, `MPI_Test_cancelled()`
 
-use std::cell::Cell;
-use std::fmt;
-use std::marker::PhantomData;
-use std::mem::{self, MaybeUninit};
-use std::os::raw::c_int;
-use std::ptr;
+use std::{
+    cell::Cell,
+    fmt,
+    marker::PhantomData,
+    mem::{self, MaybeUninit},
+    os::raw::c_int,
+    ptr,
+};
 
-use crate::ffi;
-use crate::ffi::{MPI_Request, MPI_Status};
-
-use crate::point_to_point::Status;
-use crate::raw::traits::*;
-use crate::with_uninitialized;
+use crate::{
+    ffi,
+    ffi::{MPI_Request, MPI_Status},
+    point_to_point::Status,
+    raw::traits::*,
+    with_uninitialized,
+};
 
 /// Check if the request is `MPI_REQUEST_NULL`.
 fn is_null(request: MPI_Request) -> bool {

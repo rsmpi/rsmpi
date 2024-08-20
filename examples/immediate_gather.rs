@@ -1,8 +1,10 @@
 #![deny(warnings)]
 
-use mpi::datatype::{MutView, UserDatatype, View};
-use mpi::traits::*;
-use mpi::Count;
+use mpi::{
+    datatype::{MutView, UserDatatype, View},
+    traits::*,
+    Count,
+};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

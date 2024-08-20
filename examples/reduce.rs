@@ -6,10 +6,12 @@ use std::os::raw::{c_int, c_void};
 
 #[cfg(feature = "user-operations")]
 use mpi::collective::UserOperation;
-use mpi::collective::{self, SystemOperation, UnsafeUserOperation};
-use mpi::ffi::MPI_Datatype;
-use mpi::topology::Rank;
-use mpi::traits::*;
+use mpi::{
+    collective::{self, SystemOperation, UnsafeUserOperation},
+    ffi::MPI_Datatype,
+    topology::Rank,
+    traits::*,
+};
 
 #[cfg(feature = "user-operations")]
 fn test_user_operations<C: Communicator>(comm: C) {

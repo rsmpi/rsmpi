@@ -1,7 +1,8 @@
 #![deny(warnings)]
 
-use mpi::{datatype::UserDatatype, topology::Process, traits::*};
 use std::mem::size_of;
+
+use mpi::{datatype::UserDatatype, topology::Process, traits::*};
 
 struct MyInts([i32; 3]);
 

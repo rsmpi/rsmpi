@@ -1,7 +1,6 @@
 #![deny(warnings)]
 
-use mpi::topology::CommunicatorRelation;
-use mpi::traits::*;
+use mpi::{topology::CommunicatorRelation, traits::*};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

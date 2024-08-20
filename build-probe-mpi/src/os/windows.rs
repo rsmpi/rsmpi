@@ -6,8 +6,9 @@
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 
-use super::super::Library;
 use std::{env, error::Error, fmt, path::PathBuf};
+
+use super::super::Library;
 
 #[derive(Debug)]
 struct VarError {

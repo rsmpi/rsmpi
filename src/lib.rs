@@ -123,8 +123,7 @@
 //!
 //! [MPIspec]: http://www.mpi-forum.org/docs/docs.html
 
-use std::mem::MaybeUninit;
-use std::os::raw::c_int;
+use std::{mem::MaybeUninit, os::raw::c_int};
 
 /// The raw C language MPI API
 ///
@@ -148,16 +147,14 @@ pub mod topology;
 
 /// Re-exports all traits.
 pub mod traits {
-    pub use crate::attribute::traits::*;
-    pub use crate::collective::traits::*;
-    pub use crate::datatype::traits::*;
-    pub use crate::point_to_point::traits::*;
-    pub use crate::raw::traits::*;
-    pub use crate::topology::traits::*;
-
     // Re-export derives
     #[cfg(feature = "derive")]
     pub use mpi_derive::Equivalence;
+
+    pub use crate::{
+        attribute::traits::*, collective::traits::*, datatype::traits::*,
+        point_to_point::traits::*, raw::traits::*, topology::traits::*,
+    };
 }
 
 /// These crates are used by mpi-derive, and so must be public, but shouldn't be used by dependent
@@ -173,7 +170,6 @@ pub mod internal {
 pub use crate::environment::{
     initialize, initialize_with_threading, time, time_resolution, Threading,
 };
-
 use crate::ffi::MPI_Aint;
 
 /// Encodes error values returned by MPI functions.

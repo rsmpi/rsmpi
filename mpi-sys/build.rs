@@ -2,8 +2,7 @@
 // Generates the Rust header for the C API.
 // Finds out information about the MPI library
 
-use std::env;
-use std::path::Path;
+use std::{env, path::Path};
 
 fn main() {
     // Try to find an MPI library

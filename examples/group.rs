@@ -1,8 +1,10 @@
 #![deny(warnings)]
 #![allow(clippy::many_single_char_names)]
 
-use mpi::topology::{GroupRelation, Rank, SystemGroup};
-use mpi::traits::*;
+use mpi::{
+    topology::{GroupRelation, Rank, SystemGroup},
+    traits::*,
+};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

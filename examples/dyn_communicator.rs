@@ -1,8 +1,10 @@
 #![deny(warnings)]
 
-use mpi::collective::SystemOperation;
-use mpi::topology::Communicator;
-use mpi::traits::{CommunicatorCollectives, Group};
+use mpi::{
+    collective::SystemOperation,
+    topology::Communicator,
+    traits::{CommunicatorCollectives, Group},
+};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

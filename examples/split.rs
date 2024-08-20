@@ -1,7 +1,9 @@
 #![deny(warnings)]
 
-use mpi::topology::{Color, GroupRelation, SystemGroup};
-use mpi::traits::*;
+use mpi::{
+    topology::{Color, GroupRelation, SystemGroup},
+    traits::*,
+};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

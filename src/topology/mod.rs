@@ -19,23 +19,25 @@
 //! - **6.8**: Naming objects
 //! - **7**: Process topologies
 //! - **Parts of sections**: 8, 10, 12
-use std::ffi::{CStr, CString};
-use std::mem::MaybeUninit;
-use std::os::raw::{c_char, c_int, c_void};
-use std::process;
+use std::{
+    ffi::{CStr, CString},
+    mem::MaybeUninit,
+    os::raw::{c_char, c_int, c_void},
+    process,
+};
 
 use conv::ConvUtil;
 
 #[cfg(not(msmpi))]
 use crate::Tag;
-use crate::{Count, IntArray};
-
-use crate::attribute::CommAttribute;
-use crate::datatype::traits::*;
-use crate::ffi;
-use crate::ffi::{MPI_Comm, MPI_Group};
-use crate::raw::traits::*;
-use crate::with_uninitialized;
+use crate::{
+    attribute::CommAttribute,
+    datatype::traits::*,
+    ffi,
+    ffi::{MPI_Comm, MPI_Group},
+    raw::traits::*,
+    with_uninitialized, Count, IntArray,
+};
 
 mod cartesian;
 

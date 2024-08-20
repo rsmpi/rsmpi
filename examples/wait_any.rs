@@ -1,8 +1,9 @@
 #![deny(warnings)]
 #![allow(clippy::float_cmp)]
 
-use mpi::traits::*;
 use std::{thread, time};
+
+use mpi::traits::*;
 
 fn main() {
     let universe = mpi::initialize().unwrap();

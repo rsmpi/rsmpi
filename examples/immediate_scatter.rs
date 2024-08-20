@@ -1,7 +1,6 @@
 #![deny(warnings)]
 
-use mpi::topology::Rank;
-use mpi::traits::*;
+use mpi::{topology::Rank, traits::*};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

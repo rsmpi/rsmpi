@@ -1,8 +1,6 @@
 #![deny(warnings)]
 
-use mpi::datatype::PartitionMut;
-use mpi::traits::*;
-use mpi::Count;
+use mpi::{datatype::PartitionMut, traits::*, Count};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

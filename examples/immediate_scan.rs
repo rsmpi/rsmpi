@@ -1,8 +1,6 @@
 #![deny(warnings)]
 
-use mpi::collective::SystemOperation;
-use mpi::topology::Rank;
-use mpi::traits::*;
+use mpi::{collective::SystemOperation, topology::Rank, traits::*};
 
 fn fac(n: Rank) -> Rank {
     (1..=n).product()

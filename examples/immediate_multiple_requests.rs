@@ -1,6 +1,5 @@
 //! Example using request handlers.
-use mpi::point_to_point::Status;
-use mpi::traits::*;
+use mpi::{point_to_point::Status, traits::*};
 
 const COUNT: usize = 256;
 

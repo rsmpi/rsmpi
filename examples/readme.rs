@@ -1,7 +1,6 @@
 #![deny(warnings)]
 
-use mpi::request::WaitGuard;
-use mpi::traits::*;
+use mpi::{request::WaitGuard, traits::*};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

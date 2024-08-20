@@ -1,8 +1,10 @@
 #![deny(warnings)]
 #![allow(clippy::float_cmp)]
 
-use mpi::request::{CancelGuard, WaitGuard};
-use mpi::traits::*;
+use mpi::{
+    request::{CancelGuard, WaitGuard},
+    traits::*,
+};
 
 fn main() {
     let universe = mpi::initialize().unwrap();
