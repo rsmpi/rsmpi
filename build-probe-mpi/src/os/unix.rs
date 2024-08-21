@@ -9,9 +9,9 @@
 use core::fmt;
 use std::{env, error::Error, path::PathBuf, process::Command};
 
-use super::super::Library;
-
 use pkg_config::Config;
+
+use super::super::Library;
 
 #[derive(Debug, PartialEq)]
 struct UnquoteError {

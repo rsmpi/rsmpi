@@ -1,9 +1,11 @@
 #![deny(warnings)]
 
-use mpi::datatype::{MutView, UserDatatype, View};
-use mpi::point_to_point as p2p;
-use mpi::topology::Rank;
-use mpi::traits::*;
+use mpi::{
+    datatype::{MutView, UserDatatype, View},
+    point_to_point as p2p,
+    topology::Rank,
+    traits::*,
+};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

@@ -1,7 +1,6 @@
-use crate::ffi;
-use crate::topology::comm_is_inter;
-use crate::traits::AsRaw;
 use mpi_sys::MPI_Comm;
+
+use crate::{ffi, topology::comm_is_inter, traits::AsRaw};
 
 /// A raw communicator handle.
 pub enum CommunicatorHandle {

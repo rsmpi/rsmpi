@@ -1,0 +1,8 @@
+# Enables the use of the features below
+unstable_features = true
+
+# Group imports from the same crate/module together
+imports_granularity = "Crate"
+
+# Sort imports into three sections. Standard library, external and internal
+group_imports = "StdExternalCrate"

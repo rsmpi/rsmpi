@@ -1,9 +1,7 @@
 #![deny(warnings)]
-use std::env;
-use std::process::Command;
+use std::{env, process::Command};
 
-use mpi::topology::MergeOrder;
-use mpi::traits::*;
+use mpi::{topology::MergeOrder, traits::*};
 
 fn main() -> Result<(), mpi::MpiError> {
     let universe = mpi::initialize().unwrap();

@@ -3,11 +3,9 @@ use std::mem;
 use conv::ConvUtil;
 
 use super::{sealed, AsCommunicator, Communicator, IntoTopology, Rank};
-use crate::ffi::MPI_Comm;
-use crate::topology::SimpleCommunicator;
 use crate::{
-    datatype::traits::*, ffi, raw::traits::*, with_uninitialized, with_uninitialized2, Count,
-    IntArray,
+    datatype::traits::*, ffi, ffi::MPI_Comm, raw::traits::*, topology::SimpleCommunicator,
+    with_uninitialized, with_uninitialized2, Count, IntArray,
 };
 
 /// Contains arrays describing the layout of the

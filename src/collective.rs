@@ -9,28 +9,31 @@
 //! - **5.12**: Nonblocking collective operations,
 //! `MPI_Ialltoallw()`, `MPI_Ireduce_scatter()`
 
-use std::ffi::{CString, NulError};
 #[cfg(feature = "user-operations")]
 use std::mem;
-use std::os::raw::{c_char, c_int, c_void};
-use std::process::Command;
-use std::{fmt, ptr};
+use std::{
+    ffi::{CString, NulError},
+    fmt,
+    os::raw::{c_char, c_int, c_void},
+    process::Command,
+    ptr,
+};
 
 use conv::ConvUtil;
 #[cfg(feature = "user-operations")]
 use libffi::middle::{Cif, Closure, Type};
 
-use crate::ffi::MPI_Op;
-use crate::{ffi, MpiError};
-
-use crate::datatype::traits::*;
 #[cfg(feature = "user-operations")]
 use crate::datatype::{DatatypeRef, DynBuffer, DynBufferMut};
-use crate::raw::traits::*;
-use crate::request::{Request, Scope, StaticScope};
-use crate::topology::{traits::*, InterCommunicator};
-use crate::topology::{Process, Rank};
-use crate::with_uninitialized;
+use crate::{
+    datatype::traits::*,
+    ffi,
+    ffi::MPI_Op,
+    raw::traits::*,
+    request::{Request, Scope, StaticScope},
+    topology::{traits::*, InterCommunicator, Process, Rank},
+    with_uninitialized, MpiError,
+};
 
 /// Collective communication traits
 pub mod traits {

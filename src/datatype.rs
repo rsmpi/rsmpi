@@ -65,21 +65,12 @@
 //! - **4.3**: Canonical pack and unpack, `MPI_Pack_external()`, `MPI_Unpack_external()`,
 //! `MPI_Pack_external_size()`
 
-use std::borrow::Borrow;
-use std::marker::PhantomData;
-use std::os::raw::c_void;
-use std::{mem, slice};
+use std::{borrow::Borrow, marker::PhantomData, mem, os::raw::c_void, slice};
 
 use conv::ConvUtil;
 
 use super::{Address, Count};
-
-use crate::ffi;
-use crate::ffi::MPI_Datatype;
-
-use crate::raw::traits::*;
-
-use crate::with_uninitialized;
+use crate::{ffi, ffi::MPI_Datatype, raw::traits::*, with_uninitialized};
 
 /// Datatype traits
 pub mod traits {
@@ -216,8 +207,9 @@ equivalent_system_datatype!(isize, ffi::RSMPI_INT64_T);
 #[cfg(feature = "complex")]
 /// Implement direct equivalence for complex types
 pub mod complex_datatype {
-    use super::{ffi, DatatypeRef, Equivalence, FromRaw, SystemDatatype};
     use num_complex::{Complex32, Complex64};
+
+    use super::{ffi, DatatypeRef, Equivalence, FromRaw, SystemDatatype};
     equivalent_system_datatype!(Complex32, ffi::RSMPI_FLOAT_COMPLEX);
     equivalent_system_datatype!(Complex64, ffi::RSMPI_DOUBLE_COMPLEX);
 }

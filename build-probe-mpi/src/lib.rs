@@ -25,9 +25,9 @@
 
 mod os;
 
-pub use os::probe;
-
 use std::path::PathBuf;
+
+pub use os::probe;
 
 /// Result of a successfull probe
 #[allow(clippy::manual_non_exhaustive)]

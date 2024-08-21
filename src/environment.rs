@@ -20,14 +20,13 @@ use std::{
 use conv::ConvUtil;
 use once_cell::sync::Lazy;
 
-use crate::{attribute::AppNum, ffi};
-use crate::{attribute::UniverseSize, traits::FromRaw};
 use crate::{
-    topology::traits::AnyCommunicator,
-    topology::{Communicator, InterCommunicator, SimpleCommunicator},
-    traits::AsRaw,
+    attribute::{AppNum, UniverseSize},
+    ffi,
+    topology::{traits::AnyCommunicator, Communicator, InterCommunicator, SimpleCommunicator},
+    traits::{AsRaw, FromRaw},
+    with_uninitialized, with_uninitialized2,
 };
-use crate::{with_uninitialized, with_uninitialized2};
 
 /// Internal data structure used to uphold certain MPI invariants.
 /// State is currently only used with the derive feature.

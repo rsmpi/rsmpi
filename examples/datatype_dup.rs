@@ -1,7 +1,6 @@
 #![deny(warnings)]
 
-use mpi::datatype::DynBufferMut;
-use mpi::traits::*;
+use mpi::{datatype::DynBufferMut, traits::*};
 
 fn main() {
     let universe = mpi::initialize().unwrap();

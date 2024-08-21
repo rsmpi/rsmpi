@@ -1,8 +1,6 @@
 #![deny(warnings)]
 
-use mpi::point_to_point as p2p;
-use mpi::topology::Rank;
-use mpi::traits::*;
+use mpi::{point_to_point as p2p, topology::Rank, traits::*};
 
 fn main() {
     let universe = mpi::initialize().unwrap();
