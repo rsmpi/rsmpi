@@ -76,7 +76,7 @@ where
             let b_in = Box::from_raw(val_in as *mut Self);
             let b_out = b_in.clone();
             *(val_out as *mut *mut Self) = Box::into_raw(b_out);
-            Box::into_raw(b_in); // deconstruct to avoid dropping
+            let _ = Box::into_raw(b_in); // deconstruct to avoid dropping
             *flag = 1;
         } else {
             *flag = 0;
