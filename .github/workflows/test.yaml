@@ -72,7 +72,7 @@ jobs:
         if: ${{ matrix.cargo_update }}
         run: cargo update --verbose
       - name: Cargo Test ${{ matrix.cargo_flags }}
-        run: cargo test ${{ matrix.cargo_flags }}
+        run: cargo test --workspace ${{ matrix.cargo_flags }}
       - name: Parallel Examples
         run: |
           cargo install --force cargo-mpirun
