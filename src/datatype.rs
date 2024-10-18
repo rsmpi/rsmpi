@@ -161,6 +161,32 @@ pub type SystemDatatype = DatatypeRef<'static>;
 /// # Standard section(s)
 ///
 /// 3.2.2
+///
+/// # Example
+/// This trait can be derived using the `derive` crate feature.
+/// ```ignore
+/// use mpi_derive::Equivalence;
+///
+/// #[derive(Equivalence)]
+/// struct MyProgramOpts {
+///     name: [u8; 100],
+///     num_cycles: u32,
+///     material_properties: [f64; 20],
+/// }
+/// ```
+///
+/// If you use `mpi` via a re-export, you can modify the crate path using the `mpi` attribute:
+/// ```ignore
+/// use mpi_derive::Equivalence;
+///
+/// #[derive(Equivalence)]
+/// #[mpi(crate = "::crate1::mpi")]
+/// struct MyProgramOpts {
+///     name: [u8; 100],
+///     num_cycles: u32,
+///     material_properties: [f64; 20],
+/// }
+/// ```
 pub unsafe trait Equivalence {
     /// The type of the equivalent MPI datatype (e.g. `SystemDatatype` or `UserDatatype`)
     type Out: Datatype;

@@ -24,6 +24,7 @@ exclude = [
 [workspace]
 members = [
   "build-probe-mpi",
+  "derive-test",
   "mpi-derive",
   "mpi-sys",
 ]

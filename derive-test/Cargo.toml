@@ -1,0 +1,7 @@
+[package]
+name = "derive-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rsmpi = { package = "mpi", version = "0.8.0", path = "..", features = ["derive"] }
