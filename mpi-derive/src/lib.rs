@@ -6,6 +6,34 @@ type TokenStream2 = proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{DeriveInput, Error, Expr, Fields, Type};
 
+/// The `derive` crate feature enables the `Equivalence` derive macro, which makes it easy to
+/// send structs over-the-wire without worrying about safety around padding,
+/// and allowing arbitrary datatype matching between structs with the same field order but different layout.
+///
+/// # Example
+/// ```ignore
+/// use mpi_derive::Equivalence;
+///
+/// #[derive(Equivalence)]
+/// struct MyProgramOpts {
+///     name: [u8; 100],
+///     num_cycles: u32,
+///     material_properties: [f64; 20],
+/// }
+/// ```
+///
+/// If you use `mpi` via a re-export, you can modify the crate path using the `mpi` attribute:
+/// ```ignore
+/// use mpi_derive::Equivalence;
+///
+/// #[derive(Equivalence)]
+/// #[mpi(crate = "::crate1::mpi")]
+/// struct MyProgramOpts {
+///     name: [u8; 100],
+///     num_cycles: u32,
+///     material_properties: [f64; 20],
+/// }
+/// ```
 #[proc_macro_derive(Equivalence, attributes(mpi))]
 pub fn create_user_datatype(input: TokenStream1) -> TokenStream1 {
     let ast: syn::DeriveInput = syn::parse(input).expect("Couldn't parse struct");
