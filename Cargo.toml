@@ -32,6 +32,7 @@ members = [
 [features]
 default = ["user-operations"]
 user-operations = ["libffi"]
+libffi-system = ["libffi?/system"]
 derive = ["mpi-derive", "memoffset"]
 complex = ["dep:num-complex"]
 

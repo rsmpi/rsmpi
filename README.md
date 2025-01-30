@@ -51,7 +51,9 @@ First, it uses a thin static library written in C (see [rsmpi.h][rsmpih] and [rs
 
 Second, to generate FFI definitions tailored to each MPI implementation, `rsmpi` uses `rust-bindgen` which needs `libclang`. See the [bindgen project page][bindgen] for more information.
 
-Furthermore, `rsmpi` uses the `libffi` crate which installs the native `libffi` which depends on certain build tools. See the [libffi project page][libffi] for more information.
+Furthermore, `rsmpi` uses the `libffi` crate if you use `collective` feature.
+The default behaviour is for libffi to build `libffi.so` from source code using certain build tools, but you can also have it use `libffi.so` installed on your system by enabling the `libffi-system` feature.
+See the [libffi project page][libffi] for more information.
 
 [OpenMPI]: https://www.open-mpi.org
 [MPICH]: https://www.mpich.org

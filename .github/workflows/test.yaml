@@ -21,24 +21,24 @@ jobs:
           - os: ubuntu-latest
             rust: nightly
             mpi_package: libmpich-dev
-            cargo_flags: --all-features
+            cargo_flags: --features user-operations,derive,complex
             cargo_update: true
           - os: ubuntu-latest
             rust: stable
             mpi_package: libmpich-dev
-            cargo_flags: --all-features
+            cargo_flags: --features user-operations,derive,complex
           - os: ubuntu-latest
             rust: 1.70.0
             mpi_package: libmpich-dev
-            cargo_flags: --all-features
+            cargo_flags: --features user-operations,derive,complex
           - os: macos-latest
             rust: stable
             mpi_package: open-mpi
-            cargo_flags: --all-features
+            cargo_flags: --features user-operations,derive,complex
           - os: ubuntu-latest
             rust: stable
             mpi_package: libopenmpi-dev
-            cargo_flags: --all-features
+            cargo_flags: --features user-operations,derive,complex
           - os: windows-2022
             rust: stable
             cargo_flags: --features derive,complex
