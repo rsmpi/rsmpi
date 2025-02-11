@@ -53,7 +53,7 @@ jobs:
         if: runner.os == 'macOS'
         # Workaround for intermittent failures with OMPI https://github.com/open-mpi/ompi/issues/7393
         run: |
-          brew install llvm@13 ${{ matrix.mpi_package }}
+          brew install llvm@14 ${{ matrix.mpi_package }}
           echo TMPDIR=/tmp | tee -a $GITHUB_ENV
           env
       - name: Install (Windows)
