@@ -16,11 +16,15 @@ edition = "2021"
 rust-version = "1.65"
 links = "mpi"
 
+[features]
+default = "bindgen-runtime"
+bindgen-runtime = ["bindgen/runtime"]
+
 [dependencies]
 
 [build-dependencies]
 cc = "1.0.90"
-bindgen = "0.69"
+bindgen = { version = "0.69", default-features = false }
 build-probe-mpi = { path = "../build-probe-mpi", version = "0.1.4" }
 
 [package.metadata.release]
