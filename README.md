@@ -38,6 +38,7 @@ For a reasonable chance of success with `rsmpi` with any MPI implementation, you
   - `rsmpi` automatically uses `CRAY_MPICH_DIR` on Cray environments so the above need not be set
   - `mpich` and `ompi` are tried by default as a last resort
   - Tip: test with a command like `pkg-config --cflags --libs mpich`
+  - Tip: On Fedora 41, full installation with MPICH can be done by setting `$PKG_CONFIG_PATH` to `/usr/lib64/mpich/lib/pkgconfig` and `$LD_LIBRARY_PATH` to `/usr/lib64/mpich/lib/` after installing `mpich` through `dnf`
 - The implementation provides a C compiler wrapper `mpicc`
   - export `MPICC=/path/to/mpicc` to specify fully
   - otherwise tries `mpicc` in `$PATH`
