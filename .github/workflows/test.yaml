@@ -64,6 +64,7 @@ jobs:
           echo MSMPI_INC="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\\" | tee -a $GITHUB_ENV
           echo MSMPI_LIB32="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x86\\" | tee -a $GITHUB_ENV
           echo MSMPI_LIB64="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x64\\" | tee -a $GITHUB_ENV
+          echo "/c/Program Files/Microsoft MPI/Bin" | tee -a $GITHUB_PATH
           env
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -76,5 +77,4 @@ jobs:
       - name: Parallel Examples
         run: |
           cargo install --force cargo-mpirun
-          export PATH="/c/Program Files/Microsoft MPI/Bin:${PATH}"
           ci/run-examples.sh ${{ matrix.cargo_flags }}
