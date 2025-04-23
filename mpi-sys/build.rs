@@ -61,9 +61,14 @@ fn main() {
         }
     }
 
+    let mpi_opaque_types =
+        "MPI_(Comm|Datatype|Errhandler|Group|Info|Message|Op|Request|Session|Win)";
+
     // Generate Rust bindings for the MPI C API.
     let bindings = builder
         .header("src/rsmpi.h")
+        .new_type_alias(mpi_opaque_types)
+        .derive_partialeq(true)
         .emit_builtins()
         .generate()
         .unwrap();
