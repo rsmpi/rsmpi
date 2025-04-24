@@ -121,7 +121,7 @@
 //! most of the descriptions are quite terse for now and to the uninitiated will only make sense in
 //! combination with the [MPI specification][MPIspec].
 //!
-//! [MPIspec]: http://www.mpi-forum.org/docs/docs.html
+//! [MPIspec]: https://www.mpi-forum.org/docs/
 
 use std::{mem::MaybeUninit, os::raw::c_int};
 
@@ -129,7 +129,7 @@ use std::{mem::MaybeUninit, os::raw::c_int};
 ///
 /// Documented in the [Message Passing Interface specification][spec]
 ///
-/// [spec]: http://www.mpi-forum.org/docs/docs.html
+/// [spec]: https://www.mpi-forum.org/docs/
 #[allow(missing_docs, dead_code, non_snake_case, non_camel_case_types)]
 #[macro_use]
 pub mod ffi {
