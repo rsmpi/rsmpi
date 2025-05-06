@@ -37,12 +37,40 @@ fn var(key: &str) -> Result<String, VarError> {
 
 /// Probe the environment for MS-MPI
 pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
-    let mut errs: Vec<Box<dyn Error>> = vec![];
+    let mut intel_errs: Vec<Box<dyn Error>> = vec![];
+
+    // Check for Intel MPI first
+    match var("I_MPI_ROOT") {
+        Ok(oneapi_root) => {
+            let include_path = PathBuf::from(&oneapi_root).join("include");
+
+            // TODO: arthur: check this as in a conda env things will be at "lib" directly
+            let lib_path = if PathBuf::from(&oneapi_root).join("lib/release").exists() {
+                PathBuf::from(&oneapi_root).join("lib/release")
+            } else {
+                PathBuf::from(&oneapi_root).join("lib")
+            };
+
+            return Ok(Library {
+                mpicc: None,
+                libs: vec!["impi".to_owned()],
+                lib_paths: vec![lib_path],
+                include_paths: vec![include_path],
+                version: String::from("Intel MPI"),
+                _priv: (),
+            });
+        }
+        Err(err) => {
+            intel_errs.push(Box::new(err));
+        }
+    }
+
+    let mut msmpi_errs: Vec<Box<dyn Error>> = vec![];
 
     let include_path = match var("MSMPI_INC") {
         Ok(include_path) => Some(include_path),
         Err(err) => {
-            errs.push(Box::new(err));
+            msmpi_errs.push(Box::new(err));
             None
         }
     };
@@ -58,13 +86,15 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
     let lib_path = match var(lib_env) {
         Ok(lib_path) => Some(lib_path),
         Err(err) => {
-            errs.push(Box::new(err));
+            msmpi_errs.push(Box::new(err));
             None
         }
     };
 
-    if errs.len() > 0 {
-        return Err(errs);
+    if msmpi_errs.len() > 0 && intel_errs.len() > 0 {
+        let mut all_errs = msmpi_errs;
+        all_errs.extend(intel_errs);
+        return Err(all_errs);
     }
 
     Ok(Library {
