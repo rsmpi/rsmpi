@@ -13,9 +13,9 @@ rust-version = "1.65"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1.0.79"
-quote = "1.0.35"
-syn = "2.0.55"
+proc-macro2 = "1.0.95"
+quote = "1.0.40"
+syn = "2.0.101"
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-{{version}}"

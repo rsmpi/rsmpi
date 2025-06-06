@@ -28,7 +28,7 @@ jobs:
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: ubuntu-22.04
-            rust: 1.70.0
+            rust: 1.78.0
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: macos-latest
