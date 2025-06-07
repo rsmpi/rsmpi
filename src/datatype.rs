@@ -1247,12 +1247,12 @@ impl<'a> DynBufferMut<'a> {
     }
 
     /// Reborrows the buffer with a shorter lifetime.
-    pub fn reborrow(&self) -> DynBuffer {
+    pub fn reborrow(&self) -> DynBuffer<'_> {
         unsafe { DynBuffer::from_raw(self.as_ptr(), self.count(), self.as_datatype()) }
     }
 
     /// Reborrows the buffer mutably with a shorter lifetime.
-    pub fn reborrow_mut(&mut self) -> DynBufferMut {
+    pub fn reborrow_mut(&mut self) -> DynBufferMut<'_> {
         unsafe { DynBufferMut::from_raw(self.as_mut_ptr(), self.count(), self.as_datatype()) }
     }
 
@@ -1453,7 +1453,7 @@ where
     D: Borrow<[Count]>,
 {
     /// Partition `buf` using `counts` and `displs`
-    pub fn new(buf: &B, counts: C, displs: D) -> Partition<B, C, D> {
+    pub fn new(buf: &'b B, counts: C, displs: D) -> Self {
         let n = buf.count();
         assert!(counts
             .borrow()
@@ -1524,7 +1524,7 @@ where
     D: Borrow<[Count]>,
 {
     /// Partition `buf` using `counts` and `displs`
-    pub fn new(buf: &mut B, counts: C, displs: D) -> PartitionMut<B, C, D> {
+    pub fn new(buf: &'b mut B, counts: C, displs: D) -> Self {
         let n = buf.count();
         assert!(counts
             .borrow()
