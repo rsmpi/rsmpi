@@ -55,6 +55,8 @@ jobs:
         run: |
           brew install llvm@19 ${{ matrix.mpi_package }}
           echo TMPDIR=/tmp | tee -a $GITHUB_ENV
+          echo PATH="/opt/homebrew/opt/llvm@19/bin:$PATH" | tee -a $GITHUB_ENV
+          echo DYLD_LIBRARY_PATH=$(/opt/homebrew/opt/llvm@19/bin/llvm-config --libdir) | tee -a $GITHUB_ENV
           env
       - name: Install (Windows)
         if: runner.os == 'Windows'

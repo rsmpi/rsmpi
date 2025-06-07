@@ -20,7 +20,7 @@ links = "mpi"
 
 [build-dependencies]
 cc = "1.2.26"
-bindgen = { version = "0.70.1" }
+bindgen = { version = "0.70.1", default-features = false }
 build-probe-mpi = { path = "../build-probe-mpi", version = "0.1.4" }
 
 [package.metadata.release]
