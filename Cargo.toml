@@ -37,7 +37,7 @@ complex = ["dep:num-complex"]
 
 [dependencies]
 conv = "0.3.3"
-libffi = { version = "4.0.0", optional = true }
+libffi = { version = "4.1.0", optional = true }
 memoffset = { version = "0.9", optional = true }
 mpi-derive = { path = "mpi-derive", version = "0.1.2", optional = true }
 mpi-sys = { path = "mpi-sys", version = "0.2.2" }
