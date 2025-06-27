@@ -9,9 +9,9 @@ fn main() {
     let lib = match build_probe_mpi::probe() {
         Ok(lib) => lib,
         Err(errs) => {
-            println!("Could not find MPI library for various reasons:\n");
+            println!("This library checks multiple methods to find an MPI library on your system. This process has failed to find an MPI library for various reasons:\n");
             for (i, err) in errs.iter().enumerate() {
-                println!("Reason #{}:\n{}\n", i, err);
+                println!("Reason #{}:\n{}\n", i + 1, err);
             }
             panic!();
         }

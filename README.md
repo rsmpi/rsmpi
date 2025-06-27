@@ -2,8 +2,8 @@
 
 [![GitHub Actions][actions-shield]][actions]
 [![Documentation][doc-shield]][doc]
-[![Crates.io][crate-shield]][crate] 
-[![License: Apache License 2.0 or MIT][license-shield]][license] 
+[![Crates.io][crate-shield]][crate]
+[![License: Apache License 2.0 or MIT][license-shield]][license]
 
 The [Message Passing Interface][MPI] (MPI) is a specification for a
 message-passing style concurrency library. Implementations of MPI are often used to structure
