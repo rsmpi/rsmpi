@@ -28,7 +28,7 @@ jobs:
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: ubuntu-22.04
-            rust: 1.70.0
+            rust: 1.78.0
             mpi_package: libmpich-dev
             cargo_flags: --all-features
           - os: macos-latest
@@ -55,6 +55,9 @@ jobs:
         run: |
           brew install llvm@19 ${{ matrix.mpi_package }}
           echo TMPDIR=/tmp | tee -a $GITHUB_ENV
+          ## The following two lines are needed on MacOS if the runtime feature is disabled
+          # echo PATH="/opt/homebrew/opt/llvm@19/bin:$PATH" | tee -a $GITHUB_ENV
+          # echo DYLD_LIBRARY_PATH=$(/opt/homebrew/opt/llvm@19/bin/llvm-config --libdir) | tee -a $GITHUB_ENV
           env
       - name: Install (Windows)
         if: runner.os == 'Windows'

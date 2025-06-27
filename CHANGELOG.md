@@ -2,7 +2,7 @@
 
 ## `main` branch
 
-**MSRV:** 1.70
+**MSRV:** 1.78
 
 ### New Features
 

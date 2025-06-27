@@ -378,19 +378,19 @@ pub trait Communicator: sealed::AsHandle {
     ///
     /// # Examples
     /// See `examples/broadcast.rs` `examples/gather.rs` `examples/send_receive.rs`
-    fn process_at_rank(&self, r: Rank) -> Process {
+    fn process_at_rank(&self, r: Rank) -> Process<'_> {
         assert!(0 <= r && r < self.target_size());
         Process::by_rank_unchecked(self, r)
     }
 
     /// Returns an `AnyProcess` identifier that can be used, e.g. as a `Source` in point to point
     /// communication.
-    fn any_process(&self) -> AnyProcess {
+    fn any_process(&self) -> AnyProcess<'_> {
         AnyProcess(self.as_handle())
     }
 
     /// A `Process` for the calling process
-    fn this_process(&self) -> Process {
+    fn this_process(&self) -> Process<'_> {
         let rank = self.rank();
         Process::by_rank_unchecked(self, rank)
     }
