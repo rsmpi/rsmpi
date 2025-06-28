@@ -41,6 +41,11 @@ jobs:
             cargo_flags: --all-features
           - os: windows-2025
             rust: stable
+            mpi_package: intelmpi
+            cargo_flags: --all-features
+          - os: windows-2025
+            rust: stable
+            mpi_package: msmpi
             cargo_flags: --features derive,complex
     steps:
       - uses: actions/checkout@v4
@@ -63,11 +68,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           choco install llvm --version 20.1.2 --allow-downgrade -y
-          sh ci/install-mpi-windows.sh
-          echo MSMPI_INC="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\\" | tee -a $GITHUB_ENV
-          echo MSMPI_LIB32="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x86\\" | tee -a $GITHUB_ENV
-          echo MSMPI_LIB64="C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x64\\" | tee -a $GITHUB_ENV
-          echo "/c/Program Files/Microsoft MPI/Bin" | tee -a $GITHUB_PATH
+          sh ci/install-mpi-windows.sh ${{ matrix.mpi_package }}
           env
       - uses: dtolnay/rust-toolchain@master
         with:
