@@ -33,7 +33,7 @@ fn main() {
 
         assert!(buf
             .iter()
-            .zip((0..size).flat_map(|r| (0..r)))
+            .zip((0..size).flat_map(|r| 0..r))
             .all(|(&i, j)| i == j));
         println!("{:?}", buf);
     } else {
