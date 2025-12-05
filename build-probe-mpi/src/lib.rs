@@ -29,7 +29,7 @@ use std::path::PathBuf;
 
 pub use os::probe;
 
-/// Result of a successfull probe
+/// Result of a successful probe
 #[allow(clippy::manual_non_exhaustive)]
 #[derive(Clone, Debug)]
 pub struct Library {

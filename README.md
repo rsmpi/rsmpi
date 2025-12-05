@@ -42,8 +42,9 @@ For a reasonable chance of success with `rsmpi` with any MPI implementation, you
   - export `MPICC=/path/to/mpicc` to specify fully
   - otherwise tries `mpicc` in `$PATH`
   - `mpicc -show` should print the full command line that is used to invoke the wrapped C compiler in gcc-compatible syntax (e.g., `-lmpi`, `-I/usr/local/include`, ...)
-- On Windows, the variables `MSMPI_INC` and either `MSMPI_LIB32` or `MSMPI_LIB64` should be set
-  - see example in [GitHub Actions](.github/workflows/test.yaml)
+- On Windows,
+  - for MS-MPI the variables `MSMPI_INC` and either `MSMPI_LIB32` or `MSMPI_LIB64` should be set
+  - for Intel MPI the variable `I_MPI_ROOT` should be set
 
 Since the MPI standard leaves some details of the C API unspecified (whether to implement certain constants and even functions using preprocessor macros or native C constructs, the details of most types, etc.) `rsmpi` takes a two step approach to generating functional low-level bindings.
 

@@ -19,8 +19,8 @@ links = "mpi"
 [dependencies]
 
 [build-dependencies]
-cc = "1.0.90"
-bindgen = "0.69"
+cc = "1.2.27"
+bindgen = { version = "0.72.0", default-features = false, features = ["runtime"] }
 build-probe-mpi = { path = "../build-probe-mpi", version = "0.1.4" }
 
 [package.metadata.release]
