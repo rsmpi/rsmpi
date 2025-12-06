@@ -116,11 +116,16 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
     if let Ok(mpi_pkg_config) = env::var("MPI_PKG_CONFIG") {
         match Config::new().cargo_metadata(false).probe(&mpi_pkg_config) {
             Ok(lib) => return Ok(Library::from(lib)),
-            Err(err) => {
-                let err: Box<dyn Error> = Box::new(err);
-                errs.push(err)
+            Err(_err) => {
+                let err: Box<dyn Error> = "Error: Environmental variable $MPI_PKG_CONFIG is set, but is not valid. Please check that it holds the address to a file ending in `.pc`.\nSee https://github.com/rsmpi/rsmpi/blob/main/README.md for more details.\nIf you mean to use another method to find an MPI library, unset $MPI_PKG_CONFIG".into();
+                errs.push(err);
+                return Err(errs);
             }
         }
+    } else {
+        let err: Box<dyn Error> =
+            "Environmental variable $MPI_PKG_CONFIG is not set. Trying next method".into();
+        errs.push(err);
     }
 
     if let Ok(cray_mpich_dir) = env::var("CRAY_MPICH_DIR") {
@@ -137,29 +142,36 @@ pub fn probe() -> Result<Library, Vec<Box<dyn Error>>> {
                 errs.push(err)
             }
         }
+    } else {
+        let err: Box<dyn Error> =
+            "Environmental variable $CRAY_MPICH_DIR is not set. Trying next method".into();
+        errs.push(err);
     }
 
     match probe_via_mpicc(&env::var("MPICC").unwrap_or_else(|_| String::from("mpicc"))) {
         Ok(lib) => return Ok(lib),
         Err(err) => {
-            let err: Box<dyn Error> = Box::new(err);
-            errs.push(err)
+            let err: Box<dyn Error> =
+                format!("MPICC failed with error: {}. Trying next method", err).into();
+            errs.push(err);
         }
     }
 
     match Config::new().cargo_metadata(false).probe("mpich") {
         Ok(lib) => return Ok(Library::from(lib)),
-        Err(err) => {
-            let err: Box<dyn Error> = Box::new(err);
-            errs.push(err)
+        Err(_err) => {
+            let err: Box<dyn Error> =
+                "Fallback 1: mpich was not found. To use this fallback, set $PKG_CONFIG_PATH to a path to a folder containing mpich.pc. Note that the recommended installation is through the $MPI_PKG_CONFIG. Trying next method".into();
+            errs.push(err);
         }
     }
 
     match Config::new().cargo_metadata(false).probe("ompi") {
         Ok(lib) => return Ok(Library::from(lib)),
-        Err(err) => {
-            let err: Box<dyn Error> = Box::new(err);
-            errs.push(err)
+        Err(_err) => {
+            let err: Box<dyn Error> =
+                "Fallback 2: ompi (Open MPI) was not found. To use this fallback, set $PKG_CONFIG_PATH to a path to a folder containing ompi.pc. Note that the recommended installation is through the $MPI_PKG_CONFIG".into();
+            errs.push(err);
         }
     }
 
