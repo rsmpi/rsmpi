@@ -72,7 +72,7 @@ Add the `mpi` crate as a dependency in your `Cargo.toml`:
 ```toml
 # "features" is optional
 [dependencies]
-mpi = { version = "0.8.0", features = ["user-operations", "derive"] }
+mpi = { version = "0.8.1", features = ["user-operations", "derive"] }
 ```
 
 Then use it in your program like this:
@@ -195,6 +195,10 @@ struct MyProgramOpts {
     material_properties: [f64; 20],
 }
 ```
+
+### On disabling the `mpi-sys/runtime` feature
+
+For a standard install of LLVM on Linux, the `runtime` feature can be disabled (e.g., via `--no-default-features`) with no consequences because `libclang.so` will be found in a default path. (To use a non-default path, `LD_LIBRARY_PATH` would have to be set.) On MacOS, standard installs (like Homebrew) do not put `libclang.dylib` in a default path. See [the CI configuration](.github/workflows/test.yaml) for examples of correctly setting `DYLD_LIBRARY_PATH` for MacOS. See [`clang-sys` documentation on linking](https://github.com/KyleMayes/clang-sys?tab=readme-ov-file#linking) for more details.
 
 ## Documentation
 
