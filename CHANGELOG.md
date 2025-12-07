@@ -1,10 +1,20 @@
 # RSMPI Release Notes
 
-## `main` branch
+## 0.8.1 (2025-12-07)
 
 **MSRV:** 1.78
 
 ### New Features
+
+* [[PR 193]](https://github.com/rsmpi/rsmpi/pull/193) Allow custom crate paths for Equivalence derive macro.
+
+### Maintenance
+
+* Upgrade dependencies, fixing issues on MacOS
+  * See [README](README.md) for details on linking with the `mpi-sys/runtime` feature disabled.
+* [[PR 201]](https://github.com/rsmpi/rsmpi/pull/201) mpi-sys: bindgen: use `new_type_alias` for opaque types.
+* `build-probe-mpi`: [[PR 205]](https://github.com/rsmpi/rsmpi/pull/205) Add support for Intel MPI on Windows.
+* `build-probe-mpi`: [[PR 208]](https://github.com/rsmpi/rsmpi/pull/208) Improve error messages for improper MPI setup
 
 ## 0.8.0 (2024-05-03)
 
