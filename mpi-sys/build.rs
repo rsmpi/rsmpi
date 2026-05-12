@@ -5,6 +5,9 @@
 use std::{env, path::Path};
 
 fn main() {
+    println!("cargo:rerun-if-changed=src/rsmpi.c");
+    println!("cargo:rerun-if-changed=src/rsmpi.h");
+
     // Try to find an MPI library
     let lib = match build_probe_mpi::probe() {
         Ok(lib) => lib,
