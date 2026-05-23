@@ -13,14 +13,14 @@ keywords = [ "message-passing", "parallel" ]
 categories = [ "external-ffi-bindings" ]
 license = "MIT OR Apache-2.0"
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.70"
 links = "mpi"
 
 [dependencies]
 
 [build-dependencies]
 cc = "1.2.49"
-bindgen = { version = "0.69.5", default-features = false, features = ["runtime"] }
+bindgen = { version = "0.72", default-features = false, features = ["runtime"] }
 build-probe-mpi = { path = "../build-probe-mpi", version = "0.1.5" }
 
 [package.metadata.release]
